@@ -1,0 +1,6 @@
+@Frigorino.Server_HostAddress = http://localhost:5133
+
+GET {{Frigorino.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
