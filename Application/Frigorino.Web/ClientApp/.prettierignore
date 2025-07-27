@@ -1,0 +1,5 @@
+# Ignore artifacts:
+build
+coverage
+src/lib/api
+src/routeTree.gen.ts

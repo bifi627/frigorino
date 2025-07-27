@@ -458,3 +458,4 @@ Peperino.Core/Peperino.UserManagement/UserManagement.Api/appsettings.Development
 Peperino/appsettings.Development.json
 
 peperino.ui/public/sw.js.map
+Application/Frigorino.Web/ClientApp/build/
