@@ -26,35 +26,50 @@ builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "
 
 var app = builder.Build();
 
-app.UseRouting();
-app.MapDefaultControllerRoute();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.UseMiddleware<InitialConnectionMiddleware>();
-
-app.MapControllers();
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
-//app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-app.UseSpaStaticFiles();
-
-// Configure the HTTP request pipeline.
-app.UseSpa(spa => spa.Options.SourcePath = "ClientApp");
-
-app.MapFallbackToFile("index.html");
-
+// Database migration
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
     var context = services.GetRequiredService<ApplicationDbContext>();
     await context.Database.MigrateAsync();
 }
+
+// Configure middleware pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+
+// Static files for SPA
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseSpaStaticFiles();
+
+// Authentication & Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Custom middleware
+app.UseMiddleware<InitialConnectionMiddleware>();
+
+// API endpoints
+app.MapControllers();
+
+// SPA configuration
+app.UseSpa(spa =>
+{
+    spa.Options.SourcePath = "ClientApp";
+    
+    if (app.Environment.IsDevelopment())
+    {
+        spa.UseProxyToSpaDevelopmentServer("https://localhost:44375");
+    }
+});
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
