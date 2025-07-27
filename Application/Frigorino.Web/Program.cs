@@ -1,3 +1,4 @@
+using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -15,9 +16,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddEntityFramework(builder.Configuration);
+builder.Services.AddApplicationServices();
 builder.Services.AddFirebaseAuth(builder.Configuration);
 
 builder.Services.AddHttpContextAccessor();
+
+// Add session support for household context
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<InitialConnectionMiddleware>();
@@ -49,6 +60,9 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseSpaStaticFiles();
 
+// Session middleware (before authentication)
+app.UseSession();
+
 // Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
@@ -63,10 +77,10 @@ app.MapControllers();
 app.UseSpa(spa =>
 {
     spa.Options.SourcePath = "ClientApp";
-    
+
     if (app.Environment.IsDevelopment())
     {
-        spa.UseProxyToSpaDevelopmentServer("https://localhost:44375");
+        //spa.UseProxyToSpaDevelopmentServer("https://localhost:44375");
     }
 });
 

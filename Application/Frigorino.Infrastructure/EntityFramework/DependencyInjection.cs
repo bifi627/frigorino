@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.RegularExpressions;
+using Frigorino.Domain.Interfaces;
+using Frigorino.Infrastructure.Services;
 
 namespace Frigorino.Infrastructure.EntityFramework
 {
@@ -19,6 +21,9 @@ namespace Frigorino.Infrastructure.EntityFramework
                     postgresOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
                 });
             });
+
+            // Register household service
+            services.AddScoped<ICurrentHouseholdService, CurrentHouseholdService>();
 
             return services;
         }

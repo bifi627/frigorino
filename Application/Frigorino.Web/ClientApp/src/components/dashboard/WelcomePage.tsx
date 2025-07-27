@@ -15,10 +15,17 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../../hooks/useAuth";
+import { HouseholdSelector } from "../household/HouseholdSelector";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const handleCreateHousehold = () => {
+        navigate({ to: "/household/create" });
+    };
 
     const stats = [
         {
@@ -87,6 +94,9 @@ export const WelcomePage = () => {
             </Box>
 
             <Divider sx={{ mb: 4 }} />
+
+            {/* Household Selector */}
+            <HouseholdSelector onCreateHousehold={handleCreateHousehold} />
 
             {/* Quick Stats */}
             <Typography

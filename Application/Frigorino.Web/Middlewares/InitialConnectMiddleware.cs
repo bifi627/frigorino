@@ -25,10 +25,18 @@ namespace Frigorino.Web.Middlewares
                     _applicationDbContext.Users.Add(new Domain.Entities.User
                     {
                         ExternalId = _currentUserService.UserId,
-                        Name = $"User_{Guid.NewGuid()}",
+                        Name = _currentUserService.UserName ?? $"User_{Guid.NewGuid()}",
+                        Email = _currentUserService.Email ?? "",
                     });
-                    await _applicationDbContext.SaveChangesAsync();
                 }
+                else
+                {
+                    var user = _applicationDbContext.Users.First(e => e.ExternalId == _currentUserService.UserId);
+                    user.LastLoginAt = DateTime.UtcNow;
+                    user.Email = _currentUserService.Email;
+                }
+
+                await _applicationDbContext.SaveChangesAsync();
 
                 _checkedConnections.Add(_currentUserService.UserId);
             }

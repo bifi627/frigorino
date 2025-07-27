@@ -6,6 +6,7 @@ namespace Frigorino.Web.Controllers
     [Route("api/[controller]")]
     public class DemoController : ControllerBase
     {
+        [HttpGet]
         public string Get()
         {
             return "Hello, World!";
