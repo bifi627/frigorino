@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import { env } from "process";
 import { defineConfig } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 const baseFolder =
     env.APPDATA !== undefined && env.APPDATA !== ""
@@ -53,6 +54,30 @@ export default defineConfig({
         tanstackRouter({
             target: "react",
             autoCodeSplitting: true,
+        }),
+        VitePWA({
+            registerType: "autoUpdate",
+            devOptions: {
+                enabled: true,
+            },
+            manifest: {
+                name: "Frigorino Client",
+                short_name: "Frigorino",
+                description: "Frigorino Client description",
+                theme_color: "#ffffff",
+                icons: [
+                    {
+                        src: "192.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                    },
+                    {
+                        src: "512.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                    },
+                ],
+            },
         }),
         plugin(),
     ],
