@@ -430,7 +430,7 @@
                 }
             }
         },
-        "/api/household/{householdId}/Members/{memberUserId}": {
+        "/api/household/{householdId}/Members/{targetUserId}/role": {
             "put": {
                 "tags": ["Members"],
                 "parameters": [
@@ -444,7 +444,7 @@
                         }
                     },
                     {
-                        "name": "memberUserId",
+                        "name": "targetUserId",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -493,7 +493,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/api/household/{householdId}/Members/{targetUserId}": {
             "delete": {
                 "tags": ["Members"],
                 "parameters": [
@@ -507,7 +509,7 @@
                         }
                     },
                     {
-                        "name": "memberUserId",
+                        "name": "targetUserId",
                         "in": "path",
                         "required": true,
                         "schema": {

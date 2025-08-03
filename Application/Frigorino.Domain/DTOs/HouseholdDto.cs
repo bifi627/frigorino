@@ -40,4 +40,16 @@ namespace Frigorino.Domain.DTOs
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
     }
+
+    // Member management DTOs
+    public class AddMemberRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public HouseholdRole? Role { get; set; } = HouseholdRole.Member;
+    }
+
+    public class UpdateMemberRoleRequest
+    {
+        public HouseholdRole Role { get; set; }
+    }
 }

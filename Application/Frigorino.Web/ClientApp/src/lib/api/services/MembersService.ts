@@ -47,22 +47,22 @@ export class MembersService {
     }
     /**
      * @param householdId
-     * @param memberUserId
+     * @param targetUserId
      * @param requestBody
      * @returns HouseholdMemberDto OK
      * @throws ApiError
      */
-    public putApiHouseholdMembers(
+    public putApiHouseholdMembersRole(
         householdId: number,
-        memberUserId: string,
+        targetUserId: string,
         requestBody?: UpdateMemberRoleRequest,
     ): CancelablePromise<HouseholdMemberDto> {
         return this.httpRequest.request({
             method: 'PUT',
-            url: '/api/household/{householdId}/Members/{memberUserId}',
+            url: '/api/household/{householdId}/Members/{targetUserId}/role',
             path: {
                 'householdId': householdId,
-                'memberUserId': memberUserId,
+                'targetUserId': targetUserId,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -70,20 +70,20 @@ export class MembersService {
     }
     /**
      * @param householdId
-     * @param memberUserId
+     * @param targetUserId
      * @returns any OK
      * @throws ApiError
      */
     public deleteApiHouseholdMembers(
         householdId: number,
-        memberUserId: string,
+        targetUserId: string,
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'DELETE',
-            url: '/api/household/{householdId}/Members/{memberUserId}',
+            url: '/api/household/{householdId}/Members/{targetUserId}',
             path: {
                 'householdId': householdId,
-                'memberUserId': memberUserId,
+                'targetUserId': targetUserId,
             },
         });
     }
