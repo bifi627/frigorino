@@ -144,7 +144,9 @@ export const HeroImage = ({
                             transform: imageLoaded ? "scale(1)" : "scale(0.95)",
                         },
                         "50%": {
-                            transform: imageLoaded ? "scale(1.1)" : "scale(1.05)",
+                            transform: imageLoaded
+                                ? "scale(1.1)"
+                                : "scale(1.05)",
                             filter: "brightness(1.1)",
                         },
                         "100%": {

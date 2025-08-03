@@ -29,27 +29,6 @@ interface HouseholdSwitcherProps {
     onCreateHousehold: () => void;
 }
 
-const roleLabels: Record<number, string> = {
-    0: "Member",
-    1: "Admin",
-    2: "Owner",
-};
-
-const roleColors: Record<
-    number,
-    | "default"
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning"
-> = {
-    0: "default",
-    1: "primary",
-    2: "warning",
-};
-
 export const HouseholdSwitcher = ({
     onCreateHousehold,
 }: HouseholdSwitcherProps) => {
@@ -92,7 +71,6 @@ export const HouseholdSwitcher = ({
     );
     const currentHouseholdName =
         currentHouseholdDetails?.name || "No Household";
-    const householdCount = households?.length || 0;
 
     if (isLoading) {
         return (

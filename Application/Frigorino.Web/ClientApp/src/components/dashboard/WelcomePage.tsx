@@ -26,8 +26,8 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
-import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 import { HeroImage } from "../common/HeroImage";
+import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
@@ -43,10 +43,6 @@ export const WelcomePage = () => {
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
-    };
-
-    const handleManageHousehold = () => {
-        navigate({ to: "/household/manage" });
     };
 
     const toggleSection = (sectionId: string) => {
