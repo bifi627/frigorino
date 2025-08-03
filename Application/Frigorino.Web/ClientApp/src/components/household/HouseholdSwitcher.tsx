@@ -1,16 +1,23 @@
-import { Add, Business, Group, KeyboardArrowDown } from "@mui/icons-material";
+import {
+    Add,
+    Business,
+    Edit,
+    House,
+    KeyboardArrowDown,
+} from "@mui/icons-material";
 import {
     Box,
     Button,
-    Chip,
     CircularProgress,
     Divider,
+    IconButton,
     ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
     Typography,
 } from "@mui/material";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
     useCurrentHousehold,
@@ -46,6 +53,7 @@ const roleColors: Record<
 export const HouseholdSwitcher = ({
     onCreateHousehold,
 }: HouseholdSwitcherProps) => {
+    const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -72,6 +80,10 @@ export const HouseholdSwitcher = ({
         } else {
             handleClose();
         }
+    };
+
+    const handleHouseHoldEdit = () => {
+        navigate({ to: "/household/manage" });
     };
 
     // Find current household details
@@ -166,21 +178,6 @@ export const HouseholdSwitcher = ({
                     },
                 }}
             >
-                <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography
-                        variant="subtitle2"
-                        color="text.secondary"
-                        sx={{
-                            fontWeight: 600,
-                            fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                        }}
-                    >
-                        Your Households ({householdCount})
-                    </Typography>
-                </Box>
-
-                <Divider />
-
                 {households && households.length > 0 ? (
                     households.map((household) => (
                         <MenuItem
@@ -197,95 +194,40 @@ export const HouseholdSwitcher = ({
                             }}
                         >
                             <ListItemIcon sx={{ minWidth: { xs: 32, sm: 40 } }}>
-                                <Business
-                                    sx={{ fontSize: { xs: 18, sm: 20 } }}
-                                />
+                                <House sx={{ fontSize: { xs: 18, sm: 20 } }} />
                             </ListItemIcon>
                             <ListItemText
                                 primary={
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontWeight: 500,
-                                            fontSize: {
-                                                xs: "0.875rem",
-                                                sm: "1rem",
-                                            },
-                                        }}
-                                    >
-                                        {household.name}
-                                    </Typography>
-                                }
-                                secondary={
                                     <Box
-                                        sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 1,
-                                            mt: 0.5,
-                                            flexWrap: "wrap",
-                                        }}
+                                        flexDirection={"row"}
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent={"space-between"}
                                     >
-                                        <Box
+                                        <Typography
+                                            variant="body2"
                                             sx={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 0.5,
+                                                fontWeight: 500,
+                                                fontSize: {
+                                                    xs: "0.875rem",
+                                                    sm: "1rem",
+                                                },
                                             }}
                                         >
-                                            <Group
-                                                sx={{
-                                                    fontSize: {
-                                                        xs: 12,
-                                                        sm: 14,
-                                                    },
-                                                }}
-                                            />
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    fontSize: {
-                                                        xs: "0.7rem",
-                                                        sm: "0.75rem",
-                                                    },
-                                                }}
-                                            >
-                                                {household.memberCount || 0}{" "}
-                                                members
-                                            </Typography>
-                                        </Box>
-                                        {household.currentUserRole !==
-                                            undefined && (
-                                            <Chip
-                                                label={
-                                                    roleLabels[
-                                                        household
-                                                            .currentUserRole
-                                                    ]
-                                                }
-                                                size="small"
-                                                color={
-                                                    roleColors[
-                                                        household
-                                                            .currentUserRole
-                                                    ]
-                                                }
-                                                variant="outlined"
-                                                sx={{
-                                                    height: { xs: 16, sm: 18 },
-                                                    fontSize: {
-                                                        xs: "0.6rem",
-                                                        sm: "0.7rem",
-                                                    },
-                                                    "& .MuiChip-label": {
-                                                        px: {
-                                                            xs: 0.5,
-                                                            sm: 0.75,
-                                                        },
-                                                    },
-                                                }}
-                                            />
-                                        )}
+                                            {household.name}
+                                        </Typography>
+                                        <IconButton
+                                            onClick={handleHouseHoldEdit}
+                                            sx={{
+                                                visibility:
+                                                    household.id ===
+                                                    currentHousehold?.householdId
+                                                        ? "visible"
+                                                        : "hidden",
+                                            }}
+                                        >
+                                            <Edit />
+                                        </IconButton>
                                     </Box>
                                 }
                             />
@@ -313,9 +255,7 @@ export const HouseholdSwitcher = ({
                         />
                     </MenuItem>
                 )}
-
                 <Divider />
-
                 <MenuItem
                     onClick={() => {
                         handleClose();

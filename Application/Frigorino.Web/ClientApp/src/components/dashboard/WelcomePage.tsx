@@ -2,14 +2,11 @@ import {
     Add,
     ChevronRight,
     KitchenOutlined,
-    ManageAccounts,
     RestaurantOutlined,
     TimerOutlined,
 } from "@mui/icons-material";
 import {
-    Avatar,
     Box,
-    Button,
     Card,
     CardContent,
     Chip,
@@ -30,6 +27,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
 import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
+import { HeroImage } from "../common/HeroImage";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
@@ -178,59 +176,18 @@ export const WelcomePage = () => {
                         onCreateHousehold={handleCreateHousehold}
                     />
                 </Box>
-
-                {/* Welcome Section */}
-                <Box sx={{ textAlign: "center" }}>
-                    <Avatar
-                        sx={{
-                            width: { xs: 64, sm: 80 },
-                            height: { xs: 64, sm: 80 },
-                            mx: "auto",
-                            mb: { xs: 1.5, sm: 2 },
-                            bgcolor: "primary.main",
-                            fontSize: { xs: "1.5rem", sm: "2rem" },
-                        }}
-                    >
-                        {user?.email?.charAt(0).toUpperCase() || "U"}
-                    </Avatar>
-
-                    <Typography
-                        variant="h4"
-                        component="h1"
-                        gutterBottom
-                        sx={{
-                            fontWeight: 600,
-                            fontSize: {
-                                xs: "1.5rem",
-                                sm: "1.8rem",
-                                md: "2.2rem",
-                            },
-                            mb: { xs: 1, sm: 2 },
-                        }}
-                    >
-                        Welcome back!
-                    </Typography>
-
-                    {/* Action Button for Household Management */}
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<ManageAccounts />}
-                        onClick={handleManageHousehold}
-                        sx={{
-                            textTransform: "none",
-                            fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                            px: { xs: 1.5, sm: 2 },
-                            py: { xs: 0.5, sm: 0.75 },
-                            borderRadius: 2,
-                        }}
-                    >
-                        Manage Household
-                    </Button>
-                </Box>
             </Box>
 
             <Divider sx={{ mb: { xs: 3, sm: 4 } }} />
+
+            {/* Welcome Image */}
+            <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                <HeroImage
+                    src="/full.png"
+                    alt="Frigorino Welcome"
+                    size="small"
+                />
+            </Box>
 
             {/* Quick Stats */}
             <Typography

@@ -25,7 +25,7 @@ namespace Frigorino.Web.Middlewares
                     _applicationDbContext.Users.Add(new Domain.Entities.User
                     {
                         ExternalId = _currentUserService.UserId,
-                        Name = _currentUserService.UserName ?? $"User_{Guid.NewGuid()}",
+                        Name = _currentUserService.UserName ?? _currentUserService.Email?.Split("@")[0] ?? $"User_{Guid.NewGuid()}",
                         Email = _currentUserService.Email ?? "",
                     });
                 }
@@ -34,6 +34,7 @@ namespace Frigorino.Web.Middlewares
                     var user = _applicationDbContext.Users.First(e => e.ExternalId == _currentUserService.UserId);
                     user.LastLoginAt = DateTime.UtcNow;
                     user.Email = _currentUserService.Email;
+                    user.Name = _currentUserService.Email?.Split("@")[0] ?? user.Name;
                 }
 
                 await _applicationDbContext.SaveChangesAsync();

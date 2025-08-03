@@ -1,15 +1,38 @@
-import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
+import { AccountCircle, Logout } from "@mui/icons-material";
+import {
+    AppBar,
+    Avatar,
+    Box,
+    Button,
+    IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Toolbar,
+    Typography,
+} from "@mui/material";
 import { Link, useRouter } from "@tanstack/react-router";
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 
 export const Navigation: React.FC = () => {
     const { isAuthenticated, logout, user } = useAuth();
     const router = useRouter();
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     const handleLogout = async () => {
+        handleMenuClose();
         await logout();
-        router.navigate({ to: "/auth/login" });
+        router.navigate({ to: "." });
     };
 
     return (
@@ -26,18 +49,58 @@ export const Navigation: React.FC = () => {
                 <Box>
                     {isAuthenticated ? (
                         <>
-                            <Button
-                                color="inherit"
-                                sx={{
-                                    display: { xs: "none", sm: "inline-flex" },
-                                    maxWidth: "200px",
+                            <IconButton
+                                onClick={handleMenuClick}
+                                size="small"
+                                sx={{ color: "inherit" }}
+                                aria-controls={
+                                    Boolean(anchorEl) ? "user-menu" : undefined
+                                }
+                                aria-haspopup="true"
+                                aria-expanded={
+                                    Boolean(anchorEl) ? "true" : undefined
+                                }
+                            >
+                                {user?.photoURL ? (
+                                    <Avatar
+                                        src={user.photoURL}
+                                        sx={{ width: 32, height: 32 }}
+                                    />
+                                ) : (
+                                    <AccountCircle sx={{ fontSize: 32 }} />
+                                )}
+                            </IconButton>
+
+                            <Menu
+                                id="user-menu"
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleMenuClose}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                }}
+                                transformOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                }}
+                                slotProps={{
+                                    paper: {
+                                        sx: {
+                                            mt: 1,
+                                            minWidth: 150,
+                                            borderRadius: 2,
+                                        },
+                                    },
                                 }}
                             >
-                                Welcome, {user?.email?.split("@")[0]}
-                            </Button>
-                            <Button color="inherit" onClick={handleLogout}>
-                                Logout
-                            </Button>
+                                <MenuItem onClick={handleLogout}>
+                                    <ListItemIcon>
+                                        <Logout fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Logout" />
+                                </MenuItem>
+                            </Menu>
                         </>
                     ) : (
                         <Button

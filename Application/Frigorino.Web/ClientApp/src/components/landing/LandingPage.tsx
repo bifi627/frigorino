@@ -1,6 +1,7 @@
 import { AppRegistrationOutlined, LoginOutlined } from "@mui/icons-material";
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import { Link } from "@tanstack/react-router";
+import { HeroImage } from "../common/HeroImage";
 
 export const LandingPage = () => {
     return (
@@ -35,35 +36,16 @@ export const LandingPage = () => {
                 >
                     Frigorino
                 </Typography>
+            </Box>
 
-                <Typography
-                    variant="h5"
-                    component="h2"
-                    color="text.secondary"
-                    sx={{
-                        fontSize: { xs: "1.1rem", sm: "1.5rem" },
-                        fontWeight: 400,
-                        mb: 4,
-                        lineHeight: 1.4,
-                    }}
-                >
-                    Your smart kitchen companion
-                </Typography>
-
-                <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{
-                        fontSize: { xs: "0.95rem", sm: "1.1rem" },
-                        mb: 4,
-                        maxWidth: "400px",
-                        mx: "auto",
-                        lineHeight: 1.6,
-                    }}
-                >
-                    Manage your refrigerator, track expiration dates, and never
-                    waste food again. Get started today!
-                </Typography>
+            {/* Hero Image */}
+            <Box sx={{ mb: { xs: 4, sm: 6 } }}>
+                <HeroImage
+                    src="/full.png"
+                    alt="Frigorino - Smart Kitchen Management"
+                    size="large"
+                    borderRadius={3}
+                />
             </Box>
 
             <Stack
@@ -118,16 +100,6 @@ export const LandingPage = () => {
                     Get Started
                 </Button>
             </Stack>
-
-            <Box sx={{ mt: 6, opacity: 0.7 }}>
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontSize: "0.8rem" }}
-                >
-                    Join thousands of users reducing food waste
-                </Typography>
-            </Box>
         </Container>
     );
 };
