@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useState } from "react";
 
 interface HeroImageProps {
@@ -74,7 +74,7 @@ export const HeroImage = ({
                         maxWidth: config.maxWidth,
                         height: config.maxHeight,
                         borderRadius,
-                        bgcolor: "grey.100",
+                        // bgcolor: "grey.100",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -92,22 +92,7 @@ export const HeroImage = ({
                             },
                         },
                     }}
-                >
-                    <Typography
-                        variant={size === "small" ? "caption" : "body2"}
-                        color="text.secondary"
-                        sx={{
-                            fontSize:
-                                size === "small"
-                                    ? "0.8rem"
-                                    : size === "large"
-                                      ? "0.9rem"
-                                      : "0.85rem",
-                        }}
-                    >
-                        Loading...
-                    </Typography>
-                </Box>
+                ></Box>
             )}
 
             <Box
@@ -130,15 +115,22 @@ export const HeroImage = ({
                     transition: config.transition,
                     cursor: "pointer",
                     animation: isClicked ? "clickPulse 0.3s ease-out" : "none",
+                    // Remove mobile tap highlight
+                    WebkitTapHighlightColor: "transparent",
+                    // Prevent text selection on touch
+                    WebkitUserSelect: "none",
+                    userSelect: "none",
+                    // Prevent touch callout on iOS
+                    WebkitTouchCallout: "none",
                     "&:hover": {
                         transform: imageLoaded
                             ? `scale(${config.hoverScale})`
                             : "scale(0.95)",
                         boxShadow: config.hoverBoxShadow,
                     },
-                    "&:active": {
-                        transform: imageLoaded ? "scale(0.98)" : "scale(0.95)",
-                    },
+                    // "&:active": {
+                    //     transform: imageLoaded ? "scale(0.98)" : "scale(0.95)",
+                    // },
                     "@keyframes clickPulse": {
                         "0%": {
                             transform: imageLoaded ? "scale(1)" : "scale(0.95)",
