@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.Application", "Fr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.Web", "Frigorino.Web\Frigorino.Web.csproj", "{468F95EB-759D-C22A-0FCF-E4CB8D7D00E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.Test", "Frigorino.Test\Frigorino.Test.csproj", "{F9864036-081D-4055-8B4A-D37D61AAA340}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{468F95EB-759D-C22A-0FCF-E4CB8D7D00E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{468F95EB-759D-C22A-0FCF-E4CB8D7D00E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{468F95EB-759D-C22A-0FCF-E4CB8D7D00E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9864036-081D-4055-8B4A-D37D61AAA340}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9864036-081D-4055-8B4A-D37D61AAA340}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9864036-081D-4055-8B4A-D37D61AAA340}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9864036-081D-4055-8B4A-D37D61AAA340}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

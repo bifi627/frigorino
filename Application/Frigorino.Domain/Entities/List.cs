@@ -14,5 +14,6 @@ namespace Frigorino.Domain.Entities
         // Navigation properties
         public Household Household { get; set; } = null!;
         public User CreatedByUser { get; set; } = null!;
+        public ICollection<ListItem> ListItems { get; set; } = new List<ListItem>();
     }
 }

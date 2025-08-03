@@ -15,6 +15,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<Household> Households { get; set; }
         public DbSet<UserHousehold> UserHouseholds { get; set; }
         public DbSet<List> Lists { get; set; }
+        public DbSet<ListItem> ListItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -57,12 +58,34 @@ namespace Frigorino.Infrastructure.EntityFramework
                     {
                         userHousehold.JoinedAt = now;
                     }
+
+                    if (entry.Entity is List list && list.CreatedAt == default)
+                    {
+                        list.CreatedAt = now;
+                        list.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is ListItem listItem && listItem.CreatedAt == default)
+                    {
+                        listItem.CreatedAt = now;
+                        listItem.UpdatedAt = now;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
                     if (entry.Entity is Household household)
                     {
                         household.UpdatedAt = now;
+                    }
+                    
+                    if (entry.Entity is List list)
+                    {
+                        list.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is ListItem listItem)
+                    {
+                        listItem.UpdatedAt = now;
                     }
                 }
             }

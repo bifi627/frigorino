@@ -1,0 +1,103 @@
+@hostAddress = http://localhost:5133
+@householdId = 1
+@listId = 1
+@itemId = 1
+@authToken = Bearer_YOUR_JWT_TOKEN_HERE
+
+### Get all list items (sorted)
+GET {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems
+Authorization: {{authToken}}
+Accept: application/json
+
+### Get specific list item
+GET {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}
+Authorization: {{authToken}}
+Accept: application/json
+
+### Create new list item
+POST {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "text": "Buy milk",
+  "quantity": "1 gallon"
+}
+
+### Update list item
+PUT {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "text": "Buy organic milk",
+  "quantity": "2 gallons",
+  "status": false
+}
+
+### Delete list item
+DELETE {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}
+Authorization: {{authToken}}
+
+### Toggle item status (check/uncheck)
+PATCH {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}/toggle-status
+Authorization: {{authToken}}
+
+### Reorder item (move after another item)
+PATCH {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}/reorder
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "afterItemId": 5
+}
+
+### Reorder item to top of section
+PATCH {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/{{itemId}}/reorder
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "afterItemId": 0
+}
+
+### Compact sort orders for list
+POST {{hostAddress}}/api/household/{{householdId}}/lists/{{listId}}/listitems/compact
+Authorization: {{authToken}}
+
+###
+### Direct item access endpoints (alternative routes)
+###
+
+### Get item directly by ID
+GET {{hostAddress}}/api/items/{{itemId}}
+Authorization: {{authToken}}
+Accept: application/json
+
+### Update item directly
+PUT {{hostAddress}}/api/items/{{itemId}}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "text": "Updated item text",
+  "quantity": "new quantity",
+  "status": true
+}
+
+### Delete item directly
+DELETE {{hostAddress}}/api/items/{{itemId}}
+Authorization: {{authToken}}
+
+### Toggle status directly
+PATCH {{hostAddress}}/api/items/{{itemId}}/toggle-status
+Authorization: {{authToken}}
+
+### Reorder item directly
+PATCH {{hostAddress}}/api/items/{{itemId}}/reorder
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "afterItemId": 3
+}
