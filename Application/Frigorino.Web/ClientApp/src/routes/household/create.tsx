@@ -14,12 +14,14 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "../../common/authGuard";
 import {
     useCreateHousehold,
     useSetCurrentHousehold,
 } from "../../hooks/useHouseholdQueries";
 
 export const Route = createFileRoute("/household/create")({
+    beforeLoad: requireAuth,
     component: CreateHouseholdPage,
 });
 

@@ -19,11 +19,13 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useDeleteList, useHouseholdLists } from "../../hooks/useListQueries";
 import type { ListDto } from "../../lib/api";
 
 export const Route = createFileRoute("/lists/")({
+    beforeLoad: requireAuth,
     component: ListsPage,
 });
 

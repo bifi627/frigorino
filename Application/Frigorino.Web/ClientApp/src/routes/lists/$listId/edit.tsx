@@ -30,6 +30,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { requireAuth } from "../../../common/authGuard";
 import { useCurrentHouseholdWithDetails } from "../../../hooks/useHouseholdQueries";
 import {
     useDeleteList,
@@ -39,6 +40,7 @@ import {
 } from "../../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/$listId/edit")({
+    beforeLoad: requireAuth,
     component: ListEditPage,
 });
 

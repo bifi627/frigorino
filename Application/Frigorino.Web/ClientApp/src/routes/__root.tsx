@@ -1,11 +1,23 @@
 import { Box } from "@mui/material";
 import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { getAuth } from "firebase/auth";
 import { Navigation } from "../components/layout/Navigation";
 import { useAuth } from "../hooks/useAuth";
 
 export const Route = createRootRoute({
     component: RootComponent,
+    beforeLoad: async () => {
+        // Wait for Firebase auth to initialize
+        const auth = getAuth();
+
+        return new Promise((resolve) => {
+            const unsubscribe = auth.onAuthStateChanged((user) => {
+                unsubscribe();
+                resolve({ user });
+            });
+        });
+    },
 });
 
 function RootComponent() {

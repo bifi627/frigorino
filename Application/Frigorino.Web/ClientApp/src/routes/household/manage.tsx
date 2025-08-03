@@ -28,6 +28,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "../../common/authGuard";
 import { HouseholdMembers } from "../../components/household";
 import {
     useCurrentHouseholdWithDetails,
@@ -35,6 +36,7 @@ import {
 } from "../../hooks/useHouseholdQueries";
 
 export const Route = createFileRoute("/household/manage")({
+    beforeLoad: requireAuth,
     component: HouseholdManagePage,
 });
 

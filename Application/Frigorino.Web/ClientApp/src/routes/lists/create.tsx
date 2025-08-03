@@ -18,10 +18,12 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useCreateList } from "../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/create")({
+    beforeLoad: requireAuth,
     component: CreateListPage,
 });
 

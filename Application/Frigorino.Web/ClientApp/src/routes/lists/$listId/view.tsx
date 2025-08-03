@@ -9,10 +9,12 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { requireAuth } from "../../../common/authGuard";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import { useList } from "../../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/$listId/view")({
+    beforeLoad: requireAuth,
     component: RouteComponent,
 });
 
