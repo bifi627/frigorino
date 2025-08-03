@@ -11,9 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ListsIndexRouteImport } from './routes/lists/index'
+import { Route as ListsCreateRouteImport } from './routes/lists/create'
 import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
+import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -23,6 +27,16 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsIndexRoute = ListsIndexRouteImport.update({
+  id: '/lists/',
+  path: '/lists/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsCreateRoute = ListsCreateRouteImport.update({
+  id: '/lists/create',
+  path: '/lists/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseholdManageRoute = HouseholdManageRouteImport.update({
@@ -40,6 +54,16 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListsListIdViewRoute = ListsListIdViewRouteImport.update({
+  id: '/lists/$listId/view',
+  path: '/lists/$listId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsListIdEditRoute = ListsListIdEditRouteImport.update({
+  id: '/lists/$listId/edit',
+  path: '/lists/$listId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +71,10 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/lists/create': typeof ListsCreateRoute
+  '/lists': typeof ListsIndexRoute
+  '/lists/$listId/edit': typeof ListsListIdEditRoute
+  '/lists/$listId/view': typeof ListsListIdViewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +82,10 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/lists/create': typeof ListsCreateRoute
+  '/lists': typeof ListsIndexRoute
+  '/lists/$listId/edit': typeof ListsListIdEditRoute
+  '/lists/$listId/view': typeof ListsListIdViewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +94,10 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/lists/create': typeof ListsCreateRoute
+  '/lists/': typeof ListsIndexRoute
+  '/lists/$listId/edit': typeof ListsListIdEditRoute
+  '/lists/$listId/view': typeof ListsListIdViewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,8 +107,21 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/lists/create'
+    | '/lists'
+    | '/lists/$listId/edit'
+    | '/lists/$listId/view'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/auth/login' | '/household/create' | '/household/manage'
+  to:
+    | '/'
+    | '/about'
+    | '/auth/login'
+    | '/household/create'
+    | '/household/manage'
+    | '/lists/create'
+    | '/lists'
+    | '/lists/$listId/edit'
+    | '/lists/$listId/view'
   id:
     | '__root__'
     | '/'
@@ -80,6 +129,10 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/lists/create'
+    | '/lists/'
+    | '/lists/$listId/edit'
+    | '/lists/$listId/view'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +141,10 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
   HouseholdManageRoute: typeof HouseholdManageRoute
+  ListsCreateRoute: typeof ListsCreateRoute
+  ListsIndexRoute: typeof ListsIndexRoute
+  ListsListIdEditRoute: typeof ListsListIdEditRoute
+  ListsListIdViewRoute: typeof ListsListIdViewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -104,6 +161,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/': {
+      id: '/lists/'
+      path: '/lists'
+      fullPath: '/lists'
+      preLoaderRoute: typeof ListsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/create': {
+      id: '/lists/create'
+      path: '/lists/create'
+      fullPath: '/lists/create'
+      preLoaderRoute: typeof ListsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/household/manage': {
@@ -127,6 +198,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lists/$listId/view': {
+      id: '/lists/$listId/view'
+      path: '/lists/$listId/view'
+      fullPath: '/lists/$listId/view'
+      preLoaderRoute: typeof ListsListIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/$listId/edit': {
+      id: '/lists/$listId/edit'
+      path: '/lists/$listId/edit'
+      fullPath: '/lists/$listId/edit'
+      preLoaderRoute: typeof ListsListIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -136,6 +221,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
   HouseholdManageRoute: HouseholdManageRoute,
+  ListsCreateRoute: ListsCreateRoute,
+  ListsIndexRoute: ListsIndexRoute,
+  ListsListIdEditRoute: ListsListIdEditRoute,
+  ListsListIdViewRoute: ListsListIdViewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,15 +1,14 @@
 import {
     ArrowBack,
-    Business,
     Delete,
-    Group,
+    List as ListIcon,
     MoreVert,
+    Save,
 } from "@mui/icons-material";
 import {
     Alert,
     Box,
     Button,
-    Chip,
     Container,
     Dialog,
     DialogActions,
@@ -22,42 +21,72 @@ import {
     Menu,
     MenuItem,
     Skeleton,
-    Stack,
     TextField,
     Typography,
 } from "@mui/material";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { HouseholdMembers } from "../../components/household";
 import {
-    useCurrentHouseholdWithDetails,
-    useDeleteHousehold,
-} from "../../hooks/useHouseholdQueries";
+    createFileRoute,
+    useNavigate,
+    useRouter,
+} from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useCurrentHouseholdWithDetails } from "../../../hooks/useHouseholdQueries";
+import {
+    useDeleteList,
+    useList,
+    useUpdateList,
+    type UpdateListRequest,
+} from "../../../hooks/useListQueries";
 
-export const Route = createFileRoute("/household/manage")({
-    component: HouseholdManagePage,
+export const Route = createFileRoute("/lists/$listId/edit")({
+    component: ListEditPage,
 });
 
-function HouseholdManagePage() {
+function ListEditPage() {
     const navigate = useNavigate();
+    const router = useRouter();
+    const { listId } = Route.useParams();
+    const listIdNum = parseInt(listId, 10);
+
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [confirmationText, setConfirmationText] = useState("");
+    const [editedName, setEditedName] = useState("");
+    const [editedDescription, setEditedDescription] = useState("");
 
-    // Use simplified hooks
+    // Get current household info
     const {
         currentHousehold,
-        currentHouseholdDetails,
-        isLoading,
-        error,
+        isLoading: householdLoading,
+        error: householdError,
         hasActiveHousehold,
     } = useCurrentHouseholdWithDetails();
 
-    // Delete household mutation
-    const deleteHouseholdMutation = useDeleteHousehold();
+    // Get list data
+    const {
+        data: list,
+        isLoading: listLoading,
+        error: listError,
+    } = useList(
+        currentHousehold?.householdId || 0,
+        listIdNum,
+        hasActiveHousehold && !isNaN(listIdNum),
+    );
+
+    // Mutations
+    const updateListMutation = useUpdateList();
+    const deleteListMutation = useDeleteList();
+
+    // Set initial form values when list data loads
+    useEffect(() => {
+        if (list) {
+            setEditedName(list.name || "");
+            setEditedDescription(list.description || "");
+        }
+    }, [list]);
 
     const handleBack = () => {
-        navigate({ to: "/" });
+        router.history.back();
     };
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -70,16 +99,53 @@ function HouseholdManagePage() {
 
     const handleDeleteClick = () => {
         setDeleteDialogOpen(true);
-        setConfirmationText(""); // Reset confirmation text
+        setConfirmationText("");
         handleMenuClose();
+    };
+
+    const handleSave = () => {
+        if (!currentHousehold?.householdId || !list?.id) return;
+
+        const updateData: UpdateListRequest = {
+            name: editedName.trim(),
+            description: editedDescription.trim() || null,
+        };
+
+        updateListMutation.mutate(
+            {
+                householdId: currentHousehold.householdId,
+                listId: list.id,
+                data: updateData,
+            },
+            {
+                onSuccess: () => {
+                    handleBack();
+                },
+            },
+        );
+    };
+
+    const handleCancelEdit = () => {
+        handleBack();
     };
 
     const handleDeleteConfirm = () => {
         if (
             currentHousehold?.householdId &&
-            confirmationText === householdName
+            list?.id &&
+            confirmationText === list.name
         ) {
-            deleteHouseholdMutation.mutate(currentHousehold.householdId);
+            deleteListMutation.mutate(
+                {
+                    householdId: currentHousehold.householdId,
+                    listId: list.id,
+                },
+                {
+                    onSuccess: () => {
+                        navigate({ to: "/" });
+                    },
+                },
+            );
         }
     };
 
@@ -87,6 +153,9 @@ function HouseholdManagePage() {
         setDeleteDialogOpen(false);
         setConfirmationText("");
     };
+
+    const isLoading = householdLoading || listLoading;
+    const error = householdError || listError;
 
     if (isLoading) {
         return (
@@ -116,16 +185,6 @@ function HouseholdManagePage() {
         );
     }
 
-    if (isLoading) {
-        return (
-            <Container maxWidth="lg">
-                <Box p={3}>
-                    <Typography>Loading...</Typography>
-                </Box>
-            </Container>
-        );
-    }
-
     if (error) {
         return (
             <Container
@@ -134,7 +193,7 @@ function HouseholdManagePage() {
             >
                 <Box>
                     <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        Failed to load household information
+                        Failed to load list information
                     </Alert>
                 </Box>
             </Container>
@@ -156,30 +215,23 @@ function HouseholdManagePage() {
         );
     }
 
-    const householdName = currentHouseholdDetails?.name || "Household";
-    const memberCount = currentHouseholdDetails?.memberCount || 0;
-    const userRole = currentHousehold.role || 0;
+    if (!list) {
+        return (
+            <Container
+                maxWidth="md"
+                sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 2 } }}
+            >
+                <Box>
+                    <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                        List not found or you don't have access to it.
+                    </Alert>
+                </Box>
+            </Container>
+        );
+    }
 
-    const roleLabels: Record<number, string> = {
-        0: "Member",
-        1: "Admin",
-        2: "Owner",
-    };
-
-    const roleColors: Record<
-        number,
-        | "default"
-        | "primary"
-        | "secondary"
-        | "error"
-        | "info"
-        | "success"
-        | "warning"
-    > = {
-        0: "default",
-        1: "primary",
-        2: "warning",
-    };
+    const listName = list.name || "Untitled List";
+    const isFormValid = editedName.trim().length > 0;
 
     return (
         <Container
@@ -212,34 +264,29 @@ function HouseholdManagePage() {
                                 flexGrow: 1,
                             }}
                         >
-                            Household Management
+                            Edit List
                         </Typography>
 
-                        {/* Menu button for household owner */}
-                        {userRole === 2 && ( // Only show for owners
-                            <IconButton
-                                onClick={handleMenuClick}
-                                size="small"
-                                sx={{
-                                    bgcolor: "background.paper",
-                                    border: 1,
-                                    borderColor: "divider",
-                                    "&:hover": {
-                                        bgcolor: "action.hover",
-                                    },
-                                }}
-                            >
-                                <MoreVert fontSize="small" />
-                            </IconButton>
-                        )}
+                        {/* Menu button */}
+                        <IconButton
+                            onClick={handleMenuClick}
+                            size="small"
+                            sx={{
+                                bgcolor: "background.paper",
+                                border: 1,
+                                borderColor: "divider",
+                                "&:hover": {
+                                    bgcolor: "action.hover",
+                                },
+                            }}
+                        >
+                            <MoreVert fontSize="small" />
+                        </IconButton>
                     </Box>
 
-                    {/* Household Info Card */}
+                    {/* List Info Card */}
                     <Box
                         sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: { xs: 1.5, sm: 2 },
                             p: { xs: 2, sm: 2.5 },
                             bgcolor: "background.paper",
                             borderRadius: 2,
@@ -250,93 +297,111 @@ function HouseholdManagePage() {
                     >
                         <Box
                             sx={{
-                                p: 1,
-                                borderRadius: 1.5,
-                                bgcolor: "primary.main",
-                                color: "primary.contrastText",
                                 display: "flex",
-                                alignItems: "center",
+                                flexDirection: "column",
+                                gap: 2,
                             }}
                         >
-                            <Business fontSize="small" />
-                        </Box>
-
-                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                            <Typography
-                                variant="h6"
+                            <Box
                                 sx={{
-                                    fontWeight: 600,
-                                    fontSize: { xs: "1.1rem", sm: "1.25rem" },
-                                    mb: 0.5,
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 2,
+                                    mb: 1,
                                 }}
-                            >
-                                {householdName}
-                            </Typography>
-
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                                sx={{ flexWrap: "wrap", gap: 0.5 }}
                             >
                                 <Box
                                     sx={{
+                                        p: 1,
+                                        borderRadius: 1.5,
+                                        bgcolor: "primary.main",
+                                        color: "primary.contrastText",
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: 0.5,
                                     }}
                                 >
-                                    <Group
-                                        sx={{
-                                            fontSize: 14,
-                                            color: "text.secondary",
-                                        }}
-                                    />
-                                    <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                        sx={{
-                                            fontSize: {
-                                                xs: "0.7rem",
-                                                sm: "0.75rem",
-                                            },
-                                        }}
-                                    >
-                                        {memberCount} members
-                                    </Typography>
+                                    <ListIcon fontSize="small" />
                                 </Box>
+                                <Typography
+                                    variant="h6"
+                                    sx={{ fontWeight: 600 }}
+                                >
+                                    Edit List Details
+                                </Typography>
+                            </Box>
 
-                                <Chip
-                                    label={roleLabels[userRole]}
-                                    size="small"
-                                    color={roleColors[userRole]}
-                                    sx={{
-                                        height: { xs: 20, sm: 24 },
-                                        fontSize: {
-                                            xs: "0.7rem",
-                                            sm: "0.75rem",
-                                        },
-                                        "& .MuiChip-label": {
-                                            px: { xs: 0.75, sm: 1 },
-                                        },
-                                    }}
-                                />
-                            </Stack>
+                            <TextField
+                                label="List Name"
+                                value={editedName}
+                                onChange={(e) => setEditedName(e.target.value)}
+                                fullWidth
+                                required
+                                error={editedName.trim().length === 0}
+                                helperText={
+                                    editedName.trim().length === 0
+                                        ? "List name is required"
+                                        : ""
+                                }
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+
+                            <TextField
+                                label="Description (Optional)"
+                                value={editedDescription}
+                                onChange={(e) =>
+                                    setEditedDescription(e.target.value)
+                                }
+                                fullWidth
+                                multiline
+                                rows={3}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
                         </Box>
                     </Box>
-                </Box>
 
-                {/* Members Management */}
-                <HouseholdMembers
-                    householdId={currentHousehold.householdId}
-                    currentUserRole={userRole}
-                />
+                    {/* Save/Cancel Buttons */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            gap: 2,
+                            justifyContent: "flex-end",
+                            mt: 3,
+                        }}
+                    >
+                        <Button
+                            variant="outlined"
+                            onClick={handleCancelEdit}
+                            disabled={updateListMutation.isPending}
+                            sx={{ borderRadius: 2, minWidth: 100 }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleSave}
+                            disabled={
+                                updateListMutation.isPending || !isFormValid
+                            }
+                            startIcon={<Save />}
+                            sx={{ borderRadius: 2, minWidth: 100 }}
+                        >
+                            {updateListMutation.isPending
+                                ? "Saving..."
+                                : "Save"}
+                        </Button>
+                    </Box>
+                </Box>
             </Box>
 
-            {/* Household Actions Menu */}
+            {/* Menu */}
             <Menu
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
@@ -374,7 +439,7 @@ function HouseholdManagePage() {
                     <ListItemIcon>
                         <Delete fontSize="small" color="error" />
                     </ListItemIcon>
-                    <ListItemText primary="Delete Household" />
+                    <ListItemText primary="Delete List" />
                 </MenuItem>
             </Menu>
 
@@ -391,12 +456,12 @@ function HouseholdManagePage() {
                         component="div"
                         sx={{ fontWeight: 600 }}
                     >
-                        Delete Household
+                        Delete List
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Are you sure you want to delete "{householdName}"? This
+                        Are you sure you want to delete "{listName}"? This
                         action cannot be undone.
                     </DialogContentText>
 
@@ -422,43 +487,43 @@ function HouseholdManagePage() {
                             color="error.dark"
                             sx={{ mt: 1, ml: 2 }}
                         >
-                            • All household data and settings
+                            • The entire list and its settings
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All member associations
+                            • All list items (future: when items are
+                            implemented)
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All shared content (future: lists, inventory,
-                            etc.)
+                            • All associated data and history
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                        To confirm, please type the household name:{" "}
-                        <strong>{householdName}</strong>
+                        To confirm, please type the list name:{" "}
+                        <strong>{listName}</strong>
                     </Typography>
                     <TextField
                         fullWidth
                         variant="outlined"
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
-                        placeholder={`Type "${householdName}" to confirm`}
-                        disabled={deleteHouseholdMutation.isPending}
+                        placeholder={`Type "${listName}" to confirm`}
+                        disabled={deleteListMutation.isPending}
                         error={
                             confirmationText.length > 0 &&
-                            confirmationText !== householdName
+                            confirmationText !== listName
                         }
                         helperText={
                             confirmationText.length > 0 &&
-                            confirmationText !== householdName
+                            confirmationText !== listName
                                 ? "Name doesn't match"
                                 : ""
                         }
@@ -472,7 +537,7 @@ function HouseholdManagePage() {
                 <DialogActions sx={{ p: 3, pt: 1 }}>
                     <Button
                         onClick={handleDeleteDialogClose}
-                        disabled={deleteHouseholdMutation.isPending}
+                        disabled={deleteListMutation.isPending}
                         sx={{ borderRadius: 2 }}
                     >
                         Cancel
@@ -482,8 +547,8 @@ function HouseholdManagePage() {
                         color="error"
                         variant="contained"
                         disabled={
-                            deleteHouseholdMutation.isPending ||
-                            confirmationText !== householdName
+                            deleteListMutation.isPending ||
+                            confirmationText !== listName
                         }
                         sx={{
                             borderRadius: 2,
@@ -491,9 +556,9 @@ function HouseholdManagePage() {
                             minWidth: 120,
                         }}
                     >
-                        {deleteHouseholdMutation.isPending
+                        {deleteListMutation.isPending
                             ? "Deleting..."
-                            : "Delete Household"}
+                            : "Delete List"}
                     </Button>
                 </DialogActions>
             </Dialog>

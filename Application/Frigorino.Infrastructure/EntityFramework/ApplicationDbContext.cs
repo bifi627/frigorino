@@ -14,6 +14,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<User> Users { get; set; }
         public DbSet<Household> Households { get; set; }
         public DbSet<UserHousehold> UserHouseholds { get; set; }
+        public DbSet<List> Lists { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -1,4 +1,4 @@
-import { Add, ArrowBack } from "@mui/icons-material";
+import { Add, ArrowBack, ListAlt } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -12,39 +12,40 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import {
-    useCreateHousehold,
-    useSetCurrentHousehold,
-} from "../../hooks/useHouseholdQueries";
+    createFileRoute,
+    useNavigate,
+    useRouter,
+} from "@tanstack/react-router";
+import { useState } from "react";
+import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { useCreateList } from "../../hooks/useListQueries";
 
-export const Route = createFileRoute("/household/create")({
-    component: CreateHouseholdPage,
+export const Route = createFileRoute("/lists/create")({
+    component: CreateListPage,
 });
 
-interface CreateHouseholdFormData {
+interface CreateListFormData {
     name: string;
     description: string;
 }
 
-function CreateHouseholdPage() {
+function CreateListPage() {
     const navigate = useNavigate();
-    const createHouseholdMutation = useCreateHousehold();
-    const setCurrentHouseholdMutation = useSetCurrentHousehold();
-    const [formData, setFormData] = useState<CreateHouseholdFormData>({
+    const router = useRouter();
+    const createListMutation = useCreateList();
+    const { data: currentHousehold } = useCurrentHousehold();
+
+    const [formData, setFormData] = useState<CreateListFormData>({
         name: "",
         description: "",
     });
 
-    const isLoading =
-        createHouseholdMutation.isPending ||
-        setCurrentHouseholdMutation.isPending;
-    const error =
-        createHouseholdMutation.error || setCurrentHouseholdMutation.error;
+    const isLoading = createListMutation.isPending;
+    const error = createListMutation.error;
 
     const handleInputChange =
-        (field: keyof CreateHouseholdFormData) =>
+        (field: keyof CreateListFormData) =>
         (event: React.ChangeEvent<HTMLInputElement>) => {
             setFormData((prev) => ({
                 ...prev,
@@ -55,32 +56,46 @@ function CreateHouseholdPage() {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        if (!formData.name.trim()) {
+        if (!formData.name.trim() || !currentHousehold?.householdId) {
             return;
         }
 
         try {
-            const household = await createHouseholdMutation.mutateAsync({
-                name: formData.name.trim(),
-                description: formData.description.trim() || undefined,
+            const response = await createListMutation.mutateAsync({
+                householdId: currentHousehold.householdId,
+                data: {
+                    name: formData.name.trim(),
+                    description: formData.description.trim() || undefined,
+                },
             });
 
-            // Set as current household
-            if (household.id) {
-                await setCurrentHouseholdMutation.mutateAsync(household.id);
-            }
-
-            // Navigate back to main page
-            navigate({ to: "/" });
+            navigate({ to: `/lists/${response.id}/view` });
         } catch (err) {
             // Error is handled by the mutation
-            console.error("Failed to create household:", err);
+            console.error("Failed to create list:", err);
         }
     };
 
     const handleBack = () => {
-        navigate({ to: "/" });
+        router.history.back();
     };
+
+    // Show error if no current household
+    if (!currentHousehold?.householdId) {
+        return (
+            <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
+                <Alert severity="error" sx={{ borderRadius: 2 }}>
+                    You need to select a household before creating a list.
+                    <Button
+                        onClick={handleBack}
+                        sx={{ mt: 1, display: "block" }}
+                    >
+                        Go back to dashboard
+                    </Button>
+                </Alert>
+            </Container>
+        );
+    }
 
     return (
         <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
@@ -104,9 +119,47 @@ function CreateHouseholdPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    Create New Household
+                    Create New List
                 </Typography>
             </Box>
+
+            {/* Info Card */}
+            <Card
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                }}
+            >
+                <CardContent sx={{ p: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Box
+                            sx={{
+                                p: 1.5,
+                                borderRadius: 2,
+                                bgcolor: "rgba(255,255,255,0.2)",
+                                display: "flex",
+                                alignItems: "center",
+                            }}
+                        >
+                            <ListAlt />
+                        </Box>
+                        <Box>
+                            <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 600, mb: 0.5 }}
+                            >
+                                Shopping Lists
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                Create organized lists for your household
+                                shopping needs
+                            </Typography>
+                        </Box>
+                    </Box>
+                </CardContent>
+            </Card>
 
             {/* Form */}
             <Card
@@ -130,16 +183,17 @@ function CreateHouseholdPage() {
                                 </Alert>
                             )}
 
-                            {/* Household Name */}
+                            {/* List Name */}
                             <Box>
                                 <Typography
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    Household Name *
+                                    List Name *
                                 </Typography>
                                 <TextField
                                     fullWidth
+                                    placeholder="e.g., Weekly Shopping, Party Supplies"
                                     value={formData.name}
                                     onChange={handleInputChange("name")}
                                     disabled={isLoading}
@@ -150,9 +204,34 @@ function CreateHouseholdPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? "Household name is required"
-                                            : "Choose a name that everyone in your household will recognize"
+                                            ? "List name is required"
+                                            : "Choose a descriptive name for your shopping list"
                                     }
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: 2,
+                                        },
+                                    }}
+                                />
+                            </Box>
+
+                            {/* Description */}
+                            <Box>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{ fontWeight: 600, mb: 1 }}
+                                >
+                                    Description (Optional)
+                                </Typography>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    placeholder="e.g., Items needed for weekend barbecue"
+                                    value={formData.description}
+                                    onChange={handleInputChange("description")}
+                                    disabled={isLoading}
+                                    helperText="Add any additional details about this list"
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
                                             borderRadius: 2,
@@ -185,7 +264,7 @@ function CreateHouseholdPage() {
                                     mt: 2,
                                 }}
                             >
-                                {isLoading ? "Creating..." : "Create Household"}
+                                {isLoading ? "Creating..." : "Create List"}
                             </Button>
                         </Stack>
                     </form>
@@ -197,4 +276,5 @@ function CreateHouseholdPage() {
         </Container>
     );
 }
-export default CreateHouseholdPage;
+
+export default CreateListPage;

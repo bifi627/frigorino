@@ -45,6 +45,10 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .WithOne(uh => uh.Household)
                 .HasForeignKey(uh => uh.HouseholdId);
 
+            builder.HasMany(h => h.Lists)
+                .WithOne(l => l.Household)
+                .HasForeignKey(l => l.HouseholdId);
+
             // Indexes
             builder.HasIndex(h => h.CreatedByUserId);
             builder.HasIndex(h => h.IsActive);

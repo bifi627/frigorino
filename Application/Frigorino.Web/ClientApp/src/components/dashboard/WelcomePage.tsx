@@ -1,7 +1,6 @@
 import {
     Add,
-    ExpandLess,
-    ExpandMore,
+    ChevronRight,
     KitchenOutlined,
     ManageAccounts,
     RestaurantOutlined,
@@ -28,12 +27,21 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { useHouseholdLists } from "../../hooks/useListQueries";
 import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [expandedSections, setExpandedSections] = useState<string[]>([]);
+
+    // Get current household and lists
+    const { data: currentHousehold } = useCurrentHousehold();
+    const { data: lists = [], isLoading: listsLoading } = useHouseholdLists(
+        currentHousehold?.householdId || 0,
+        !!currentHousehold?.householdId,
+    );
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
@@ -52,12 +60,22 @@ export const WelcomePage = () => {
     };
 
     const handleAddItem = (collectionId: string) => {
-        // TODO: Implement add item functionality
-        // This will be connected to the backend later
-        console.log(`Add new item to ${collectionId}`);
-
-        // For now, we can show an alert or navigate to an add form
-        // Example: navigate({ to: `/${collectionId}/add` });
+        // Navigate to the appropriate create page based on collection
+        switch (collectionId) {
+            case "einkaufslisten":
+                navigate({ to: "/lists/create" });
+                break;
+            case "inventar":
+                // TODO: Implement inventory add functionality
+                console.log("Add new item to inventory");
+                break;
+            case "rezepte":
+                // TODO: Implement recipe add functionality
+                console.log("Add new recipe");
+                break;
+            default:
+                console.log(`Add new item to ${collectionId}`);
+        }
     };
 
     const collections = [
@@ -66,19 +84,24 @@ export const WelcomePage = () => {
             label: "Einkaufslisten",
             icon: <KitchenOutlined />,
             color: "#2196F3",
-            items: [
-                {
-                    name: "Wocheneinkauf",
-                    count: "12 Artikel",
-                    status: "In Bearbeitung",
-                },
-                { name: "Getränke", count: "5 Artikel", status: "Erledigt" },
-                {
-                    name: "Party Einkauf",
-                    count: "8 Artikel",
-                    status: "Geplant",
-                },
-            ],
+            items: listsLoading
+                ? [{ name: "Loading...", count: "", status: "Loading" }]
+                : lists.length > 0
+                  ? lists.map((list) => ({
+                        name: list.name || "Unnamed List",
+                        count: "List",
+                        status: new Date(list.createdAt!).toLocaleDateString(
+                            "de-DE",
+                        ),
+                        id: list.id,
+                    }))
+                  : [
+                        {
+                            name: "No lists yet",
+                            count: "",
+                            status: "Create your first list!",
+                        },
+                    ],
         },
         {
             id: "inventar",
@@ -255,9 +278,9 @@ export const WelcomePage = () => {
                                             cursor: "pointer",
                                             flex: 1,
                                         }}
-                                        onClick={() =>
-                                            toggleSection(collection.id)
-                                        }
+                                        onClick={() => {
+                                            toggleSection(collection.id);
+                                        }}
                                     >
                                         <Box
                                             sx={{
@@ -322,9 +345,14 @@ export const WelcomePage = () => {
 
                                         <IconButton
                                             size="small"
-                                            onClick={() =>
-                                                toggleSection(collection.id)
-                                            }
+                                            onClick={() => {
+                                                if (
+                                                    collection.id ===
+                                                    "einkaufslisten"
+                                                ) {
+                                                    navigate({ to: "/lists" });
+                                                }
+                                            }}
                                             sx={{
                                                 color: collection.color,
                                                 width: 32,
@@ -334,11 +362,7 @@ export const WelcomePage = () => {
                                                 },
                                             }}
                                         >
-                                            {isExpanded ? (
-                                                <ExpandLess />
-                                            ) : (
-                                                <ExpandMore />
-                                            )}
+                                            <ChevronRight />
                                         </IconButton>
                                     </Box>
                                 </Box>
@@ -350,68 +374,93 @@ export const WelcomePage = () => {
                                     unmountOnExit
                                 >
                                     <List sx={{ mt: 2, pt: 0 }}>
-                                        {collection.items.map((item, index) => (
-                                            <ListItem
-                                                key={index}
-                                                sx={{
-                                                    py: 1,
-                                                    px: 0,
-                                                    borderRadius: 1,
-                                                    "&:hover": {
-                                                        bgcolor: "action.hover",
-                                                    },
-                                                }}
-                                            >
-                                                <ListItemIcon
-                                                    sx={{ minWidth: 36 }}
-                                                >
-                                                    <Box
-                                                        sx={{
-                                                            width: 8,
-                                                            height: 8,
-                                                            borderRadius: "50%",
+                                        {collection.items.map((item, index) => {
+                                            const isClickable =
+                                                collection.id ===
+                                                    "einkaufslisten" &&
+                                                (item as any).id;
+                                            return (
+                                                <ListItem
+                                                    key={index}
+                                                    sx={{
+                                                        py: 1,
+                                                        px: 0,
+                                                        borderRadius: 1,
+                                                        "&:hover": {
                                                             bgcolor:
-                                                                collection.color,
-                                                        }}
-                                                    />
-                                                </ListItemIcon>
-                                                <ListItemText
-                                                    primary={
+                                                                "action.hover",
+                                                        },
+                                                        cursor: isClickable
+                                                            ? "pointer"
+                                                            : "default",
+                                                    }}
+                                                    onClick={
+                                                        isClickable
+                                                            ? () =>
+                                                                  navigate({
+                                                                      to: "/lists/$listId/view",
+                                                                      params: {
+                                                                          listId: (
+                                                                              item as any
+                                                                          ).id.toString(),
+                                                                      },
+                                                                  })
+                                                            : undefined
+                                                    }
+                                                >
+                                                    <ListItemIcon
+                                                        sx={{ minWidth: 36 }}
+                                                    >
                                                         <Box
                                                             sx={{
-                                                                display: "flex",
-                                                                justifyContent:
-                                                                    "space-between",
-                                                                alignItems:
-                                                                    "center",
+                                                                width: 8,
+                                                                height: 8,
+                                                                borderRadius:
+                                                                    "50%",
+                                                                bgcolor:
+                                                                    collection.color,
                                                             }}
-                                                        >
-                                                            <Typography
-                                                                variant="body2"
+                                                        />
+                                                    </ListItemIcon>
+                                                    <ListItemText
+                                                        primary={
+                                                            <Box
                                                                 sx={{
-                                                                    fontWeight: 500,
+                                                                    display:
+                                                                        "flex",
+                                                                    justifyContent:
+                                                                        "space-between",
+                                                                    alignItems:
+                                                                        "center",
                                                                 }}
                                                             >
-                                                                {item.name}
-                                                            </Typography>
-                                                            <Chip
-                                                                label={
-                                                                    item.status
-                                                                }
-                                                                size="small"
-                                                                variant="outlined"
-                                                                sx={{
-                                                                    fontSize:
-                                                                        "0.7rem",
-                                                                    height: 20,
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                    }
-                                                    secondary={item.count}
-                                                />
-                                            </ListItem>
-                                        ))}
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    sx={{
+                                                                        fontWeight: 500,
+                                                                    }}
+                                                                >
+                                                                    {item.name}
+                                                                </Typography>
+                                                                <Chip
+                                                                    label={
+                                                                        item.status
+                                                                    }
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    sx={{
+                                                                        fontSize:
+                                                                            "0.7rem",
+                                                                        height: 20,
+                                                                    }}
+                                                                />
+                                                            </Box>
+                                                        }
+                                                        secondary={item.count}
+                                                    />
+                                                </ListItem>
+                                            );
+                                        })}
                                     </List>
                                 </Collapse>
                             </CardContent>

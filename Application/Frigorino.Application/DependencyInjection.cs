@@ -9,6 +9,7 @@ namespace Frigorino.Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddScoped<IHouseholdService, HouseholdService>();
+            services.AddScoped<IListService, ListService>();
             
             return services;
         }
