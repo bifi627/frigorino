@@ -11,9 +11,12 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ClientApi } from "../../common/apiClient";
+import {
+    useCurrentHousehold,
+    useSetCurrentHousehold,
+    useUserHouseholds,
+} from "../../hooks/useHouseholdQueries";
 
 interface HouseholdSwitcherProps {
     onCreateHousehold: () => void;
@@ -45,30 +48,11 @@ export const HouseholdSwitcher = ({
 }: HouseholdSwitcherProps) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const queryClient = useQueryClient();
 
-    const { data: households, isLoading } = useQuery({
-        queryKey: ["user-households"],
-        queryFn: () => ClientApi.household.getApiHousehold(),
-    });
-
-    const { data: currentHousehold } = useQuery({
-        queryKey: ["current-household"],
-        queryFn: () => ClientApi.currentHousehold.getApiCurrentHousehold(),
-    });
-
-    const setCurrentHouseholdMutation = useMutation({
-        mutationFn: async (householdId: number) => {
-            return ClientApi.currentHousehold.postApiCurrentHousehold(
-                householdId,
-            );
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["current-household"] });
-            queryClient.invalidateQueries({ queryKey: ["user-households"] });
-            handleClose();
-        },
-    });
+    const { data: households, isLoading } = useUserHouseholds();
+    const { data: currentHousehold } = useCurrentHousehold();
+    const { mutate: switchHousehold, isPending: isSwitching } =
+        useSetCurrentHousehold();
 
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -80,7 +64,11 @@ export const HouseholdSwitcher = ({
 
     const handleHouseholdSelect = (householdId: number) => {
         if (householdId !== currentHousehold?.householdId) {
-            setCurrentHouseholdMutation.mutate(householdId);
+            switchHousehold(householdId, {
+                onSuccess: () => {
+                    handleClose();
+                },
+            });
         } else {
             handleClose();
         }
@@ -112,7 +100,7 @@ export const HouseholdSwitcher = ({
                 variant="outlined"
                 size="small"
                 endIcon={<KeyboardArrowDown sx={{ fontSize: 16 }} />}
-                disabled={setCurrentHouseholdMutation.isPending}
+                disabled={isSwitching}
                 sx={{
                     borderRadius: 2,
                     textTransform: "none",
@@ -201,7 +189,7 @@ export const HouseholdSwitcher = ({
                             selected={
                                 household.id === currentHousehold?.householdId
                             }
-                            disabled={setCurrentHouseholdMutation.isPending}
+                            disabled={isSwitching}
                             sx={{
                                 py: { xs: 1.5, sm: 2 },
                                 px: 2,

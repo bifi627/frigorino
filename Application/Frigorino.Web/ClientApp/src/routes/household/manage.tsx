@@ -26,11 +26,13 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ClientApi } from "../../common/apiClient";
 import { HouseholdMembers } from "../../components/household";
+import {
+    useCurrentHouseholdWithDetails,
+    useDeleteHousehold,
+} from "../../hooks/useHouseholdQueries";
 
 export const Route = createFileRoute("/household/manage")({
     component: HouseholdManagePage,
@@ -38,44 +40,21 @@ export const Route = createFileRoute("/household/manage")({
 
 function HouseholdManagePage() {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [confirmationText, setConfirmationText] = useState("");
 
-    // Get current household
+    // Use simplified hooks
     const {
-        data: currentHousehold,
+        currentHousehold,
+        currentHouseholdDetails,
         isLoading,
         error,
-    } = useQuery({
-        queryKey: ["current-household"],
-        queryFn: () => ClientApi.currentHousehold.getApiCurrentHousehold(),
-    });
-
-    // Get household details to show name
-    const { data: households, isLoading: householdsLoading } = useQuery({
-        queryKey: ["user-households"],
-        queryFn: () => ClientApi.household.getApiHousehold(),
-        enabled: !!currentHousehold?.householdId,
-    });
+        hasActiveHousehold,
+    } = useCurrentHouseholdWithDetails();
 
     // Delete household mutation
-    const deleteHouseholdMutation = useMutation({
-        mutationFn: async (householdId: number) => {
-            return ClientApi.household.deleteApiHousehold(householdId);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["current-household"] });
-            queryClient.invalidateQueries({ queryKey: ["user-households"] });
-            setDeleteDialogOpen(false);
-            navigate({ to: "/" });
-        },
-    });
-
-    const currentHouseholdDetails = households?.find(
-        (h) => h.id === currentHousehold?.householdId,
-    );
+    const deleteHouseholdMutation = useDeleteHousehold();
 
     const handleBack = () => {
         navigate({ to: "/" });
@@ -109,7 +88,7 @@ function HouseholdManagePage() {
         setConfirmationText("");
     };
 
-    if (isLoading || householdsLoading) {
+    if (isLoading) {
         return (
             <Container
                 maxWidth="md"
@@ -162,10 +141,7 @@ function HouseholdManagePage() {
         );
     }
 
-    if (
-        !currentHousehold?.hasActiveHousehold ||
-        !currentHousehold.householdId
-    ) {
+    if (!hasActiveHousehold || !currentHousehold?.householdId) {
         return (
             <Container
                 maxWidth="md"

@@ -38,7 +38,7 @@ public class HouseholdController : ControllerBase
     {
         var userId = _currentUserService.UserId;
         var household = await _householdService.GetHouseholdAsync(id, userId);
-        
+
         if (household == null)
         {
             return NotFound("Household not found or you don't have access to it.");
@@ -75,7 +75,7 @@ public class HouseholdController : ControllerBase
         {
             var userId = _currentUserService.UserId;
             var household = await _householdService.UpdateHouseholdAsync(id, request, userId);
-            
+
             if (household == null)
             {
                 return NotFound("Household not found or you don't have access to it.");
@@ -103,7 +103,7 @@ public class HouseholdController : ControllerBase
         {
             var userId = _currentUserService.UserId;
             var result = await _householdService.DeleteHouseholdAsync(id, userId);
-            
+
             if (!result)
             {
                 return NotFound("Household not found or you don't have access to it.");

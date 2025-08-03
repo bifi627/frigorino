@@ -21,11 +21,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     const [password, setPassword] = useState("");
     const { login, loginWithGoogle, loading, error } = useAuth();
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         await login(email, password);
     };
 
-    const handleGoogleLogin = async () => {
+    const handleGoogleLogin = async (
+        e: React.MouseEvent<HTMLButtonElement>,
+    ) => {
+        e.preventDefault();
         await loginWithGoogle();
     };
 

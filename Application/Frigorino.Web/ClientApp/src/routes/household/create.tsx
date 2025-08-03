@@ -17,7 +17,7 @@ import { useState } from "react";
 import {
     useCreateHousehold,
     useSetCurrentHousehold,
-} from "../../hooks/useHousehold";
+} from "../../hooks/useHouseholdQueries";
 
 export const Route = createFileRoute("/household/create")({
     component: CreateHouseholdPage,

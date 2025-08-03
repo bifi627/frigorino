@@ -24,9 +24,12 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { ClientApi } from "../../common/apiClient";
+import {
+    useHouseholdMembers,
+    useRemoveMember,
+    useUpdateMemberRole,
+} from "../../hooks/useHouseholdQueries";
 import { type HouseholdMemberDto, type HouseholdRole } from "../../lib/api";
 import { AddMemberDialog } from "./AddMemberDialog";
 
@@ -68,59 +71,15 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
     const [selectedMember, setSelectedMember] =
         useState<HouseholdMemberDto | null>(null);
 
-    const queryClient = useQueryClient();
-
-    // Fetch household members
     const {
         data: members,
         isLoading,
         error,
-    } = useQuery({
-        queryKey: ["household-members", householdId],
-        queryFn: () => ClientApi.members.getApiHouseholdMembers(householdId),
-    });
+    } = useHouseholdMembers(householdId);
 
-    // Remove member mutation
-    const removeMemberMutation = useMutation({
-        mutationFn: async (userId: string) => {
-            return ClientApi.members.deleteApiHouseholdMembers(
-                householdId,
-                userId,
-            );
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["household-members", householdId],
-            });
-            setConfirmRemoveOpen(false);
-            setMemberToRemove(null);
-        },
-    });
-
-    // Update member role mutation
-    const updateRoleMutation = useMutation({
-        mutationFn: async ({
-            userId,
-            role,
-        }: {
-            userId: string;
-            role: HouseholdRole;
-        }) => {
-            return ClientApi.members.putApiHouseholdMembersRole(
-                householdId,
-                userId,
-                {
-                    role,
-                },
-            );
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["household-members", householdId],
-            });
-            handleMenuClose();
-        },
-    });
+    const { mutate: removeMember, isPending: isRemoving } =
+        useRemoveMember(householdId);
+    const { mutate: updateRole } = useUpdateMemberRole(householdId);
 
     const handleMenuClick = (
         event: React.MouseEvent<HTMLElement>,
@@ -143,10 +102,17 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
 
     const handleRoleChange = (role: HouseholdRole) => {
         if (selectedMember?.user?.externalId) {
-            updateRoleMutation.mutate({
-                userId: selectedMember.user.externalId,
-                role,
-            });
+            updateRole(
+                {
+                    userId: selectedMember.user.externalId,
+                    role,
+                },
+                {
+                    onSuccess: () => {
+                        handleMenuClose();
+                    },
+                },
+            );
         }
     };
 
@@ -408,16 +374,17 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                     <Button
                         onClick={() =>
                             memberToRemove?.user?.externalId &&
-                            removeMemberMutation.mutate(
-                                memberToRemove.user.externalId,
-                            )
+                            removeMember(memberToRemove.user.externalId, {
+                                onSuccess: () => {
+                                    setConfirmRemoveOpen(false);
+                                    setMemberToRemove(null);
+                                },
+                            })
                         }
                         color="error"
-                        disabled={removeMemberMutation.isPending}
+                        disabled={isRemoving}
                     >
-                        {removeMemberMutation.isPending
-                            ? "Removing..."
-                            : "Remove"}
+                        {isRemoving ? "Removing..." : "Remove"}
                     </Button>
                 </DialogActions>
             </Dialog>

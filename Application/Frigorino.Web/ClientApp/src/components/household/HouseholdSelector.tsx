@@ -17,8 +17,8 @@ import {
     useCurrentHousehold,
     useSetCurrentHousehold,
     useUserHouseholds,
-    type HouseholdRole,
-} from "../../hooks/useHousehold";
+} from "../../hooks/useHouseholdQueries";
+import type { HouseholdRole } from "../../lib/api";
 
 interface HouseholdSelectorProps {
     onCreateHousehold?: () => void;
