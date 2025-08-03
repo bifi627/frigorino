@@ -1,9 +1,11 @@
 import {
+    Add,
+    ExpandLess,
+    ExpandMore,
     KitchenOutlined,
     ManageAccounts,
     RestaurantOutlined,
     TimerOutlined,
-    TrendingUpOutlined,
 } from "@mui/icons-material";
 import {
     Avatar,
@@ -12,18 +14,26 @@ import {
     Card,
     CardContent,
     Chip,
+    Collapse,
     Container,
     Divider,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
     Stack,
     Typography,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
@@ -33,30 +43,80 @@ export const WelcomePage = () => {
         navigate({ to: "/household/manage" });
     };
 
-    const stats = [
+    const toggleSection = (sectionId: string) => {
+        setExpandedSections((prev) =>
+            prev.includes(sectionId)
+                ? prev.filter((id) => id !== sectionId)
+                : [...prev, sectionId],
+        );
+    };
+
+    const handleAddItem = (collectionId: string) => {
+        // TODO: Implement add item functionality
+        // This will be connected to the backend later
+        console.log(`Add new item to ${collectionId}`);
+
+        // For now, we can show an alert or navigate to an add form
+        // Example: navigate({ to: `/${collectionId}/add` });
+    };
+
+    const collections = [
         {
-            label: "Items in Fridge",
-            value: "0",
+            id: "einkaufslisten",
+            label: "Einkaufslisten",
             icon: <KitchenOutlined />,
             color: "#2196F3",
+            items: [
+                {
+                    name: "Wocheneinkauf",
+                    count: "12 Artikel",
+                    status: "In Bearbeitung",
+                },
+                { name: "Getränke", count: "5 Artikel", status: "Erledigt" },
+                {
+                    name: "Party Einkauf",
+                    count: "8 Artikel",
+                    status: "Geplant",
+                },
+            ],
         },
         {
-            label: "Expiring Soon",
-            value: "0",
+            id: "inventar",
+            label: "Inventar",
             icon: <TimerOutlined />,
             color: "#FF9800",
+            items: [
+                { name: "Kühlschrank", count: "23 Artikel", status: "Aktuell" },
+                {
+                    name: "Gefrierschrank",
+                    count: "15 Artikel",
+                    status: "Aktuell",
+                },
+                {
+                    name: "Vorratsschrank",
+                    count: "34 Artikel",
+                    status: "Zu prüfen",
+                },
+            ],
         },
         {
-            label: "Recipes Available",
-            value: "0",
+            id: "rezepte",
+            label: "Rezepte",
             icon: <RestaurantOutlined />,
             color: "#4CAF50",
-        },
-        {
-            label: "Food Saved",
-            value: "0%",
-            icon: <TrendingUpOutlined />,
-            color: "#9C27B0",
+            items: [
+                {
+                    name: "Pasta Bolognese",
+                    count: "4 Portionen",
+                    status: "Favorit",
+                },
+                { name: "Gemüsecurry", count: "6 Portionen", status: "Neu" },
+                {
+                    name: "Apfelkuchen",
+                    count: "8 Portionen",
+                    status: "Klassiker",
+                },
+            ],
         },
     ];
 
@@ -160,108 +220,205 @@ export const WelcomePage = () => {
                     fontSize: { xs: "1.1rem", sm: "1.25rem" },
                 }}
             >
-                Your Kitchen Overview
+                Overview
             </Typography>
 
             <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>
-                {stats.map((stat, index) => (
-                    <Card
-                        key={index}
-                        sx={{
-                            borderRadius: 2,
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            "&:hover": {
-                                transform: "translateY(-2px)",
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                            },
-                            transition: "all 0.3s ease",
-                        }}
-                    >
-                        <CardContent sx={{ py: { xs: 2, sm: 2.5 } }}>
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                }}
-                            >
+                {collections.map((collection) => {
+                    const isExpanded = expandedSections.includes(collection.id);
+                    return (
+                        <Card
+                            key={collection.id}
+                            sx={{
+                                borderRadius: 2,
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                "&:hover": {
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                },
+                                transition: "all 0.3s ease",
+                            }}
+                        >
+                            <CardContent sx={{ py: { xs: 2, sm: 2.5 } }}>
+                                {/* Header */}
                                 <Box
                                     sx={{
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: 2,
+                                        justifyContent: "space-between",
                                     }}
                                 >
                                     <Box
                                         sx={{
-                                            p: 1.5,
-                                            borderRadius: 2,
-                                            bgcolor: `${stat.color}15`,
-                                            color: stat.color,
                                             display: "flex",
                                             alignItems: "center",
+                                            gap: 2,
+                                            cursor: "pointer",
+                                            flex: 1,
                                         }}
+                                        onClick={() =>
+                                            toggleSection(collection.id)
+                                        }
                                     >
-                                        {stat.icon}
+                                        <Box
+                                            sx={{
+                                                p: 1.5,
+                                                borderRadius: 2,
+                                                bgcolor: `${collection.color}15`,
+                                                color: collection.color,
+                                                display: "flex",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            {collection.icon}
+                                        </Box>
+                                        <Box>
+                                            <Typography
+                                                variant="body1"
+                                                sx={{
+                                                    fontWeight: 600,
+                                                    fontSize: "1rem",
+                                                }}
+                                            >
+                                                {collection.label}
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    color: "text.secondary",
+                                                    fontSize: "0.85rem",
+                                                }}
+                                            >
+                                                {collection.items.length}{" "}
+                                                Einträge
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                    <Typography
-                                        variant="body1"
+
+                                    <Box
                                         sx={{
-                                            fontWeight: 500,
-                                            fontSize: "0.95rem",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 1,
                                         }}
                                     >
-                                        {stat.label}
-                                    </Typography>
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddItem(collection.id);
+                                            }}
+                                            sx={{
+                                                bgcolor: `${collection.color}15`,
+                                                color: collection.color,
+                                                width: 32,
+                                                height: 32,
+                                                "&:hover": {
+                                                    bgcolor: `${collection.color}25`,
+                                                },
+                                            }}
+                                        >
+                                            <Add fontSize="small" />
+                                        </IconButton>
+
+                                        <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                                toggleSection(collection.id)
+                                            }
+                                            sx={{
+                                                color: collection.color,
+                                                width: 32,
+                                                height: 32,
+                                                "&:hover": {
+                                                    bgcolor: `${collection.color}15`,
+                                                },
+                                            }}
+                                        >
+                                            {isExpanded ? (
+                                                <ExpandLess />
+                                            ) : (
+                                                <ExpandMore />
+                                            )}
+                                        </IconButton>
+                                    </Box>
                                 </Box>
 
-                                <Typography
-                                    variant="h6"
-                                    sx={{
-                                        fontWeight: 700,
-                                        color: stat.color,
-                                        fontSize: "1.3rem",
-                                    }}
+                                {/* Collapsible Content */}
+                                <Collapse
+                                    in={isExpanded}
+                                    timeout="auto"
+                                    unmountOnExit
                                 >
-                                    {stat.value}
-                                </Typography>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                ))}
+                                    <List sx={{ mt: 2, pt: 0 }}>
+                                        {collection.items.map((item, index) => (
+                                            <ListItem
+                                                key={index}
+                                                sx={{
+                                                    py: 1,
+                                                    px: 0,
+                                                    borderRadius: 1,
+                                                    "&:hover": {
+                                                        bgcolor: "action.hover",
+                                                    },
+                                                }}
+                                            >
+                                                <ListItemIcon
+                                                    sx={{ minWidth: 36 }}
+                                                >
+                                                    <Box
+                                                        sx={{
+                                                            width: 8,
+                                                            height: 8,
+                                                            borderRadius: "50%",
+                                                            bgcolor:
+                                                                collection.color,
+                                                        }}
+                                                    />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Box
+                                                            sx={{
+                                                                display: "flex",
+                                                                justifyContent:
+                                                                    "space-between",
+                                                                alignItems:
+                                                                    "center",
+                                                            }}
+                                                        >
+                                                            <Typography
+                                                                variant="body2"
+                                                                sx={{
+                                                                    fontWeight: 500,
+                                                                }}
+                                                            >
+                                                                {item.name}
+                                                            </Typography>
+                                                            <Chip
+                                                                label={
+                                                                    item.status
+                                                                }
+                                                                size="small"
+                                                                variant="outlined"
+                                                                sx={{
+                                                                    fontSize:
+                                                                        "0.7rem",
+                                                                    height: 20,
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    }
+                                                    secondary={item.count}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </Collapse>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </Stack>
-
-            {/* Coming Soon Section */}
-            <Card
-                sx={{
-                    borderRadius: 2,
-                    background:
-                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
-                    textAlign: "center",
-                }}
-            >
-                <CardContent sx={{ py: 4 }}>
-                    <Typography
-                        variant="h6"
-                        gutterBottom
-                        sx={{ fontWeight: 600 }}
-                    >
-                        More Features Coming Soon!
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            opacity: 0.9,
-                            fontSize: "0.9rem",
-                            lineHeight: 1.5,
-                        }}
-                    >
-                        We're working hard to bring you inventory management,
-                        expiration tracking, and smart recipe suggestions.
-                    </Typography>
-                </CardContent>
-            </Card>
         </Container>
     );
 };

@@ -61,9 +61,9 @@ export default defineConfig({
                 enabled: true,
             },
             manifest: {
-                name: "Frigorino Client",
+                name: "Frigorino",
                 short_name: "Frigorino",
-                description: "Frigorino Client description",
+                description: "Frigorino",
                 theme_color: "#ffffff",
                 icons: [
                     {
