@@ -22,7 +22,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
@@ -32,7 +32,31 @@ import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [expandedSections, setExpandedSections] = useState<string[]>([]);
+    
+    // Local storage key for expanded sections
+    const EXPANDED_SECTIONS_KEY = "frigorino-welcome-expanded-sections";
+    
+    // Load expanded sections from local storage or default to empty array
+    const loadExpandedSections = (): string[] => {
+        try {
+            const saved = localStorage.getItem(EXPANDED_SECTIONS_KEY);
+            return saved ? JSON.parse(saved) : [];
+        } catch (error) {
+            console.warn("Failed to load expanded sections from localStorage:", error);
+            return [];
+        }
+    };
+    
+    const [expandedSections, setExpandedSections] = useState<string[]>(loadExpandedSections);
+
+    // Save expanded sections to local storage whenever it changes
+    useEffect(() => {
+        try {
+            localStorage.setItem(EXPANDED_SECTIONS_KEY, JSON.stringify(expandedSections));
+        } catch (error) {
+            console.warn("Failed to save expanded sections to localStorage:", error);
+        }
+    }, [expandedSections]);
 
     // Get current household and lists
     const { data: currentHousehold } = useCurrentHousehold();
