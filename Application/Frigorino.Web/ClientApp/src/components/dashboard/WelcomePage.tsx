@@ -1,5 +1,6 @@
 import {
     KitchenOutlined,
+    ManageAccounts,
     RestaurantOutlined,
     TimerOutlined,
     TrendingUpOutlined,
@@ -7,6 +8,7 @@ import {
 import {
     Avatar,
     Box,
+    Button,
     Card,
     CardContent,
     Chip,
@@ -17,7 +19,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../../hooks/useAuth";
-import { HouseholdSelector } from "../household/HouseholdSelector";
+import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
@@ -25,6 +27,10 @@ export const WelcomePage = () => {
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
+    };
+
+    const handleManageHousehold = () => {
+        navigate({ to: "/household/manage" });
     };
 
     const stats = [
@@ -55,48 +61,93 @@ export const WelcomePage = () => {
     ];
 
     return (
-        <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
-            {/* Welcome Header */}
-            <Box sx={{ textAlign: "center", mb: 4 }}>
-                <Avatar
+        <Container
+            maxWidth="sm"
+            sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 2 } }}
+        >
+            {/* Header with User Info and Household Switcher */}
+            <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+                {/* Top Row - User Email and Household Switcher */}
+                <Box
                     sx={{
-                        width: 80,
-                        height: 80,
-                        mx: "auto",
-                        mb: 2,
-                        bgcolor: "primary.main",
-                        fontSize: "2rem",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: { xs: 2, sm: 3 },
+                        gap: 1,
                     }}
                 >
-                    {user?.email?.charAt(0).toUpperCase() || "U"}
-                </Avatar>
+                    <Chip
+                        label={user?.email || "User"}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                            fontSize: { xs: "0.7rem", sm: "0.8rem" },
+                            maxWidth: { xs: "50%", sm: "60%" },
+                            "& .MuiChip-label": {
+                                px: { xs: 0.75, sm: 1 },
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                            },
+                        }}
+                    />
+                    <HouseholdSwitcher
+                        onCreateHousehold={handleCreateHousehold}
+                    />
+                </Box>
 
-                <Typography
-                    variant="h4"
-                    component="h1"
-                    gutterBottom
-                    sx={{
-                        fontWeight: 600,
-                        fontSize: { xs: "1.8rem", sm: "2.2rem" },
-                    }}
-                >
-                    Welcome back!
-                </Typography>
+                {/* Welcome Section */}
+                <Box sx={{ textAlign: "center" }}>
+                    <Avatar
+                        sx={{
+                            width: { xs: 64, sm: 80 },
+                            height: { xs: 64, sm: 80 },
+                            mx: "auto",
+                            mb: { xs: 1.5, sm: 2 },
+                            bgcolor: "primary.main",
+                            fontSize: { xs: "1.5rem", sm: "2rem" },
+                        }}
+                    >
+                        {user?.email?.charAt(0).toUpperCase() || "U"}
+                    </Avatar>
 
-                <Chip
-                    label={user?.email || "User"}
-                    variant="outlined"
-                    sx={{
-                        fontSize: "0.9rem",
-                        px: 1,
-                    }}
-                />
+                    <Typography
+                        variant="h4"
+                        component="h1"
+                        gutterBottom
+                        sx={{
+                            fontWeight: 600,
+                            fontSize: {
+                                xs: "1.5rem",
+                                sm: "1.8rem",
+                                md: "2.2rem",
+                            },
+                            mb: { xs: 1, sm: 2 },
+                        }}
+                    >
+                        Welcome back!
+                    </Typography>
+
+                    {/* Action Button for Household Management */}
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<ManageAccounts />}
+                        onClick={handleManageHousehold}
+                        sx={{
+                            textTransform: "none",
+                            fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                            px: { xs: 1.5, sm: 2 },
+                            py: { xs: 0.5, sm: 0.75 },
+                            borderRadius: 2,
+                        }}
+                    >
+                        Manage Household
+                    </Button>
+                </Box>
             </Box>
 
-            <Divider sx={{ mb: 4 }} />
-
-            {/* Household Selector */}
-            <HouseholdSelector onCreateHousehold={handleCreateHousehold} />
+            <Divider sx={{ mb: { xs: 3, sm: 4 } }} />
 
             {/* Quick Stats */}
             <Typography
@@ -104,14 +155,15 @@ export const WelcomePage = () => {
                 gutterBottom
                 sx={{
                     fontWeight: 600,
-                    mb: 3,
+                    mb: { xs: 2, sm: 3 },
                     color: "text.primary",
+                    fontSize: { xs: "1.1rem", sm: "1.25rem" },
                 }}
             >
                 Your Kitchen Overview
             </Typography>
 
-            <Stack spacing={2} sx={{ mb: 4 }}>
+            <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>
                 {stats.map((stat, index) => (
                     <Card
                         key={index}
@@ -125,7 +177,7 @@ export const WelcomePage = () => {
                             transition: "all 0.3s ease",
                         }}
                     >
-                        <CardContent sx={{ py: 2.5 }}>
+                        <CardContent sx={{ py: { xs: 2, sm: 2.5 } }}>
                             <Box
                                 sx={{
                                     display: "flex",

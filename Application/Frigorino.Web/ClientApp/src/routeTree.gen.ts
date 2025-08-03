@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
@@ -22,6 +23,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseholdManageRoute = HouseholdManageRouteImport.update({
+  id: '/household/manage',
+  path: '/household/manage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseholdCreateRoute = HouseholdCreateRouteImport.update({
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
+  '/household/manage': typeof HouseholdManageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
+  '/household/manage': typeof HouseholdManageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,25 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
+  '/household/manage': typeof HouseholdManageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/auth/login' | '/household/create'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/auth/login'
+    | '/household/create'
+    | '/household/manage'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/auth/login' | '/household/create'
-  id: '__root__' | '/' | '/about' | '/auth/login' | '/household/create'
+  to: '/' | '/about' | '/auth/login' | '/household/create' | '/household/manage'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/auth/login'
+    | '/household/create'
+    | '/household/manage'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +87,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthLoginRoute: typeof AuthLoginRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
+  HouseholdManageRoute: typeof HouseholdManageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/manage': {
+      id: '/household/manage'
+      path: '/household/manage'
+      fullPath: '/household/manage'
+      preLoaderRoute: typeof HouseholdManageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/household/create': {
@@ -107,6 +135,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AuthLoginRoute: AuthLoginRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
+  HouseholdManageRoute: HouseholdManageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
