@@ -53,7 +53,7 @@ namespace Frigorino.Application.Services
             return item.ToDto();
         }
 
-        public async Task<ListItemDto> CreateItemAsync(int listId, CreateListItemRequest request, string userId)
+        public async Task<ListItemDto> CreateItemAsync(int listId, CreateListItemRequest request, string userId, bool @checked = false)
         {
             if (string.IsNullOrWhiteSpace(request.Text))
             {
@@ -64,9 +64,16 @@ namespace Frigorino.Application.Services
             await ValidateListAccessAsync(listId, userId);
 
             // Calculate sort order for new item (always goes to top of unchecked section)
-            var sortOrder = SortOrderCalculator.GetNewItemSortOrder();
+            // In realistic usage, items are added one at a time, so we use the standard approach
+            var existingUncheckedItems = await _dbContext.ListItems
+                .Where(li => li.ListId == listId && li.IsActive)
+                .OrderBy(li => li.SortOrder)
+                .ToListAsync();
+
+            var sortOrder = UpdateSortOrder(existingUncheckedItems, @checked, null, null);
 
             var item = request.ToEntity(listId, sortOrder);
+            item.Status = @checked; // Set initial status based on parameter
             _dbContext.ListItems.Add(item);
             await _dbContext.SaveChangesAsync();
 
@@ -75,11 +82,6 @@ namespace Frigorino.Application.Services
 
         public async Task<ListItemDto?> UpdateItemAsync(int itemId, UpdateListItemRequest request, string userId)
         {
-            if (string.IsNullOrWhiteSpace(request.Text))
-            {
-                throw new ArgumentException("Item text is required.");
-            }
-
             var item = await _dbContext.ListItems
                 .Include(li => li.List)
                 .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
@@ -94,18 +96,30 @@ namespace Frigorino.Application.Services
 
             // If status is changing, update sort order accordingly
             var statusChanged = item.Status != request.Status;
-            
-            item.UpdateFromRequest(request);
 
-            if (statusChanged)
+            if (statusChanged && request.Status is not null)
             {
-                item.SortOrder = request.Status 
-                    ? SortOrderCalculator.GetCheckedStatusSortOrder()
-                    : SortOrderCalculator.GetUncheckedStatusSortOrder();
+                var allEntries = item.List.ListItems;
+
+                var sortOrder = UpdateSortOrder(allEntries, request.Status.Value, null, null);
+                item.SortOrder = sortOrder;
             }
+
+            item.UpdateFromRequest(request);
 
             await _dbContext.SaveChangesAsync();
             return item.ToDto();
+        }
+
+        public static int UpdateSortOrder(IEnumerable<Domain.Entities.ListItem> allEntries, bool status, int? after, int? before)
+        {
+            var existingItems = allEntries.Where(x => x.Status == status).OrderBy(x => x.SortOrder).ToList();
+            var first = existingItems.FirstOrDefault()?.SortOrder ?? null;
+            var last = existingItems.LastOrDefault()?.SortOrder ?? null;
+
+            var result = SortOrderCalculator.CalculateSortOrder(status, after, before, first, last, out bool needRecalculation);
+
+            return result ?? -1;
         }
 
         public async Task<bool> DeleteItemAsync(int itemId, string userId)
@@ -132,7 +146,7 @@ namespace Frigorino.Application.Services
         public async Task<ListItemDto?> ReorderItemAsync(int itemId, ReorderItemRequest request, string userId)
         {
             var item = await _dbContext.ListItems
-                .Include(li => li.List)
+                .Include(li => li.List).ThenInclude(item => item.ListItems)
                 .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
 
             if (item == null)
@@ -143,41 +157,17 @@ namespace Frigorino.Application.Services
             // Validate user access
             await ValidateListAccessAsync(item.ListId, userId);
 
-            // Get all items in the same list and status group for sort order calculation
-            var sameStatusItems = await _dbContext.ListItems
-                .Where(li => li.ListId == item.ListId && li.Status == item.Status && li.IsActive && li.Id != itemId)
-                .OrderBy(li => li.SortOrder)
-                .Select(li => new { li.Id, li.SortOrder })
-                .ToListAsync();
-
-            int newSortOrder;
-
-            if (request.AfterItemId == 0)
+            var items = item.List.ListItems.Where(li => li.Status == item.Status).OrderBy(l => l.SortOrder).ToArray();
+            var afterItem = items.FirstOrDefault(item => item.Id == request.AfterId);
+            ListItem? beforeItem = null;
+            if (afterItem is not null)
             {
-                // Move to top of section
-                newSortOrder = item.Status 
-                    ? SortOrderCalculator.GetCheckedStatusSortOrder()
-                    : SortOrderCalculator.GetNewItemSortOrder();
-            }
-            else
-            {
-                // Find the after and before items
-                var afterItem = sameStatusItems.FirstOrDefault(i => i.Id == request.AfterItemId);
-                if (afterItem == null)
-                {
-                    throw new ArgumentException("Invalid AfterItemId");
-                }
-
-                var afterIndex = sameStatusItems.IndexOf(afterItem);
-                var beforeItem = afterIndex + 1 < sameStatusItems.Count ? sameStatusItems[afterIndex + 1] : null;
-
-                newSortOrder = SortOrderCalculator.CalculateReorderSortOrder(
-                    afterItem.SortOrder, 
-                    beforeItem?.SortOrder, 
-                    item.Status);
+                beforeItem = items.FirstOrDefault(item => item.SortOrder > afterItem.SortOrder);
             }
 
-            item.SortOrder = newSortOrder;
+            var sortOrder = UpdateSortOrder(item.List.ListItems, item.Status, afterItem?.SortOrder ?? 0, beforeItem?.SortOrder ?? 0);
+            item.SortOrder = sortOrder;
+
             await _dbContext.SaveChangesAsync();
 
             // Check if compaction is needed
@@ -198,7 +188,7 @@ namespace Frigorino.Application.Services
         public async Task<ListItemDto?> ToggleItemStatusAsync(int itemId, string userId)
         {
             var item = await _dbContext.ListItems
-                .Include(li => li.List)
+                .Include(li => li.List).ThenInclude(l => l.ListItems)
                 .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
 
             if (item == null)
@@ -209,17 +199,16 @@ namespace Frigorino.Application.Services
             // Validate user access
             await ValidateListAccessAsync(item.ListId, userId);
 
-            // Toggle status and update sort order
-            item.Status = !item.Status;
-            item.SortOrder = item.Status 
-                ? SortOrderCalculator.GetCheckedStatusSortOrder()
-                : SortOrderCalculator.GetUncheckedStatusSortOrder();
+            var sortOrder = UpdateSortOrder(item.List.ListItems, !item.Status, null, null);
+            item.SortOrder = sortOrder;
+
+            item.Status = !item.Status; // Toggle status
 
             await _dbContext.SaveChangesAsync();
             return item.ToDto();
         }
 
-        public async Task<bool> CompactListSortOrdersAsync(int listId, string userId)
+        public async Task<bool> RecalculateFullSortOrder(int listId, string userId)
         {
             // Validate user access
             await ValidateListAccessAsync(listId, userId);
@@ -239,7 +228,7 @@ namespace Frigorino.Application.Services
             var checkedItems = items.Where(i => i.Status).ToList();
 
             var (uncheckedOrders, checkedOrders) = SortOrderCalculator.GenerateCompactedSortOrders(
-                uncheckedItems.Count, 
+                uncheckedItems.Count,
                 checkedItems.Count);
 
             // Update sort orders

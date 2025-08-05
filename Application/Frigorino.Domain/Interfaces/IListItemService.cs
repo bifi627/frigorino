@@ -7,7 +7,7 @@ namespace Frigorino.Domain.Interfaces
         // Basic CRUD operations
         Task<IEnumerable<ListItemDto>> GetItemsByListIdAsync(int listId, string userId);
         Task<ListItemDto?> GetItemAsync(int itemId, string userId);
-        Task<ListItemDto> CreateItemAsync(int listId, CreateListItemRequest request, string userId);
+        Task<ListItemDto> CreateItemAsync(int listId, CreateListItemRequest request, string userId, bool @checked = false);
         Task<ListItemDto?> UpdateItemAsync(int itemId, UpdateListItemRequest request, string userId);
         Task<bool> DeleteItemAsync(int itemId, string userId);
 
@@ -16,6 +16,6 @@ namespace Frigorino.Domain.Interfaces
         Task<ListItemDto?> ToggleItemStatusAsync(int itemId, string userId);
 
         // Utility operations
-        Task<bool> CompactListSortOrdersAsync(int listId, string userId);
+        Task<bool> RecalculateFullSortOrder(int listId, string userId);
     }
 }

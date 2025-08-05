@@ -20,14 +20,14 @@ namespace Frigorino.Domain.DTOs
 
     public class UpdateListItemRequest
     {
-        public string Text { get; set; } = string.Empty;
+        public string? Text { get; set; } = string.Empty;
         public string? Quantity { get; set; }
-        public bool Status { get; set; }
+        public bool? Status { get; set; }
     }
 
     public class ReorderItemRequest
     {
-        public int AfterItemId { get; set; } // 0 means move to top of section
+        public int AfterId { get; set; } // 0 means move to top of section
     }
 
     public class ToggleStatusRequest

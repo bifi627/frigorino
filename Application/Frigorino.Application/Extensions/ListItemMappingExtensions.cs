@@ -39,9 +39,9 @@ namespace Frigorino.Application.Extensions
 
         public static void UpdateFromRequest(this ListItem listItem, UpdateListItemRequest request)
         {
-            listItem.Text = request.Text;
-            listItem.Quantity = request.Quantity;
-            listItem.Status = request.Status;
+            listItem.Text = request.Text ?? listItem.Text;
+            listItem.Quantity = request.Quantity ?? listItem.Quantity;
+            listItem.Status = request.Status ?? listItem.Status;
         }
     }
 }

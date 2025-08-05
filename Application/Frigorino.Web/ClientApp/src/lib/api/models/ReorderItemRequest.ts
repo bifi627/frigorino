@@ -3,6 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type ReorderItemRequest = {
-    afterItemId?: number;
+    afterId?: number;
 };
 

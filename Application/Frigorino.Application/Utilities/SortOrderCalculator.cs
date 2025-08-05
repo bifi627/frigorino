@@ -1,74 +1,164 @@
 namespace Frigorino.Application.Utilities
 {
+    public enum InsertType
+    {
+        Start,
+        End,
+    }
+
     public static class SortOrderCalculator
     {
-        // Unchecked items range: 100,000 - 999,999
-        public const int UncheckedMinRange = 100_000;
-        public const int UncheckedMaxRange = 999_999;
-        
-        // Checked items range: 1,100,000+
-        public const int CheckedMinRange = 1_100_000;
-        
+        public const int UncheckedMinRange = 1_000_000;
+        public const int UncheckedMaxRange = 9_000_000;
+
+        public const int CheckedMinRange = 10_000_000;
+        public const int CheckedMaxRange = 19_000_000;
+
         // Default gap between items
-        public const int DefaultGap = 1_000;
-        
+        public const int DefaultGap = 10_000;
+
         // Minimum gap before compaction is needed
-        public const int MinGapThreshold = 100;
+        public const int MinGapThreshold = 10;
 
-        /// <summary>
-        /// Calculate sort order for a new unchecked item (always goes to top)
-        /// </summary>
-        public static int GetNewItemSortOrder()
+        public static int? CalculateSortOrder(bool @checked, int? after, int? before, int? first, int? last, out bool needRecalculation)
         {
-            return UncheckedMinRange - DefaultGap; // 99,000
-        }
+            needRecalculation = false;
 
-        /// <summary>
-        /// Calculate sort order when changing status from unchecked to checked
-        /// </summary>
-        public static int GetCheckedStatusSortOrder()
-        {
-            return CheckedMinRange - DefaultGap; // 1,099,000
-        }
-
-        /// <summary>
-        /// Calculate sort order when changing status from checked to unchecked
-        /// </summary>
-        public static int GetUncheckedStatusSortOrder()
-        {
-            return GetNewItemSortOrder(); // 99,000
-        }
-
-        /// <summary>
-        /// Calculate sort order for reordering within a section
-        /// </summary>
-        /// <param name="afterSortOrder">Sort order of item to place after (0 means top of section)</param>
-        /// <param name="beforeSortOrder">Sort order of item to place before (null means bottom of section)</param>
-        /// <param name="isCheckedSection">Whether this is for checked or unchecked section</param>
-        public static int CalculateReorderSortOrder(int afterSortOrder, int? beforeSortOrder, bool isCheckedSection)
-        {
-            if (afterSortOrder == 0) // Move to top of section
+            if (after is null) // Move to start/end of section
             {
-                return isCheckedSection ? GetCheckedStatusSortOrder() : GetNewItemSortOrder();
+                if (first is null) // No items in section
+                {
+                    return @checked ? CheckedMinRange + DefaultGap : UncheckedMinRange + DefaultGap;
+                }
             }
 
-            if (beforeSortOrder == null) // Move to bottom of section
+            if (after is null && !@checked && last is not null)
             {
-                return afterSortOrder + DefaultGap;
+                return last + DefaultGap;
             }
 
-            // Calculate midpoint
-            int midpoint = (afterSortOrder + beforeSortOrder.Value) / 2;
-            
-            // If gap is too small, we might need compaction later
-            if (beforeSortOrder.Value - afterSortOrder < MinGapThreshold)
+            if (after is null && @checked && first is not null)
             {
-                // For now, just use the midpoint and flag for future compaction
-                return midpoint;
+                return first - DefaultGap;
             }
 
-            return midpoint;
+            if (after is not null && after is not 0)
+            {
+                if (before is not null && before is not 0)
+                {
+                    var mid = (before - after) / 2;
+                    return after + mid;
+                }
+                return after + DefaultGap;
+            }
+
+            if (first is not null)
+            {
+                return first - DefaultGap;
+            }
+
+            //if (last == first)
+            //{
+            //    if (@checked)
+            //    {
+            //        last = null;
+            //    }
+            //    else
+            //    {
+            //        first = null;
+            //    }
+            //}
+
+            //after ??= @checked ? first ?? CheckedMinRange + DefaultGap : last ?? UncheckedMinRange + DefaultGap;
+            //before ??= @checked ? last ?? CheckedMinRange + DefaultGap : first ?? UncheckedMinRange + DefaultGap;
+
+            //if (after == before)
+            //{
+            //    if (@checked)
+            //    {
+            //        before = last - DefaultGap;
+            //    }
+            //    else
+            //    {
+            //        after = first - DefaultGap;
+            //    }
+            //}
+
+            //var midpoint = after + (before.Value - after.Value) / 2;
+
+            //// If gap is too small, we might need compaction later
+            //if (midpoint < MinGapThreshold)
+            //{
+            //    needRecalculation = true;
+            //    return midpoint.Value;
+            //}
+            //return midpoint.Value;
+            return -1;
         }
+
+        //public static int CalculateSortOrderChecked(int after, int first, int last, out bool needRecalculation)
+        //{
+        //    needRecalculation = false;
+
+        //    if (after == 0) // Move to start/end of section
+        //    {
+        //        if (last == 0) // No items in section
+        //        {
+        //            return CheckedMinRange + DefaultGap;
+        //        }
+
+        //        int next = first - DefaultGap;
+        //        if (next < UncheckedMaxRange)
+        //        {
+        //            needRecalculation = true;
+        //        }
+
+        //        return next;
+        //    }
+
+        //    int midpoint = after + (after + DefaultGap) / 2;
+
+        //    // If gap is too small, we might need compaction later
+        //    if (midpoint < MinGapThreshold)
+        //    {
+        //        needRecalculation = true;
+        //        return midpoint;
+        //    }
+
+        //    return midpoint;
+        //}
+
+        //public static int CalculateSortOrderUnchecked(int after, int first, int last, out bool needRecalculation)
+        //{
+        //    needRecalculation = false;
+
+        //    if (after == 0) // Move to start/end of section
+        //    {
+        //        if (last == 0) // No items in section
+        //        {
+        //            return UncheckedMinRange + DefaultGap;
+        //        }
+
+        //        int next = first - DefaultGap;
+        //        if (next < DefaultGap)
+        //        {
+        //            needRecalculation = true;
+        //        }
+
+        //        return next;
+        //    }
+
+        //    int midpoint = after / 2;
+
+        //    // If gap is too small, we might need compaction later
+        //    if (midpoint < MinGapThreshold)
+        //    {
+        //        needRecalculation = true;
+        //        return midpoint;
+        //    }
+
+        //    return midpoint;
+        //}
 
         /// <summary>
         /// Check if a list needs sort order compaction

@@ -1689,7 +1689,7 @@
             "ReorderItemRequest": {
                 "type": "object",
                 "properties": {
-                    "afterItemId": {
+                    "afterId": {
                         "type": "integer",
                         "format": "int32"
                     }
@@ -1722,7 +1722,8 @@
                         "nullable": true
                     },
                     "status": {
-                        "type": "boolean"
+                        "type": "boolean",
+                        "nullable": true
                     }
                 },
                 "additionalProperties": false

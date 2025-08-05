@@ -224,7 +224,7 @@ public class ListItemsController : ControllerBase
         try
         {
             var userId = _currentUserService.UserId;
-            var success = await _listItemService.CompactListSortOrdersAsync(listId, userId);
+            var success = await _listItemService.RecalculateFullSortOrder(listId, userId);
 
             if (!success)
             {

@@ -1,4 +1,4 @@
-import { ArrowBack, Edit } from "@mui/icons-material";
+import { ArrowBack, Compress, Edit, MoreVert } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -6,11 +6,19 @@ import {
     CircularProgress,
     Container,
     IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Snackbar,
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
+import { SortableList } from "../../../components/list/SortableList";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
+import { useCompactListItems } from "../../../hooks/useListItemQueries";
 import { useList } from "../../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/$listId/view")({
@@ -21,6 +29,9 @@ export const Route = createFileRoute("/lists/$listId/view")({
 function RouteComponent() {
     const router = useRouter();
     const { listId } = Route.useParams();
+    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
 
     // Get current household and list data
     const { data: currentHousehold } = useCurrentHousehold();
@@ -34,6 +45,9 @@ function RouteComponent() {
         !!currentHousehold?.householdId,
     );
 
+    // Compaction mutation
+    const compactListItems = useCompactListItems();
+
     const handleBack = () => {
         router.history.back();
     };
@@ -42,6 +56,37 @@ function RouteComponent() {
         router.navigate({
             to: `/lists/${listId}/edit`,
         });
+    };
+
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        setMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setMenuAnchorEl(null);
+    };
+
+    const handleCompact = async () => {
+        handleMenuClose();
+        if (!currentHousehold?.householdId) return;
+
+        try {
+            await compactListItems.mutateAsync({
+                householdId: currentHousehold.householdId,
+                listId: parseInt(listId),
+            });
+            setSnackbarMessage("List order compacted successfully!");
+            setSnackbarOpen(true);
+        } catch (error) {
+            setSnackbarMessage(
+                "Failed to compact list order. Please try again.",
+            );
+            setSnackbarOpen(true);
+        }
+    };
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     if (!currentHousehold?.householdId) {
@@ -96,13 +141,24 @@ function RouteComponent() {
                 <IconButton onClick={handleBack} sx={{ p: 1 }}>
                     <ArrowBack />
                 </IconButton>
-                <Typography
-                    variant="h5"
-                    component="h1"
-                    sx={{ fontWeight: 600, flex: 1 }}
-                >
-                    {list.name}
-                </Typography>
+                <Box sx={{ flex: 1 }}>
+                    <Typography
+                        variant="h5"
+                        component="h1"
+                        sx={{ fontWeight: 600, mb: 0.5 }}
+                    >
+                        {list.name}
+                    </Typography>
+                    {list.description && (
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ lineHeight: 1.4 }}
+                        >
+                            {list.description}
+                        </Typography>
+                    )}
+                </Box>
                 <Box sx={{ display: "flex", gap: 1 }}>
                     <IconButton
                         onClick={handleEdit}
@@ -114,8 +170,61 @@ function RouteComponent() {
                     >
                         <Edit />
                     </IconButton>
+                    <IconButton
+                        onClick={handleMenuOpen}
+                        sx={{
+                            bgcolor: "grey.100",
+                            color: "grey.700",
+                            "&:hover": { bgcolor: "grey.200" },
+                        }}
+                    >
+                        <MoreVert />
+                    </IconButton>
                 </Box>
             </Box>
+
+            {/* Menu */}
+            <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                }}
+            >
+                <MenuItem
+                    onClick={handleCompact}
+                    disabled={compactListItems.isPending}
+                >
+                    <ListItemIcon>
+                        <Compress fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary="Compact List Order"
+                        secondary="Reorganize item sort order"
+                    />
+                </MenuItem>
+            </Menu>
+
+            {/* Snackbar for feedback */}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                message={snackbarMessage}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            />
+
+            {/* Sortable List Items */}
+            <SortableList
+                householdId={currentHousehold.householdId}
+                listId={parseInt(listId)}
+            />
         </Container>
     );
 }

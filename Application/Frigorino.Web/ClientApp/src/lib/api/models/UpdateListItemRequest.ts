@@ -5,6 +5,6 @@
 export type UpdateListItemRequest = {
     text?: string | null;
     quantity?: string | null;
-    status?: boolean;
+    status?: boolean | null;
 };
 
