@@ -90,7 +90,7 @@ function ListsPage() {
     const handleEditList = () => {
         if (selectedList?.id) {
             // TODO: Navigate to edit page when implemented
-            console.log("Edit list:", selectedList.id);
+            window.console.log("Edit list:", selectedList.id);
         }
         handleMenuClose();
     };

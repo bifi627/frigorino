@@ -16,14 +16,13 @@ import {
 import {
     Alert,
     Box,
-    Chip,
     CircularProgress,
     Divider,
     List,
     Paper,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
     useCreateListItem,
     useDeleteListItem,
@@ -46,6 +45,7 @@ interface SortableListProps {
 export const SortableList = ({ householdId, listId }: SortableListProps) => {
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const [activeItem, setActiveItem] = useState<ListItemDto | null>(null);
+    const dividerRef = useRef<HTMLHRElement | null>(null);
 
     // Queries and mutations
     const {
@@ -119,8 +119,6 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
             overIndex--;
         }
 
-        console.log(overIndex);
-
         // The afterId should be the ID of the item at overIndex, or 0 if placing at the beginning
         const afterItemId = overIndex >= 0 ? activeSection[overIndex].id : 0;
 
@@ -168,6 +166,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
     };
 
     const handleAddItem = (data: CreateListItemRequest) => {
+        dividerRef.current?.scrollIntoView();
         createMutation.mutate({
             householdId,
             listId,
@@ -195,8 +194,8 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
         <Box
             sx={{
                 position: "relative",
-                pb: items.length > 0 ? 8 : 0, // Reduced padding bottom when there are items
-                px: 1, // Added small horizontal padding
+                pb: items.length > 0 ? 10 : 0, // Increased padding bottom to provide space above input
+                px: 0.5, // Reduced horizontal padding for more space
             }}
         >
             <Box>
@@ -214,7 +213,13 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                             )}
                             strategy={verticalListSortingStrategy}
                         >
-                            <List sx={{ py: 0 }}>
+                            <List
+                                data-section="unchecked-items"
+                                sx={{
+                                    py: 0,
+                                    "& .MuiListItem-root": { mb: 0.5 },
+                                }}
+                            >
                                 {uncheckedItems.map((item) => (
                                     <SortableListItem
                                         key={item.id}
@@ -230,58 +235,40 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                     )}
 
                     {/* Checked Items Section */}
-                    {checkedItems.length > 0 && (
-                        <>
-                            {uncheckedItems.length > 0 && (
-                                <Box sx={{ my: 2, textAlign: "center" }}>
-                                    <Divider sx={{ mb: 1 }}>
-                                        <Chip
-                                            label="Completed Items"
-                                            size="small"
-                                            color="success"
-                                            variant="outlined"
-                                            sx={{
-                                                bgcolor: "success.50",
-                                                color: "success.700",
-                                                fontWeight: "bold",
-                                                fontSize: "0.75rem",
-                                            }}
-                                        />
-                                    </Divider>
-                                </Box>
-                            )}
+                    <Box sx={{ my: 1, textAlign: "center" }}>
+                        <Divider ref={dividerRef} sx={{ m: 2 }} />
+                    </Box>
 
-                            <Box
+                    <Box
+                        sx={{
+                            bgcolor: "success.25",
+                        }}
+                    >
+                        <SortableContext
+                            items={checkedItems.map(
+                                (item) => item.id?.toString() || "0",
+                            )}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <List
                                 sx={{
-                                    bgcolor: "success.25",
+                                    py: 0,
+                                    "& .MuiListItem-root": { mb: 0.5 },
                                 }}
                             >
-                                <SortableContext
-                                    items={checkedItems.map(
-                                        (item) => item.id?.toString() || "0",
-                                    )}
-                                    strategy={verticalListSortingStrategy}
-                                >
-                                    <List sx={{ py: 0 }}>
-                                        {checkedItems.map((item) => (
-                                            <SortableListItem
-                                                key={item.id}
-                                                item={item}
-                                                onToggleStatus={
-                                                    handleToggleStatus
-                                                }
-                                                onEdit={handleEditItem}
-                                                onDelete={handleDeleteItem}
-                                                isEditing={
-                                                    editingItem?.id === item.id
-                                                }
-                                            />
-                                        ))}
-                                    </List>
-                                </SortableContext>
-                            </Box>
-                        </>
-                    )}
+                                {checkedItems.map((item) => (
+                                    <SortableListItem
+                                        key={item.id}
+                                        item={item}
+                                        onToggleStatus={handleToggleStatus}
+                                        onEdit={handleEditItem}
+                                        onDelete={handleDeleteItem}
+                                        isEditing={editingItem?.id === item.id}
+                                    />
+                                ))}
+                            </List>
+                        </SortableContext>
+                    </Box>
 
                     {/* Empty State */}
                     {items.length === 0 && (

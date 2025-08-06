@@ -20,7 +20,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
         // Set up new subscription
         unsubscribe = onAuthStateChanged(getAuth(), (user) => {
-            console.log("Auth state changed:", user);
+            window.console.log("Auth state changed:", user);
             set({ user, loading: false });
         });
     },

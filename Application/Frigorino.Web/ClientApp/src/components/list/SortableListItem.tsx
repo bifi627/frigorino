@@ -69,11 +69,11 @@ export const SortableListItem = ({
             dragHandle="left"
             containerSx={{
                 borderRadius: 1,
-                mb: 1,
+                mb: 0.5, // Reduced margin bottom for denser layout
                 bgcolor: isEditing ? "warning.50" : "background.paper",
-                border: "2px solid",
+                border: "1px solid", // Reduced border width
                 borderColor: isEditing ? "warning.main" : "divider",
-                boxShadow: isDragging ? 3 : isEditing ? 2 : 1,
+                boxShadow: isDragging ? 3 : isEditing ? 2 : 0, // Reduced shadow for cleaner look
                 opacity: item.status ? 0.7 : 1,
                 transition: "all 0.2s ease",
                 ...(isEditing && {
@@ -97,18 +97,19 @@ export const SortableListItem = ({
                 <ListItemButton
                     sx={{
                         flex: 1,
-                        py: 1.5,
-                        px: 1,
+                        py: 0.75, // Reduced vertical padding for denser layout
+                        px: 0.75, // Reduced horizontal padding
                         "&:hover": { bgcolor: "transparent" },
                     }}
                     onClick={handleToggle}
                 >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
+                    <ListItemIcon sx={{ minWidth: 32 }}>
                         <Checkbox
                             edge="start"
                             checked={item.status}
                             tabIndex={-1}
                             disableRipple
+                            size="small"
                             sx={{
                                 color: item.status
                                     ? "success.main"
@@ -122,12 +123,17 @@ export const SortableListItem = ({
 
                     <ListItemText
                         primary={
-                            <Typography variant="body1">{item.text}</Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{ fontWeight: 500 }}
+                            >
+                                {item.text}
+                            </Typography>
                         }
                         secondary={
                             item.quantity && (
                                 <Typography
-                                    variant="body2"
+                                    variant="caption"
                                     sx={{
                                         color: item.status
                                             ? "text.disabled"
@@ -145,13 +151,14 @@ export const SortableListItem = ({
                 </ListItemButton>
 
                 {/* Actions Menu */}
-                <Box sx={{ pr: 1 }}>
+                <Box sx={{ pr: 0.5 }}>
                     <IconButton
                         size="small"
                         onClick={handleMenuOpen}
                         sx={{
                             color: "text.secondary",
                             "&:hover": { color: "text.primary" },
+                            p: 0.5, // Reduced padding for smaller touch target
                         }}
                     >
                         <MoreVert />

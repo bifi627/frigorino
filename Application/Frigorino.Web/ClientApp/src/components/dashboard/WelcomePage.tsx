@@ -95,14 +95,14 @@ export const WelcomePage = () => {
                 break;
             case "inventar":
                 // TODO: Implement inventory add functionality
-                console.log("Add new item to inventory");
+                window.console.log("Add new item to inventory");
                 break;
             case "rezepte":
                 // TODO: Implement recipe add functionality
-                console.log("Add new recipe");
+                window.console.log("Add new recipe");
                 break;
             default:
-                console.log(`Add new item to ${collectionId}`);
+                window.console.log(`Add new item to ${collectionId}`);
         }
     };
 

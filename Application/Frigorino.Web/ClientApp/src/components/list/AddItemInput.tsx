@@ -280,17 +280,17 @@ export const AddItemInput = ({
             onClick={handleContainerClick}
             sx={{
                 position: "fixed",
-                bottom: 16,
+                bottom: 8, // Reduced bottom spacing
                 left: "50%",
                 // transform: hasItems
                 //     ? "translateX(-50%)"
                 //     : "translate(-50%, 50%)",
                 // width: "calc(100% - 32px)",
                 // maxWidth: "600px",
-                p: 1,
+                p: 0.75, // Reduced padding
                 zIndex: 1000,
                 bgcolor: "background.paper",
-                borderRadius: 3,
+                borderRadius: 2, // Slightly smaller border radius
                 border: "1px solid",
                 borderColor: isEditing ? "warning.main" : "primary.200",
                 cursor: "text",
@@ -298,12 +298,12 @@ export const AddItemInput = ({
                 // Modern viewport units for mobile keyboard handling
                 "@supports (height: 100dvh)": {
                     // Use dynamic viewport height when available (modern browsers)
-                    bottom: 16,
+                    bottom: 8, // Reduced bottom spacing
                     transform: "translateX(-50%)",
                 },
                 "@supports (height: 100svh)": {
                     // Use small viewport height for better mobile keyboard support
-                    bottom: "max(16px, env(keyboard-inset-height, 16px))",
+                    bottom: "max(8px, env(keyboard-inset-height, 8px))", // Reduced bottom spacing
                 },
                 // Mobile-specific adjustments
                 "@media (max-width: 600px)": {
@@ -315,7 +315,7 @@ export const AddItemInput = ({
                     paddingLeft: "max(8px, env(safe-area-inset-left))",
                     paddingRight: "max(8px, env(safe-area-inset-right))",
                     // Adjust for virtual keyboard
-                    bottom: "max(16px, env(keyboard-inset-height, 16px))",
+                    bottom: "max(8px, env(keyboard-inset-height, 8px))", // Reduced bottom spacing
                 },
                 "&:hover": {
                     borderColor: isEditing ? "warning.dark" : "primary.main",
@@ -334,10 +334,10 @@ export const AddItemInput = ({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        p: 1,
+                        p: 0.75, // Reduced padding
                         backgroundColor: "warning.50",
                         borderRadius: 1,
-                        mb: 1,
+                        mb: 0.75, // Reduced margin bottom
                     }}
                 >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -511,7 +511,7 @@ export const AddItemInput = ({
                                             border: "none",
                                         },
                                         "& .MuiInputBase-input": {
-                                            py: 1.5,
+                                            py: 1, // Reduced vertical padding
                                         },
                                     },
                                 }}
@@ -635,8 +635,8 @@ export const AddItemInput = ({
                     className="quantity-section"
                     sx={{
                         display: "flex",
-                        gap: 1,
-                        mt: 1,
+                        gap: 0.75, // Reduced gap
+                        mt: 0.75, // Reduced top margin
                         alignItems: "center",
                     }}
                 >
@@ -663,7 +663,7 @@ export const AddItemInput = ({
                                     borderColor: "divider",
                                 },
                                 "& .MuiInputBase-input": {
-                                    py: 1,
+                                    py: 0.75, // Reduced vertical padding for quantity input
                                 },
                                 "&:hover .MuiOutlinedInput-notchedOutline": {
                                     borderColor: "primary.main",

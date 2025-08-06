@@ -108,9 +108,9 @@ export const useCreateListItem = () => {
             const optimisticItem: ListItemDto = {
                 id: Date.now(), // Temporary ID until server responds
                 text: variables.data.text,
-                quantity: variables.data.quantity || "1",
+                quantity: variables.data.quantity,
                 status: false, // New items are always unchecked
-                sortOrder: 1, // Will be at the top of unchecked items
+                sortOrder: 999999999, // Will be at the top of unchecked items
                 listId: variables.listId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
