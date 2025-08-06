@@ -6,6 +6,7 @@ import type {
     ReorderItemRequest,
     UpdateListItemRequest,
 } from "../lib/api";
+import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
 
 // Re-export types for convenience
 export type {
@@ -73,6 +74,7 @@ export const useListItem = (
 // Create List Item Hook
 export const useCreateListItem = () => {
     const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -149,13 +151,10 @@ export const useCreateListItem = () => {
             }
         },
         onSuccess: (_, variables) => {
-            // Invalidate the list items query to refetch with real data
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
+            // Debounced invalidate the list items query to refetch with real data
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
         },
     });
 };
@@ -163,6 +162,7 @@ export const useCreateListItem = () => {
 // Update List Item Hook
 export const useUpdateListItem = () => {
     const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -248,16 +248,11 @@ export const useUpdateListItem = () => {
             }
         },
         onSuccess: (_, variables) => {
-            // Invalidate both the list items and individual item queries
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.detail(variables.itemId),
-            });
+            // Debounced invalidate both the list items and individual item queries
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
+            debouncedInvalidate(listItemKeys.detail(variables.itemId));
         },
     });
 };
@@ -265,6 +260,7 @@ export const useUpdateListItem = () => {
 // Delete List Item Hook
 export const useDeleteListItem = () => {
     const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -331,13 +327,10 @@ export const useDeleteListItem = () => {
             });
         },
         onSettled: (_, __, variables) => {
-            // Always refetch to ensure consistency with server
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
+            // Always refetch to ensure consistency with server (debounced)
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
         },
     });
 };
@@ -345,6 +338,7 @@ export const useDeleteListItem = () => {
 // Toggle List Item Status Hook
 export const useToggleListItemStatus = () => {
     const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -403,14 +397,15 @@ export const useToggleListItemStatus = () => {
                 );
             }
         },
+        onSuccess: () => {
+            // For toggle status, we rely on optimistic updates and only invalidate on settled
+            // No invalidation here to avoid double calls
+        },
         onSettled: (_, __, variables) => {
-            // Always refetch to ensure consistency
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
+            // Always refetch to ensure consistency (debounced)
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
         },
     });
 };
@@ -418,6 +413,7 @@ export const useToggleListItemStatus = () => {
 // Reorder List Item Hook
 export const useReorderListItem = () => {
     const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -518,20 +514,17 @@ export const useReorderListItem = () => {
             }
         },
         onSettled: (_, __, variables) => {
-            // Always refetch to ensure consistency with server
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
+            // Always refetch to ensure consistency with server (debounced)
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
         },
     });
 };
 
 // Compact List Items Hook
 export const useCompactListItems = () => {
-    const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
         mutationFn: async ({
@@ -547,13 +540,10 @@ export const useCompactListItems = () => {
             );
         },
         onSuccess: (_, variables) => {
-            // Invalidate the list items query to refetch with compacted order
-            queryClient.invalidateQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
-            });
+            // Debounced invalidate the list items query to refetch with compacted order
+            debouncedInvalidate(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
         },
     });
 };
