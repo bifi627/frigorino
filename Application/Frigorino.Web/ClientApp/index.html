@@ -2,9 +2,50 @@
 <html lang="en">
 
 <head>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
     <title>Frigorino</title>
     <meta name="description" content="Frigorino description">
+    <style>
+        /* Mobile viewport height handling for virtual keyboards */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: 100dvh;
+            /* Dynamic viewport height - adjusts for mobile keyboards */
+            overflow-x: hidden;
+        }
+
+        #root {
+            height: 100vh;
+            height: 100dvh;
+            /* Dynamic viewport height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fallback for browsers that don't support dvh */
+        @supports not (height: 100dvh) {
+
+            html,
+            body,
+            #root {
+                height: 100vh;
+            }
+        }
+
+        /* Additional mobile optimization */
+        @media (max-width: 600px) {
+            body {
+                /* Prevent zoom on input focus */
+                -webkit-text-size-adjust: 100%;
+                /* Smooth keyboard transitions */
+                transition: height 0.3s ease;
+            }
+        }
+    </style>
     <link rel="icon" href="/favicon.ico">
     <!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"> -->
     <link rel="mask-icon" href="/mask-icon.svg" color="#FFFFFF">
