@@ -15,7 +15,10 @@ namespace Frigorino.Application.Extensions
                 HouseholdId = list.HouseholdId,
                 CreatedAt = list.CreatedAt,
                 UpdatedAt = list.UpdatedAt,
-                CreatedByUser = list.CreatedByUser.ToDto()
+                CreatedByUser = list.CreatedByUser.ToDto(),
+                CheckedCount = list.ListItems.Count(li => li.Status),
+                UncheckedCount = list.ListItems.Count(li => !li.Status),
+
             };
         }
 

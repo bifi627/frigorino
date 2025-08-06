@@ -13,13 +13,12 @@ import {
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Add } from "@mui/icons-material";
 import {
     Alert,
     Box,
+    Chip,
     CircularProgress,
     Divider,
-    Fab,
     List,
     Paper,
     Typography,
@@ -36,8 +35,8 @@ import {
     type ListItemDto,
     type UpdateListItemRequest,
 } from "../../hooks/useListItemQueries";
-import { ListItemDialog } from "../list/ListItemDialog";
-import { SortableListItem } from "../list/SortableListItem";
+import { AddItemInput } from "./AddItemInput";
+import { SortableListItem } from "./SortableListItem";
 
 interface SortableListProps {
     householdId: number;
@@ -45,7 +44,6 @@ interface SortableListProps {
 }
 
 export const SortableList = ({ householdId, listId }: SortableListProps) => {
-    const [dialogOpen, setDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const [activeItem, setActiveItem] = useState<ListItemDto | null>(null);
 
@@ -137,45 +135,44 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
         }
     };
 
-    const handleAddItem = () => {
-        setEditingItem(null);
-        setDialogOpen(true);
-    };
-
     const handleEditItem = (item: ListItemDto) => {
         setEditingItem(item);
-        setDialogOpen(true);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingItem(null);
+    };
+
+    const handleUpdateItem = (data: UpdateListItemRequest) => {
+        if (editingItem?.id) {
+            updateMutation.mutate({
+                householdId,
+                listId,
+                itemId: editingItem.id,
+                data,
+            });
+            setEditingItem(null); // Clear editing state after update
+        }
+    };
+
+    const handleUncheckExisting = (itemId: number) => {
+        toggleMutation.mutate({ householdId, listId, itemId });
     };
 
     const handleDeleteItem = (itemId: number) => {
-        if (confirm("Are you sure you want to delete this item?")) {
-            deleteMutation.mutate({ householdId, listId, itemId });
-        }
+        deleteMutation.mutate({ householdId, listId, itemId });
     };
 
     const handleToggleStatus = (itemId: number) => {
         toggleMutation.mutate({ householdId, listId, itemId });
     };
 
-    const handleSaveItem = (
-        data: CreateListItemRequest | UpdateListItemRequest,
-    ) => {
-        if (editingItem?.id) {
-            // Update existing item
-            updateMutation.mutate({
-                householdId,
-                listId,
-                itemId: editingItem.id,
-                data: data as UpdateListItemRequest,
-            });
-        } else {
-            // Create new item
-            createMutation.mutate({
-                householdId,
-                listId,
-                data: data as CreateListItemRequest,
-            });
-        }
+    const handleAddItem = (data: CreateListItemRequest) => {
+        createMutation.mutate({
+            householdId,
+            listId,
+            data,
+        });
     };
 
     if (isLoading) {
@@ -195,40 +192,29 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
     }
 
     return (
-        <Box sx={{ position: "relative", pb: 10 }}>
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                {/* Unchecked Items Section */}
-                {uncheckedItems.length > 0 && (
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            mb: 2,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 2,
-                        }}
-                    >
-                        <Box sx={{ p: 2, pb: 1 }}>
-                            <Typography
-                                variant="subtitle1"
-                                sx={{ fontWeight: 600, color: "text.primary" }}
-                            >
-                                Shopping List ({uncheckedItems.length})
-                            </Typography>
-                        </Box>
-
+        <Box
+            sx={{
+                position: "relative",
+                pb: items.length > 0 ? 8 : 0, // Reduced padding bottom when there are items
+                px: 1, // Added small horizontal padding
+            }}
+        >
+            <Box>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    {/* Unchecked Items Section */}
+                    {uncheckedItems.length > 0 && (
                         <SortableContext
                             items={uncheckedItems.map(
                                 (item) => item.id?.toString() || "0",
                             )}
                             strategy={verticalListSortingStrategy}
                         >
-                            <List sx={{ px: 2, pb: 2 }}>
+                            <List sx={{ py: 0 }}>
                                 {uncheckedItems.map((item) => (
                                     <SortableListItem
                                         key={item.id}
@@ -236,138 +222,131 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                                         onToggleStatus={handleToggleStatus}
                                         onEdit={handleEditItem}
                                         onDelete={handleDeleteItem}
+                                        isEditing={editingItem?.id === item.id}
                                     />
                                 ))}
                             </List>
                         </SortableContext>
-                    </Paper>
-                )}
+                    )}
 
-                {/* Checked Items Section */}
-                {checkedItems.length > 0 && (
-                    <>
-                        {uncheckedItems.length > 0 && (
-                            <Divider sx={{ my: 2 }} />
-                        )}
+                    {/* Checked Items Section */}
+                    {checkedItems.length > 0 && (
+                        <>
+                            {uncheckedItems.length > 0 && (
+                                <Box sx={{ my: 2, textAlign: "center" }}>
+                                    <Divider sx={{ mb: 1 }}>
+                                        <Chip
+                                            label="Completed Items"
+                                            size="small"
+                                            color="success"
+                                            variant="outlined"
+                                            sx={{
+                                                bgcolor: "success.50",
+                                                color: "success.700",
+                                                fontWeight: "bold",
+                                                fontSize: "0.75rem",
+                                            }}
+                                        />
+                                    </Divider>
+                                </Box>
+                            )}
 
+                            <Box
+                                sx={{
+                                    bgcolor: "success.25",
+                                }}
+                            >
+                                <SortableContext
+                                    items={checkedItems.map(
+                                        (item) => item.id?.toString() || "0",
+                                    )}
+                                    strategy={verticalListSortingStrategy}
+                                >
+                                    <List sx={{ py: 0 }}>
+                                        {checkedItems.map((item) => (
+                                            <SortableListItem
+                                                key={item.id}
+                                                item={item}
+                                                onToggleStatus={
+                                                    handleToggleStatus
+                                                }
+                                                onEdit={handleEditItem}
+                                                onDelete={handleDeleteItem}
+                                                isEditing={
+                                                    editingItem?.id === item.id
+                                                }
+                                            />
+                                        ))}
+                                    </List>
+                                </SortableContext>
+                            </Box>
+                        </>
+                    )}
+
+                    {/* Empty State */}
+                    {items.length === 0 && (
                         <Paper
                             elevation={0}
                             sx={{
-                                border: "1px solid",
-                                borderColor: "success.200",
+                                p: 3,
+                                textAlign: "center",
+                                border: "2px dashed",
+                                borderColor: "divider",
                                 borderRadius: 2,
-                                bgcolor: "success.50",
+                                mx: 1,
                             }}
                         >
-                            <Box sx={{ p: 2, pb: 1 }}>
-                                <Typography
-                                    variant="subtitle1"
-                                    sx={{
-                                        fontWeight: 600,
-                                        color: "success.700",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 1,
-                                    }}
-                                >
-                                    ✓ Completed ({checkedItems.length})
-                                </Typography>
-                            </Box>
-
-                            <SortableContext
-                                items={checkedItems.map(
-                                    (item) => item.id?.toString() || "0",
-                                )}
-                                strategy={verticalListSortingStrategy}
+                            <Typography
+                                variant="h6"
+                                color="text.secondary"
+                                gutterBottom
                             >
-                                <List sx={{ px: 2, pb: 2 }}>
-                                    {checkedItems.map((item) => (
-                                        <SortableListItem
-                                            key={item.id}
-                                            item={item}
-                                            onToggleStatus={handleToggleStatus}
-                                            onEdit={handleEditItem}
-                                            onDelete={handleDeleteItem}
-                                        />
-                                    ))}
-                                </List>
-                            </SortableContext>
+                                List ist leer
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mb: 2 }}
+                            >
+                                Füge deinen ersten Artikel hinzu, um zu
+                                beginnen!
+                            </Typography>
                         </Paper>
-                    </>
-                )}
+                    )}
 
-                {/* Empty State */}
-                {items.length === 0 && (
-                    <Paper
-                        elevation={0}
-                        sx={{
-                            p: 4,
-                            textAlign: "center",
-                            border: "2px dashed",
-                            borderColor: "divider",
-                            borderRadius: 2,
-                        }}
-                    >
-                        <Typography
-                            variant="h6"
-                            color="text.secondary"
-                            gutterBottom
-                        >
-                            Your list is empty
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 2 }}
-                        >
-                            Add your first item to get started!
-                        </Typography>
-                    </Paper>
-                )}
+                    {/* Drag Overlay */}
+                    <DragOverlay>
+                        {activeItem ? (
+                            <Paper
+                                elevation={8}
+                                sx={{
+                                    transform: "rotate(5deg)",
+                                    opacity: 0.95,
+                                }}
+                            >
+                                <SortableListItem
+                                    item={activeItem}
+                                    onToggleStatus={() => {}}
+                                    onEdit={() => {}}
+                                    onDelete={() => {}}
+                                    isEditing={false}
+                                />
+                            </Paper>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            </Box>
 
-                {/* Drag Overlay */}
-                <DragOverlay>
-                    {activeItem ? (
-                        <Paper
-                            elevation={8}
-                            sx={{
-                                transform: "rotate(5deg)",
-                                opacity: 0.95,
-                            }}
-                        >
-                            <SortableListItem
-                                item={activeItem}
-                                onToggleStatus={() => {}}
-                                onEdit={() => {}}
-                                onDelete={() => {}}
-                            />
-                        </Paper>
-                    ) : null}
-                </DragOverlay>
-            </DndContext>
-
-            {/* Add Item FAB */}
-            <Fab
-                color="primary"
-                aria-label="add item"
-                onClick={handleAddItem}
-                sx={{
-                    position: "fixed",
-                    bottom: 24,
-                    right: 24,
-                    zIndex: 1000,
-                }}
-            >
-                <Add />
-            </Fab>
-
-            {/* Add/Edit Dialog */}
-            <ListItemDialog
-                open={dialogOpen}
-                onClose={() => setDialogOpen(false)}
-                onSave={handleSaveItem}
-                item={editingItem}
+            {/* Add Item Input - Sticky at bottom */}
+            <AddItemInput
+                onAdd={handleAddItem}
+                onUpdate={handleUpdateItem}
+                onCancelEdit={handleCancelEdit}
+                onUncheckExisting={handleUncheckExisting}
+                editingItem={editingItem}
+                existingItems={items}
                 isLoading={createMutation.isPending || updateMutation.isPending}
+                hasItems={items.length > 0}
             />
         </Box>
     );

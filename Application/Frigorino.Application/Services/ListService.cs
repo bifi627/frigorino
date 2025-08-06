@@ -29,7 +29,7 @@ namespace Frigorino.Application.Services
 
             var lists = await _dbContext.Lists
                 .Where(l => l.HouseholdId == householdId && l.IsActive)
-                .Include(l => l.CreatedByUser)
+                .Include(l => l.CreatedByUser).Include(l => l.ListItems)
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
 

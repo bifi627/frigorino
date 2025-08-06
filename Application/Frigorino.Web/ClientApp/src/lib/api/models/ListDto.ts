@@ -11,5 +11,7 @@ export type ListDto = {
     createdAt?: string;
     updatedAt?: string;
     createdByUser?: UserDto;
+    uncheckedCount?: number;
+    checkedCount?: number;
 };
 

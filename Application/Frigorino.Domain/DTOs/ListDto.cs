@@ -1,5 +1,3 @@
-using Frigorino.Domain.Entities;
-
 namespace Frigorino.Domain.DTOs
 {
     public class ListDto
@@ -11,6 +9,8 @@ namespace Frigorino.Domain.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public UserDto CreatedByUser { get; set; } = null!;
+        public int UncheckedCount { get; set; }
+        public int CheckedCount { get; set; }
     }
 
     public class CreateListRequest

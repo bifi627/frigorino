@@ -54,7 +54,6 @@ function ListEditPage() {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [confirmationText, setConfirmationText] = useState("");
     const [editedName, setEditedName] = useState("");
-    const [editedDescription, setEditedDescription] = useState("");
 
     // Get current household info
     const {
@@ -83,7 +82,6 @@ function ListEditPage() {
     useEffect(() => {
         if (list) {
             setEditedName(list.name || "");
-            setEditedDescription(list.description || "");
         }
     }, [list]);
 
@@ -110,7 +108,6 @@ function ListEditPage() {
 
         const updateData: UpdateListRequest = {
             name: editedName.trim(),
-            description: editedDescription.trim() || null,
         };
 
         updateListMutation.mutate(
@@ -344,22 +341,6 @@ function ListEditPage() {
                                         ? "List name is required"
                                         : ""
                                 }
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        borderRadius: 2,
-                                    },
-                                }}
-                            />
-
-                            <TextField
-                                label="Description (Optional)"
-                                value={editedDescription}
-                                onChange={(e) =>
-                                    setEditedDescription(e.target.value)
-                                }
-                                fullWidth
-                                multiline
-                                rows={3}
                                 sx={{
                                     "& .MuiOutlinedInput-root": {
                                         borderRadius: 2,

@@ -1645,6 +1645,14 @@
                     },
                     "createdByUser": {
                         "$ref": "#/components/schemas/UserDto"
+                    },
+                    "uncheckedCount": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "checkedCount": {
+                        "type": "integer",
+                        "format": "int32"
                     }
                 },
                 "additionalProperties": false

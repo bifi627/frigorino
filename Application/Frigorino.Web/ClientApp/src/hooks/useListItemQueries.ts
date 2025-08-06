@@ -90,8 +90,66 @@ export const useCreateListItem = () => {
                 data,
             );
         },
+        onMutate: async (variables) => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({
+                queryKey: listItemKeys.byList(
+                    variables.householdId,
+                    variables.listId,
+                ),
+            });
+
+            // Snapshot the previous value for rollback
+            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
+
+            // Create optimistic item with temporary ID
+            const optimisticItem: ListItemDto = {
+                id: Date.now(), // Temporary ID until server responds
+                text: variables.data.text,
+                quantity: variables.data.quantity || "1",
+                status: false, // New items are always unchecked
+                sortOrder: 1, // Will be at the top of unchecked items
+                listId: variables.listId,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            };
+
+            // Optimistically add the item to the cache
+            queryClient.setQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+                (old) => {
+                    if (!old) return [optimisticItem];
+
+                    // Add new item at the beginning of unchecked items
+                    // Update sortOrder for existing unchecked items
+                    const updatedItems = old.map((item) =>
+                        !item.status
+                            ? { ...item, sortOrder: (item.sortOrder || 0) + 1 }
+                            : item,
+                    );
+
+                    return [optimisticItem, ...updatedItems];
+                },
+            );
+
+            return { previousItems };
+        },
+        onError: (_, variables, context) => {
+            // Rollback on error - restore the previous items
+            if (context?.previousItems) {
+                queryClient.setQueryData(
+                    listItemKeys.byList(
+                        variables.householdId,
+                        variables.listId,
+                    ),
+                    context.previousItems,
+                );
+            }
+        },
         onSuccess: (_, variables) => {
-            // Invalidate the list items query to refetch
+            // Invalidate the list items query to refetch with real data
             queryClient.invalidateQueries({
                 queryKey: listItemKeys.byList(
                     variables.householdId,
@@ -124,6 +182,70 @@ export const useUpdateListItem = () => {
                 itemId,
                 data,
             );
+        },
+        onMutate: async (variables) => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({
+                queryKey: listItemKeys.byList(
+                    variables.householdId,
+                    variables.listId,
+                ),
+            });
+
+            // Snapshot the previous value for rollback
+            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
+
+            // Optimistically update the item in the cache
+            queryClient.setQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+                (old) => {
+                    if (!old) return old;
+                    return old.map((item) =>
+                        item.id === variables.itemId
+                            ? {
+                                  ...item,
+                                  text: variables.data.text || item.text,
+                                  quantity:
+                                      variables.data.quantity || item.quantity,
+                                  updatedAt: new Date().toISOString(),
+                              }
+                            : item,
+                    );
+                },
+            );
+
+            // Also update the individual item cache if it exists
+            const currentItem = queryClient.getQueryData<ListItemDto>(
+                listItemKeys.detail(variables.itemId),
+            );
+            if (currentItem) {
+                queryClient.setQueryData<ListItemDto>(
+                    listItemKeys.detail(variables.itemId),
+                    {
+                        ...currentItem,
+                        text: variables.data.text || currentItem.text,
+                        quantity:
+                            variables.data.quantity || currentItem.quantity,
+                        updatedAt: new Date().toISOString(),
+                    },
+                );
+            }
+
+            return { previousItems };
+        },
+        onError: (_, variables, context) => {
+            // Rollback on error - restore the previous items
+            if (context?.previousItems) {
+                queryClient.setQueryData(
+                    listItemKeys.byList(
+                        variables.householdId,
+                        variables.listId,
+                    ),
+                    context.previousItems,
+                );
+            }
         },
         onSuccess: (_, variables) => {
             // Invalidate both the list items and individual item queries
@@ -160,17 +282,61 @@ export const useDeleteListItem = () => {
                 itemId,
             );
         },
-        onSuccess: (_, variables) => {
-            // Invalidate the list items query to refetch
-            queryClient.invalidateQueries({
+        onMutate: async (variables) => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({
                 queryKey: listItemKeys.byList(
                     variables.householdId,
                     variables.listId,
                 ),
             });
-            // Remove the individual item from cache
+
+            // Snapshot the previous value for rollback
+            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+            );
+
+            // Optimistically remove the item from the cache
+            queryClient.setQueryData<ListItemDto[]>(
+                listItemKeys.byList(variables.householdId, variables.listId),
+                (old) => {
+                    if (!old) return old;
+                    return old.filter((item) => item.id !== variables.itemId);
+                },
+            );
+
+            // Also remove the individual item from cache
             queryClient.removeQueries({
                 queryKey: listItemKeys.detail(variables.itemId),
+            });
+
+            return { previousItems };
+        },
+        onError: (_, variables, context) => {
+            // Rollback on error - restore the previous items
+            if (context?.previousItems) {
+                queryClient.setQueryData(
+                    listItemKeys.byList(
+                        variables.householdId,
+                        variables.listId,
+                    ),
+                    context.previousItems,
+                );
+            }
+        },
+        onSuccess: (_, variables) => {
+            // On success, ensure the item is removed from cache
+            queryClient.removeQueries({
+                queryKey: listItemKeys.detail(variables.itemId),
+            });
+        },
+        onSettled: (_, __, variables) => {
+            // Always refetch to ensure consistency with server
+            queryClient.invalidateQueries({
+                queryKey: listItemKeys.byList(
+                    variables.householdId,
+                    variables.listId,
+                ),
             });
         },
     });

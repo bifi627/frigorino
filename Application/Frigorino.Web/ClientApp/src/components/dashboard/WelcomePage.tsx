@@ -22,7 +22,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
@@ -32,29 +32,39 @@ import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    
+
     // Local storage key for expanded sections
     const EXPANDED_SECTIONS_KEY = "frigorino-welcome-expanded-sections";
-    
+
     // Load expanded sections from local storage or default to empty array
     const loadExpandedSections = (): string[] => {
         try {
             const saved = localStorage.getItem(EXPANDED_SECTIONS_KEY);
             return saved ? JSON.parse(saved) : [];
         } catch (error) {
-            console.warn("Failed to load expanded sections from localStorage:", error);
+            console.warn(
+                "Failed to load expanded sections from localStorage:",
+                error,
+            );
             return [];
         }
     };
-    
-    const [expandedSections, setExpandedSections] = useState<string[]>(loadExpandedSections);
+
+    const [expandedSections, setExpandedSections] =
+        useState<string[]>(loadExpandedSections);
 
     // Save expanded sections to local storage whenever it changes
     useEffect(() => {
         try {
-            localStorage.setItem(EXPANDED_SECTIONS_KEY, JSON.stringify(expandedSections));
+            localStorage.setItem(
+                EXPANDED_SECTIONS_KEY,
+                JSON.stringify(expandedSections),
+            );
         } catch (error) {
-            console.warn("Failed to save expanded sections to localStorage:", error);
+            console.warn(
+                "Failed to save expanded sections to localStorage:",
+                error,
+            );
         }
     }, [expandedSections]);
 
@@ -107,7 +117,7 @@ export const WelcomePage = () => {
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
-                        count: "List",
+                        count: `${list.checkedCount}/${list.uncheckedCount} Artikel`,
                         status: new Date(list.createdAt!).toLocaleDateString(
                             "de-DE",
                         ),
@@ -225,7 +235,9 @@ export const WelcomePage = () => {
 
             <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>
                 {collections.map((collection) => {
-                    const isExpanded = expandedSections.includes(collection.id);
+                    const isExpanded =
+                        expandedSections.includes(collection.id) &&
+                        collection.id === "einkaufslisten";
                     return (
                         <Card
                             key={collection.id}
@@ -280,16 +292,6 @@ export const WelcomePage = () => {
                                                 }}
                                             >
                                                 {collection.label}
-                                            </Typography>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    color: "text.secondary",
-                                                    fontSize: "0.85rem",
-                                                }}
-                                            >
-                                                {collection.items.length}{" "}
-                                                Einträge
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -421,7 +423,7 @@ export const WelcomePage = () => {
                                                                 </Typography>
                                                                 <Chip
                                                                     label={
-                                                                        item.status
+                                                                        item.count
                                                                     }
                                                                     size="small"
                                                                     variant="outlined"

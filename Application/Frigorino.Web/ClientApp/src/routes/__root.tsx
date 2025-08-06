@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { getAuth } from "firebase/auth";
 import { Navigation } from "../components/layout/Navigation";
 import { useAuth } from "../hooks/useAuth";
@@ -34,7 +33,7 @@ function RootComponent() {
             <Box component="main">
                 <Outlet />
             </Box>
-            <TanStackRouterDevtools />
+            {/* <TanStackRouterDevtools /> */}
         </Box>
     );
 }

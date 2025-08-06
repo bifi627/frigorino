@@ -121,7 +121,7 @@ function CreateListPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    Create New List
+                    Neue Einkaufsliste erstellen
                 </Typography>
             </Box>
 
@@ -152,12 +152,12 @@ function CreateListPage() {
                                 variant="h6"
                                 sx={{ fontWeight: 600, mb: 0.5 }}
                             >
-                                Shopping Lists
+                                Einkaufsliste
                             </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                            {/* <Typography variant="body2" sx={{ opacity: 0.9 }}>
                                 Create organized lists for your household
                                 shopping needs
-                            </Typography>
+                            </Typography> */}
                         </Box>
                     </Box>
                 </CardContent>
@@ -191,11 +191,10 @@ function CreateListPage() {
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    List Name *
+                                    Name *
                                 </Typography>
                                 <TextField
                                     fullWidth
-                                    placeholder="e.g., Weekly Shopping, Party Supplies"
                                     value={formData.name}
                                     onChange={handleInputChange("name")}
                                     disabled={isLoading}
@@ -206,8 +205,8 @@ function CreateListPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? "List name is required"
-                                            : "Choose a descriptive name for your shopping list"
+                                            ? "Name is required"
+                                            : ""
                                     }
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
@@ -218,7 +217,7 @@ function CreateListPage() {
                             </Box>
 
                             {/* Description */}
-                            <Box>
+                            {/* <Box>
                                 <Typography
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
@@ -229,7 +228,6 @@ function CreateListPage() {
                                     fullWidth
                                     multiline
                                     rows={3}
-                                    placeholder="e.g., Items needed for weekend barbecue"
                                     value={formData.description}
                                     onChange={handleInputChange("description")}
                                     disabled={isLoading}
@@ -240,7 +238,7 @@ function CreateListPage() {
                                         },
                                     }}
                                 />
-                            </Box>
+                            </Box> */}
 
                             {/* Submit Button */}
                             <Button

@@ -21,6 +21,7 @@ interface SortableListItemProps {
     onEdit: (item: ListItemDto) => void;
     onDelete: (itemId: number) => void;
     isDragging?: boolean;
+    isEditing?: boolean;
 }
 
 export const SortableListItem = ({
@@ -29,6 +30,7 @@ export const SortableListItem = ({
     onEdit,
     onDelete,
     isDragging = false,
+    isEditing = false,
 }: SortableListItemProps) => {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -68,16 +70,26 @@ export const SortableListItem = ({
             containerSx={{
                 borderRadius: 1,
                 mb: 1,
-                bgcolor: "background.paper",
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: isDragging ? 3 : 1,
+                bgcolor: isEditing ? "warning.50" : "background.paper",
+                border: "2px solid",
+                borderColor: isEditing ? "warning.main" : "divider",
+                boxShadow: isDragging ? 3 : isEditing ? 2 : 1,
                 opacity: item.status ? 0.7 : 1,
                 transition: "all 0.2s ease",
-                "&:hover": {
-                    borderColor: "primary.main",
-                    bgcolor: "primary.50",
-                },
+                ...(isEditing && {
+                    animation: "pulse 2s ease-in-out infinite",
+                    "@keyframes pulse": {
+                        "0%": {
+                            boxShadow: "0 0 0 0 rgba(237, 108, 2, 0.4)",
+                        },
+                        "70%": {
+                            boxShadow: "0 0 0 10px rgba(237, 108, 2, 0)",
+                        },
+                        "100%": {
+                            boxShadow: "0 0 0 0 rgba(237, 108, 2, 0)",
+                        },
+                    },
+                }),
             }}
         >
             <ListItem sx={{ px: 0, py: 0 }} disablePadding>
