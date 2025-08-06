@@ -110,7 +110,7 @@ export const useCreateListItem = () => {
                 text: variables.data.text,
                 quantity: variables.data.quantity,
                 status: false, // New items are always unchecked
-                sortOrder: 999999999, // Will be at the top of unchecked items
+                sortOrder: 999999999, // Will be at the bottom of unchecked items
                 listId: variables.listId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),

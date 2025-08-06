@@ -22,7 +22,7 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import {
     useCreateListItem,
     useDeleteListItem,
@@ -36,6 +36,34 @@ import {
 } from "../../hooks/useListItemQueries";
 import { AddItemInput } from "./AddItemInput";
 import { SortableListItem } from "./SortableListItem";
+
+// Memoized list item renderer to prevent unnecessary re-renders
+const MemoizedSortableListItem = memo(
+    ({
+        item,
+        isEditing,
+        onToggleStatus,
+        onEdit,
+        onDelete,
+    }: {
+        item: ListItemDto;
+        isEditing: boolean;
+        onToggleStatus: (itemId: number) => void;
+        onEdit: (item: ListItemDto) => void;
+        onDelete: (itemId: number) => void;
+    }) => (
+        <SortableListItem
+            key={item.id}
+            item={item}
+            onToggleStatus={onToggleStatus}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            isEditing={isEditing}
+        />
+    ),
+);
+
+MemoizedSortableListItem.displayName = "MemoizedSortableListItem";
 
 interface SortableListProps {
     householdId: number;
@@ -59,7 +87,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
     const toggleMutation = useToggleListItemStatus();
     const reorderMutation = useReorderListItem();
 
-    // Configure drag sensors for both mouse/pointer and touch
+    // Configure drag sensors - must be at top level, not in useMemo
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -74,105 +102,149 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
         }),
     );
 
-    // Separate items by status and sort by sortOrder
-    const uncheckedItems = items
-        .filter((item) => !item.status)
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    // Memoize expensive sorting operations
+    const { uncheckedItems, checkedItems } = useMemo(() => {
+        const unchecked = items
+            .filter((item) => !item.status)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-    const checkedItems = items
-        .filter((item) => item.status)
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        const checked = items
+            .filter((item) => item.status)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-    // Event handlers
-    const handleDragStart = (event: DragStartEvent) => {
-        const { active } = event;
-        const item = items.find((item) => item.id?.toString() === active.id);
-        setActiveItem(item || null);
-    };
+        return { uncheckedItems: unchecked, checkedItems: checked };
+    }, [items]);
 
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveItem(null);
+    // Event handlers - memoized to prevent unnecessary re-renders
+    const handleDragStart = useCallback(
+        (event: DragStartEvent) => {
+            const { active } = event;
+            const item = items.find(
+                (item) => item.id?.toString() === active.id,
+            );
+            setActiveItem(item || null);
+        },
+        [items],
+    );
 
-        if (!over || active.id === over.id) return;
+    const handleDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+            setActiveItem(null);
 
-        const activeItem = items.find(
-            (item) => item.id?.toString() === active.id,
-        );
-        const overItem = items.find((item) => item.id?.toString() === over.id);
+            if (!over || active.id === over.id) return;
 
-        if (!activeItem || !overItem) return;
+            const activeItem = items.find(
+                (item) => item.id?.toString() === active.id,
+            );
+            const overItem = items.find(
+                (item) => item.id?.toString() === over.id,
+            );
 
-        // Prevent dragging between checked/unchecked sections
-        if (activeItem.status !== overItem.status) return;
+            if (!activeItem || !overItem) return;
 
-        // Find the item after which to place the active item
-        const activeSection = activeItem.status ? checkedItems : uncheckedItems;
-        let overIndex = activeSection.findIndex(
-            (item) => item.id === overItem.id,
-        );
-        const activeIndex = activeSection.findIndex(
-            (item) => item.id === activeItem.id,
-        );
+            // Prevent dragging between checked/unchecked sections
+            if (activeItem.status !== overItem.status) return;
 
-        if (overIndex < activeIndex) {
-            overIndex--;
-        }
+            // Calculate the appropriate section inside the callback to avoid dependency issues
+            const currentSectionItems = items
+                .filter((item) => item.status === activeItem.status)
+                .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-        // The afterId should be the ID of the item at overIndex, or 0 if placing at the beginning
-        const afterItemId = overIndex >= 0 ? activeSection[overIndex].id : 0;
+            let overIndex = currentSectionItems.findIndex(
+                (item) => item.id === overItem.id,
+            );
+            const activeIndex = currentSectionItems.findIndex(
+                (item) => item.id === activeItem.id,
+            );
 
-        // Call reorder API
-        if (activeItem.id) {
-            reorderMutation.mutate({
-                householdId,
-                listId,
-                itemId: activeItem.id,
-                data: { afterId: afterItemId || 0 },
-            });
-        }
-    };
+            if (overIndex < activeIndex) {
+                overIndex--;
+            }
 
-    const handleEditItem = (item: ListItemDto) => {
+            // The afterId should be the ID of the item at overIndex, or 0 if placing at the beginning
+            const afterItemId =
+                overIndex >= 0 ? currentSectionItems[overIndex].id : 0;
+
+            // Call reorder API
+            if (activeItem.id) {
+                reorderMutation.mutate({
+                    householdId,
+                    listId,
+                    itemId: activeItem.id,
+                    data: { afterId: afterItemId || 0 },
+                });
+            }
+        },
+        [items, reorderMutation, householdId, listId],
+    );
+
+    const handleEditItem = useCallback((item: ListItemDto) => {
         setEditingItem(item);
-    };
+    }, []);
 
-    const handleCancelEdit = () => {
+    const handleCancelEdit = useCallback(() => {
         setEditingItem(null);
-    };
+    }, []);
 
-    const handleUpdateItem = (data: UpdateListItemRequest) => {
-        if (editingItem?.id) {
-            updateMutation.mutate({
+    const handleUpdateItem = useCallback(
+        (data: UpdateListItemRequest) => {
+            if (editingItem?.id) {
+                updateMutation.mutate({
+                    householdId,
+                    listId,
+                    itemId: editingItem.id,
+                    data,
+                });
+                setEditingItem(null); // Clear editing state after update
+            }
+        },
+        [editingItem?.id, updateMutation, householdId, listId],
+    );
+
+    const handleUncheckExisting = useCallback(
+        (itemId: number) => {
+            toggleMutation.mutate({ householdId, listId, itemId });
+        },
+        [toggleMutation, householdId, listId],
+    );
+
+    const handleDeleteItem = useCallback(
+        (itemId: number) => {
+            deleteMutation.mutate({ householdId, listId, itemId });
+        },
+        [deleteMutation, householdId, listId],
+    );
+
+    const handleToggleStatus = useCallback(
+        (itemId: number) => {
+            toggleMutation.mutate({ householdId, listId, itemId });
+        },
+        [toggleMutation, householdId, listId],
+    );
+
+    const handleAddItem = useCallback(
+        (data: CreateListItemRequest) => {
+            dividerRef.current?.scrollIntoView();
+            createMutation.mutate({
                 householdId,
                 listId,
-                itemId: editingItem.id,
                 data,
             });
-            setEditingItem(null); // Clear editing state after update
-        }
-    };
+        },
+        [createMutation, householdId, listId],
+    );
 
-    const handleUncheckExisting = (itemId: number) => {
-        toggleMutation.mutate({ householdId, listId, itemId });
-    };
+    // Memoize item IDs for SortableContext to prevent unnecessary re-renders
+    const uncheckedItemIds = useMemo(
+        () => uncheckedItems.map((item) => item.id?.toString() || "0"),
+        [uncheckedItems],
+    );
 
-    const handleDeleteItem = (itemId: number) => {
-        deleteMutation.mutate({ householdId, listId, itemId });
-    };
-
-    const handleToggleStatus = (itemId: number) => {
-        toggleMutation.mutate({ householdId, listId, itemId });
-    };
-
-    const handleAddItem = (data: CreateListItemRequest) => {
-        dividerRef.current?.scrollIntoView();
-        createMutation.mutate({
-            householdId,
-            listId,
-            data,
-        });
-    };
+    const checkedItemIds = useMemo(
+        () => checkedItems.map((item) => item.id?.toString() || "0"),
+        [checkedItems],
+    );
 
     if (isLoading) {
         return (
@@ -208,9 +280,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                     {/* Unchecked Items Section */}
                     {uncheckedItems.length > 0 && (
                         <SortableContext
-                            items={uncheckedItems.map(
-                                (item) => item.id?.toString() || "0",
-                            )}
+                            items={uncheckedItemIds}
                             strategy={verticalListSortingStrategy}
                         >
                             <List
@@ -221,7 +291,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                                 }}
                             >
                                 {uncheckedItems.map((item) => (
-                                    <SortableListItem
+                                    <MemoizedSortableListItem
                                         key={item.id}
                                         item={item}
                                         onToggleStatus={handleToggleStatus}
@@ -245,9 +315,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                         }}
                     >
                         <SortableContext
-                            items={checkedItems.map(
-                                (item) => item.id?.toString() || "0",
-                            )}
+                            items={checkedItemIds}
                             strategy={verticalListSortingStrategy}
                         >
                             <List
@@ -257,7 +325,7 @@ export const SortableList = ({ householdId, listId }: SortableListProps) => {
                                 }}
                             >
                                 {checkedItems.map((item) => (
-                                    <SortableListItem
+                                    <MemoizedSortableListItem
                                         key={item.id}
                                         item={item}
                                         onToggleStatus={handleToggleStatus}

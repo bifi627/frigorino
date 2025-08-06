@@ -11,7 +11,7 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import type { ListItemDto } from "../../hooks/useListItemQueries";
 import { SortableItem } from "../common/sortable/SortableItem";
 
@@ -24,173 +24,184 @@ interface SortableListItemProps {
     isEditing?: boolean;
 }
 
-export const SortableListItem = ({
-    item,
-    onToggleStatus,
-    onEdit,
-    onDelete,
-    isDragging = false,
-    isEditing = false,
-}: SortableListItemProps) => {
-    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+export const SortableListItem = memo(
+    ({
+        item,
+        onToggleStatus,
+        onEdit,
+        onDelete,
+        isDragging = false,
+        isEditing = false,
+    }: SortableListItemProps) => {
+        const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        event.stopPropagation();
-        setMenuAnchor(event.currentTarget);
-    };
+        const handleMenuOpen = useCallback(
+            (event: React.MouseEvent<HTMLElement>) => {
+                event.stopPropagation();
+                setMenuAnchor(event.currentTarget);
+            },
+            [],
+        );
 
-    const handleMenuClose = () => {
-        setMenuAnchor(null);
-    };
+        const handleMenuClose = useCallback(() => {
+            setMenuAnchor(null);
+        }, []);
 
-    const handleEdit = () => {
-        onEdit(item);
-        handleMenuClose();
-    };
+        const handleEdit = useCallback(() => {
+            onEdit(item);
+            handleMenuClose();
+        }, [onEdit, item, handleMenuClose]);
 
-    const handleDelete = () => {
-        if (item.id) {
-            onDelete(item.id);
-        }
-        handleMenuClose();
-    };
+        const handleDelete = useCallback(() => {
+            if (item.id) {
+                onDelete(item.id);
+            }
+            handleMenuClose();
+        }, [item.id, onDelete, handleMenuClose]);
 
-    const handleToggle = (event: React.MouseEvent) => {
-        event.stopPropagation();
-        if (item.id) {
-            onToggleStatus(item.id);
-        }
-    };
+        const handleToggle = useCallback(
+            (event: React.MouseEvent) => {
+                event.stopPropagation();
+                if (item.id) {
+                    onToggleStatus(item.id);
+                }
+            },
+            [item.id, onToggleStatus],
+        );
 
-    return (
-        <SortableItem
-            item={item}
-            isDragging={isDragging}
-            dragHandle="left"
-            containerSx={{
-                borderRadius: 1,
-                mb: 0.5, // Reduced margin bottom for denser layout
-                bgcolor: isEditing ? "warning.50" : "background.paper",
-                border: "1px solid", // Reduced border width
-                borderColor: isEditing ? "warning.main" : "divider",
-                boxShadow: isDragging ? 3 : isEditing ? 2 : 0, // Reduced shadow for cleaner look
-                opacity: item.status ? 0.7 : 1,
-                transition: "all 0.2s ease",
-                ...(isEditing && {
-                    animation: "pulse 2s ease-in-out infinite",
-                    "@keyframes pulse": {
-                        "0%": {
-                            boxShadow: "0 0 0 0 rgba(237, 108, 2, 0.4)",
+        return (
+            <SortableItem
+                item={item}
+                isDragging={isDragging}
+                dragHandle="left"
+                containerSx={{
+                    borderRadius: 1,
+                    mb: 0.5, // Reduced margin bottom for denser layout
+                    bgcolor: isEditing ? "warning.50" : "background.paper",
+                    border: "1px solid", // Reduced border width
+                    borderColor: isEditing ? "warning.main" : "divider",
+                    boxShadow: isDragging ? 3 : isEditing ? 2 : 0, // Reduced shadow for cleaner look
+                    opacity: item.status ? 0.7 : 1,
+                    transition: "all 0.2s ease",
+                    ...(isEditing && {
+                        animation: "pulse 2s ease-in-out infinite",
+                        "@keyframes pulse": {
+                            "0%": {
+                                boxShadow: "0 0 0 0 rgba(237, 108, 2, 0.4)",
+                            },
+                            "70%": {
+                                boxShadow: "0 0 0 10px rgba(237, 108, 2, 0)",
+                            },
+                            "100%": {
+                                boxShadow: "0 0 0 0 rgba(237, 108, 2, 0)",
+                            },
                         },
-                        "70%": {
-                            boxShadow: "0 0 0 10px rgba(237, 108, 2, 0)",
-                        },
-                        "100%": {
-                            boxShadow: "0 0 0 0 rgba(237, 108, 2, 0)",
-                        },
-                    },
-                }),
-            }}
-        >
-            <ListItem sx={{ px: 0, py: 0 }} disablePadding>
-                {/* Main Content */}
-                <ListItemButton
-                    sx={{
-                        flex: 1,
-                        py: 0.75, // Reduced vertical padding for denser layout
-                        px: 0.75, // Reduced horizontal padding
-                        "&:hover": { bgcolor: "transparent" },
-                    }}
-                    onClick={handleToggle}
-                >
-                    <ListItemIcon sx={{ minWidth: 32 }}>
-                        <Checkbox
-                            edge="start"
-                            checked={item.status}
-                            tabIndex={-1}
-                            disableRipple
-                            size="small"
-                            sx={{
-                                color: item.status
-                                    ? "success.main"
-                                    : "text.secondary",
-                                "&.Mui-checked": {
-                                    color: "success.main",
-                                },
-                            }}
-                        />
-                    </ListItemIcon>
-
-                    <ListItemText
-                        primary={
-                            <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 500 }}
-                            >
-                                {item.text}
-                            </Typography>
-                        }
-                        secondary={
-                            item.quantity && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        color: item.status
-                                            ? "text.disabled"
-                                            : "text.secondary",
-                                        textDecoration: item.status
-                                            ? "line-through"
-                                            : "none",
-                                    }}
-                                >
-                                    {item.quantity}
-                                </Typography>
-                            )
-                        }
-                    />
-                </ListItemButton>
-
-                {/* Actions Menu */}
-                <Box sx={{ pr: 0.5 }}>
-                    <IconButton
-                        size="small"
-                        onClick={handleMenuOpen}
+                    }),
+                }}
+            >
+                <ListItem sx={{ px: 0, py: 0 }} disablePadding>
+                    {/* Main Content */}
+                    <ListItemButton
                         sx={{
-                            color: "text.secondary",
-                            "&:hover": { color: "text.primary" },
-                            p: 0.5, // Reduced padding for smaller touch target
+                            flex: 1,
+                            py: 0.75, // Reduced vertical padding for denser layout
+                            px: 0.75, // Reduced horizontal padding
+                            "&:hover": { bgcolor: "transparent" },
                         }}
+                        onClick={handleToggle}
                     >
-                        <MoreVert />
-                    </IconButton>
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                            <Checkbox
+                                edge="start"
+                                checked={item.status}
+                                tabIndex={-1}
+                                disableRipple
+                                size="small"
+                                sx={{
+                                    color: item.status
+                                        ? "success.main"
+                                        : "text.secondary",
+                                    "&.Mui-checked": {
+                                        color: "success.main",
+                                    },
+                                }}
+                            />
+                        </ListItemIcon>
 
-                    <Menu
-                        anchorEl={menuAnchor}
-                        open={Boolean(menuAnchor)}
-                        onClose={handleMenuClose}
-                        anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "right",
-                        }}
-                        transformOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                        }}
-                    >
-                        <MenuItem onClick={handleEdit}>
-                            <Edit fontSize="small" sx={{ mr: 1 }} />
-                            Edit
-                        </MenuItem>
-                        <MenuItem
-                            onClick={handleDelete}
-                            sx={{ color: "error.main" }}
+                        <ListItemText
+                            primary={
+                                <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 500 }}
+                                >
+                                    {item.text}
+                                </Typography>
+                            }
+                            secondary={
+                                item.quantity && (
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: item.status
+                                                ? "text.disabled"
+                                                : "text.secondary",
+                                            textDecoration: item.status
+                                                ? "line-through"
+                                                : "none",
+                                        }}
+                                    >
+                                        {item.quantity}
+                                    </Typography>
+                                )
+                            }
+                        />
+                    </ListItemButton>
+
+                    {/* Actions Menu */}
+                    <Box sx={{ pr: 0.5 }}>
+                        <IconButton
+                            size="small"
+                            onClick={handleMenuOpen}
+                            sx={{
+                                color: "text.secondary",
+                                "&:hover": { color: "text.primary" },
+                                p: 0.5, // Reduced padding for smaller touch target
+                            }}
                         >
-                            <Delete fontSize="small" sx={{ mr: 1 }} />
-                            Delete
-                        </MenuItem>
-                    </Menu>
-                </Box>
-            </ListItem>
-        </SortableItem>
-    );
-};
+                            <MoreVert />
+                        </IconButton>
+
+                        <Menu
+                            anchorEl={menuAnchor}
+                            open={Boolean(menuAnchor)}
+                            onClose={handleMenuClose}
+                            anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "right",
+                            }}
+                            transformOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                            }}
+                        >
+                            <MenuItem onClick={handleEdit}>
+                                <Edit fontSize="small" sx={{ mr: 1 }} />
+                                Edit
+                            </MenuItem>
+                            <MenuItem
+                                onClick={handleDelete}
+                                sx={{ color: "error.main" }}
+                            >
+                                <Delete fontSize="small" sx={{ mr: 1 }} />
+                                Delete
+                            </MenuItem>
+                        </Menu>
+                    </Box>
+                </ListItem>
+            </SortableItem>
+        );
+    },
+);
+
+// Add display name for debugging
+SortableListItem.displayName = "SortableListItem";
