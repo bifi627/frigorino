@@ -184,7 +184,7 @@ namespace Frigorino.Application.Services
 
             // Find user by email
             var targetUser = await _dbContext.Users
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive);
+                .FirstOrDefaultAsync(u => u.Email != null && u.Email.ToLower() == email && u.IsActive);
 
             if (targetUser == null)
             {

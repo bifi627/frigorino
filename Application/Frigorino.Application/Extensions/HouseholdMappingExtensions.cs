@@ -49,7 +49,7 @@ namespace Frigorino.Application.Extensions
             {
                 ExternalId = user.ExternalId,
                 Name = user.Name,
-                Email = user.Email
+                Email = user.Email ?? ""
             };
         }
 

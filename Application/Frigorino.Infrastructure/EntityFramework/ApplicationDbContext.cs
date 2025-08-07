@@ -16,6 +16,8 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<UserHousehold> UserHouseholds { get; set; }
         public DbSet<List> Lists { get; set; }
         public DbSet<ListItem> ListItems { get; set; }
+        public DbSet<Inventory> Inventories { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -47,13 +49,13 @@ namespace Frigorino.Infrastructure.EntityFramework
                         user.CreatedAt = now;
                         user.LastLoginAt = now;
                     }
-                    
+
                     if (entry.Entity is Household household && household.CreatedAt == default)
                     {
                         household.CreatedAt = now;
                         household.UpdatedAt = now;
                     }
-                    
+
                     if (entry.Entity is UserHousehold userHousehold && userHousehold.JoinedAt == default)
                     {
                         userHousehold.JoinedAt = now;
@@ -70,6 +72,18 @@ namespace Frigorino.Infrastructure.EntityFramework
                         listItem.CreatedAt = now;
                         listItem.UpdatedAt = now;
                     }
+
+                    if (entry.Entity is Inventory inventory && inventory.CreatedAt == default)
+                    {
+                        inventory.CreatedAt = now;
+                        inventory.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is InventoryItem inventoryItem && inventoryItem.CreatedAt == default)
+                    {
+                        inventoryItem.CreatedAt = now;
+                        inventoryItem.UpdatedAt = now;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
@@ -77,7 +91,7 @@ namespace Frigorino.Infrastructure.EntityFramework
                     {
                         household.UpdatedAt = now;
                     }
-                    
+
                     if (entry.Entity is List list)
                     {
                         list.UpdatedAt = now;
@@ -86,6 +100,16 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is ListItem listItem)
                     {
                         listItem.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is Inventory inventory)
+                    {
+                        inventory.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is InventoryItem inventoryItem)
+                    {
+                        inventoryItem.UpdatedAt = now;
                     }
                 }
             }
