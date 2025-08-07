@@ -16,6 +16,6 @@ namespace Frigorino.Domain.Interfaces
         Task<ListItemDto?> ToggleItemStatusAsync(int itemId, string userId);
 
         // Utility operations
-        Task<bool> RecalculateFullSortOrder(int listId, string userId);
+        Task<bool> RecalculateFullSortOrder(int listId, string userId, bool isBackgroundJob = false);
     }
 }

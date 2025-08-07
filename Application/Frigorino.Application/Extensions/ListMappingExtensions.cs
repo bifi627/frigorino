@@ -16,8 +16,8 @@ namespace Frigorino.Application.Extensions
                 CreatedAt = list.CreatedAt,
                 UpdatedAt = list.UpdatedAt,
                 CreatedByUser = list.CreatedByUser.ToDto(),
-                CheckedCount = list.ListItems.Count(li => li.Status),
-                UncheckedCount = list.ListItems.Count(li => !li.Status),
+                CheckedCount = list.ListItems.Where(li => li.IsActive).Count(li => li.Status),
+                UncheckedCount = list.ListItems.Where(li => li.IsActive).Count(li => !li.Status),
 
             };
         }

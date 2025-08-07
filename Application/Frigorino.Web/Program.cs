@@ -18,6 +18,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddEntityFramework(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddFirebaseAuth(builder.Configuration);
+builder.Services.AddMaintenanceServices();
 
 builder.Services.AddHttpContextAccessor();
 

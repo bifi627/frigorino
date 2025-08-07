@@ -208,10 +208,13 @@ namespace Frigorino.Application.Services
             return item.ToDto();
         }
 
-        public async Task<bool> RecalculateFullSortOrder(int listId, string userId)
+        public async Task<bool> RecalculateFullSortOrder(int listId, string userId, bool isBackgroundJob = false)
         {
             // Validate user access
-            await ValidateListAccessAsync(listId, userId);
+            if (!isBackgroundJob)
+            {
+                await ValidateListAccessAsync(listId, userId);
+            }
 
             var items = await _dbContext.ListItems
                 .Where(li => li.ListId == listId && li.IsActive)
