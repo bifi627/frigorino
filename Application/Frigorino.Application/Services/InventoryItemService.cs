@@ -1,6 +1,5 @@
 using Frigorino.Application.Extensions;
 using Frigorino.Domain.DTOs;
-using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
@@ -97,16 +96,14 @@ namespace Frigorino.Application.Services
             }
 
             var inventoryItem = request.ToEntity(inventoryId, userId);
-            
+
             // Calculate sort order using the SortOrderCalculator utility
             var lastSortOrder = await _dbContext.InventoryItems
                 .Where(ii => ii.InventoryId == inventoryId && ii.IsActive)
-                .Select(ii => ii.SortOrder)
-                .DefaultIfEmpty(0)
-                .MaxAsync();
-            
-            inventoryItem.SortOrder = lastSortOrder + 1000;
-            
+                .Select(ii => ii.SortOrder).ToListAsync();
+
+            inventoryItem.SortOrder = lastSortOrder.DefaultIfEmpty(0).Max() + 1000;
+
             _dbContext.InventoryItems.Add(inventoryItem);
             await _dbContext.SaveChangesAsync();
 

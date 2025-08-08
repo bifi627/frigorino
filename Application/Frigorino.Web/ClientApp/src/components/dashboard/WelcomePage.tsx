@@ -25,6 +25,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { useHouseholdInventories } from "../../hooks/useInventoryQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
 import { HeroImage } from "../common/HeroImage";
 import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
@@ -74,6 +75,11 @@ export const WelcomePage = () => {
         currentHousehold?.householdId || 0,
         !!currentHousehold?.householdId,
     );
+    const { data: inventories = [], isLoading: inventoriesLoading } =
+        useHouseholdInventories(
+            currentHousehold?.householdId || 0,
+            !!currentHousehold?.householdId,
+        );
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
@@ -94,8 +100,7 @@ export const WelcomePage = () => {
                 navigate({ to: "/lists/create" });
                 break;
             case "inventar":
-                // TODO: Implement inventory add functionality
-                window.console.log("Add new item to inventory");
+                navigate({ to: "/inventories/create" });
                 break;
             case "rezepte":
                 // TODO: Implement recipe add functionality
@@ -136,19 +141,26 @@ export const WelcomePage = () => {
             label: "Inventar",
             icon: <TimerOutlined />,
             color: "#FF9800",
-            items: [
-                { name: "Kühlschrank", count: "23 Artikel", status: "Aktuell" },
-                {
-                    name: "Gefrierschrank",
-                    count: "15 Artikel",
-                    status: "Aktuell",
-                },
-                {
-                    name: "Vorratsschrank",
-                    count: "34 Artikel",
-                    status: "Zu prüfen",
-                },
-            ],
+            items: inventoriesLoading
+                ? [{ name: "Loading...", count: "", status: "Loading" }]
+                : inventories.length > 0
+                  ? inventories.map((inventory) => ({
+                        name: inventory.name || "Unnamed Inventory",
+                        count: `${inventory.totalItems || 0} Items`,
+                        status:
+                            inventory.expiringItems &&
+                            inventory.expiringItems > 0
+                                ? `${inventory.expiringItems} expiring`
+                                : "Current",
+                        id: inventory.id,
+                    }))
+                  : [
+                        {
+                            name: "No inventories yet",
+                            count: "",
+                            status: "Create your first inventory!",
+                        },
+                    ],
         },
         {
             id: "rezepte",
@@ -157,15 +169,9 @@ export const WelcomePage = () => {
             color: "#4CAF50",
             items: [
                 {
-                    name: "Pasta Bolognese",
-                    count: "4 Portionen",
-                    status: "Favorit",
-                },
-                { name: "Gemüsecurry", count: "6 Portionen", status: "Neu" },
-                {
-                    name: "Apfelkuchen",
-                    count: "8 Portionen",
-                    status: "Klassiker",
+                    name: "Coming soon...",
+                    count: "",
+                    status: "Recipe management will be added later",
                 },
             ],
         },
@@ -237,7 +243,8 @@ export const WelcomePage = () => {
                 {collections.map((collection) => {
                     const isExpanded =
                         expandedSections.includes(collection.id) &&
-                        collection.id === "einkaufslisten";
+                        (collection.id === "einkaufslisten" ||
+                            collection.id === "inventar");
                     return (
                         <Card
                             key={collection.id}
@@ -330,6 +337,12 @@ export const WelcomePage = () => {
                                                     "einkaufslisten"
                                                 ) {
                                                     navigate({ to: "/lists" });
+                                                } else if (
+                                                    collection.id === "inventar"
+                                                ) {
+                                                    navigate({
+                                                        to: "/inventories",
+                                                    });
                                                 }
                                             }}
                                             sx={{
@@ -355,9 +368,11 @@ export const WelcomePage = () => {
                                     <List sx={{ mt: 2, pt: 0 }}>
                                         {collection.items.map((item, index) => {
                                             const isClickable =
-                                                collection.id ===
+                                                (collection.id ===
                                                     "einkaufslisten" &&
-                                                (item as any).id;
+                                                    (item as any).id) ||
+                                                (collection.id === "inventar" &&
+                                                    (item as any).id);
                                             return (
                                                 <ListItem
                                                     key={index}
@@ -375,15 +390,34 @@ export const WelcomePage = () => {
                                                     }}
                                                     onClick={
                                                         isClickable
-                                                            ? () =>
-                                                                  navigate({
-                                                                      to: "/lists/$listId/view",
-                                                                      params: {
-                                                                          listId: (
-                                                                              item as any
-                                                                          ).id.toString(),
-                                                                      },
-                                                                  })
+                                                            ? () => {
+                                                                  if (
+                                                                      collection.id ===
+                                                                      "einkaufslisten"
+                                                                  ) {
+                                                                      navigate({
+                                                                          to: "/lists/$listId/view",
+                                                                          params: {
+                                                                              listId: (
+                                                                                  item as any
+                                                                              ).id.toString(),
+                                                                          },
+                                                                      });
+                                                                  } else if (
+                                                                      collection.id ===
+                                                                      "inventar"
+                                                                  ) {
+                                                                      navigate({
+                                                                          to: "/inventories/$inventoryId/view",
+                                                                          params: {
+                                                                              inventoryId:
+                                                                                  (
+                                                                                      item as any
+                                                                                  ).id.toString(),
+                                                                          },
+                                                                      });
+                                                                  }
+                                                              }
                                                             : undefined
                                                     }
                                                 >

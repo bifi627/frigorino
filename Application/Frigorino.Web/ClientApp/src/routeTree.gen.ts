@@ -13,12 +13,16 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ListsIndexRouteImport } from './routes/lists/index'
+import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
 import { Route as ListsCreateRouteImport } from './routes/lists/create'
+import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
 import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
 import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
+import { Route as InventoriesInventoryIdViewRouteImport } from './routes/inventories/$inventoryId/view'
+import { Route as InventoriesInventoryIdEditRouteImport } from './routes/inventories/$inventoryId/edit'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -39,9 +43,19 @@ const ListsIndexRoute = ListsIndexRouteImport.update({
   path: '/lists/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoriesIndexRoute = InventoriesIndexRouteImport.update({
+  id: '/inventories/',
+  path: '/inventories/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListsCreateRoute = ListsCreateRouteImport.update({
   id: '/lists/create',
   path: '/lists/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoriesCreateRoute = InventoriesCreateRouteImport.update({
+  id: '/inventories/create',
+  path: '/inventories/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseholdManageRoute = HouseholdManageRouteImport.update({
@@ -69,6 +83,18 @@ const ListsListIdEditRoute = ListsListIdEditRouteImport.update({
   path: '/lists/$listId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoriesInventoryIdViewRoute =
+  InventoriesInventoryIdViewRouteImport.update({
+    id: '/inventories/$inventoryId/view',
+    path: '/inventories/$inventoryId/view',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InventoriesInventoryIdEditRoute =
+  InventoriesInventoryIdEditRouteImport.update({
+    id: '/inventories/$inventoryId/edit',
+    path: '/inventories/$inventoryId/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -76,8 +102,12 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
+  '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
+  '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
 }
@@ -87,8 +117,12 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
+  '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
+  '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
 }
@@ -100,8 +134,12 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
+  '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
+  '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
 }
@@ -113,8 +151,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/create'
     | '/lists/create'
+    | '/inventories'
     | '/lists'
+    | '/inventories/$inventoryId/edit'
+    | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
   fileRoutesByTo: FileRoutesByTo
@@ -124,8 +166,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/create'
     | '/lists/create'
+    | '/inventories'
     | '/lists'
+    | '/inventories/$inventoryId/edit'
+    | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
   id:
@@ -136,8 +182,12 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/create'
     | '/lists/create'
+    | '/inventories/'
     | '/lists/'
+    | '/inventories/$inventoryId/edit'
+    | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
   fileRoutesById: FileRoutesById
@@ -149,8 +199,12 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
   HouseholdManageRoute: typeof HouseholdManageRoute
+  InventoriesCreateRoute: typeof InventoriesCreateRoute
   ListsCreateRoute: typeof ListsCreateRoute
+  InventoriesIndexRoute: typeof InventoriesIndexRoute
   ListsIndexRoute: typeof ListsIndexRoute
+  InventoriesInventoryIdEditRoute: typeof InventoriesInventoryIdEditRoute
+  InventoriesInventoryIdViewRoute: typeof InventoriesInventoryIdViewRoute
   ListsListIdEditRoute: typeof ListsListIdEditRoute
   ListsListIdViewRoute: typeof ListsListIdViewRoute
 }
@@ -185,11 +239,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventories/': {
+      id: '/inventories/'
+      path: '/inventories'
+      fullPath: '/inventories'
+      preLoaderRoute: typeof InventoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lists/create': {
       id: '/lists/create'
       path: '/lists/create'
       fullPath: '/lists/create'
       preLoaderRoute: typeof ListsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/create': {
+      id: '/inventories/create'
+      path: '/inventories/create'
+      fullPath: '/inventories/create'
+      preLoaderRoute: typeof InventoriesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/household/manage': {
@@ -227,6 +295,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListsListIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventories/$inventoryId/view': {
+      id: '/inventories/$inventoryId/view'
+      path: '/inventories/$inventoryId/view'
+      fullPath: '/inventories/$inventoryId/view'
+      preLoaderRoute: typeof InventoriesInventoryIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/$inventoryId/edit': {
+      id: '/inventories/$inventoryId/edit'
+      path: '/inventories/$inventoryId/edit'
+      fullPath: '/inventories/$inventoryId/edit'
+      preLoaderRoute: typeof InventoriesInventoryIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -237,8 +319,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
   HouseholdManageRoute: HouseholdManageRoute,
+  InventoriesCreateRoute: InventoriesCreateRoute,
   ListsCreateRoute: ListsCreateRoute,
+  InventoriesIndexRoute: InventoriesIndexRoute,
   ListsIndexRoute: ListsIndexRoute,
+  InventoriesInventoryIdEditRoute: InventoriesInventoryIdEditRoute,
+  InventoriesInventoryIdViewRoute: InventoriesInventoryIdViewRoute,
   ListsListIdEditRoute: ListsListIdEditRoute,
   ListsListIdViewRoute: ListsListIdViewRoute,
 }
