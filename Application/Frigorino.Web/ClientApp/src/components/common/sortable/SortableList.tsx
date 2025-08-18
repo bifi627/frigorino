@@ -1,3 +1,4 @@
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
     DndContext,
     DragOverlay,
@@ -6,18 +7,17 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import {
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Box } from "@mui/material";
-import { useState } from "react";
+import { Box, type SxProps } from "@mui/material";
 import type { ReactNode } from "react";
+import { useState } from "react";
 
 export interface SortableItem {
     id?: number | string | null;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface SortableSection<T extends SortableItem> {
@@ -33,13 +33,13 @@ export interface SortableListProps<T extends SortableItem> {
         activeItem: T,
         overItem: T,
         activeSection: string,
-        overSection: string
+        overSection: string,
     ) => void;
     allowCrossSectionDrag?: boolean;
     renderSectionHeader?: (section: SortableSection<T>) => ReactNode;
     renderActiveOverlay?: (item: T) => ReactNode;
-    containerSx?: any;
-    sectionSx?: any;
+    containerSx?: SxProps;
+    sectionSx?: SxProps;
 }
 
 export function SortableList<T extends SortableItem>({
@@ -74,7 +74,11 @@ export function SortableList<T extends SortableItem>({
     // Find which section an item belongs to
     const findItemSection = (itemId: string | number) => {
         for (const section of sections) {
-            if (section.items.find((item) => (item.id ?? "0").toString() === itemId.toString())) {
+            if (
+                section.items.find(
+                    (item) => (item.id ?? "0").toString() === itemId.toString(),
+                )
+            ) {
                 return section.id;
             }
         }
@@ -83,7 +87,9 @@ export function SortableList<T extends SortableItem>({
 
     const handleDragStart = (event: DragStartEvent) => {
         const { active } = event;
-        const item = allItems.find((item) => (item.id ?? "0").toString() === active.id);
+        const item = allItems.find(
+            (item) => (item.id ?? "0").toString() === active.id,
+        );
         setActiveItem(item || null);
     };
 
@@ -126,9 +132,13 @@ export function SortableList<T extends SortableItem>({
                 >
                     {sections.map((section) => (
                         <Box key={section.id} sx={sectionSx}>
-                            {renderSectionHeader && renderSectionHeader(section)}
+                            {renderSectionHeader &&
+                                renderSectionHeader(section)}
                             {section.items.map((item) =>
-                                section.renderItem(item, activeItem?.id === item.id)
+                                section.renderItem(
+                                    item,
+                                    activeItem?.id === item.id,
+                                ),
                             )}
                         </Box>
                     ))}
@@ -142,7 +152,8 @@ export function SortableList<T extends SortableItem>({
                                 : sections
                                       .find((section) =>
                                           section.items.some(
-                                              (item) => item.id === activeItem.id,
+                                              (item) =>
+                                                  item.id === activeItem.id,
                                           ),
                                       )
                                       ?.renderItem(activeItem, true)}

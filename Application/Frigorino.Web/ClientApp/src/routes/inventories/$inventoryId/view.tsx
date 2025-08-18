@@ -8,21 +8,9 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
-import { AddItemInput } from "../../../components/shared/AddItemInput";
-import { SortableItemList } from "../../../components/shared/SortableItemList";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import { useInventory } from "../../../hooks/useInventoryQueries";
-import {
-    useCreateInventoryItem,
-    useDeleteInventoryItem,
-    useInventoryItems,
-    useUpdateInventoryItem,
-    type CreateInventoryItemRequest,
-    type InventoryItemDto,
-    type UpdateInventoryItemRequest,
-} from "../../../hooks/useInventoryItemQueries";
 
 export const Route = createFileRoute("/inventories/$inventoryId/view")({
     beforeLoad: requireAuth,
@@ -34,7 +22,9 @@ function RouteComponent() {
     const { inventoryId } = Route.useParams();
     const inventoryIdNum = parseInt(inventoryId, 10);
 
-    const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(null);
+    // const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
+    //     null,
+    // );
 
     const { data: currentHousehold } = useCurrentHousehold();
     const {
@@ -48,15 +38,15 @@ function RouteComponent() {
     );
 
     // Inventory items queries and mutations
-    const {
-        data: items = [],
-        isLoading: itemsLoading,
-        error: itemsError,
-    } = useInventoryItems(inventoryIdNum, !!inventory);
+    // const {
+    //     data: items = [],
+    //     isLoading: itemsLoading,
+    //     error: itemsError,
+    // } = useInventoryItems(inventoryIdNum, !!inventory);
 
-    const createMutation = useCreateInventoryItem();
-    const updateMutation = useUpdateInventoryItem();
-    const deleteMutation = useDeleteInventoryItem();
+    // const createMutation = useCreateInventoryItem();
+    // const updateMutation = useUpdateInventoryItem();
+    // const deleteMutation = useDeleteInventoryItem();
 
     const handleBack = () => {
         router.history.back();
@@ -66,44 +56,44 @@ function RouteComponent() {
         router.navigate({ to: `/inventories/${inventoryId}/edit` });
     };
 
-    const handleEditItem = useCallback((item: InventoryItemDto) => {
-        setEditingItem(item);
-    }, []);
+    // const handleEditItem = useCallback((item: InventoryItemDto) => {
+    //     setEditingItem(item);
+    // }, []);
 
-    const handleCancelEdit = useCallback(() => {
-        setEditingItem(null);
-    }, []);
+    // const handleCancelEdit = useCallback(() => {
+    //     setEditingItem(null);
+    // }, []);
 
-    const handleAddItem = useCallback(
-        (data: CreateInventoryItemRequest) => {
-            createMutation.mutate({
-                inventoryId: inventoryIdNum,
-                data,
-            });
-        },
-        [createMutation, inventoryIdNum],
-    );
+    // const handleAddItem = useCallback(
+    //     (data: CreateInventoryItemRequest) => {
+    //         createMutation.mutate({
+    //             inventoryId: inventoryIdNum,
+    //             data,
+    //         });
+    //     },
+    //     [createMutation, inventoryIdNum],
+    // );
 
-    const handleUpdateItem = useCallback(
-        (data: UpdateInventoryItemRequest) => {
-            if (editingItem?.id) {
-                updateMutation.mutate({
-                    inventoryId: inventoryIdNum,
-                    itemId: editingItem.id,
-                    data,
-                });
-                setEditingItem(null);
-            }
-        },
-        [editingItem?.id, updateMutation, inventoryIdNum],
-    );
+    // const handleUpdateItem = useCallback(
+    //     (data: UpdateInventoryItemRequest) => {
+    //         if (editingItem?.id) {
+    //             updateMutation.mutate({
+    //                 inventoryId: inventoryIdNum,
+    //                 itemId: editingItem.id,
+    //                 data,
+    //             });
+    //             setEditingItem(null);
+    //         }
+    //     },
+    //     [editingItem?.id, updateMutation, inventoryIdNum],
+    // );
 
-    const handleDeleteItem = useCallback(
-        (itemId: number) => {
-            deleteMutation.mutate({ inventoryId: inventoryIdNum, itemId });
-        },
-        [deleteMutation, inventoryIdNum],
-    );
+    // const handleDeleteItem = useCallback(
+    //     (itemId: number) => {
+    //         deleteMutation.mutate({ inventoryId: inventoryIdNum, itemId });
+    //     },
+    //     [deleteMutation, inventoryIdNum],
+    // );
 
     if (!currentHousehold?.householdId) {
         return (
@@ -174,37 +164,6 @@ function RouteComponent() {
                     </IconButton>
                 </Box>
             </Box>
-
-            {/* Sortable Inventory Items List */}
-            <SortableItemList
-                items={items}
-                isLoading={itemsLoading}
-                error={itemsError}
-                editingItem={editingItem}
-                onEdit={handleEditItem}
-                onDelete={handleDeleteItem}
-                showStatus={false} // Inventory items don't have checked/unchecked status
-                emptyStateTitle="Inventory is empty"
-                emptyStateDescription="Add your first item to get started!"
-                loadingText="Loading inventory items..."
-            />
-
-            {/* Add Item Input */}
-            <AddItemInput
-                onAdd={handleAddItem}
-                onUpdate={handleUpdateItem}
-                onCancelEdit={handleCancelEdit}
-                editingItem={editingItem}
-                existingItems={items}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-                hasItems={items.length > 0}
-                placeholder="Add inventory item..."
-                editingPlaceholder="Edit inventory item..."
-                showQuantity={true}
-                showDatePicker={true}
-                dateLabel="Expiry Date"
-                quantityLabel="Quantity"
-            />
         </Container>
     );
 }

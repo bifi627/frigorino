@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
  * Custom hook for throttling function calls
  * Useful for performance-critical operations like drag handlers
  */
-export const useThrottle = <T extends (...args: any[]) => any>(
+export const useThrottle = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number,
 ): T => {
@@ -39,7 +39,7 @@ export const useThrottle = <T extends (...args: any[]) => any>(
  * Custom hook for debouncing function calls
  * Useful for search inputs or expensive operations
  */
-export const useDebounce = <T extends (...args: any[]) => any>(
+export const useDebounce = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number,
 ): T => {

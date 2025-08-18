@@ -1,12 +1,12 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DragIndicator } from "@mui/icons-material";
-import { Box } from "@mui/material";
+import { Box, type SxProps } from "@mui/material";
 import type { ReactNode } from "react";
 
 export interface SortableItemData {
     id?: number | string | null;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export interface SortableItemProps<T extends SortableItemData> {
@@ -14,8 +14,8 @@ export interface SortableItemProps<T extends SortableItemData> {
     children: ReactNode;
     dragHandle?: "left" | "right" | "custom" | "none";
     renderDragHandle?: () => ReactNode;
-    containerSx?: any;
-    dragHandleSx?: any;
+    containerSx?: SxProps;
+    dragHandleSx?: SxProps;
     isDragging?: boolean;
     disabled?: boolean;
 }
@@ -74,14 +74,16 @@ export function SortableItem<T extends SortableItemData>({
                 color: disabled ? "text.disabled" : "text.secondary",
                 bgcolor: "transparent",
                 borderRadius: 1,
-                "&:hover": !disabled && {
-                    bgcolor: "action.hover",
-                    color: "text.primary",
-                },
-                "&:active": !disabled && {
-                    cursor: "grabbing",
-                    bgcolor: "action.selected",
-                },
+                ...(!disabled && {
+                    "&:hover": {
+                        bgcolor: "action.hover",
+                        color: "text.primary",
+                    },
+                    "&:active": {
+                        cursor: "grabbing",
+                        bgcolor: "action.selected",
+                    },
+                }),
                 touchAction: "none",
                 userSelect: "none",
                 WebkitTouchCallout: "none",

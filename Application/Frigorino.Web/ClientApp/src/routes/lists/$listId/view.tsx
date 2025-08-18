@@ -14,11 +14,21 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
+import { AddItemInput } from "../../../components/list/AddItemInput";
 import { SortableList } from "../../../components/list/SortableList";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
-import { useCompactListItems } from "../../../hooks/useListItemQueries";
+import {
+    useCompactListItems,
+    useCreateListItem,
+    useListItems,
+    useToggleListItemStatus,
+    useUpdateListItem,
+    type CreateListItemRequest,
+    type ListItemDto,
+    type UpdateListItemRequest,
+} from "../../../hooks/useListItemQueries";
 import { useList } from "../../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/$listId/view")({
@@ -32,6 +42,10 @@ function RouteComponent() {
     const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [lastItemCount, setLastItemCount] = useState(0);
+    const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
 
     // Get current household and list data
     const { data: currentHousehold } = useCurrentHousehold();
@@ -45,8 +59,45 @@ function RouteComponent() {
         !!currentHousehold?.householdId,
     );
 
-    // Compaction mutation
+    // Get list items for AddItemInput
+    const { data: items = [] } = useListItems(
+        currentHousehold?.householdId || 0,
+        parseInt(listId),
+    );
+
+    // Mutations for AddItemInput
+    const createMutation = useCreateListItem();
+    const updateMutation = useUpdateListItem();
+    const toggleMutation = useToggleListItemStatus();
     const compactListItems = useCompactListItems();
+
+    // Effect to scroll to top when new items are added
+    useEffect(() => {
+        if (shouldScrollToTop && items.length > lastItemCount) {
+            // Use multiple strategies to ensure scroll works
+            const scrollToTop = () => {
+                if (scrollContainerRef.current) {
+                    // Strategy 1: Try to find the first list item and scroll to it
+                    const firstListItem =
+                        scrollContainerRef.current.querySelector(
+                            '[data-section="unchecked-items"]',
+                        );
+                    if (firstListItem) {
+                        firstListItem.scrollIntoView({
+                            behavior: "smooth",
+                            block: "end",
+                        });
+                    }
+
+                    setShouldScrollToTop(false);
+                }
+            };
+
+            // Try immediately and also with a delay
+            scrollToTop();
+        }
+        setLastItemCount(items.length);
+    }, [items.length, lastItemCount, shouldScrollToTop]);
 
     const handleBack = () => {
         router.history.back();
@@ -77,7 +128,7 @@ function RouteComponent() {
             });
             setSnackbarMessage("List order compacted successfully!");
             setSnackbarOpen(true);
-        } catch (error) {
+        } catch {
             setSnackbarMessage(
                 "Failed to compact list order. Please try again.",
             );
@@ -88,6 +139,63 @@ function RouteComponent() {
     const handleSnackbarClose = () => {
         setSnackbarOpen(false);
     };
+
+    // AddItemInput handlers
+    const handleAddItem = useCallback(
+        (data: CreateListItemRequest) => {
+            if (!currentHousehold?.householdId) return;
+            createMutation.mutate(
+                {
+                    householdId: currentHousehold.householdId,
+                    listId: parseInt(listId),
+                    data,
+                },
+                {
+                    onSuccess: () => {
+                        // Trigger scroll to top via the useEffect
+                        setShouldScrollToTop(true);
+                    },
+                },
+            );
+        },
+        [createMutation, currentHousehold?.householdId, listId],
+    );
+
+    const handleUpdateItem = useCallback(
+        (data: UpdateListItemRequest) => {
+            if (editingItem?.id && currentHousehold?.householdId) {
+                updateMutation.mutate({
+                    householdId: currentHousehold.householdId,
+                    listId: parseInt(listId),
+                    itemId: editingItem.id,
+                    data,
+                });
+                setEditingItem(null);
+            }
+        },
+        [
+            editingItem?.id,
+            updateMutation,
+            currentHousehold?.householdId,
+            listId,
+        ],
+    );
+
+    const handleCancelEdit = useCallback(() => {
+        setEditingItem(null);
+    }, []);
+
+    const handleUncheckExisting = useCallback(
+        (itemId: number) => {
+            if (!currentHousehold?.householdId) return;
+            toggleMutation.mutate({
+                householdId: currentHousehold.householdId,
+                listId: parseInt(listId),
+                itemId,
+            });
+        },
+        [toggleMutation, currentHousehold?.householdId, listId],
+    );
 
     if (!currentHousehold?.householdId) {
         return (
@@ -128,60 +236,68 @@ function RouteComponent() {
     }
 
     return (
-        <Container maxWidth="sm" sx={{ py: 3 }}>
-            {/* Header */}
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    mb: 3,
-                }}
-            >
-                <IconButton onClick={handleBack} sx={{ p: 1 }}>
-                    <ArrowBack />
-                </IconButton>
-                <Box sx={{ flex: 1 }}>
-                    <Typography
-                        variant="h5"
-                        component="h1"
-                        sx={{ fontWeight: 600, mb: 0.5 }}
-                    >
-                        {list.name}
-                    </Typography>
-                    {list.description && (
+        <Box
+            sx={{
+                height: "calc(100vh - 56px)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+            }}
+        >
+            {/* Header Section */}
+            <Container maxWidth="sm" sx={{ py: 3, flexShrink: 0 }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                    }}
+                >
+                    <IconButton onClick={handleBack} sx={{ p: 1 }}>
+                        <ArrowBack />
+                    </IconButton>
+                    <Box sx={{ flex: 1 }}>
                         <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.4 }}
+                            variant="h5"
+                            component="h1"
+                            sx={{ fontWeight: 600, mb: 0.5 }}
                         >
-                            {list.description}
+                            {list.name}
                         </Typography>
-                    )}
+                        {list.description && (
+                            <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ lineHeight: 1.4 }}
+                            >
+                                {list.description}
+                            </Typography>
+                        )}
+                    </Box>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                        <IconButton
+                            onClick={handleEdit}
+                            sx={{
+                                bgcolor: "primary.main",
+                                color: "white",
+                                "&:hover": { bgcolor: "primary.dark" },
+                            }}
+                        >
+                            <Edit />
+                        </IconButton>
+                        <IconButton
+                            onClick={handleMenuOpen}
+                            sx={{
+                                bgcolor: "grey.100",
+                                color: "grey.700",
+                                "&:hover": { bgcolor: "grey.200" },
+                            }}
+                        >
+                            <MoreVert />
+                        </IconButton>
+                    </Box>
                 </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                    <IconButton
-                        onClick={handleEdit}
-                        sx={{
-                            bgcolor: "primary.main",
-                            color: "white",
-                            "&:hover": { bgcolor: "primary.dark" },
-                        }}
-                    >
-                        <Edit />
-                    </IconButton>
-                    <IconButton
-                        onClick={handleMenuOpen}
-                        sx={{
-                            bgcolor: "grey.100",
-                            color: "grey.700",
-                            "&:hover": { bgcolor: "grey.200" },
-                        }}
-                    >
-                        <MoreVert />
-                    </IconButton>
-                </Box>
-            </Box>
+            </Container>
 
             {/* Menu */}
             <Menu
@@ -211,6 +327,41 @@ function RouteComponent() {
                 </MenuItem>
             </Menu>
 
+            {/* Scrollable Content Section */}
+            <Container
+                ref={scrollContainerRef}
+                maxWidth="sm"
+                sx={{
+                    flex: 1,
+                    overflow: "auto",
+                    px: 3,
+                    py: 0,
+                }}
+            >
+                <SortableList
+                    householdId={currentHousehold.householdId}
+                    listId={parseInt(listId)}
+                    editingItem={editingItem}
+                    onEdit={setEditingItem}
+                />
+            </Container>
+
+            {/* Footer Section - AddItemInput */}
+            <Container maxWidth="sm" sx={{ flexShrink: 0, p: 2 }}>
+                <AddItemInput
+                    onAdd={handleAddItem}
+                    onUpdate={handleUpdateItem}
+                    onCancelEdit={handleCancelEdit}
+                    onUncheckExisting={handleUncheckExisting}
+                    editingItem={editingItem}
+                    existingItems={items}
+                    isLoading={
+                        createMutation.isPending || updateMutation.isPending
+                    }
+                    hasItems={items.length > 0}
+                />
+            </Container>
+
             {/* Snackbar for feedback */}
             <Snackbar
                 open={snackbarOpen}
@@ -219,12 +370,6 @@ function RouteComponent() {
                 message={snackbarMessage}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             />
-
-            {/* Sortable List Items */}
-            <SortableList
-                householdId={currentHousehold.householdId}
-                listId={parseInt(listId)}
-            />
-        </Container>
+        </Box>
     );
 }

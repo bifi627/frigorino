@@ -1,11 +1,15 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { QueryClient, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 
 // Shared debouncer for all query invalidations
 class QueryInvalidationDebouncer {
     private timeouts = new Map<string, NodeJS.Timeout>();
 
-    debounce(queryClient: any, queryKey: readonly unknown[], delay = 500) {
+    debounce(
+        queryClient: QueryClient,
+        queryKey: readonly unknown[],
+        delay = 500,
+    ) {
         const keyString = JSON.stringify(queryKey);
 
         // Clear existing timeout for this query key

@@ -2,12 +2,13 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
-import { globalIgnores } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config([
-    globalIgnores(["dist"]),
+    {
+        ignores: ["dev-dist/**", "dist/**", "src/lib/api/**"],
+    },
     {
         files: ["**/*.{ts,tsx}"],
         extends: [

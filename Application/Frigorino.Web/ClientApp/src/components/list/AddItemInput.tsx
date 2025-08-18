@@ -157,17 +157,6 @@ export const AddItemInput = memo(
         const focusInput = useCallback(() => {
             if (inputRef.current && !isLoading) {
                 inputRef.current.focus();
-                inputRef.current.scrollTop = 0;
-
-                // Scroll the input into view on mobile to handle virtual keyboard
-                if (window.innerWidth <= 600) {
-                    setTimeout(() => {
-                        inputRef.current?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                        });
-                    }, 300); // Delay to allow keyboard to appear
-                }
             }
         }, [isLoading]);
 
@@ -292,44 +281,14 @@ export const AddItemInput = memo(
                 elevation={3}
                 onClick={handleContainerClick}
                 sx={{
-                    position: "fixed",
-                    bottom: 8, // Reduced bottom spacing
-                    left: "50%",
-                    // transform: hasItems
-                    //     ? "translateX(-50%)"
-                    //     : "translate(-50%, 50%)",
-                    // width: "calc(100% - 32px)",
-                    // maxWidth: "600px",
-                    p: 0.75, // Reduced padding
-                    zIndex: 1000,
+                    width: "100%",
+                    p: 2,
                     bgcolor: "background.paper",
-                    borderRadius: 2, // Slightly smaller border radius
+                    borderRadius: 2,
                     border: "1px solid",
                     borderColor: isEditing ? "warning.main" : "primary.200",
                     cursor: "text",
                     transition: "all 0.3s ease",
-                    // Modern viewport units for mobile keyboard handling
-                    "@supports (height: 100dvh)": {
-                        // Use dynamic viewport height when available (modern browsers)
-                        bottom: 8, // Reduced bottom spacing
-                        transform: "translateX(-50%)",
-                    },
-                    "@supports (height: 100svh)": {
-                        // Use small viewport height for better mobile keyboard support
-                        bottom: "max(8px, env(keyboard-inset-height, 8px))", // Reduced bottom spacing
-                    },
-                    // Mobile-specific adjustments
-                    "@media (max-width: 600px)": {
-                        width: "calc(100vw - 16px)",
-                        left: "8px",
-                        right: "8px",
-                        transform: "none",
-                        // Use safe area insets for devices with notches
-                        paddingLeft: "max(8px, env(safe-area-inset-left))",
-                        paddingRight: "max(8px, env(safe-area-inset-right))",
-                        // Adjust for virtual keyboard
-                        bottom: "max(8px, env(keyboard-inset-height, 8px))", // Reduced bottom spacing
-                    },
                     "&:hover": {
                         borderColor: isEditing
                             ? "warning.dark"

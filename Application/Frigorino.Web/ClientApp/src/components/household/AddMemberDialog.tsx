@@ -13,7 +13,11 @@ import {
     Select,
     TextField,
 } from "@mui/material";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    useMutation,
+    useQueryClient,
+    type DefaultError,
+} from "@tanstack/react-query";
 import React, { useState } from "react";
 import { ClientApi } from "../../common/apiClient";
 import { type AddMemberRequest, type HouseholdRole } from "../../lib/api";
@@ -56,10 +60,8 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             queryClient.invalidateQueries({ queryKey: ["user-households"] });
             handleClose();
         },
-        onError: (error: any) => {
-            setError(
-                error.body?.message || error.message || "Failed to add member",
-            );
+        onError: (error: DefaultError) => {
+            setError(error.message || "Failed to add member");
         },
     });
 

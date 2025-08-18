@@ -118,7 +118,7 @@ export const WelcomePage = () => {
             icon: <KitchenOutlined />,
             color: "#2196F3",
             items: listsLoading
-                ? [{ name: "Loading...", count: "", status: "Loading" }]
+                ? [{ name: "Loading...", count: "", status: "Loading", id: 0 }]
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
@@ -133,6 +133,7 @@ export const WelcomePage = () => {
                             name: "No lists yet",
                             count: "",
                             status: "Create your first list!",
+                            id: 0,
                         },
                     ],
         },
@@ -142,7 +143,7 @@ export const WelcomePage = () => {
             icon: <TimerOutlined />,
             color: "#FF9800",
             items: inventoriesLoading
-                ? [{ name: "Loading...", count: "", status: "Loading" }]
+                ? [{ name: "Loading...", count: "", status: "Loading", id: 0 }]
                 : inventories.length > 0
                   ? inventories.map((inventory) => ({
                         name: inventory.name || "Unnamed Inventory",
@@ -159,6 +160,7 @@ export const WelcomePage = () => {
                             name: "No inventories yet",
                             count: "",
                             status: "Create your first inventory!",
+                            id: 0,
                         },
                     ],
         },
@@ -172,6 +174,7 @@ export const WelcomePage = () => {
                     name: "Coming soon...",
                     count: "",
                     status: "Recipe management will be added later",
+                    id: 0,
                 },
             ],
         },
@@ -370,9 +373,9 @@ export const WelcomePage = () => {
                                             const isClickable =
                                                 (collection.id ===
                                                     "einkaufslisten" &&
-                                                    (item as any).id) ||
+                                                    item.id) ||
                                                 (collection.id === "inventar" &&
-                                                    (item as any).id);
+                                                    item.id);
                                             return (
                                                 <ListItem
                                                     key={index}
@@ -398,9 +401,9 @@ export const WelcomePage = () => {
                                                                       navigate({
                                                                           to: "/lists/$listId/view",
                                                                           params: {
-                                                                              listId: (
-                                                                                  item as any
-                                                                              ).id.toString(),
+                                                                              listId:
+                                                                                  item.id?.toString() ??
+                                                                                  "",
                                                                           },
                                                                       });
                                                                   } else if (
@@ -411,9 +414,8 @@ export const WelcomePage = () => {
                                                                           to: "/inventories/$inventoryId/view",
                                                                           params: {
                                                                               inventoryId:
-                                                                                  (
-                                                                                      item as any
-                                                                                  ).id.toString(),
+                                                                                  item.id?.toString() ??
+                                                                                  "",
                                                                           },
                                                                       });
                                                                   }

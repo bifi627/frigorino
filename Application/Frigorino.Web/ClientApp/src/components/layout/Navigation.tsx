@@ -54,12 +54,10 @@ export const Navigation: React.FC = () => {
                                 size="small"
                                 sx={{ color: "inherit" }}
                                 aria-controls={
-                                    Boolean(anchorEl) ? "user-menu" : undefined
+                                    anchorEl ? "user-menu" : undefined
                                 }
                                 aria-haspopup="true"
-                                aria-expanded={
-                                    Boolean(anchorEl) ? "true" : undefined
-                                }
+                                aria-expanded={anchorEl ? "true" : undefined}
                             >
                                 {user?.photoURL ? (
                                     <Avatar
