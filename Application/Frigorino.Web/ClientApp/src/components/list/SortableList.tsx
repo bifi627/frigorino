@@ -40,12 +40,14 @@ const MemoizedSortableListItem = memo(
         onToggleStatus,
         onEdit,
         onDelete,
+        showDragHandles,
     }: {
         item: ListItemDto;
         isEditing: boolean;
         onToggleStatus: (itemId: number) => void;
         onEdit: (item: ListItemDto) => void;
         onDelete: (itemId: number) => void;
+        showDragHandles?: boolean;
     }) => (
         <SortableListItem
             key={item.id}
@@ -54,6 +56,7 @@ const MemoizedSortableListItem = memo(
             onEdit={onEdit}
             onDelete={onDelete}
             isEditing={isEditing}
+            showDragHandles={showDragHandles}
         />
     ),
 );
@@ -65,6 +68,7 @@ interface SortableListProps {
     listId: number;
     editingItem?: ListItemDto | null;
     onEdit?: (item: ListItemDto) => void;
+    showDragHandles?: boolean;
 }
 
 export const SortableList = ({
@@ -72,6 +76,7 @@ export const SortableList = ({
     listId,
     editingItem: externalEditingItem,
     onEdit,
+    showDragHandles = false,
 }: SortableListProps) => {
     const [activeItem, setActiveItem] = useState<ListItemDto | null>(null);
     const dividerRef = useRef<HTMLHRElement | null>(null);
@@ -259,6 +264,7 @@ export const SortableList = ({
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
+                                    showDragHandles={showDragHandles}
                                 />
                             ))}
                         </List>
@@ -296,6 +302,7 @@ export const SortableList = ({
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
+                                    showDragHandles={showDragHandles}
                                 />
                             ))}
                         </List>
@@ -348,6 +355,7 @@ export const SortableList = ({
                                 onEdit={() => {}}
                                 onDelete={() => {}}
                                 isEditing={false}
+                                showDragHandles={false}
                             />
                         </Paper>
                     ) : null}

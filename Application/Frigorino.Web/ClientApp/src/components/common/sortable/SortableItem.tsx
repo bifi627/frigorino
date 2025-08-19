@@ -30,6 +30,9 @@ export function SortableItem<T extends SortableItemData>({
     isDragging: externalIsDragging,
     disabled = false,
 }: SortableItemProps<T>) {
+    // Disable sortable functionality when dragHandle is "none"
+    const shouldDisableSortable = disabled || dragHandle === "none";
+
     const {
         attributes,
         listeners,
@@ -39,7 +42,7 @@ export function SortableItem<T extends SortableItemData>({
         isDragging: internalIsDragging,
     } = useSortable({
         id: (item.id ?? "0").toString(),
-        disabled,
+        disabled: shouldDisableSortable,
         data: {
             type: "sortable-item",
             item,
@@ -100,7 +103,7 @@ export function SortableItem<T extends SortableItemData>({
         return (
             <Box
                 ref={setNodeRef}
-                style={style}
+                // style={style}
                 sx={{
                     ...containerSx,
                 }}

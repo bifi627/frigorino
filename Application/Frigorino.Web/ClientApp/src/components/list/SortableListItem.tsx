@@ -22,6 +22,7 @@ interface SortableListItemProps {
     onDelete: (itemId: number) => void;
     isDragging?: boolean;
     isEditing?: boolean;
+    showDragHandles?: boolean;
 }
 
 export const SortableListItem = memo(
@@ -32,6 +33,7 @@ export const SortableListItem = memo(
         onDelete,
         isDragging = false,
         isEditing = false,
+        showDragHandles = false,
     }: SortableListItemProps) => {
         const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -73,7 +75,7 @@ export const SortableListItem = memo(
             <SortableItem
                 item={item}
                 isDragging={isDragging}
-                dragHandle="left"
+                dragHandle={showDragHandles ? "left" : "none"}
                 containerSx={{
                     borderRadius: 1,
                     mb: 0.5, // Reduced margin bottom for denser layout

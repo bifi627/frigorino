@@ -1,4 +1,10 @@
-import { ArrowBack, Compress, Edit, MoreVert } from "@mui/icons-material";
+import {
+    ArrowBack,
+    Compress,
+    DragIndicator,
+    Edit,
+    MoreVert,
+} from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -46,6 +52,7 @@ function RouteComponent() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
+    const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     // Quantity panel state
@@ -146,6 +153,11 @@ function RouteComponent() {
             );
             setSnackbarOpen(true);
         }
+    };
+
+    const handleToggleDragHandles = () => {
+        setShowDragHandles(!showDragHandles);
+        handleMenuClose();
     };
 
     const handleSnackbarClose = () => {
@@ -290,7 +302,7 @@ function RouteComponent() {
                     <IconButton onClick={handleBack} sx={{ p: 1 }}>
                         <ArrowBack />
                     </IconButton>
-                    <Box>
+                    <Box sx={{ flex: 1 }}>
                         <Typography
                             variant="h5"
                             component="h1"
@@ -308,7 +320,7 @@ function RouteComponent() {
                             </Typography>
                         )}
                     </Box>
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
                         <IconButton
                             onClick={handleEdit}
                             sx={{
@@ -347,6 +359,19 @@ function RouteComponent() {
                     horizontal: "right",
                 }}
             >
+                <MenuItem onClick={handleToggleDragHandles}>
+                    <ListItemIcon>
+                        <DragIndicator fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={
+                            showDragHandles
+                                ? "Hide Drag Handles"
+                                : "Show Drag Handles"
+                        }
+                        secondary="Toggle reorder handles visibility"
+                    />
+                </MenuItem>
                 <MenuItem
                     onClick={handleCompact}
                     disabled={compactListItems.isPending}
@@ -378,6 +403,7 @@ function RouteComponent() {
                     listId={parseInt(listId)}
                     editingItem={editingItem}
                     onEdit={setEditingItem}
+                    showDragHandles={showDragHandles}
                 />
             </Container>
 
