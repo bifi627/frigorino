@@ -4,6 +4,7 @@ import {
     Box,
     Button,
     CircularProgress,
+    Collapse,
     Container,
     IconButton,
     ListItemIcon,
@@ -14,9 +15,13 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
-import { AddItemInput } from "../../../components/list/AddItemInput";
+import { AddInput } from "../../../components/list/AddInput";
+import {
+    QuantityPanel,
+    QuantityToggle,
+} from "../../../components/list/QuantityPanel";
 import { SortableList } from "../../../components/list/SortableList";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import {
@@ -25,9 +30,7 @@ import {
     useListItems,
     useToggleListItemStatus,
     useUpdateListItem,
-    type CreateListItemRequest,
     type ListItemDto,
-    type UpdateListItemRequest,
 } from "../../../hooks/useListItemQueries";
 import { useList } from "../../../hooks/useListQueries";
 
@@ -45,6 +48,22 @@ function RouteComponent() {
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // Quantity panel state
+    const [quantity, setQuantity] = useState("");
+    const [showQuantityPanel, setShowQuantityPanel] = useState(false);
+
+    // Update quantity state when editing item changes
+    useEffect(() => {
+        if (editingItem) {
+            setQuantity(editingItem.quantity || "");
+            if (editingItem.quantity) {
+                setShowQuantityPanel(true);
+            }
+        } else {
+            setQuantity("");
+        }
+    }, [editingItem]);
+
     // Get current household and list data
     const { data: currentHousehold } = useCurrentHousehold();
     const {
@@ -57,13 +76,13 @@ function RouteComponent() {
         !!currentHousehold?.householdId,
     );
 
-    // Get list items for AddItemInput
+    // Get list items for AddInput
     const { data: items = [] } = useListItems(
         currentHousehold?.householdId || 0,
         parseInt(listId),
     );
 
-    // Mutations for AddItemInput
+    // Mutations for AddInput
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
@@ -133,18 +152,27 @@ function RouteComponent() {
         setSnackbarOpen(false);
     };
 
-    // AddItemInput handlers
+    // AddInput handlers
     const handleAddItem = useCallback(
-        (data: CreateListItemRequest) => {
+        (data: string) => {
             if (!currentHousehold?.householdId) return;
+
+            // Include quantity from external state
+            const itemData = {
+                text: data,
+                quantity: quantity.trim() || undefined,
+            };
+
             createMutation.mutate(
                 {
                     householdId: currentHousehold.householdId,
                     listId: parseInt(listId),
-                    data,
+                    data: itemData,
                 },
                 {
                     onSuccess: () => {
+                        // Clear quantity state
+                        setQuantity("");
                         // Scroll to the last item in the unchecked section
                         scrollToLastUncheckedItem();
                     },
@@ -156,17 +184,24 @@ function RouteComponent() {
             currentHousehold?.householdId,
             listId,
             scrollToLastUncheckedItem,
+            quantity,
         ],
     );
 
     const handleUpdateItem = useCallback(
-        (data: UpdateListItemRequest) => {
+        (data: string) => {
             if (editingItem?.id && currentHousehold?.householdId) {
+                // Include quantity from external state
+                const itemData = {
+                    text: data,
+                    quantity: quantity.trim() || undefined,
+                };
+
                 updateMutation.mutate({
                     householdId: currentHousehold.householdId,
                     listId: parseInt(listId),
                     itemId: editingItem.id,
-                    data,
+                    data: itemData,
                 });
                 setEditingItem(null);
             }
@@ -176,6 +211,7 @@ function RouteComponent() {
             updateMutation,
             currentHousehold?.householdId,
             listId,
+            quantity,
         ],
     );
 
@@ -345,7 +381,7 @@ function RouteComponent() {
                 />
             </Container>
 
-            {/* Footer Section - AddItemInput */}
+            {/* Footer Section - AddInput */}
             <Container
                 maxWidth="sm"
                 sx={{
@@ -357,17 +393,57 @@ function RouteComponent() {
                     bgcolor: "background.paper",
                 }}
             >
-                <AddItemInput
+                <AddInput
                     onAdd={handleAddItem}
                     onUpdate={handleUpdateItem}
                     onCancelEdit={handleCancelEdit}
                     onUncheckExisting={handleUncheckExisting}
-                    editingItem={editingItem}
-                    existingItems={items}
+                    editingItem={
+                        editingItem
+                            ? {
+                                  ...editingItem,
+                                  secondaryText: editingItem?.quantity,
+                              }
+                            : undefined
+                    }
+                    existingItems={items.map((item) => ({
+                        ...item,
+                        secondaryText: item.quantity || null,
+                    }))}
                     isLoading={
                         createMutation.isPending || updateMutation.isPending
                     }
                     hasItems={items.length > 0}
+                    rightControls={[
+                        <QuantityToggle
+                            key="quantity-toggle"
+                            value={quantity}
+                            onToggle={() =>
+                                setShowQuantityPanel(!showQuantityPanel)
+                            }
+                        />,
+                    ]}
+                    bottomPanels={[
+                        <Collapse key="quantity-panel" in={showQuantityPanel}>
+                            <QuantityPanel
+                                value={quantity}
+                                onChange={setQuantity}
+                                isLoading={
+                                    createMutation.isPending ||
+                                    updateMutation.isPending
+                                }
+                                onKeyPress={(event) => {
+                                    if (
+                                        event.key === "Enter" &&
+                                        !event.shiftKey
+                                    ) {
+                                        event.preventDefault();
+                                        // The AddInput component will handle the submit
+                                    }
+                                }}
+                            />
+                        </Collapse>,
+                    ]}
                 />
             </Container>
 

@@ -9,7 +9,10 @@
       "Bash(npm run start:*)",
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_drag",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "mcp__playwright__browser_press_key"
     ],
     "deny": [],
     "ask": []
