@@ -67,11 +67,11 @@ interface SortableListProps {
     onEdit?: (item: ListItemDto) => void;
 }
 
-export const SortableList = ({ 
-    householdId, 
-    listId, 
+export const SortableList = ({
+    householdId,
+    listId,
     editingItem: externalEditingItem,
-    onEdit 
+    onEdit,
 }: SortableListProps) => {
     const [activeItem, setActiveItem] = useState<ListItemDto | null>(null);
     const dividerRef = useRef<HTMLHRElement | null>(null);
@@ -178,12 +178,14 @@ export const SortableList = ({
         [items, reorderMutation, householdId, listId],
     );
 
-    const handleEditItem = useCallback((item: ListItemDto) => {
-        if (onEdit) {
-            onEdit(item);
-        }
-    }, [onEdit]);
-
+    const handleEditItem = useCallback(
+        (item: ListItemDto) => {
+            if (onEdit) {
+                onEdit(item);
+            }
+        },
+        [onEdit],
+    );
 
     const handleDeleteItem = useCallback(
         (itemId: number) => {
@@ -198,7 +200,6 @@ export const SortableList = ({
         },
         [toggleMutation, householdId, listId],
     );
-
 
     // Memoize item IDs for SortableContext to prevent unnecessary re-renders
     const uncheckedItemIds = useMemo(
@@ -228,126 +229,130 @@ export const SortableList = ({
     }
 
     return (
-            <Box>
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                >
-                    {/* Unchecked Items Section */}
-                    {uncheckedItems.length > 0 && (
-                        <SortableContext
-                            items={uncheckedItemIds}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <List
-                                data-section="unchecked-items"
-                                sx={{
-                                    py: 0,
-                                    "& .MuiListItem-root": { mb: 0.5 },
-                                }}
-                            >
-                                {uncheckedItems.map((item) => (
-                                    <MemoizedSortableListItem
-                                        key={item.id}
-                                        item={item}
-                                        onToggleStatus={handleToggleStatus}
-                                        onEdit={handleEditItem}
-                                        onDelete={handleDeleteItem}
-                                        isEditing={externalEditingItem?.id === item.id}
-                                    />
-                                ))}
-                            </List>
-                        </SortableContext>
-                    )}
-
-                    {/* Checked Items Section */}
-                    <Box sx={{ my: 1, textAlign: "center" }}>
-                        <Divider ref={dividerRef} sx={{ m: 2 }} />
-                    </Box>
-
-                    <Box
-                        sx={{
-                            bgcolor: "success.25",
-                        }}
+        <Box>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                {/* Unchecked Items Section */}
+                {uncheckedItems.length > 0 && (
+                    <SortableContext
+                        items={uncheckedItemIds}
+                        strategy={verticalListSortingStrategy}
                     >
-                        <SortableContext
-                            items={checkedItemIds}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            <List
-                                sx={{
-                                    py: 0,
-                                    "& .MuiListItem-root": { mb: 0.5 },
-                                }}
-                            >
-                                {checkedItems.map((item) => (
-                                    <MemoizedSortableListItem
-                                        key={item.id}
-                                        item={item}
-                                        onToggleStatus={handleToggleStatus}
-                                        onEdit={handleEditItem}
-                                        onDelete={handleDeleteItem}
-                                        isEditing={externalEditingItem?.id === item.id}
-                                    />
-                                ))}
-                            </List>
-                        </SortableContext>
-                    </Box>
-
-                    {/* Empty State */}
-                    {items.length === 0 && (
-                        <Paper
-                            elevation={0}
+                        <List
+                            data-section="unchecked-items"
                             sx={{
-                                p: 3,
-                                textAlign: "center",
-                                border: "2px dashed",
-                                borderColor: "divider",
-                                borderRadius: 2,
-                                mx: 1,
+                                py: 0,
+                                "& .MuiListItem-root": { mb: 0.5 },
                             }}
                         >
-                            <Typography
-                                variant="h6"
-                                color="text.secondary"
-                                gutterBottom
-                            >
-                                List ist leer
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ mb: 2 }}
-                            >
-                                Füge deinen ersten Artikel hinzu, um zu
-                                beginnen!
-                            </Typography>
-                        </Paper>
-                    )}
-
-                    {/* Drag Overlay */}
-                    <DragOverlay>
-                        {activeItem ? (
-                            <Paper
-                                elevation={8}
-                                sx={{
-                                    transform: "rotate(5deg)",
-                                    opacity: 0.95,
-                                }}
-                            >
-                                <SortableListItem
-                                    item={activeItem}
-                                    onToggleStatus={() => {}}
-                                    onEdit={() => {}}
-                                    onDelete={() => {}}
-                                    isEditing={false}
+                            {uncheckedItems.map((item) => (
+                                <MemoizedSortableListItem
+                                    key={item.id}
+                                    item={item}
+                                    onToggleStatus={handleToggleStatus}
+                                    onEdit={handleEditItem}
+                                    onDelete={handleDeleteItem}
+                                    isEditing={
+                                        externalEditingItem?.id === item.id
+                                    }
                                 />
-                            </Paper>
-                        ) : null}
-                    </DragOverlay>
-                </DndContext>
-            </Box>
+                            ))}
+                        </List>
+                    </SortableContext>
+                )}
+
+                {/* Checked Items Section */}
+                <Box sx={{ my: 1, textAlign: "center" }}>
+                    <Divider ref={dividerRef} sx={{ m: 2 }} />
+                </Box>
+
+                <Box
+                    sx={{
+                        bgcolor: "success.25",
+                    }}
+                >
+                    <SortableContext
+                        items={checkedItemIds}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <List
+                            data-section="checked-items"
+                            sx={{
+                                py: 0,
+                                "& .MuiListItem-root": { mb: 0.5 },
+                            }}
+                        >
+                            {checkedItems.map((item) => (
+                                <MemoizedSortableListItem
+                                    key={item.id}
+                                    item={item}
+                                    onToggleStatus={handleToggleStatus}
+                                    onEdit={handleEditItem}
+                                    onDelete={handleDeleteItem}
+                                    isEditing={
+                                        externalEditingItem?.id === item.id
+                                    }
+                                />
+                            ))}
+                        </List>
+                    </SortableContext>
+                </Box>
+
+                {/* Empty State */}
+                {items.length === 0 && (
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 3,
+                            textAlign: "center",
+                            border: "2px dashed",
+                            borderColor: "divider",
+                            borderRadius: 2,
+                            mx: 1,
+                        }}
+                    >
+                        <Typography
+                            variant="h6"
+                            color="text.secondary"
+                            gutterBottom
+                        >
+                            List ist leer
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 2 }}
+                        >
+                            Füge deinen ersten Artikel hinzu, um zu beginnen!
+                        </Typography>
+                    </Paper>
+                )}
+
+                {/* Drag Overlay */}
+                <DragOverlay>
+                    {activeItem ? (
+                        <Paper
+                            elevation={8}
+                            sx={{
+                                transform: "rotate(5deg)",
+                                opacity: 0.95,
+                            }}
+                        >
+                            <SortableListItem
+                                item={activeItem}
+                                onToggleStatus={() => {}}
+                                onEdit={() => {}}
+                                onDelete={() => {}}
+                                isEditing={false}
+                            />
+                        </Paper>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
+        </Box>
     );
 };

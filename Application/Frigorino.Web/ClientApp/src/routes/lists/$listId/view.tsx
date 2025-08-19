@@ -14,7 +14,7 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
 import { AddItemInput } from "../../../components/list/AddItemInput";
 import { SortableList } from "../../../components/list/SortableList";
@@ -44,8 +44,6 @@ function RouteComponent() {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const [lastItemCount, setLastItemCount] = useState(0);
-    const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
 
     // Get current household and list data
     const { data: currentHousehold } = useCurrentHousehold();
@@ -71,33 +69,28 @@ function RouteComponent() {
     const toggleMutation = useToggleListItemStatus();
     const compactListItems = useCompactListItems();
 
-    // Effect to scroll to top when new items are added
-    useEffect(() => {
-        if (shouldScrollToTop && items.length > lastItemCount) {
-            // Use multiple strategies to ensure scroll works
-            const scrollToTop = () => {
-                if (scrollContainerRef.current) {
-                    // Strategy 1: Try to find the first list item and scroll to it
-                    const firstListItem =
-                        scrollContainerRef.current.querySelector(
-                            '[data-section="unchecked-items"]',
-                        );
-                    if (firstListItem) {
-                        firstListItem.scrollIntoView({
-                            behavior: "smooth",
-                            block: "end",
-                        });
-                    }
-
-                    setShouldScrollToTop(false);
+    // Function to scroll to the last item in the unchecked section
+    const scrollToLastUncheckedItem = useCallback(() => {
+        if (scrollContainerRef.current) {
+            // Find the unchecked items section and get its last item
+            const uncheckedSection = scrollContainerRef.current.querySelector(
+                '[data-section="unchecked-items"]',
+            );
+            if (uncheckedSection) {
+                // Get all list items within the unchecked section
+                const listItems =
+                    uncheckedSection.querySelectorAll(".MuiListItem-root");
+                // Get the last item in the unchecked section
+                const lastItem = listItems[listItems.length - 1];
+                if (lastItem) {
+                    lastItem.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
                 }
-            };
-
-            // Try immediately and also with a delay
-            scrollToTop();
+            }
         }
-        setLastItemCount(items.length);
-    }, [items.length, lastItemCount, shouldScrollToTop]);
+    }, []);
 
     const handleBack = () => {
         router.history.back();
@@ -152,13 +145,18 @@ function RouteComponent() {
                 },
                 {
                     onSuccess: () => {
-                        // Trigger scroll to top via the useEffect
-                        setShouldScrollToTop(true);
+                        // Scroll to the last item in the unchecked section
+                        scrollToLastUncheckedItem();
                     },
                 },
             );
         },
-        [createMutation, currentHousehold?.householdId, listId],
+        [
+            createMutation,
+            currentHousehold?.householdId,
+            listId,
+            scrollToLastUncheckedItem,
+        ],
     );
 
     const handleUpdateItem = useCallback(
@@ -238,14 +236,14 @@ function RouteComponent() {
     return (
         <Box
             sx={{
-                height: "calc(100vh - 56px)",
+                height: "calc(100dvh - 56px)",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
             }}
         >
             {/* Header Section */}
-            <Container maxWidth="sm" sx={{ py: 3, flexShrink: 0 }}>
+            <Container maxWidth="sm" sx={{ px: 3, py: 3, flexShrink: 0 }}>
                 <Box
                     sx={{
                         display: "flex",
@@ -256,7 +254,7 @@ function RouteComponent() {
                     <IconButton onClick={handleBack} sx={{ p: 1 }}>
                         <ArrowBack />
                     </IconButton>
-                    <Box sx={{ flex: 1 }}>
+                    <Box>
                         <Typography
                             variant="h5"
                             component="h1"
@@ -336,6 +334,7 @@ function RouteComponent() {
                     overflow: "auto",
                     px: 3,
                     py: 0,
+                    minHeight: 0,
                 }}
             >
                 <SortableList
@@ -347,7 +346,17 @@ function RouteComponent() {
             </Container>
 
             {/* Footer Section - AddItemInput */}
-            <Container maxWidth="sm" sx={{ flexShrink: 0, p: 2 }}>
+            <Container
+                maxWidth="sm"
+                sx={{
+                    flexShrink: 0,
+                    px: 3,
+                    py: 2,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                }}
+            >
                 <AddItemInput
                     onAdd={handleAddItem}
                     onUpdate={handleUpdateItem}
