@@ -1,6 +1,12 @@
 import { Container } from "@mui/material";
-import { forwardRef, memo } from "react";
+import { forwardRef, memo, useCallback } from "react";
 import type { ListItemDto } from "../../hooks/useListItemQueries";
+import {
+    useListItems,
+    useDeleteListItem,
+    useToggleListItemStatus,
+    useReorderListItem,
+} from "../../hooks/useListItemQueries";
 import { SortableList } from "../sortables/SortableList";
 
 interface ListContainerProps {
@@ -17,6 +23,51 @@ export const ListContainer = memo(
             { householdId, listId, editingItem, onEdit, showDragHandles },
             ref,
         ) => {
+            // Fetch data and setup mutations at the container level
+            const {
+                data: items = [],
+                isLoading,
+                error,
+            } = useListItems(householdId, listId);
+            const deleteMutation = useDeleteListItem();
+            const toggleMutation = useToggleListItemStatus();
+            const reorderMutation = useReorderListItem();
+
+            // Create callback handlers for the sortable list
+            const handleReorder = useCallback(
+                async (itemId: number, afterId: number): Promise<void> => {
+                    await reorderMutation.mutateAsync({
+                        householdId,
+                        listId,
+                        itemId,
+                        data: { afterId },
+                    });
+                },
+                [reorderMutation, householdId, listId],
+            );
+
+            const handleToggleStatus = useCallback(
+                async (itemId: number): Promise<void> => {
+                    await toggleMutation.mutateAsync({
+                        householdId,
+                        listId,
+                        itemId,
+                    });
+                },
+                [toggleMutation, householdId, listId],
+            );
+
+            const handleDelete = useCallback(
+                async (itemId: number): Promise<void> => {
+                    await deleteMutation.mutateAsync({
+                        householdId,
+                        listId,
+                        itemId,
+                    });
+                },
+                [deleteMutation, householdId, listId],
+            );
+
             return (
                 <Container
                     ref={ref}
@@ -29,11 +80,15 @@ export const ListContainer = memo(
                         minHeight: 0,
                     }}
                 >
-                    <SortableList
-                        householdId={householdId}
-                        listId={listId}
-                        editingItem={editingItem}
+                    <SortableList<ListItemDto>
+                        items={items}
+                        isLoading={isLoading}
+                        error={error}
+                        onReorder={handleReorder}
+                        onToggleStatus={handleToggleStatus}
                         onEdit={onEdit}
+                        onDelete={handleDelete}
+                        editingItem={editingItem}
                         showDragHandles={showDragHandles}
                     />
                 </Container>

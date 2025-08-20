@@ -22,74 +22,126 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
-import {
-    useDeleteListItem,
-    useListItems,
-    useReorderListItem,
-    useToggleListItemStatus,
-    type ListItemDto,
-} from "../../hooks/useListItemQueries";
-import { SortableListItem } from "./SortableListItem";
+import React, { memo, useCallback, useMemo, useRef, useState } from "react";
 
-// Memoized list item renderer to prevent unnecessary re-renders
-const MemoizedSortableListItem = memo(
-    ({
-        item,
-        isEditing,
-        onToggleStatus,
-        onEdit,
-        onDelete,
-        showDragHandles,
-    }: {
-        item: ListItemDto;
-        isEditing: boolean;
-        onToggleStatus: (itemId: number) => void;
-        onEdit: (item: ListItemDto) => void;
-        onDelete: (itemId: number) => void;
-        showDragHandles?: boolean;
-    }) => (
-        <SortableListItem
-            key={item.id}
-            item={item}
-            onToggleStatus={onToggleStatus}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            isEditing={isEditing}
-            showDragHandles={showDragHandles}
-        />
-    ),
-);
-
-MemoizedSortableListItem.displayName = "MemoizedSortableListItem";
-
-interface SortableListProps {
-    householdId: number;
-    listId: number;
-    editingItem?: ListItemDto | null;
-    onEdit?: (item: ListItemDto) => void;
-    showDragHandles?: boolean;
+// Minimal interface that sortable items must implement
+export interface SortableItemInterface {
+    id?: number | string | null;
+    sortOrder?: number | null;
+    status?: boolean; // For grouping checked/unchecked items
+    [key: string]: unknown; // Index signature required for generic compatibility
 }
 
-export const SortableList = ({
-    householdId,
-    listId,
-    editingItem: externalEditingItem,
-    onEdit,
-    showDragHandles = false,
-}: SortableListProps) => {
-    const [activeItem, setActiveItem] = useState<ListItemDto | null>(null);
-    const dividerRef = useRef<HTMLHRElement | null>(null);
+import {
+    SortableListItem,
+    type DisplayableSortableItem,
+} from "./SortableListItem";
 
-    // Queries and mutations
-    const {
-        data: items = [],
-        isLoading,
-        error,
-    } = useListItems(householdId, listId);
-    const deleteMutation = useDeleteListItem();
-    const toggleMutation = useToggleListItemStatus();
-    const reorderMutation = useReorderListItem();
+// Generic memoized list item renderer interface
+interface MemoizedSortableListItemProps<T extends SortableItemInterface> {
+    item: T;
+    isEditing: boolean;
+    onToggleStatus: (itemId: number) => void;
+    onEdit: (item: T) => void;
+    onDelete: (itemId: number) => void;
+    showDragHandles?: boolean;
+    renderItem?: (
+        item: T,
+        isEditing: boolean,
+        showDragHandles: boolean,
+        handlers: {
+            onToggleStatus: (itemId: number) => void;
+            onEdit: (item: T) => void;
+            onDelete: (itemId: number) => void;
+        },
+    ) => React.ReactNode;
+}
+
+// Memoized list item renderer to prevent unnecessary re-renders
+function MemoizedSortableListItemComponent<T extends SortableItemInterface>({
+    item,
+    isEditing,
+    onToggleStatus,
+    onEdit,
+    onDelete,
+    showDragHandles,
+    renderItem,
+}: MemoizedSortableListItemProps<T>) {
+    if (renderItem) {
+        return (
+            <>
+                {renderItem(item, isEditing, showDragHandles || false, {
+                    onToggleStatus,
+                    onEdit,
+                    onDelete,
+                })}
+            </>
+        );
+    }
+
+    // For the default renderer, we assume T is compatible with DisplayableSortableItem
+    return (
+        <SortableListItem
+            key={item.id}
+            item={item as DisplayableSortableItem}
+            onToggleStatus={onToggleStatus}
+            onEdit={onEdit as (item: DisplayableSortableItem) => void}
+            onDelete={onDelete}
+            isEditing={isEditing}
+            showDragHandles={showDragHandles || false}
+        />
+    );
+}
+
+const MemoizedSortableListItem = memo(
+    MemoizedSortableListItemComponent,
+) as typeof MemoizedSortableListItemComponent;
+
+export interface SortableListProps<
+    T extends SortableItemInterface = DisplayableSortableItem,
+> {
+    // Data props
+    items: T[];
+    isLoading?: boolean;
+    error?: Error | null;
+
+    // Event handlers
+    onReorder: (itemId: number, afterId: number) => Promise<void>;
+    onToggleStatus: (itemId: number) => Promise<void>;
+    onEdit: (item: T) => void;
+    onDelete: (itemId: number) => Promise<void>;
+
+    // UI props
+    editingItem?: T | null;
+    showDragHandles?: boolean;
+    renderItem?: (
+        item: T,
+        isEditing: boolean,
+        showDragHandles: boolean,
+        handlers: {
+            onToggleStatus: (itemId: number) => void;
+            onEdit: (item: T) => void;
+            onDelete: (itemId: number) => void;
+        },
+    ) => React.ReactNode;
+}
+
+export const SortableList = <
+    T extends SortableItemInterface = DisplayableSortableItem,
+>({
+    items,
+    isLoading = false,
+    error = null,
+    onReorder,
+    onToggleStatus,
+    onEdit,
+    onDelete,
+    editingItem: externalEditingItem,
+    showDragHandles = false,
+    renderItem,
+}: SortableListProps<T>) => {
+    const [activeItem, setActiveItem] = useState<T | null>(null);
+    const dividerRef = useRef<HTMLHRElement | null>(null);
 
     // Configure drag sensors - must be at top level, not in useMemo
     const sensors = useSensors(
@@ -126,13 +178,13 @@ export const SortableList = ({
             const item = items.find(
                 (item) => item.id?.toString() === active.id,
             );
-            setActiveItem(item || null);
+            setActiveItem((item as T) || null);
         },
         [items],
     );
 
     const handleDragEnd = useCallback(
-        (event: DragEndEvent) => {
+        async (event: DragEndEvent) => {
             const { active, over } = event;
             setActiveItem(null);
 
@@ -145,7 +197,7 @@ export const SortableList = ({
                 (item) => item.id?.toString() === over.id,
             );
 
-            if (!activeItem || !overItem) return;
+            if (!activeItem || !overItem || !activeItem.id) return;
 
             // Prevent dragging between checked/unchecked sections
             if (activeItem.status !== overItem.status) return;
@@ -170,40 +222,41 @@ export const SortableList = ({
             const afterItemId =
                 overIndex >= 0 ? currentSectionItems[overIndex].id : 0;
 
-            // Call reorder API
-            if (activeItem.id) {
-                reorderMutation.mutate({
-                    householdId,
-                    listId,
-                    itemId: activeItem.id,
-                    data: { afterId: afterItemId || 0 },
-                });
+            const numericActiveId =
+                typeof activeItem.id === "string"
+                    ? parseInt(activeItem.id)
+                    : activeItem.id;
+            const numericAfterId =
+                typeof afterItemId === "string"
+                    ? parseInt(afterItemId)
+                    : afterItemId;
+
+            if (numericActiveId) {
+                await onReorder(numericActiveId, numericAfterId || 0);
             }
         },
-        [items, reorderMutation, householdId, listId],
+        [items, onReorder],
     );
 
     const handleEditItem = useCallback(
-        (item: ListItemDto) => {
-            if (onEdit) {
-                onEdit(item);
-            }
+        (item: T) => {
+            onEdit(item);
         },
         [onEdit],
     );
 
     const handleDeleteItem = useCallback(
-        (itemId: number) => {
-            deleteMutation.mutate({ householdId, listId, itemId });
+        async (itemId: number) => {
+            await onDelete(itemId);
         },
-        [deleteMutation, householdId, listId],
+        [onDelete],
     );
 
     const handleToggleStatus = useCallback(
-        (itemId: number) => {
-            toggleMutation.mutate({ householdId, listId, itemId });
+        async (itemId: number) => {
+            await onToggleStatus(itemId);
         },
-        [toggleMutation, householdId, listId],
+        [onToggleStatus],
     );
 
     // Memoize item IDs for SortableContext to prevent unnecessary re-renders
@@ -257,7 +310,7 @@ export const SortableList = ({
                             {uncheckedItems.map((item) => (
                                 <MemoizedSortableListItem
                                     key={item.id}
-                                    item={item}
+                                    item={item as T}
                                     onToggleStatus={handleToggleStatus}
                                     onEdit={handleEditItem}
                                     onDelete={handleDeleteItem}
@@ -265,6 +318,7 @@ export const SortableList = ({
                                         externalEditingItem?.id === item.id
                                     }
                                     showDragHandles={showDragHandles}
+                                    renderItem={renderItem}
                                 />
                             ))}
                         </List>
@@ -295,7 +349,7 @@ export const SortableList = ({
                             {checkedItems.map((item) => (
                                 <MemoizedSortableListItem
                                     key={item.id}
-                                    item={item}
+                                    item={item as T}
                                     onToggleStatus={handleToggleStatus}
                                     onEdit={handleEditItem}
                                     onDelete={handleDeleteItem}
@@ -303,6 +357,7 @@ export const SortableList = ({
                                         externalEditingItem?.id === item.id
                                     }
                                     showDragHandles={showDragHandles}
+                                    renderItem={renderItem}
                                 />
                             ))}
                         </List>
