@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AddInputItem } from "../types";
+import type { ListItem } from "../types";
 
 interface UseInputStateProps {
-    editingItem?: AddInputItem;
+    editingItem?: ListItem;
     isLoading: boolean;
 }
 
-export const useInputState = ({ editingItem, isLoading }: UseInputStateProps) => {
+export const useInputState = ({
+    editingItem,
+    isLoading,
+}: UseInputStateProps) => {
     const [text, setText] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 

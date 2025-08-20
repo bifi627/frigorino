@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import type { AddInputItem } from "../types";
+import type { ListItem } from "../types";
 
 interface UseDuplicateDetectionProps {
     text: string;
-    existingItems: AddInputItem[];
+    existingItems: ListItem[];
     isEditing: boolean;
-    editingItem?: AddInputItem;
+    editingItem?: ListItem;
 }
 
 export const useDuplicateDetection = ({
@@ -29,7 +29,7 @@ export const useDuplicateDetection = ({
 
     const hasDuplicate = Boolean(existingItem && text.trim().length >= 3);
 
-    const checkForDuplicate = (trimmedText: string): AddInputItem | undefined => {
+    const checkForDuplicate = (trimmedText: string): ListItem | undefined => {
         return existingItems.find(
             (item) =>
                 item.text?.toLowerCase() === trimmedText.toLowerCase() &&

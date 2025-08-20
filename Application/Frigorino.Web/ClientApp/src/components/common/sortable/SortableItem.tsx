@@ -103,9 +103,9 @@ export function SortableItem<T extends SortableItemData>({
         return (
             <Box
                 ref={setNodeRef}
-                // style={style}
                 sx={{
                     ...containerSx,
+                    pl: 1.5,
                 }}
                 {...(!disabled ? defaultDragHandleProps : {})}
             >

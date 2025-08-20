@@ -9,7 +9,7 @@ import { useAddInputStyles } from "./hooks/useAddInputStyles";
 import { useDuplicateDetection } from "./hooks/useDuplicateDetection";
 import { useInputState } from "./hooks/useInputState";
 import { useSubmitHandler } from "./hooks/useSubmitHandler";
-import type { AddInputItem, AddInputProps } from "./types";
+import type { AddInputProps, ListItem } from "./types";
 
 export const AddInput = memo(
     ({
@@ -26,17 +26,19 @@ export const AddInput = memo(
     }: AddInputProps) => {
         const isEditing = Boolean(editingItem);
 
-        const { text, setText, clearText, inputRef, focusInput } = useInputState({
-            editingItem,
-            isLoading,
-        });
+        const { text, setText, clearText, inputRef, focusInput } =
+            useInputState({
+                editingItem,
+                isLoading,
+            });
 
-        const { existingItem, hasDuplicate, checkForDuplicate } = useDuplicateDetection({
-            text,
-            existingItems,
-            isEditing,
-            editingItem,
-        });
+        const { existingItem, hasDuplicate, checkForDuplicate } =
+            useDuplicateDetection({
+                text,
+                existingItems,
+                isEditing,
+                editingItem,
+            });
 
         const { handleSubmit, handleKeyDown } = useSubmitHandler({
             text,
@@ -77,7 +79,7 @@ export const AddInput = memo(
             focusInput();
         };
 
-        const handleSelectOption = (option: AddInputItem) => {
+        const handleSelectOption = (option: ListItem) => {
             setText(option.text || "");
         };
 
@@ -100,65 +102,73 @@ export const AddInput = memo(
                     onClick={handleContainerClick}
                     sx={styles.containerStyles}
                 >
-                {isEditing && editingItem && (
-                    <EditingHeader
-                        editingItem={editingItem}
-                        onCancel={handleCancel}
-                    />
-                )}
-
-                {/* Top Panels */}
-                {topPanels.length > 0 && (
-                    <Box className="panel-section" sx={{ mb: 1 }}>
-                        {topPanels.map((panel, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    mb: index < topPanels.length - 1 ? 1 : 0,
-                                }}
-                            >
-                                {panel}
-                            </Box>
-                        ))}
-                    </Box>
-                )}
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {text.trim() && !isEditing && (
-                        <IconButton
-                            onClick={handleDiscard}
-                            size="small"
-                            sx={styles.discardButtonStyles}
-                            title="Discard input"
-                        >
-                            <Delete fontSize="small" />
-                        </IconButton>
+                    {isEditing && editingItem && (
+                        <EditingHeader
+                            editingItem={editingItem}
+                            onCancel={handleCancel}
+                        />
                     )}
 
-                    <AutocompleteInput
-                        onTextChange={setText}
-                        onSelectOption={handleSelectOption}
-                        onKeyDown={handleKeyDown}
-                        inputRef={inputRef}
-                    />
+                    {/* Top Panels */}
+                    {topPanels.length > 0 && (
+                        <Box className="panel-section" sx={{ mb: 0.5 }}>
+                            {topPanels.map((panel, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        mb:
+                                            index < topPanels.length - 1
+                                                ? 0.5
+                                                : 0,
+                                    }}
+                                >
+                                    {panel}
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
 
-                    {rightControls.map((control, index) => (
-                        <Box key={index}>{control}</Box>
-                    ))}
+                    <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                        {text.trim() && !isEditing && (
+                            <IconButton
+                                onClick={handleDiscard}
+                                size="medium"
+                                sx={styles.discardButtonStyles}
+                                title="Discard input"
+                            >
+                                <Delete />
+                            </IconButton>
+                        )}
 
-                    <ActionButton onSubmit={handleSubmit} />
-                </Box>
+                        <AutocompleteInput
+                            onTextChange={setText}
+                            onSelectOption={handleSelectOption}
+                            onKeyDown={handleKeyDown}
+                            inputRef={inputRef}
+                        />
 
-                {/* Bottom Panels */}
-                {bottomPanels.length > 0 && (
-                    <Box className="panel-section" sx={{ mt: 1 }}>
-                        {bottomPanels.map((panel, index) => (
-                            <Box key={index} sx={{ mt: index === 0 ? 0 : 1 }}>
-                                {panel}
-                            </Box>
+                        {rightControls.map((control, index) => (
+                            <Box key={index}>{control}</Box>
                         ))}
+
+                        <ActionButton onSubmit={handleSubmit} />
                     </Box>
-                )}
+
+                    {/* Bottom Panels */}
+                    {bottomPanels.length > 0 && (
+                        <Box className="panel-section" sx={{ mt: 0.5 }}>
+                            {bottomPanels.map((panel, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{ mt: index === 0 ? 0 : 0.5 }}
+                                >
+                                    {panel}
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
                 </Paper>
             </AddInputProvider>
         );

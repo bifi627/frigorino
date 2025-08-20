@@ -1,34 +1,19 @@
-import {
-    ArrowBack,
-    Compress,
-    DragIndicator,
-    Edit,
-    MoreVert,
-} from "@mui/icons-material";
+import { ArrowBack } from "@mui/icons-material";
 import {
     Alert,
     Box,
     Button,
     CircularProgress,
-    Collapse,
     Container,
-    IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
     Snackbar,
     Typography,
 } from "@mui/material";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
-import { AddInput } from "../../../components/list/AddInput";
-import {
-    QuantityPanel,
-    QuantityToggle,
-} from "../../../components/list/QuantityPanel";
-import { SortableList } from "../../../components/list/SortableList";
+import { ListContainer } from "../../../components/list/ListContainer";
+import { ListFooter } from "../../../components/list/ListFooter";
+import { ListViewHeader } from "../../../components/list/ListViewHeader";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import {
     useCompactListItems,
@@ -46,30 +31,12 @@ export const Route = createFileRoute("/lists/$listId/view")({
 });
 
 function RouteComponent() {
-    const router = useRouter();
     const { listId } = Route.useParams();
-    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    // Quantity panel state
-    const [quantity, setQuantity] = useState("");
-    const [showQuantityPanel, setShowQuantityPanel] = useState(false);
-
-    // Update quantity state when editing item changes
-    useEffect(() => {
-        if (editingItem) {
-            setQuantity(editingItem.quantity || "");
-            if (editingItem.quantity) {
-                setShowQuantityPanel(true);
-            }
-        } else {
-            setQuantity("");
-        }
-    }, [editingItem]);
 
     // Get current household and list data
     const { data: currentHousehold } = useCurrentHousehold();
@@ -118,26 +85,7 @@ function RouteComponent() {
         }
     }, []);
 
-    const handleBack = () => {
-        router.history.back();
-    };
-
-    const handleEdit = () => {
-        router.navigate({
-            to: `/lists/${listId}/edit`,
-        });
-    };
-
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setMenuAnchorEl(null);
-    };
-
-    const handleCompact = async () => {
-        handleMenuClose();
+    const handleCompact = useCallback(async () => {
         if (!currentHousehold?.householdId) return;
 
         try {
@@ -153,60 +101,41 @@ function RouteComponent() {
             );
             setSnackbarOpen(true);
         }
-    };
+    }, [compactListItems, currentHousehold?.householdId, listId]);
 
-    const handleToggleDragHandles = () => {
+    const handleToggleDragHandles = useCallback(() => {
         setShowDragHandles(!showDragHandles);
-        handleMenuClose();
-    };
+    }, [showDragHandles]);
 
-    const handleSnackbarClose = () => {
+    const handleSnackbarClose = useCallback(() => {
         setSnackbarOpen(false);
-    };
+    }, []);
 
     // AddInput handlers
     const handleAddItem = useCallback(
-        (data: string) => {
+        (data: string, quantity?: string) => {
             if (!currentHousehold?.householdId) return;
 
-            // Include quantity from external state
             const itemData = {
                 text: data,
-                quantity: quantity.trim() || undefined,
+                quantity: quantity || undefined,
             };
 
-            createMutation.mutate(
-                {
-                    householdId: currentHousehold.householdId,
-                    listId: parseInt(listId),
-                    data: itemData,
-                },
-                {
-                    onSuccess: () => {
-                        // Clear quantity state
-                        setQuantity("");
-                        // Scroll to the last item in the unchecked section
-                        scrollToLastUncheckedItem();
-                    },
-                },
-            );
+            createMutation.mutate({
+                householdId: currentHousehold.householdId,
+                listId: parseInt(listId),
+                data: itemData,
+            });
         },
-        [
-            createMutation,
-            currentHousehold?.householdId,
-            listId,
-            scrollToLastUncheckedItem,
-            quantity,
-        ],
+        [createMutation, currentHousehold?.householdId, listId],
     );
 
     const handleUpdateItem = useCallback(
-        (data: string) => {
+        (data: string, quantity?: string) => {
             if (editingItem?.id && currentHousehold?.householdId) {
-                // Include quantity from external state
                 const itemData = {
                     text: data,
-                    quantity: quantity.trim() || undefined,
+                    quantity: quantity || undefined,
                 };
 
                 updateMutation.mutate({
@@ -218,13 +147,7 @@ function RouteComponent() {
                 setEditingItem(null);
             }
         },
-        [
-            editingItem?.id,
-            updateMutation,
-            currentHousehold?.householdId,
-            listId,
-            quantity,
-        ],
+        [editingItem?.id, updateMutation, currentHousehold?.householdId, listId],
     );
 
     const handleCancelEdit = useCallback(() => {
@@ -273,7 +196,7 @@ function RouteComponent() {
                 <Button
                     variant="outlined"
                     startIcon={<ArrowBack />}
-                    onClick={handleBack}
+                    onClick={() => window.history.back()}
                 >
                     Back to Lists
                 </Button>
@@ -291,187 +214,36 @@ function RouteComponent() {
             }}
         >
             {/* Header Section */}
-            <Container maxWidth="sm" sx={{ px: 3, py: 3, flexShrink: 0 }}>
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                    }}
-                >
-                    <IconButton onClick={handleBack} sx={{ p: 1 }}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Box sx={{ flex: 1 }}>
-                        <Typography
-                            variant="h5"
-                            component="h1"
-                            sx={{ fontWeight: 600, mb: 0.5 }}
-                        >
-                            {list.name}
-                        </Typography>
-                        {list.description && (
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ lineHeight: 1.4 }}
-                            >
-                                {list.description}
-                            </Typography>
-                        )}
-                    </Box>
-                    <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
-                        <IconButton
-                            onClick={handleEdit}
-                            sx={{
-                                bgcolor: "primary.main",
-                                color: "white",
-                                "&:hover": { bgcolor: "primary.dark" },
-                            }}
-                        >
-                            <Edit />
-                        </IconButton>
-                        <IconButton
-                            onClick={handleMenuOpen}
-                            sx={{
-                                bgcolor: "grey.100",
-                                color: "grey.700",
-                                "&:hover": { bgcolor: "grey.200" },
-                            }}
-                        >
-                            <MoreVert />
-                        </IconButton>
-                    </Box>
-                </Box>
-            </Container>
-
-            {/* Menu */}
-            <Menu
-                anchorEl={menuAnchorEl}
-                open={Boolean(menuAnchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                }}
-                transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                }}
-            >
-                <MenuItem onClick={handleToggleDragHandles}>
-                    <ListItemIcon>
-                        <DragIndicator fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText
-                        primary={
-                            showDragHandles
-                                ? "Hide Drag Handles"
-                                : "Show Drag Handles"
-                        }
-                        secondary="Toggle reorder handles visibility"
-                    />
-                </MenuItem>
-                <MenuItem
-                    onClick={handleCompact}
-                    disabled={compactListItems.isPending}
-                >
-                    <ListItemIcon>
-                        <Compress fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText
-                        primary="Compact List Order"
-                        secondary="Reorganize item sort order"
-                    />
-                </MenuItem>
-            </Menu>
+            <ListViewHeader
+                list={list}
+                listId={listId}
+                showDragHandles={showDragHandles}
+                onToggleDragHandles={handleToggleDragHandles}
+                onCompact={handleCompact}
+                isCompacting={compactListItems.isPending}
+            />
 
             {/* Scrollable Content Section */}
-            <Container
+            <ListContainer
                 ref={scrollContainerRef}
-                maxWidth="sm"
-                sx={{
-                    flex: 1,
-                    overflow: "auto",
-                    px: 3,
-                    py: 0,
-                    minHeight: 0,
-                }}
-            >
-                <SortableList
-                    householdId={currentHousehold.householdId}
-                    listId={parseInt(listId)}
-                    editingItem={editingItem}
-                    onEdit={setEditingItem}
-                    showDragHandles={showDragHandles}
-                />
-            </Container>
+                householdId={currentHousehold.householdId}
+                listId={parseInt(listId)}
+                editingItem={editingItem}
+                onEdit={setEditingItem}
+                showDragHandles={showDragHandles}
+            />
 
             {/* Footer Section - AddInput */}
-            <Container
-                maxWidth="sm"
-                sx={{
-                    flexShrink: 0,
-                    px: 3,
-                    py: 2,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    bgcolor: "background.paper",
-                }}
-            >
-                <AddInput
-                    onAdd={handleAddItem}
-                    onUpdate={handleUpdateItem}
-                    onCancelEdit={handleCancelEdit}
-                    onUncheckExisting={handleUncheckExisting}
-                    editingItem={
-                        editingItem
-                            ? {
-                                  ...editingItem,
-                                  secondaryText: editingItem?.quantity,
-                              }
-                            : undefined
-                    }
-                    existingItems={items.map((item) => ({
-                        ...item,
-                        secondaryText: item.quantity || null,
-                    }))}
-                    isLoading={
-                        createMutation.isPending || updateMutation.isPending
-                    }
-                    hasItems={items.length > 0}
-                    rightControls={[
-                        <QuantityToggle
-                            key="quantity-toggle"
-                            value={quantity}
-                            onToggle={() =>
-                                setShowQuantityPanel(!showQuantityPanel)
-                            }
-                        />,
-                    ]}
-                    bottomPanels={[
-                        <Collapse key="quantity-panel" in={showQuantityPanel}>
-                            <QuantityPanel
-                                value={quantity}
-                                onChange={setQuantity}
-                                isLoading={
-                                    createMutation.isPending ||
-                                    updateMutation.isPending
-                                }
-                                onKeyPress={(event) => {
-                                    if (
-                                        event.key === "Enter" &&
-                                        !event.shiftKey
-                                    ) {
-                                        event.preventDefault();
-                                        // The AddInput component will handle the submit
-                                    }
-                                }}
-                            />
-                        </Collapse>,
-                    ]}
-                />
-            </Container>
+            <ListFooter
+                editingItem={editingItem}
+                existingItems={items}
+                onAddItem={handleAddItem}
+                onUpdateItem={handleUpdateItem}
+                onCancelEdit={handleCancelEdit}
+                onUncheckExisting={handleUncheckExisting}
+                isLoading={createMutation.isPending || updateMutation.isPending}
+                onScrollToLastUnchecked={scrollToLastUncheckedItem}
+            />
 
             {/* Snackbar for feedback */}
             <Snackbar

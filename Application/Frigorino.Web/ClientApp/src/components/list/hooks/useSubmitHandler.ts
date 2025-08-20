@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { AddInputItem } from "../types";
+import type { ListItem } from "../types";
 
 interface UseSubmitHandlerProps {
     text: string;
@@ -9,7 +9,7 @@ interface UseSubmitHandlerProps {
     onUncheckExisting?: (itemId: number) => void;
     clearText: () => void;
     focusInput: () => void;
-    checkForDuplicate: (trimmedText: string) => AddInputItem | undefined;
+    checkForDuplicate: (trimmedText: string) => ListItem | undefined;
 }
 
 export const useSubmitHandler = ({

@@ -1,4 +1,4 @@
-import { Add, Remove } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -12,36 +12,36 @@ import { memo, useRef } from "react";
 interface QuantityToggleProps {
     value: string;
     onToggle: () => void;
+    active: boolean;
 }
 
-export const QuantityToggle = memo(({ value, onToggle }: QuantityToggleProps) => {
-    return (
-        <IconButton onClick={onToggle} size="small">
-            {value ? (
-                <Typography
-                    variant="caption"
-                    sx={{
-                        fontWeight: "bold",
-                        color: "primary.main",
-                        minWidth: "30px",
-                    }}
-                >
-                    {value}
-                </Typography>
-            ) : (
-                <Typography
-                    variant="caption"
-                    sx={{
-                        fontWeight: "bold",
-                        minWidth: "30px",
-                    }}
-                >
-                    #
-                </Typography>
-            )}
-        </IconButton>
-    );
-});
+export const QuantityToggle = memo(
+    ({ value, onToggle, active }: QuantityToggleProps) => {
+        return (
+            <IconButton onClick={onToggle} size="small">
+                {value ? (
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            fontWeight: "bold",
+                            color: "primary.main",
+                            minWidth: "30px",
+                        }}
+                    >
+                        {value}
+                    </Typography>
+                ) : (
+                    <>
+                        <ShoppingBag
+                            fontSize="small"
+                            sx={{ color: active ? "primary.main" : "inherit" }}
+                        />
+                    </>
+                )}
+            </IconButton>
+        );
+    },
+);
 
 QuantityToggle.displayName = "QuantityToggle";
 
@@ -95,15 +95,13 @@ export const QuantityPanel = memo(
                             "& .MuiInputBase-input": {
                                 py: 0.75,
                             },
-                            "&:hover .MuiOutlinedInput-notchedOutline":
-                                {
-                                    borderColor: "primary.main",
-                                },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                {
-                                    borderColor: "primary.main",
-                                    borderWidth: 2,
-                                },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "primary.main",
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                borderColor: "primary.main",
+                                borderWidth: 2,
+                            },
                         },
                     }}
                 />
@@ -142,8 +140,7 @@ export const QuantityPanel = memo(
                     size="small"
                     onClick={() => {
                         const current = parseInt(value) || 0;
-                        if (current > 0)
-                            onChange((current - 1).toString());
+                        if (current > 0) onChange((current - 1).toString());
                     }}
                     disabled={!value || parseInt(value) <= 0}
                 >

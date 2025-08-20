@@ -3,7 +3,7 @@
  * These are component-specific interfaces, decoupled from API types
  */
 
-export interface AddInputItem {
+export interface ListItem {
     id?: number;
     text?: string | null;
     secondaryText?: string | null;
@@ -15,8 +15,8 @@ export interface AddInputProps {
     onUpdate?: (data: string) => void;
     onCancelEdit?: () => void;
     onUncheckExisting?: (itemId: number) => void;
-    editingItem?: AddInputItem;
-    existingItems?: AddInputItem[];
+    editingItem?: ListItem;
+    existingItems?: ListItem[];
     isLoading?: boolean;
     hasItems?: boolean;
     topPanels?: React.ReactNode[];
@@ -28,6 +28,6 @@ export interface AddInputState {
     isEditing: boolean;
     hasDuplicate: boolean;
     hasText: boolean;
-    existingItem?: AddInputItem | null;
+    existingItem?: ListItem | null;
     existingItemStatus?: boolean;
 }

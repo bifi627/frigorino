@@ -349,14 +349,14 @@ export const SortableList = ({
                                 opacity: 0.95,
                             }}
                         >
-                            <SortableListItem
+                            {/* <SortableListItem
                                 item={activeItem}
                                 onToggleStatus={() => {}}
                                 onEdit={() => {}}
                                 onDelete={() => {}}
                                 isEditing={false}
                                 showDragHandles={false}
-                            />
+                            /> */}
                         </Paper>
                     ) : null}
                 </DragOverlay>

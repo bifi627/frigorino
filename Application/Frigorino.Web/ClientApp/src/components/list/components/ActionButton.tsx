@@ -30,11 +30,11 @@ export const ActionButton = memo(({ onSubmit }: ActionButtonProps) => {
             onClick={onSubmit}
             disabled={!hasText || isLoading}
             color={styles.getActionButtonColor()}
-            size="small"
+            size="medium"
             sx={styles.actionButtonStyles}
             title={styles.getActionButtonTitle(existingItem?.text || undefined)}
         >
-            <Send fontSize="small" />
+            <Send />
         </IconButton>
     );
 });

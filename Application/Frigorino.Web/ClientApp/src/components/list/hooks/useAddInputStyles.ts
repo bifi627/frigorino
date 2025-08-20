@@ -12,7 +12,7 @@ export const useAddInputStyles = (state: StyleState) => {
 
     const containerStyles: SxProps<Theme> = {
         width: "100%",
-        p: 2,
+        p: 1,
         bgcolor: "background.paper",
         borderRadius: 2,
         border: "1px solid",
@@ -33,16 +33,17 @@ export const useAddInputStyles = (state: StyleState) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        p: 0.75,
+        px: 0.5,
+        py: 0.25,
         backgroundColor: "warning.50",
         borderRadius: 1,
-        mb: 0.75,
+        mb: 0.5,
     };
 
     const editingHeaderContentStyles: SxProps<Theme> = {
         display: "flex",
         alignItems: "center",
-        gap: 1,
+        gap: 0.5,
     };
 
     const editingHeaderButtonStyles: SxProps<Theme> = {
@@ -52,10 +53,12 @@ export const useAddInputStyles = (state: StyleState) => {
 
     const discardButtonStyles: SxProps<Theme> = {
         color: "text.secondary",
+        backgroundColor: "action.hover",
         "&:hover": {
             color: "error.main",
             backgroundColor: "error.50",
         },
+        transition: "all 0.2s ease",
     };
 
     const inputContainerStyles: SxProps<Theme> = {
