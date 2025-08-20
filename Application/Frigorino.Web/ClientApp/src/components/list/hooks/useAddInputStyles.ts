@@ -95,14 +95,14 @@ export const useAddInputStyles = (state: StyleState) => {
 
     const getActionButtonBackgroundColor = () => {
         if (!hasText) return "transparent";
-        
+
         const color = getActionButtonColor();
         return `${color}.main`;
     };
 
     const getActionButtonHoverBackgroundColor = () => {
         if (!hasText) return "transparent";
-        
+
         const color = getActionButtonColor();
         return `${color}.dark`;
     };

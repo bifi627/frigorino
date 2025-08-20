@@ -147,7 +147,12 @@ function RouteComponent() {
                 setEditingItem(null);
             }
         },
-        [editingItem?.id, updateMutation, currentHousehold?.householdId, listId],
+        [
+            editingItem?.id,
+            updateMutation,
+            currentHousehold?.householdId,
+            listId,
+        ],
     );
 
     const handleCancelEdit = useCallback(() => {
