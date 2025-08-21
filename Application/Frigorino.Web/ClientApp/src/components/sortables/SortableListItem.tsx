@@ -32,6 +32,7 @@ interface SortableListItemProps<
     isDragging?: boolean;
     isEditing?: boolean;
     showDragHandles?: boolean;
+    showCheckbox?: boolean;
 }
 
 function SortableListItemComponent<
@@ -44,6 +45,7 @@ function SortableListItemComponent<
     isDragging = false,
     isEditing = false,
     showDragHandles = false,
+    showCheckbox = false,
 }: SortableListItemProps<T>) {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -126,23 +128,25 @@ function SortableListItemComponent<
                     }}
                     onClick={handleToggle}
                 >
-                    <ListItemIcon sx={{ minWidth: 32 }}>
-                        <Checkbox
-                            edge="start"
-                            checked={item.status}
-                            tabIndex={-1}
-                            disableRipple
-                            size="small"
-                            sx={{
-                                color: item.status
-                                    ? "success.main"
-                                    : "text.secondary",
-                                "&.Mui-checked": {
-                                    color: "success.main",
-                                },
-                            }}
-                        />
-                    </ListItemIcon>
+                    {showCheckbox && (
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                            <Checkbox
+                                edge="start"
+                                checked={item.status}
+                                tabIndex={-1}
+                                disableRipple
+                                size="small"
+                                sx={{
+                                    color: item.status
+                                        ? "success.main"
+                                        : "text.secondary",
+                                    "&.Mui-checked": {
+                                        color: "success.main",
+                                    },
+                                }}
+                            />
+                        </ListItemIcon>
+                    )}
 
                     <ListItemText
                         primary={

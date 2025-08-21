@@ -2,6 +2,7 @@ import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { InventoryItemDto } from "../../lib/api";
 import { AddInput } from "../list/AddInput";
+import { DateInputPanel } from "../list/DateInputPanel";
 import { QuantityPanel, QuantityToggle } from "../list/QuantityPanel";
 
 interface ListFooterProps {
@@ -27,7 +28,8 @@ export const InventoryFooter = memo(
         onScrollToLastUnchecked,
     }: ListFooterProps) => {
         const [quantity, setQuantity] = useState("");
-        const [showQuantityPanel, setShowQuantityPanel] = useState(false);
+        const [date, setDate] = useState<Date | null>(null);
+        const [showPanels, setShowQuantityPanel] = useState(false);
 
         // Update quantity state when editing item changes
         useEffect(() => {
@@ -58,10 +60,10 @@ export const InventoryFooter = memo(
         );
 
         const handleToggleQuantityPanel = useCallback(() => {
-            setShowQuantityPanel(!showQuantityPanel);
-        }, [showQuantityPanel]);
+            setShowQuantityPanel(!showPanels);
+        }, [showPanels]);
 
-        const handleQuantityKeyPress = useCallback(
+        const handlePanelKeyPress = useCallback(
             (event: React.KeyboardEvent) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -99,27 +101,36 @@ export const InventoryFooter = memo(
                 <QuantityToggle
                     key="quantity-toggle"
                     value={quantity}
-                    active={showQuantityPanel}
+                    active={showPanels}
                     onToggle={handleToggleQuantityPanel}
                 />,
             ],
-            [quantity, handleToggleQuantityPanel, showQuantityPanel],
+            [quantity, handleToggleQuantityPanel, showPanels],
         );
 
-        // Memoize bottom panels
-        const bottomPanels = useMemo(
+        const topPanels = useMemo(
             () => [
-                <Collapse key="quantity-panel" in={showQuantityPanel}>
+                <Collapse key="date-panel" in={showPanels}>
+                    <DateInputPanel
+                        value={date}
+                        onChange={(value) => setDate(value)}
+                        isLoading={isLoading}
+                        onKeyPress={handlePanelKeyPress}
+                    ></DateInputPanel>
+                </Collapse>,
+                <Collapse key="quantity-panel" in={showPanels}>
                     <QuantityPanel
                         value={quantity}
                         onChange={setQuantity}
                         isLoading={isLoading}
-                        onKeyPress={handleQuantityKeyPress}
+                        onKeyPress={handlePanelKeyPress}
                     />
                 </Collapse>,
             ],
-            [showQuantityPanel, quantity, isLoading, handleQuantityKeyPress],
+            [showPanels, date, isLoading, handlePanelKeyPress, quantity],
         );
+
+        const bottomPanels = useMemo(() => [], []);
 
         return (
             <Container
@@ -144,6 +155,7 @@ export const InventoryFooter = memo(
                     hasItems={existingItems.length > 0}
                     rightControls={rightControls}
                     bottomPanels={bottomPanels}
+                    topPanels={topPanels}
                 />
             </Container>
         );

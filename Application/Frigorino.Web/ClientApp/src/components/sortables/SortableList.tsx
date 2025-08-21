@@ -45,6 +45,7 @@ interface MemoizedSortableListItemProps<T extends SortableItemInterface> {
     onEdit: (item: T) => void;
     onDelete: (itemId: number) => void;
     showDragHandles?: boolean;
+    showCheckbox?: boolean;
     renderItem?: (
         item: T,
         isEditing: boolean,
@@ -65,6 +66,7 @@ function MemoizedSortableListItemComponent<T extends SortableItemInterface>({
     onEdit,
     onDelete,
     showDragHandles,
+    showCheckbox,
     renderItem,
 }: MemoizedSortableListItemProps<T>) {
     if (renderItem) {
@@ -88,6 +90,7 @@ function MemoizedSortableListItemComponent<T extends SortableItemInterface>({
             onEdit={onEdit as (item: DisplayableSortableItem) => void}
             onDelete={onDelete}
             isEditing={isEditing}
+            showCheckbox={showCheckbox}
             showDragHandles={showDragHandles || false}
         />
     );
@@ -114,6 +117,7 @@ export interface SortableListProps<
     // UI props
     editingItem?: T | null;
     showDragHandles?: boolean;
+    showCheckbox?: boolean;
     renderItem?: (
         item: T,
         isEditing: boolean,
@@ -138,6 +142,7 @@ export const SortableList = <
     onDelete,
     editingItem: externalEditingItem,
     showDragHandles = false,
+    showCheckbox = false,
     renderItem,
 }: SortableListProps<T>) => {
     const [activeItem, setActiveItem] = useState<T | null>(null);
@@ -317,6 +322,7 @@ export const SortableList = <
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
+                                    showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
                                     renderItem={renderItem}
                                 />
@@ -356,6 +362,7 @@ export const SortableList = <
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
+                                    showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
                                     renderItem={renderItem}
                                 />

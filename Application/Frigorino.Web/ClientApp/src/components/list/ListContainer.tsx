@@ -2,10 +2,10 @@ import { Container } from "@mui/material";
 import { forwardRef, memo, useCallback } from "react";
 import type { ListItemDto } from "../../hooks/useListItemQueries";
 import {
-    useListItems,
     useDeleteListItem,
-    useToggleListItemStatus,
+    useListItems,
     useReorderListItem,
+    useToggleListItemStatus,
 } from "../../hooks/useListItemQueries";
 import { SortableList } from "../sortables/SortableList";
 
@@ -90,6 +90,7 @@ export const ListContainer = memo(
                         onDelete={handleDelete}
                         editingItem={editingItem}
                         showDragHandles={showDragHandles}
+                        showCheckbox={true}
                     />
                 </Container>
             );

@@ -107,7 +107,7 @@ export const ListFooter = memo(
         );
 
         // Memoize bottom panels
-        const bottomPanels = useMemo(
+        const topPanels = useMemo(
             () => [
                 <Collapse key="quantity-panel" in={showQuantityPanel}>
                     <QuantityPanel
@@ -143,7 +143,7 @@ export const ListFooter = memo(
                     isLoading={isLoading}
                     hasItems={existingItems.length > 0}
                     rightControls={rightControls}
-                    bottomPanels={bottomPanels}
+                    topPanels={topPanels}
                 />
             </Container>
         );

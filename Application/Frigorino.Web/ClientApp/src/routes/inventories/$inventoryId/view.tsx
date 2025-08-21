@@ -11,7 +11,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
 import { InventoryContainer } from "../../../components/inventory/InventoryContainer";
-import { ListFooter } from "../../../components/list/ListFooter";
+import { InventoryFooter } from "../../../components/inventory/InventoryFooter";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
@@ -202,7 +202,7 @@ function RouteComponent() {
             />
 
             {/* Footer Section - AddInput */}
-            <ListFooter
+            <InventoryFooter
                 editingItem={editingItem}
                 existingItems={items}
                 onAddItem={(data, quantity) =>
