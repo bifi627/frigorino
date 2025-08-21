@@ -1,15 +1,30 @@
-import { ArrowBack, Edit } from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import {
     Alert,
     Box,
     CircularProgress,
     Container,
-    IconButton,
+    Snackbar,
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useCallback, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
+import { InventoryContainer } from "../../../components/inventory/InventoryContainer";
+import { ListFooter } from "../../../components/list/ListFooter";
+import {
+    PageHeadActionBar,
+    type HeadNavigationAction,
+} from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
+import {
+    useCreateInventoryItem,
+    useInventoryItems,
+    useUpdateInventoryItem,
+    type CreateInventoryItemRequest,
+    type InventoryItemDto,
+    type UpdateInventoryItemRequest,
+} from "../../../hooks/useInventoryItemQueries";
 import { useInventory } from "../../../hooks/useInventoryQueries";
 
 export const Route = createFileRoute("/inventories/$inventoryId/view")({
@@ -19,12 +34,15 @@ export const Route = createFileRoute("/inventories/$inventoryId/view")({
 
 function RouteComponent() {
     const router = useRouter();
-    const { inventoryId } = Route.useParams();
-    const inventoryIdNum = parseInt(inventoryId, 10);
+    const params = Route.useParams();
+    const inventoryId = parseInt(params.inventoryId);
+    // const [showDragHandles, setShowDragHandles] = useState(false);
 
-    // const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
-    //     null,
-    // );
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
+        null,
+    );
 
     const { data: currentHousehold } = useCurrentHousehold();
     const {
@@ -33,24 +51,43 @@ function RouteComponent() {
         error: inventoryError,
     } = useInventory(
         currentHousehold?.householdId || 0,
-        inventoryIdNum,
-        !!currentHousehold?.householdId && !isNaN(inventoryIdNum),
+        inventoryId,
+        !!currentHousehold?.householdId,
     );
 
     // Inventory items queries and mutations
-    // const {
-    //     data: items = [],
-    //     isLoading: itemsLoading,
-    //     error: itemsError,
-    // } = useInventoryItems(inventoryIdNum, !!inventory);
+    const { data: items = [] } = useInventoryItems(inventoryId, !!inventory);
 
-    // const createMutation = useCreateInventoryItem();
-    // const updateMutation = useUpdateInventoryItem();
+    const createMutation = useCreateInventoryItem();
+    const updateMutation = useUpdateInventoryItem();
     // const deleteMutation = useDeleteInventoryItem();
 
-    const handleBack = () => {
-        router.history.back();
-    };
+    // Function to scroll to the last item in the unchecked section
+    const scrollToLastUncheckedItem = useCallback(() => {
+        if (scrollContainerRef.current) {
+            // Find the unchecked items section and get its last item
+            const uncheckedSection = scrollContainerRef.current.querySelector(
+                '[data-section="unchecked-items"]',
+            );
+            if (uncheckedSection) {
+                // Get all list items within the unchecked section
+                const listItems =
+                    uncheckedSection.querySelectorAll(".MuiListItem-root");
+                // Get the last item in the unchecked section
+                const lastItem = listItems[listItems.length - 1];
+                if (lastItem) {
+                    lastItem.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
+                }
+            }
+        }
+    }, []);
+
+    // const handleBack = () => {
+    //     router.history.back();
+    // };
 
     const handleEdit = () => {
         router.navigate({ to: `/inventories/${inventoryId}/edit` });
@@ -63,36 +100,39 @@ function RouteComponent() {
     // const handleCancelEdit = useCallback(() => {
     //     setEditingItem(null);
     // }, []);
+    // const handleToggleDragHandles = useCallback(() => {
+    //     setShowDragHandles(!showDragHandles);
+    // }, [showDragHandles]);
 
-    // const handleAddItem = useCallback(
-    //     (data: CreateInventoryItemRequest) => {
-    //         createMutation.mutate({
-    //             inventoryId: inventoryIdNum,
-    //             data,
-    //         });
-    //     },
-    //     [createMutation, inventoryIdNum],
-    // );
+    const handleAddItem = useCallback(
+        (data: CreateInventoryItemRequest) => {
+            createMutation.mutate({
+                inventoryId,
+                data,
+            });
+        },
+        [createMutation, inventoryId],
+    );
 
-    // const handleUpdateItem = useCallback(
-    //     (data: UpdateInventoryItemRequest) => {
-    //         if (editingItem?.id) {
-    //             updateMutation.mutate({
-    //                 inventoryId: inventoryIdNum,
-    //                 itemId: editingItem.id,
-    //                 data,
-    //             });
-    //             setEditingItem(null);
-    //         }
-    //     },
-    //     [editingItem?.id, updateMutation, inventoryIdNum],
-    // );
+    const handleUpdateItem = useCallback(
+        (data: UpdateInventoryItemRequest) => {
+            if (editingItem?.id) {
+                updateMutation.mutate({
+                    inventoryId,
+                    itemId: editingItem.id,
+                    data,
+                });
+                setEditingItem(null);
+            }
+        },
+        [editingItem?.id, updateMutation, inventoryId],
+    );
 
     // const handleDeleteItem = useCallback(
     //     (itemId: number) => {
-    //         deleteMutation.mutate({ inventoryId: inventoryIdNum, itemId });
+    //         deleteMutation.mutate({ inventoryId, itemId });
     //     },
-    //     [deleteMutation, inventoryIdNum],
+    //     [deleteMutation, inventoryId],
     // );
 
     if (!currentHousehold?.householdId) {
@@ -126,44 +166,65 @@ function RouteComponent() {
         );
     }
 
+    // Actions for HeadNavigation
+    const directActions = [
+        {
+            icon: <Edit />,
+            onClick: handleEdit,
+        },
+    ];
+
+    const menuActions: HeadNavigationAction[] = [];
+
     return (
-        <Container maxWidth="sm" sx={{ py: 3 }}>
-            {/* Header */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
-                <IconButton onClick={handleBack} sx={{ p: 1 }}>
-                    <ArrowBack />
-                </IconButton>
-                <Box sx={{ flex: 1 }}>
-                    <Typography
-                        variant="h5"
-                        component="h1"
-                        sx={{ fontWeight: 600, mb: 0.5 }}
-                    >
-                        {inventory.name}
-                    </Typography>
-                    {inventory.description && (
-                        <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.4 }}
-                        >
-                            {inventory.description}
-                        </Typography>
-                    )}
-                </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                    <IconButton
-                        onClick={handleEdit}
-                        sx={{
-                            bgcolor: "primary.main",
-                            color: "white",
-                            "&:hover": { bgcolor: "primary.dark" },
-                        }}
-                    >
-                        <Edit />
-                    </IconButton>
-                </Box>
-            </Box>
-        </Container>
+        <Box
+            sx={{
+                height: "calc(100dvh - 56px)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+            }}
+        >
+            {/* Header Section */}
+            <PageHeadActionBar
+                title={inventory.name || "Untitled Inventory"}
+                subtitle={inventory.description || undefined}
+                directActions={directActions}
+                menuActions={menuActions}
+            />
+
+            {/* Scrollable Content Section */}
+            <InventoryContainer
+                ref={scrollContainerRef}
+                inventoryId={inventoryId}
+                editingItem={editingItem}
+                onEdit={setEditingItem}
+            />
+
+            {/* Footer Section - AddInput */}
+            <ListFooter
+                editingItem={editingItem}
+                existingItems={items}
+                onAddItem={(data, quantity) =>
+                    handleAddItem({ text: data, quantity: quantity })
+                }
+                onUpdateItem={(data, quantity) =>
+                    handleUpdateItem({ text: data, quantity: quantity })
+                }
+                onCancelEdit={() => setEditingItem(null)}
+                onUncheckExisting={() => {}}
+                isLoading={createMutation.isPending || updateMutation.isPending}
+                onScrollToLastUnchecked={scrollToLastUncheckedItem}
+            />
+
+            {/* Snackbar for feedback */}
+            <Snackbar
+                open={false}
+                autoHideDuration={4000}
+                onClose={() => {}}
+                message={""}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            />
+        </Box>
     );
 }

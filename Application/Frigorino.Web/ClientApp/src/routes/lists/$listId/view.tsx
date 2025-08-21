@@ -1,4 +1,4 @@
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, Compress, DragIndicator, Edit } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -8,12 +8,12 @@ import {
     Snackbar,
     Typography,
 } from "@mui/material";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
 import { ListContainer } from "../../../components/list/ListContainer";
 import { ListFooter } from "../../../components/list/ListFooter";
-import { ListViewHeader } from "../../../components/list/ListViewHeader";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import {
     useCompactListItems,
@@ -31,6 +31,7 @@ export const Route = createFileRoute("/lists/$listId/view")({
 });
 
 function RouteComponent() {
+    const router = useRouter();
     const { listId } = Route.useParams();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -102,6 +103,12 @@ function RouteComponent() {
             setSnackbarOpen(true);
         }
     }, [compactListItems, currentHousehold?.householdId, listId]);
+
+    const handleEdit = useCallback(() => {
+        router.navigate({
+            to: `/lists/${listId}/edit`,
+        });
+    }, [router, listId]);
 
     const handleToggleDragHandles = useCallback(() => {
         setShowDragHandles(!showDragHandles);
@@ -209,6 +216,29 @@ function RouteComponent() {
         );
     }
 
+    // Actions for HeadNavigation
+    const directActions = [
+        {
+            icon: <Edit />,
+            onClick: handleEdit,
+        },
+    ];
+
+    const menuActions = [
+        {
+            icon: <DragIndicator fontSize="small" />,
+            text: showDragHandles ? "Hide Drag Handles" : "Show Drag Handles",
+            secondaryText: "Toggle reorder handles visibility",
+            onClick: handleToggleDragHandles,
+        },
+        {
+            icon: <Compress fontSize="small" />,
+            text: "Compact List Order",
+            secondaryText: "Reorganize item sort order",
+            onClick: handleCompact,
+        },
+    ];
+
     return (
         <Box
             sx={{
@@ -219,13 +249,11 @@ function RouteComponent() {
             }}
         >
             {/* Header Section */}
-            <ListViewHeader
-                list={list}
-                listId={listId}
-                showDragHandles={showDragHandles}
-                onToggleDragHandles={handleToggleDragHandles}
-                onCompact={handleCompact}
-                isCompacting={compactListItems.isPending}
+            <PageHeadActionBar
+                title={list.name || "Untitled List"}
+                subtitle={list.description || undefined}
+                directActions={directActions}
+                menuActions={menuActions}
             />
 
             {/* Scrollable Content Section */}

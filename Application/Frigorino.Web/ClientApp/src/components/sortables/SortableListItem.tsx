@@ -12,8 +12,8 @@ import {
     Typography,
 } from "@mui/material";
 import React, { memo, useCallback, useState } from "react";
-import type { SortableItemInterface } from "./SortableList";
 import { SortableItem } from "../common/sortable/SortableItem";
+import type { SortableItemInterface } from "./SortableList";
 
 // Extended interface for displayable sortable items
 export interface DisplayableSortableItem extends SortableItemInterface {
@@ -148,7 +148,10 @@ function SortableListItemComponent<
                         primary={
                             <Typography
                                 variant="body2"
-                                sx={{ fontWeight: 500 }}
+                                sx={{
+                                    fontWeight: 500,
+                                    wordBreak: "break-word",
+                                }}
                             >
                                 {item.text}
                             </Typography>
