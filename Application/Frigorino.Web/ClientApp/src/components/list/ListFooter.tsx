@@ -71,6 +71,11 @@ export const ListFooter = memo(
             [],
         );
 
+        const onClearText = () => {
+            setQuantity("");
+            setShowQuantityPanel(false);
+        };
+
         // Memoize the existing items mapping to prevent unnecessary re-renders
         const mappedExistingItems = useMemo(
             () =>
@@ -138,6 +143,7 @@ export const ListFooter = memo(
                     onUpdate={handleUpdateItem}
                     onCancelEdit={onCancelEdit}
                     onUncheckExisting={onUncheckExisting}
+                    onClearText={onClearText}
                     editingItem={mappedEditingItem}
                     existingItems={mappedExistingItems}
                     isLoading={isLoading}

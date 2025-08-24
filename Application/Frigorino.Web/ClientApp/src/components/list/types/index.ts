@@ -15,6 +15,7 @@ export interface AddInputProps {
     onUpdate?: (data: string) => void;
     onCancelEdit?: () => void;
     onUncheckExisting?: (itemId: number) => void;
+    onClearText: () => void;
     editingItem?: ListItem;
     existingItems?: ListItem[];
     isLoading?: boolean;

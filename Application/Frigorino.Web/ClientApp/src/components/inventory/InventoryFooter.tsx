@@ -35,6 +35,11 @@ export const InventoryFooter = memo(
         useEffect(() => {
             if (editingItem) {
                 setQuantity(editingItem.quantity || "");
+                setDate(
+                    editingItem.expiryDate
+                        ? new Date(editingItem.expiryDate)
+                        : null,
+                );
                 if (editingItem.quantity) {
                     setShowQuantityPanel(true);
                 }
@@ -71,6 +76,12 @@ export const InventoryFooter = memo(
         const handleToggleQuantityPanel = useCallback(() => {
             setShowQuantityPanel(!showPanels);
         }, [showPanels]);
+
+        const onClearText = () => {
+            setQuantity("");
+            setDate(null);
+            setShowQuantityPanel(false);
+        };
 
         const handlePanelKeyPress = useCallback(
             (event: React.KeyboardEvent) => {
@@ -158,6 +169,7 @@ export const InventoryFooter = memo(
                     onUpdate={handleUpdateItem}
                     onCancelEdit={onCancelEdit}
                     onUncheckExisting={onUncheckExisting}
+                    onClearText={onClearText}
                     editingItem={mappedEditingItem}
                     existingItems={mappedExistingItems}
                     isLoading={isLoading}

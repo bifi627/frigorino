@@ -4,11 +4,13 @@ import type { ListItem } from "../types";
 interface UseInputStateProps {
     editingItem?: ListItem;
     isLoading: boolean;
+    onClearText: () => void;
 }
 
 export const useInputState = ({
     editingItem,
     isLoading,
+    onClearText,
 }: UseInputStateProps) => {
     const [text, setText] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
@@ -27,25 +29,14 @@ export const useInputState = ({
         }
     }, [editingItem]);
 
-    useEffect(() => {
-        focusInput();
-    }, [focusInput]);
-
-    useEffect(() => {
-        if (!isLoading) {
-            setTimeout(() => {
-                focusInput();
-            }, 50);
-        }
-    }, [isLoading, focusInput]);
-
     const handleTextChange = useCallback((newText: string) => {
         setText(newText);
     }, []);
 
     const clearText = useCallback(() => {
         setText("");
-    }, []);
+        onClearText();
+    }, [onClearText]);
 
     return {
         text,

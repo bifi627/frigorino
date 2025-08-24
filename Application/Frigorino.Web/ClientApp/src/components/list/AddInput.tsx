@@ -17,6 +17,7 @@ export const AddInput = memo(
         onUpdate,
         onCancelEdit,
         onUncheckExisting,
+        onClearText,
         editingItem = undefined,
         existingItems = [],
         isLoading = false,
@@ -30,6 +31,7 @@ export const AddInput = memo(
             useInputState({
                 editingItem,
                 isLoading,
+                onClearText,
             });
 
         const { existingItem, hasDuplicate, checkForDuplicate } =

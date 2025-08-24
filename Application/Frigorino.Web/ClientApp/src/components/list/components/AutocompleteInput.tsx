@@ -145,7 +145,16 @@ export const AutocompleteInput = memo(
                                     ? `"${existingItem.text}" already exists${existingItem.status ? " (completed)" : ""}`
                                     : undefined
                             }
-                            onKeyDown={onKeyDown}
+                            onKeyDown={(event) => {
+                                // Handle Enter key specially to avoid Autocomplete interference
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    onKeyDown(event);
+                                    return;
+                                }
+                                onKeyDown(event);
+                            }}
                             slotProps={{
                                 input: {
                                     ...params.InputProps,

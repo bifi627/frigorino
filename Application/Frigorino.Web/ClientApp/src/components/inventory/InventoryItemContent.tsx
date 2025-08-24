@@ -11,7 +11,7 @@ export function InventoryItemContent({ item }: Props) {
             <ListItemText
                 primary={
                     <Typography
-                        variant="button"
+                        variant="body2"
                         sx={{
                             fontWeight: 500,
                             wordBreak: "break-word",
@@ -25,6 +25,7 @@ export function InventoryItemContent({ item }: Props) {
                         display="flex"
                         justifyContent="space-between"
                         alignItems="center"
+                        mt={0.5}
                     >
                         {item.quantity && (
                             <Typography
