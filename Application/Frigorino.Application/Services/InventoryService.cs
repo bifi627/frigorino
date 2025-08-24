@@ -1,4 +1,5 @@
 using Frigorino.Application.Extensions;
+using Frigorino.Application.Utilities;
 using Frigorino.Domain.DTOs;
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
@@ -155,6 +156,62 @@ namespace Frigorino.Application.Services
             inventory.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync();
 
+            return true;
+        }
+
+
+        public async Task<bool> RecalculateFullSortOrder(int inventoryId, string userId, bool isBackgroundJob = false)
+        {
+            // Validate user access
+            if (!isBackgroundJob)
+            {
+                var inventory = await _dbContext.Inventories
+                   .Include(i => i.Household)
+                   .FirstOrDefaultAsync(i => i.Id == inventoryId && i.IsActive);
+
+                if (inventory == null)
+                {
+                    return false;
+                }
+
+                // Check if user has access to the household and permission to delete
+                var userAccess = await _dbContext.UserHouseholds
+                    .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == inventory.HouseholdId && uh.IsActive);
+
+                if (userAccess == null)
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this household.");
+                }
+            }
+
+            var items = await _dbContext.InventoryItems
+                .Where(li => li.InventoryId == inventoryId && li.IsActive)
+                .OrderBy(li => li.SortOrder)
+                .ToListAsync();
+
+            if (items.Count == 0)
+            {
+                return false;
+            }
+
+            var uncheckedItems = items.ToList();
+
+            var (uncheckedOrders, checkedOrders) = SortOrderCalculator.GenerateCompactedSortOrders(
+                uncheckedItems.Count,
+                0);
+
+            // Update sort orders
+            for (int i = 0; i < uncheckedItems.Count; i++)
+            {
+                uncheckedItems[i].SortOrder = uncheckedOrders[i];
+            }
+
+            //for (int i = 0; i < checkedItems.Count; i++)
+            //{
+            //    checkedItems[i].SortOrder = checkedOrders[i];
+            //}
+
+            await _dbContext.SaveChangesAsync();
             return true;
         }
     }

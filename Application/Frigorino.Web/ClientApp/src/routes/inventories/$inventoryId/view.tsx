@@ -1,4 +1,4 @@
-import { Edit } from "@mui/icons-material";
+import { DragIndicator, Edit, Schedule } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -27,6 +27,8 @@ import {
 } from "../../../hooks/useInventoryItemQueries";
 import { useInventory } from "../../../hooks/useInventoryQueries";
 
+type SortMode = 'custom' | 'expiryDateAsc' | 'expiryDateDesc';
+
 export const Route = createFileRoute("/inventories/$inventoryId/view")({
     beforeLoad: requireAuth,
     component: RouteComponent,
@@ -43,6 +45,7 @@ function RouteComponent() {
     const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
         null,
     );
+    const [sortMode, setSortMode] = useState<SortMode>('custom');
 
     const { data: currentHousehold } = useCurrentHousehold();
     const {
@@ -91,6 +94,34 @@ function RouteComponent() {
 
     const handleEdit = () => {
         router.navigate({ to: `/inventories/${inventoryId}/edit` });
+    };
+
+    const handleToggleSortMode = useCallback(() => {
+        setSortMode(prevMode => {
+            switch (prevMode) {
+                case 'custom':
+                    return 'expiryDateAsc';
+                case 'expiryDateAsc':
+                    return 'expiryDateDesc';
+                case 'expiryDateDesc':
+                    return 'custom';
+                default:
+                    return 'custom';
+            }
+        });
+    }, []);
+
+    const getSortModeIcon = (mode: SortMode) => {
+        switch (mode) {
+            case 'custom':
+                return <DragIndicator />;
+            case 'expiryDateAsc':
+                return <Schedule />;
+            case 'expiryDateDesc':
+                return <Schedule style={{ transform: 'scaleY(-1)' }} />;
+            default:
+                return <DragIndicator />;
+        }
     };
 
     // const handleEditItem = useCallback((item: InventoryItemDto) => {
@@ -172,6 +203,10 @@ function RouteComponent() {
             icon: <Edit />,
             onClick: handleEdit,
         },
+        {
+            icon: getSortModeIcon(sortMode),
+            onClick: handleToggleSortMode,
+        },
     ];
 
     const menuActions: HeadNavigationAction[] = [];
@@ -199,6 +234,7 @@ function RouteComponent() {
                 inventoryId={inventoryId}
                 editingItem={editingItem}
                 onEdit={setEditingItem}
+                sortMode={sortMode}
             />
 
             {/* Footer Section - AddInput */}

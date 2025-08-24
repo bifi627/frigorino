@@ -176,12 +176,6 @@ namespace Frigorino.Application.Services
                 .Select(li => li.SortOrder)
                 .ToListAsync();
 
-            if (SortOrderCalculator.NeedsCompaction(allSortOrders))
-            {
-                // Background task could be triggered here for compaction
-                // For now, we'll leave it as manual operation
-            }
-
             return item.ToDto();
         }
 

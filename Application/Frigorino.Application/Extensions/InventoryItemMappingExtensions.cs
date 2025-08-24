@@ -21,7 +21,7 @@ namespace Frigorino.Application.Extensions
             };
         }
 
-        public static InventoryItem ToEntity(this CreateInventoryItemRequest request, int inventoryId, string userId)
+        public static InventoryItem ToEntity(this CreateInventoryItemRequest request, int inventoryId, string userId, int sortOrder)
         {
             return new InventoryItem
             {
@@ -29,7 +29,7 @@ namespace Frigorino.Application.Extensions
                 Quantity = request.Quantity?.Trim(),
                 ExpiryDate = request.ExpiryDate,
                 InventoryId = inventoryId,
-                SortOrder = 0, // Will be calculated by SortOrderCalculator
+                SortOrder = sortOrder,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 IsActive = true

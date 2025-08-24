@@ -3,6 +3,7 @@ import { ClientApi } from "../common/apiClient";
 import type {
     CreateInventoryItemRequest,
     InventoryItemDto,
+    ReorderItemRequest,
     UpdateInventoryItemRequest,
 } from "../lib/api";
 import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
@@ -10,6 +11,7 @@ import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
 export type {
     CreateInventoryItemRequest,
     InventoryItemDto,
+    ReorderItemRequest,
     UpdateInventoryItemRequest,
 };
 
@@ -274,6 +276,104 @@ export const useDeleteInventoryItem = () => {
             queryClient.removeQueries({
                 queryKey: inventoryItemKeys.detail(variables.itemId),
             });
+        },
+        onSettled: (_, __, variables) => {
+            // Always refetch to ensure consistency with server (debounced)
+            debouncedInvalidate(
+                inventoryItemKeys.byInventory(variables.inventoryId),
+            );
+        },
+    });
+};
+
+// Reorder Inventory Item Hook
+export const useReorderInventoryItem = () => {
+    const queryClient = useQueryClient();
+    const debouncedInvalidate = useDebouncedInvalidation();
+
+    return useMutation({
+        mutationFn: async ({
+            inventoryId,
+            itemId,
+            data,
+        }: {
+            inventoryId: number;
+            itemId: number;
+            data: ReorderItemRequest;
+        }) => {
+            return ClientApi.inventoryItems.patchApiInventoryInventoryItemsReorder(
+                inventoryId,
+                itemId,
+                undefined, // householdId - not needed as it's handled by auth
+                data,
+            );
+        },
+        onMutate: async (variables) => {
+            // Cancel any outgoing refetches
+            await queryClient.cancelQueries({
+                queryKey: inventoryItemKeys.byInventory(variables.inventoryId),
+            });
+
+            // Snapshot the previous value for rollback
+            const previousItems = queryClient.getQueryData<InventoryItemDto[]>(
+                inventoryItemKeys.byInventory(variables.inventoryId),
+            );
+
+            // Optimistically update the cache with new sortOrder
+            queryClient.setQueryData<InventoryItemDto[]>(
+                inventoryItemKeys.byInventory(variables.inventoryId),
+                (old) => {
+                    if (!old) return old;
+
+                    const movedItem = old.find(
+                        (item) => item.id === variables.itemId,
+                    );
+                    if (!movedItem) return old;
+
+                    // Find the new sortOrder based on afterId
+                    let newSortOrder = 1;
+                    if (
+                        variables.data.afterId !== undefined &&
+                        variables.data.afterId !== 0
+                    ) {
+                        const afterItem = old.find(
+                            (item) => item.id === variables.data.afterId,
+                        );
+                        if (afterItem) {
+                            newSortOrder = (afterItem.sortOrder || 0) + 1;
+                        }
+                    }
+
+                    // Update sortOrder for affected items
+                    return old.map((item) => {
+                        if (item.id === variables.itemId) {
+                            // Update the moved item's sortOrder
+                            return { ...item, sortOrder: newSortOrder };
+                        } else if (
+                            (item.sortOrder || 0) >= newSortOrder &&
+                            item.id !== variables.itemId
+                        ) {
+                            // Increment sortOrder for items that need to shift down
+                            return {
+                                ...item,
+                                sortOrder: (item.sortOrder || 0) + 1,
+                            };
+                        }
+                        return item;
+                    });
+                },
+            );
+
+            return { previousItems };
+        },
+        onError: (_, variables, context) => {
+            // Rollback on error
+            if (context?.previousItems) {
+                queryClient.setQueryData(
+                    inventoryItemKeys.byInventory(variables.inventoryId),
+                    context.previousItems,
+                );
+            }
         },
         onSettled: (_, __, variables) => {
             // Always refetch to ensure consistency with server (debounced)

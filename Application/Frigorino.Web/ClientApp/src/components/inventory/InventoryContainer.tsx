@@ -3,20 +3,24 @@ import { forwardRef, memo, useCallback } from "react";
 import {
     useDeleteInventoryItem,
     useInventoryItems,
+    useReorderInventoryItem,
 } from "../../hooks/useInventoryItemQueries";
 import type { InventoryItemDto } from "../../lib/api";
 import { SortableList } from "../sortables/SortableList";
 import { InventoryItemContent } from "./InventoryItemContent";
 
+type SortMode = 'custom' | 'expiryDateAsc' | 'expiryDateDesc';
+
 interface ContainerProps {
     inventoryId: number;
     editingItem: InventoryItemDto | null;
     onEdit: (item: InventoryItemDto) => void;
+    sortMode?: SortMode;
 }
 
 export const InventoryContainer = memo(
     forwardRef<HTMLDivElement, ContainerProps>(
-        ({ inventoryId, editingItem, onEdit }, ref) => {
+        ({ inventoryId, editingItem, onEdit, sortMode = 'custom' }, ref) => {
             // Fetch data and setup mutations at the container level
             const {
                 data: items = [],
@@ -26,20 +30,19 @@ export const InventoryContainer = memo(
 
             const deleteMutation = useDeleteInventoryItem();
             // const toggleMutation = useToggleListItemStatus();
-            // const reorderMutation = useReorderListItem();
+            const reorderMutation = useReorderInventoryItem();
 
             // Create callback handlers for the sortable list
-            // const handleReorder = useCallback(
-            //     async (itemId: number, afterId: number): Promise<void> => {
-            //         await reorderMutation.mutateAsync({
-            //             householdId,
-            //             listId,
-            //             itemId,
-            //             data: { afterId },
-            //         });
-            //     },
-            //     [reorderMutation, householdId, listId],
-            // );
+            const handleReorder = useCallback(
+                async (itemId: number, afterId: number): Promise<void> => {
+                    await reorderMutation.mutateAsync({
+                        inventoryId,
+                        itemId,
+                        data: { afterId },
+                    });
+                },
+                [reorderMutation, inventoryId],
+            );
 
             // const handleToggleStatus = useCallback(
             //     async (itemId: number): Promise<void> => {
@@ -62,6 +65,7 @@ export const InventoryContainer = memo(
                 [deleteMutation, inventoryId],
             );
 
+
             return (
                 <Container
                     ref={ref}
@@ -78,12 +82,13 @@ export const InventoryContainer = memo(
                         items={items}
                         isLoading={isLoading}
                         error={error}
-                        onReorder={async () => {}}
+                        onReorder={handleReorder}
                         onToggleStatus={async () => {}}
                         onEdit={onEdit}
                         onDelete={handleDelete}
                         editingItem={editingItem}
-                        showDragHandles={false}
+                        showDragHandles={sortMode === 'custom'}
+                        sortMode={sortMode}
                         renderContent={(item) => (
                             <InventoryItemContent item={item} />
                         )}

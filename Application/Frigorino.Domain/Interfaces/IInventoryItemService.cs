@@ -10,5 +10,6 @@ namespace Frigorino.Domain.Interfaces
         Task<InventoryItemDto> CreateInventoryItemAsync(int inventoryId, CreateInventoryItemRequest request, string userId);
         Task<InventoryItemDto?> UpdateInventoryItemAsync(int inventoryItemId, UpdateInventoryItemRequest request, string userId);
         Task<bool> DeleteInventoryItemAsync(int inventoryItemId, string userId);
+        Task<InventoryItemDto?> ReorderItemAsync(int inventoryItemId, ReorderItemRequest request, string userId);
     }
 }

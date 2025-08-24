@@ -1,5 +1,7 @@
 using Frigorino.Application.Extensions;
+using Frigorino.Application.Utilities;
 using Frigorino.Domain.DTOs;
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
@@ -95,7 +97,16 @@ namespace Frigorino.Application.Services
                 throw new UnauthorizedAccessException("You don't have access to this household.");
             }
 
-            var inventoryItem = request.ToEntity(inventoryId, userId);
+            // Calculate sort order for new item (always goes to top of unchecked section)
+            // In realistic usage, items are added one at a time, so we use the standard approach
+            var existingUncheckedItems = await _dbContext.InventoryItems
+                .Where(li => li.InventoryId == inventoryId && li.IsActive)
+                .OrderBy(li => li.SortOrder)
+                .ToListAsync();
+
+            var sortOrder = UpdateSortOrder(existingUncheckedItems, false, null, null);
+
+            var inventoryItem = request.ToEntity(inventoryId, userId, sortOrder);
 
             // Calculate sort order using the SortOrderCalculator utility
             var lastSortOrder = await _dbContext.InventoryItems
@@ -171,6 +182,55 @@ namespace Frigorino.Application.Services
             await _dbContext.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<InventoryItemDto?> ReorderItemAsync(int inventoryItemId, ReorderItemRequest request, string userId)
+        {
+            var inventoryItem = await _dbContext.InventoryItems
+                .Include(ii => ii.Inventory)
+                .ThenInclude(i => i.Household)
+                .Include(ii => ii.Inventory).ThenInclude(i => i.InventoryItems)
+                .FirstOrDefaultAsync(ii => ii.Id == inventoryItemId && ii.IsActive);
+
+            if (inventoryItem == null)
+            {
+                return null;
+            }
+
+            // Check if user has access to the household and permission to delete
+            var userAccess = await _dbContext.UserHouseholds
+                .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == inventoryItem.Inventory.HouseholdId && uh.IsActive);
+
+            if (userAccess == null)
+            {
+                throw new UnauthorizedAccessException("You don't have access to this household.");
+            }
+
+            var items = inventoryItem.Inventory.InventoryItems.OrderBy(l => l.SortOrder).ToArray();
+            var afterItem = items.FirstOrDefault(item => item.Id == request.AfterId);
+            InventoryItem? beforeItem = null;
+            if (afterItem is not null)
+            {
+                beforeItem = items.FirstOrDefault(item => item.SortOrder > afterItem.SortOrder);
+            }
+
+            var sortOrder = UpdateSortOrder(inventoryItem.Inventory.InventoryItems, false, afterItem?.SortOrder ?? 0, beforeItem?.SortOrder ?? 0);
+            inventoryItem.SortOrder = sortOrder;
+
+            await _dbContext.SaveChangesAsync();
+
+            return inventoryItem.ToDto();
+        }
+
+        public static int UpdateSortOrder(IEnumerable<Domain.Entities.InventoryItem> allEntries, bool status, int? after, int? before)
+        {
+            var existingItems = allEntries.OrderBy(x => x.SortOrder).ToList();
+            var first = existingItems.FirstOrDefault()?.SortOrder ?? null;
+            var last = existingItems.LastOrDefault()?.SortOrder ?? null;
+
+            var result = SortOrderCalculator.CalculateSortOrder(status, after, before, first, last, out bool needRecalculation);
+
+            return result ?? -1;
         }
     }
 }

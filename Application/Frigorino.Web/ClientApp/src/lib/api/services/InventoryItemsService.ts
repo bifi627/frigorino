@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { CreateInventoryItemRequest } from '../models/CreateInventoryItemRequest';
 import type { InventoryItemDto } from '../models/InventoryItemDto';
+import type { ReorderItemRequest } from '../models/ReorderItemRequest';
 import type { UpdateInventoryItemRequest } from '../models/UpdateInventoryItemRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -104,6 +105,34 @@ export class InventoryItemsService {
                 'inventoryId': inventoryId,
                 'inventoryItemId': inventoryItemId,
             },
+        });
+    }
+    /**
+     * @param inventoryId
+     * @param inventoryItemId
+     * @param householdId
+     * @param requestBody
+     * @returns InventoryItemDto OK
+     * @throws ApiError
+     */
+    public patchApiInventoryInventoryItemsReorder(
+        inventoryId: number,
+        inventoryItemId: number,
+        householdId?: number,
+        requestBody?: ReorderItemRequest,
+    ): CancelablePromise<InventoryItemDto> {
+        return this.httpRequest.request({
+            method: 'PATCH',
+            url: '/api/inventory/{inventoryId}/InventoryItems/{inventoryItemId}/reorder',
+            path: {
+                'inventoryId': inventoryId,
+                'inventoryItemId': inventoryItemId,
+            },
+            query: {
+                'householdId': householdId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

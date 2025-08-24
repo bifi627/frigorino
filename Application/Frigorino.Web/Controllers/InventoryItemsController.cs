@@ -143,4 +143,38 @@ public class InventoryItemsController : ControllerBase
             return Forbid(ex.Message);
         }
     }
+
+    /// <summary>
+    /// Reorder an item within its status section (checked or unchecked)
+    /// </summary>
+    [HttpPatch("{inventoryItemId}/reorder")]
+    public async Task<ActionResult<InventoryItemDto>> ReorderItem(int householdId, int inventoryId, int inventoryItemId, ReorderItemRequest request)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId;
+            var item = await _inventoryItemService.ReorderItemAsync(inventoryItemId, request, userId);
+
+            if (item == null)
+            {
+                return NotFound("List item not found or you don't have access to it.");
+            }
+
+            // Ensure the item belongs to the specified list
+            if (item.InventoryId != inventoryId)
+            {
+                return BadRequest("Item does not belong to the specified list.");
+            }
+
+            return Ok(item);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
 }
