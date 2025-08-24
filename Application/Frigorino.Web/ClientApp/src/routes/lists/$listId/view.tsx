@@ -1,4 +1,4 @@
-import { ArrowBack, Compress, DragIndicator, Edit } from "@mui/icons-material";
+import { ArrowBack, DragHandle, Edit } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -14,10 +14,12 @@ import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
 import { ListContainer } from "../../../components/list/ListContainer";
 import { ListFooter } from "../../../components/list/ListFooter";
-import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
+import {
+    PageHeadActionBar,
+    type HeadNavigationAction,
+} from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
 import {
-    useCompactListItems,
     useCreateListItem,
     useListItems,
     useToggleListItemStatus,
@@ -36,7 +38,7 @@ function RouteComponent() {
     const { listId } = Route.useParams();
     const { t } = useTranslation();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [snackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +65,6 @@ function RouteComponent() {
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
-    const compactListItems = useCompactListItems();
 
     // Function to scroll to the last item in the unchecked section
     const scrollToLastUncheckedItem = useCallback(() => {
@@ -87,22 +88,6 @@ function RouteComponent() {
             }
         }
     }, []);
-
-    const handleCompact = useCallback(async () => {
-        if (!currentHousehold?.householdId) return;
-
-        try {
-            await compactListItems.mutateAsync({
-                householdId: currentHousehold.householdId,
-                listId: parseInt(listId),
-            });
-            setSnackbarMessage(t("lists.listOrderCompactedSuccessfully"));
-            setSnackbarOpen(true);
-        } catch {
-            setSnackbarMessage(t("lists.failedToCompactListOrder"));
-            setSnackbarOpen(true);
-        }
-    }, [compactListItems, currentHousehold?.householdId, listId, t]);
 
     const handleEdit = useCallback(() => {
         router.navigate({
@@ -222,24 +207,13 @@ function RouteComponent() {
             icon: <Edit />,
             onClick: handleEdit,
         },
-    ];
-
-    const menuActions = [
         {
-            icon: <DragIndicator fontSize="small" />,
-            text: showDragHandles
-                ? t("lists.hideDragHandles")
-                : t("lists.showDragHandles"),
-            secondaryText: t("lists.toggleReorderHandlesVisibility"),
+            icon: <DragHandle />,
             onClick: handleToggleDragHandles,
         },
-        {
-            icon: <Compress fontSize="small" />,
-            text: t("lists.compactListOrder"),
-            secondaryText: t("lists.reorganizeItemSortOrder"),
-            onClick: handleCompact,
-        },
     ];
+
+    const menuActions: HeadNavigationAction[] = [];
 
     return (
         <Box
