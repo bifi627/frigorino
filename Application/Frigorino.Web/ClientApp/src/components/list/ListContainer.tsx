@@ -1,4 +1,4 @@
-import { Container } from "@mui/material";
+import { Container, ListItemText, Typography } from "@mui/material";
 import { forwardRef, memo, useCallback } from "react";
 import type { ListItemDto } from "../../hooks/useListItemQueries";
 import {
@@ -80,7 +80,7 @@ export const ListContainer = memo(
                         minHeight: 0,
                     }}
                 >
-                    <SortableList<ListItemDto>
+                    <SortableList
                         items={items}
                         isLoading={isLoading}
                         error={error}
@@ -91,6 +91,40 @@ export const ListContainer = memo(
                         editingItem={editingItem}
                         showDragHandles={showDragHandles}
                         showCheckbox={true}
+                        renderContent={(item) => (
+                            <>
+                                <ListItemText
+                                    primary={
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                fontWeight: 500,
+                                                wordBreak: "break-word",
+                                            }}
+                                        >
+                                            {item.text}
+                                        </Typography>
+                                    }
+                                    secondary={
+                                        item.quantity && (
+                                            <Typography
+                                                variant="caption"
+                                                sx={{
+                                                    color: item.status
+                                                        ? "text.disabled"
+                                                        : "text.secondary",
+                                                    textDecoration: item.status
+                                                        ? "line-through"
+                                                        : "none",
+                                                }}
+                                            >
+                                                {item.quantity}
+                                            </Typography>
+                                        )
+                                    }
+                                />
+                            </>
+                        )}
                     />
                 </Container>
             );

@@ -6,25 +6,14 @@ import {
     ListItem,
     ListItemButton,
     ListItemIcon,
-    ListItemText,
     Menu,
     MenuItem,
-    Typography,
 } from "@mui/material";
 import React, { memo, useCallback, useState } from "react";
 import { SortableItem } from "../common/sortable/SortableItem";
 import type { SortableItemInterface } from "./SortableList";
 
-// Extended interface for displayable sortable items
-export interface DisplayableSortableItem extends SortableItemInterface {
-    text?: string | null;
-    quantity?: string | null;
-    [key: string]: unknown; // Required for SortableItem compatibility
-}
-
-interface SortableListItemProps<
-    T extends DisplayableSortableItem = DisplayableSortableItem,
-> {
+export interface SortableListItemProps<T extends SortableItemInterface> {
     item: T;
     onToggleStatus: (itemId: number) => void;
     onEdit: (item: T) => void;
@@ -33,11 +22,10 @@ interface SortableListItemProps<
     isEditing?: boolean;
     showDragHandles?: boolean;
     showCheckbox?: boolean;
+    renderContent: (item: T) => React.ReactNode;
 }
 
-function SortableListItemComponent<
-    T extends DisplayableSortableItem = DisplayableSortableItem,
->({
+function SortableListItemComponent<T extends SortableItemInterface>({
     item,
     onToggleStatus,
     onEdit,
@@ -46,6 +34,7 @@ function SortableListItemComponent<
     isEditing = false,
     showDragHandles = false,
     showCheckbox = false,
+    renderContent,
 }: SortableListItemProps<T>) {
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -126,10 +115,12 @@ function SortableListItemComponent<
                         px: 0.75, // Reduced horizontal padding
                         "&:hover": { bgcolor: "transparent" },
                     }}
-                    onClick={handleToggle}
                 >
                     {showCheckbox && (
-                        <ListItemIcon sx={{ minWidth: 32 }}>
+                        <ListItemIcon
+                            sx={{ minWidth: 32 }}
+                            onClick={handleToggle}
+                        >
                             <Checkbox
                                 edge="start"
                                 checked={item.status}
@@ -147,37 +138,7 @@ function SortableListItemComponent<
                             />
                         </ListItemIcon>
                     )}
-
-                    <ListItemText
-                        primary={
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                    fontWeight: 500,
-                                    wordBreak: "break-word",
-                                }}
-                            >
-                                {item.text}
-                            </Typography>
-                        }
-                        secondary={
-                            item.quantity && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        color: item.status
-                                            ? "text.disabled"
-                                            : "text.secondary",
-                                        textDecoration: item.status
-                                            ? "line-through"
-                                            : "none",
-                                    }}
-                                >
-                                    {item.quantity}
-                                </Typography>
-                            )
-                        }
-                    />
+                    {renderContent(item)}
                 </ListItemButton>
 
                 {/* Actions Menu */}
@@ -226,7 +187,8 @@ function SortableListItemComponent<
 }
 
 // Export the memoized version
-export const SortableListItem = memo(SortableListItemComponent);
-
-// Add display name for debugging
-SortableListItem.displayName = "SortableListItem";
+export const SortableListItem = memo(SortableListItemComponent) as <
+    T extends SortableItemInterface,
+>(
+    props: SortableListItemProps<T>,
+) => React.ReactElement;

@@ -22,7 +22,8 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import React, { memo, useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { SortableListItem } from "./SortableListItem";
 
 // Minimal interface that sortable items must implement
 export interface SortableItemInterface {
@@ -32,77 +33,7 @@ export interface SortableItemInterface {
     [key: string]: unknown; // Index signature required for generic compatibility
 }
 
-import {
-    SortableListItem,
-    type DisplayableSortableItem,
-} from "./SortableListItem";
-
-// Generic memoized list item renderer interface
-interface MemoizedSortableListItemProps<T extends SortableItemInterface> {
-    item: T;
-    isEditing: boolean;
-    onToggleStatus: (itemId: number) => void;
-    onEdit: (item: T) => void;
-    onDelete: (itemId: number) => void;
-    showDragHandles?: boolean;
-    showCheckbox?: boolean;
-    renderItem?: (
-        item: T,
-        isEditing: boolean,
-        showDragHandles: boolean,
-        handlers: {
-            onToggleStatus: (itemId: number) => void;
-            onEdit: (item: T) => void;
-            onDelete: (itemId: number) => void;
-        },
-    ) => React.ReactNode;
-}
-
-// Memoized list item renderer to prevent unnecessary re-renders
-function MemoizedSortableListItemComponent<T extends SortableItemInterface>({
-    item,
-    isEditing,
-    onToggleStatus,
-    onEdit,
-    onDelete,
-    showDragHandles,
-    showCheckbox,
-    renderItem,
-}: MemoizedSortableListItemProps<T>) {
-    if (renderItem) {
-        return (
-            <>
-                {renderItem(item, isEditing, showDragHandles || false, {
-                    onToggleStatus,
-                    onEdit,
-                    onDelete,
-                })}
-            </>
-        );
-    }
-
-    // For the default renderer, we assume T is compatible with DisplayableSortableItem
-    return (
-        <SortableListItem
-            key={item.id}
-            item={item as DisplayableSortableItem}
-            onToggleStatus={onToggleStatus}
-            onEdit={onEdit as (item: DisplayableSortableItem) => void}
-            onDelete={onDelete}
-            isEditing={isEditing}
-            showCheckbox={showCheckbox}
-            showDragHandles={showDragHandles || false}
-        />
-    );
-}
-
-const MemoizedSortableListItem = memo(
-    MemoizedSortableListItemComponent,
-) as typeof MemoizedSortableListItemComponent;
-
-export interface SortableListProps<
-    T extends SortableItemInterface = DisplayableSortableItem,
-> {
+export interface SortableListProps<T extends SortableItemInterface> {
     // Data props
     items: T[];
     isLoading?: boolean;
@@ -118,21 +49,10 @@ export interface SortableListProps<
     editingItem?: T | null;
     showDragHandles?: boolean;
     showCheckbox?: boolean;
-    renderItem?: (
-        item: T,
-        isEditing: boolean,
-        showDragHandles: boolean,
-        handlers: {
-            onToggleStatus: (itemId: number) => void;
-            onEdit: (item: T) => void;
-            onDelete: (itemId: number) => void;
-        },
-    ) => React.ReactNode;
+    renderContent: (item: T) => React.ReactNode;
 }
 
-export const SortableList = <
-    T extends SortableItemInterface = DisplayableSortableItem,
->({
+export const SortableList = <T extends SortableItemInterface>({
     items,
     isLoading = false,
     error = null,
@@ -143,7 +63,7 @@ export const SortableList = <
     editingItem: externalEditingItem,
     showDragHandles = false,
     showCheckbox = false,
-    renderItem,
+    renderContent,
 }: SortableListProps<T>) => {
     const [activeItem, setActiveItem] = useState<T | null>(null);
     const dividerRef = useRef<HTMLHRElement | null>(null);
@@ -183,7 +103,7 @@ export const SortableList = <
             const item = items.find(
                 (item) => item.id?.toString() === active.id,
             );
-            setActiveItem((item as T) || null);
+            setActiveItem(item || null);
         },
         [items],
     );
@@ -313,9 +233,9 @@ export const SortableList = <
                             }}
                         >
                             {uncheckedItems.map((item) => (
-                                <MemoizedSortableListItem
+                                <SortableListItem
                                     key={item.id}
-                                    item={item as T}
+                                    item={item}
                                     onToggleStatus={handleToggleStatus}
                                     onEdit={handleEditItem}
                                     onDelete={handleDeleteItem}
@@ -324,7 +244,7 @@ export const SortableList = <
                                     }
                                     showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
-                                    renderItem={renderItem}
+                                    renderContent={renderContent}
                                 />
                             ))}
                         </List>
@@ -353,9 +273,9 @@ export const SortableList = <
                             }}
                         >
                             {checkedItems.map((item) => (
-                                <MemoizedSortableListItem
+                                <SortableListItem
                                     key={item.id}
-                                    item={item as T}
+                                    item={item}
                                     onToggleStatus={handleToggleStatus}
                                     onEdit={handleEditItem}
                                     onDelete={handleDeleteItem}
@@ -364,7 +284,7 @@ export const SortableList = <
                                     }
                                     showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
-                                    renderItem={renderItem}
+                                    renderContent={renderContent}
                                 />
                             ))}
                         </List>
@@ -410,16 +330,7 @@ export const SortableList = <
                                 transform: "rotate(5deg)",
                                 opacity: 0.95,
                             }}
-                        >
-                            {/* <SortableListItem
-                                item={activeItem}
-                                onToggleStatus={() => {}}
-                                onEdit={() => {}}
-                                onDelete={() => {}}
-                                isEditing={false}
-                                showDragHandles={false}
-                            /> */}
-                        </Paper>
+                        ></Paper>
                     ) : null}
                 </DragOverlay>
             </DndContext>
