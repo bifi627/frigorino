@@ -27,7 +27,7 @@ import {
 } from "../../../hooks/useInventoryItemQueries";
 import { useInventory } from "../../../hooks/useInventoryQueries";
 
-type SortMode = 'custom' | 'expiryDateAsc' | 'expiryDateDesc';
+type SortMode = "custom" | "expiryDateAsc" | "expiryDateDesc";
 
 export const Route = createFileRoute("/inventories/$inventoryId/view")({
     beforeLoad: requireAuth,
@@ -49,13 +49,16 @@ function RouteComponent() {
     const loadSortMode = (): SortMode => {
         try {
             const saved = localStorage.getItem(SORT_MODE_STORAGE_KEY);
-            if (saved && ['custom', 'expiryDateAsc', 'expiryDateDesc'].includes(saved)) {
+            if (
+                saved &&
+                ["custom", "expiryDateAsc", "expiryDateDesc"].includes(saved)
+            ) {
                 return saved as SortMode;
             }
-            return 'custom';
+            return "custom";
         } catch (error) {
-            console.warn('Failed to load sort mode from localStorage:', error);
-            return 'custom';
+            console.warn("Failed to load sort mode from localStorage:", error);
+            return "custom";
         }
     };
 
@@ -69,7 +72,7 @@ function RouteComponent() {
         try {
             localStorage.setItem(SORT_MODE_STORAGE_KEY, sortMode);
         } catch (error) {
-            console.warn('Failed to save sort mode to localStorage:', error);
+            console.warn("Failed to save sort mode to localStorage:", error);
         }
     }, [sortMode, SORT_MODE_STORAGE_KEY]);
 
@@ -123,28 +126,28 @@ function RouteComponent() {
     };
 
     const handleToggleSortMode = useCallback(() => {
-        setSortMode(prevMode => {
+        setSortMode((prevMode) => {
             switch (prevMode) {
-                case 'custom':
-                    return 'expiryDateAsc';
-                case 'expiryDateAsc':
-                    return 'expiryDateDesc';
-                case 'expiryDateDesc':
-                    return 'custom';
+                case "custom":
+                    return "expiryDateAsc";
+                case "expiryDateAsc":
+                    return "expiryDateDesc";
+                case "expiryDateDesc":
+                    return "custom";
                 default:
-                    return 'custom';
+                    return "custom";
             }
         });
     }, []);
 
     const getSortModeIcon = (mode: SortMode) => {
         switch (mode) {
-            case 'custom':
+            case "custom":
                 return <DragIndicator />;
-            case 'expiryDateAsc':
+            case "expiryDateAsc":
                 return <Schedule />;
-            case 'expiryDateDesc':
-                return <Schedule style={{ transform: 'scaleY(-1)' }} />;
+            case "expiryDateDesc":
+                return <Schedule style={{ transform: "scaleY(-1)" }} />;
             default:
                 return <DragIndicator />;
         }

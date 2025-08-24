@@ -50,9 +50,9 @@ export interface SortableListProps<T extends SortableItemInterface> {
     showDragHandles?: boolean;
     showCheckbox?: boolean;
     renderContent: (item: T) => React.ReactNode;
-    
+
     // Sorting props
-    sortMode?: 'custom' | 'expiryDateAsc' | 'expiryDateDesc';
+    sortMode?: "custom" | "expiryDateAsc" | "expiryDateDesc";
     skipInternalSort?: boolean;
 }
 
@@ -68,7 +68,7 @@ export const SortableList = <T extends SortableItemInterface>({
     showDragHandles = false,
     showCheckbox = false,
     renderContent,
-    sortMode = 'custom',
+    sortMode = "custom",
     skipInternalSort = false,
 }: SortableListProps<T>) => {
     const [activeItem, setActiveItem] = useState<T | null>(null);
@@ -96,28 +96,46 @@ export const SortableList = <T extends SortableItemInterface>({
                 return itemsToSort; // Return items as-is
             }
 
-            if (sortMode === 'custom' || !sortMode) {
+            if (sortMode === "custom" || !sortMode) {
                 // Use existing sortOrder sorting
-                return itemsToSort.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-            } else if (sortMode === 'expiryDateAsc') {
+                return itemsToSort.sort(
+                    (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0),
+                );
+            } else if (sortMode === "expiryDateAsc") {
                 // Sort by expiry date ascending (earliest first), null dates last
                 return itemsToSort.sort((a, b) => {
-                    const aDate = 'expiryDate' in a ? (a.expiryDate as string | null) : null;
-                    const bDate = 'expiryDate' in b ? (b.expiryDate as string | null) : null;
+                    const aDate =
+                        "expiryDate" in a
+                            ? (a.expiryDate as string | null)
+                            : null;
+                    const bDate =
+                        "expiryDate" in b
+                            ? (b.expiryDate as string | null)
+                            : null;
                     if (!aDate && !bDate) return 0;
                     if (!aDate) return 1;
                     if (!bDate) return -1;
-                    return new Date(aDate).getTime() - new Date(bDate).getTime();
+                    return (
+                        new Date(aDate).getTime() - new Date(bDate).getTime()
+                    );
                 });
-            } else if (sortMode === 'expiryDateDesc') {
+            } else if (sortMode === "expiryDateDesc") {
                 // Sort by expiry date descending (latest first), null dates last
                 return itemsToSort.sort((a, b) => {
-                    const aDate = 'expiryDate' in a ? (a.expiryDate as string | null) : null;
-                    const bDate = 'expiryDate' in b ? (b.expiryDate as string | null) : null;
+                    const aDate =
+                        "expiryDate" in a
+                            ? (a.expiryDate as string | null)
+                            : null;
+                    const bDate =
+                        "expiryDate" in b
+                            ? (b.expiryDate as string | null)
+                            : null;
                     if (!aDate && !bDate) return 0;
                     if (!aDate) return 1;
                     if (!bDate) return -1;
-                    return new Date(bDate).getTime() - new Date(aDate).getTime();
+                    return (
+                        new Date(bDate).getTime() - new Date(aDate).getTime()
+                    );
                 });
             }
             return itemsToSort;

@@ -9,7 +9,7 @@ import type { InventoryItemDto } from "../../lib/api";
 import { SortableList } from "../sortables/SortableList";
 import { InventoryItemContent } from "./InventoryItemContent";
 
-type SortMode = 'custom' | 'expiryDateAsc' | 'expiryDateDesc';
+type SortMode = "custom" | "expiryDateAsc" | "expiryDateDesc";
 
 interface ContainerProps {
     inventoryId: number;
@@ -20,7 +20,7 @@ interface ContainerProps {
 
 export const InventoryContainer = memo(
     forwardRef<HTMLDivElement, ContainerProps>(
-        ({ inventoryId, editingItem, onEdit, sortMode = 'custom' }, ref) => {
+        ({ inventoryId, editingItem, onEdit, sortMode = "custom" }, ref) => {
             // Fetch data and setup mutations at the container level
             const {
                 data: items = [],
@@ -65,7 +65,6 @@ export const InventoryContainer = memo(
                 [deleteMutation, inventoryId],
             );
 
-
             return (
                 <Container
                     ref={ref}
@@ -87,7 +86,7 @@ export const InventoryContainer = memo(
                         onEdit={onEdit}
                         onDelete={handleDelete}
                         editingItem={editingItem}
-                        showDragHandles={sortMode === 'custom'}
+                        showDragHandles={sortMode === "custom"}
                         sortMode={sortMode}
                         renderContent={(item) => (
                             <InventoryItemContent item={item} />
