@@ -129,9 +129,13 @@ export const AddInput = memo(
                     )}
 
                     <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                        }}
                     >
-                        {text.trim() && !isEditing && (
+                        {text.trim() && (
                             <IconButton
                                 onClick={handleDiscard}
                                 size="medium"
@@ -142,16 +146,16 @@ export const AddInput = memo(
                             </IconButton>
                         )}
 
+                        {rightControls.map((control, index) => (
+                            <Box key={index}>{control}</Box>
+                        ))}
+
                         <AutocompleteInput
                             onTextChange={setText}
                             onSelectOption={handleSelectOption}
                             onKeyDown={handleKeyDown}
                             inputRef={inputRef}
                         />
-
-                        {rightControls.map((control, index) => (
-                            <Box key={index}>{control}</Box>
-                        ))}
 
                         <ActionButton onSubmit={handleSubmit} />
                     </Box>

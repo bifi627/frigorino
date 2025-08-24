@@ -73,8 +73,8 @@ export const useAddInputStyles = (state: StyleState) => {
     const textFieldStyles: SxProps<Theme> = {
         "& .MuiOutlinedInput-root": {
             borderRadius: 2,
+            p: 0,
         },
-        mb: isEditing ? 1 : 0,
     };
 
     const autocompleteStyles: SxProps<Theme> = {
