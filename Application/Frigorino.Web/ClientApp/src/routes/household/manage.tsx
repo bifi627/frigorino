@@ -28,6 +28,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import { HouseholdMembers } from "../../components/household";
 import {
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/household/manage")({
 
 function HouseholdManagePage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [confirmationText, setConfirmationText] = useState("");
@@ -122,7 +124,7 @@ function HouseholdManagePage() {
         return (
             <Container maxWidth="lg">
                 <Box p={3}>
-                    <Typography>Loading...</Typography>
+                    <Typography>{t("common.loading")}</Typography>
                 </Box>
             </Container>
         );
@@ -136,7 +138,7 @@ function HouseholdManagePage() {
             >
                 <Box>
                     <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        Failed to load household information
+                        {t("household.failedToLoadHouseholdInformation")}
                     </Alert>
                 </Box>
             </Container>
@@ -151,21 +153,22 @@ function HouseholdManagePage() {
             >
                 <Box>
                     <Alert severity="info" sx={{ borderRadius: 2 }}>
-                        You need to create or select a household first.
+                        {t("common.createOrSelectHouseholdFirst")}
                     </Alert>
                 </Box>
             </Container>
         );
     }
 
-    const householdName = currentHouseholdDetails?.name || "Household";
+    const householdName =
+        currentHouseholdDetails?.name || t("household.household");
     const memberCount = currentHouseholdDetails?.memberCount || 0;
     const userRole = currentHousehold.role || 0;
 
     const roleLabels: Record<number, string> = {
-        0: "Member",
-        1: "Admin",
-        2: "Owner",
+        0: t("household.member"),
+        1: t("household.admin"),
+        2: t("household.owner"),
     };
 
     const roleColors: Record<
@@ -214,7 +217,7 @@ function HouseholdManagePage() {
                                 flexGrow: 1,
                             }}
                         >
-                            Household Management
+                            {t("household.householdManagement")}
                         </Typography>
 
                         {/* Menu button for household owner */}
@@ -307,7 +310,7 @@ function HouseholdManagePage() {
                                             },
                                         }}
                                     >
-                                        {memberCount} members
+                                        {memberCount} {t("household.members")}
                                     </Typography>
                                 </Box>
 
@@ -376,7 +379,7 @@ function HouseholdManagePage() {
                     <ListItemIcon>
                         <Delete fontSize="small" color="error" />
                     </ListItemIcon>
-                    <ListItemText primary="Delete Household" />
+                    <ListItemText primary={t("household.deleteHousehold")} />
                 </MenuItem>
             </Menu>
 
@@ -393,13 +396,13 @@ function HouseholdManagePage() {
                         component="div"
                         sx={{ fontWeight: 600 }}
                     >
-                        Delete Household
+                        {t("household.deleteHousehold")}
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Are you sure you want to delete "{householdName}"? This
-                        action cannot be undone.
+                        {t("common.confirmDelete")} "{householdName}
+                        "? {t("lists.actionCannotBeUndone")}
                     </DialogContentText>
 
                     <Box
@@ -417,34 +420,33 @@ function HouseholdManagePage() {
                             color="error.dark"
                             sx={{ fontWeight: 500 }}
                         >
-                            ⚠️ Warning: This will permanently delete:
+                            {t("common.warningPermanentlyDelete")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ mt: 1, ml: 2 }}
                         >
-                            • All household data and settings
+                            {t("household.allHouseholdDataSettings")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All member associations
+                            {t("household.allMemberAssociations")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All shared content (future: lists, inventory,
-                            etc.)
+                            {t("household.allSharedContentFuture")}
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                        To confirm, please type the household name:{" "}
+                        {t("household.confirmTypeHouseholdName")}{" "}
                         <strong>{householdName}</strong>
                     </Typography>
                     <TextField
@@ -452,7 +454,9 @@ function HouseholdManagePage() {
                         variant="outlined"
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
-                        placeholder={`Type "${householdName}" to confirm`}
+                        placeholder={t("household.typeHouseholdNameToConfirm", {
+                            householdName,
+                        })}
                         disabled={deleteHouseholdMutation.isPending}
                         error={
                             confirmationText.length > 0 &&
@@ -461,7 +465,7 @@ function HouseholdManagePage() {
                         helperText={
                             confirmationText.length > 0 &&
                             confirmationText !== householdName
-                                ? "Name doesn't match"
+                                ? t("lists.nameDoesntMatch")
                                 : ""
                         }
                         sx={{
@@ -477,7 +481,7 @@ function HouseholdManagePage() {
                         disabled={deleteHouseholdMutation.isPending}
                         sx={{ borderRadius: 2 }}
                     >
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         onClick={handleDeleteConfirm}
@@ -494,8 +498,8 @@ function HouseholdManagePage() {
                         }}
                     >
                         {deleteHouseholdMutation.isPending
-                            ? "Deleting..."
-                            : "Delete Household"}
+                            ? t("common.deleting")
+                            : t("household.deleteHousehold")}
                     </Button>
                 </DialogActions>
             </Dialog>

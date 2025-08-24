@@ -116,7 +116,7 @@ export const WelcomePage = () => {
     const collections = [
         {
             id: "einkaufslisten",
-            label: "Einkaufslisten",
+            label: t("lists.shoppingLists"),
             icon: <KitchenOutlined />,
             color: "#2196F3",
             items: listsLoading
@@ -131,7 +131,7 @@ export const WelcomePage = () => {
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
-                        count: `${list.checkedCount}/${list.uncheckedCount} Artikel`,
+                        count: `${list.checkedCount}/${list.uncheckedCount} ${t("dashboard.articles")}`,
                         status: new Date(list.createdAt!).toLocaleDateString(
                             "de-DE",
                         ),
@@ -139,16 +139,16 @@ export const WelcomePage = () => {
                     }))
                   : [
                         {
-                            name: "No lists yet",
+                            name: t("lists.noListsYet"),
                             count: "",
-                            status: "Create your first list!",
+                            status: t("lists.createFirstShoppingList"),
                             id: 0,
                         },
                     ],
         },
         {
             id: "inventar",
-            label: "Inventar",
+            label: t("navigation.inventory"),
             icon: <TimerOutlined />,
             color: "#FF9800",
             items: inventoriesLoading
@@ -163,33 +163,33 @@ export const WelcomePage = () => {
                 : inventories.length > 0
                   ? inventories.map((inventory) => ({
                         name: inventory.name || "Unnamed Inventory",
-                        count: `${inventory.totalItems || 0} Items`,
+                        count: `${inventory.totalItems || 0} ${t("dashboard.items")}`,
                         status:
                             inventory.expiringItems &&
                             inventory.expiringItems > 0
-                                ? `${inventory.expiringItems} expiring`
-                                : "Current",
+                                ? `${inventory.expiringItems} ${t("dashboard.expiring")}`
+                                : t("common.current"),
                         id: inventory.id,
                     }))
                   : [
                         {
-                            name: "No inventories yet",
+                            name: t("inventory.noInventoriesYet"),
                             count: "",
-                            status: "Create your first inventory!",
+                            status: t("inventory.createFirstInventory"),
                             id: 0,
                         },
                     ],
         },
         {
             id: "rezepte",
-            label: "Rezepte",
+            label: t("dashboard.recipes"),
             icon: <RestaurantOutlined />,
             color: "#4CAF50",
             items: [
                 {
-                    name: "Coming soon...",
+                    name: t("dashboard.comingSoon"),
                     count: "",
-                    status: "Recipe management will be added later",
+                    status: t("dashboard.recipeManagementLater"),
                     id: 0,
                 },
             ],

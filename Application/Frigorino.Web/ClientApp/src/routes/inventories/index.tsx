@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import {
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/inventories/")({
 
 function InventoriesPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { data: currentHousehold } = useCurrentHousehold();
     const {
         data: inventories,
@@ -113,12 +115,12 @@ function InventoriesPage() {
         return (
             <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
                 <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    You need to select a household to view inventories.
+                    {t("inventory.selectHouseholdToViewInventories")}
                     <Button
                         onClick={handleBack}
                         sx={{ mt: 1, display: "block" }}
                     >
-                        Go back to dashboard
+                        {t("common.goBackToDashboard")}
                     </Button>
                 </Alert>
             </Container>
@@ -154,7 +156,7 @@ function InventoriesPage() {
                             fontSize: { xs: "1.4rem", sm: "1.8rem" },
                         }}
                     >
-                        Inventories
+                        {t("inventory.inventories")}
                     </Typography>
                 </Box>
 
@@ -170,7 +172,7 @@ function InventoriesPage() {
                         py: 1,
                     }}
                 >
-                    Create
+                    {t("common.create")}
                 </Button>
             </Box>
 
@@ -183,7 +185,7 @@ function InventoriesPage() {
 
             {error && (
                 <Alert severity="error" sx={{ borderRadius: 2, mb: 3 }}>
-                    Failed to load inventories. Please try again.
+                    {t("inventory.failedToLoadInventories")}
                 </Alert>
             )}
 
@@ -191,14 +193,14 @@ function InventoriesPage() {
                 <Card sx={{ borderRadius: 3, textAlign: "center", py: 4 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
-                            No inventories yet
+                            {t("inventory.noInventoriesYet")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="text.secondary"
                             sx={{ mb: 3 }}
                         >
-                            Create your first inventory to get started
+                            {t("inventory.createFirstInventory")}
                         </Typography>
                         <Button
                             variant="contained"
@@ -210,7 +212,7 @@ function InventoriesPage() {
                                 fontWeight: 600,
                             }}
                         >
-                            Create Your First Inventory
+                            {t("inventory.createYourFirstInventory")}
                         </Button>
                     </CardContent>
                 </Card>
@@ -319,7 +321,7 @@ function InventoriesPage() {
             >
                 <MenuItem onClick={handleEditInventory}>
                     <Edit fontSize="small" sx={{ mr: 1 }} />
-                    Edit
+                    {t("common.edit")}
                 </MenuItem>
                 <MenuItem
                     onClick={handleDeleteInventory}
@@ -327,7 +329,7 @@ function InventoriesPage() {
                     sx={{ color: "error.main" }}
                 >
                     <Delete fontSize="small" sx={{ mr: 1 }} />
-                    Delete
+                    {t("common.delete")}
                 </MenuItem>
             </Menu>
 

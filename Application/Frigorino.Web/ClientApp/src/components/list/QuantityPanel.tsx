@@ -7,6 +7,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import { t } from "i18next";
 import { memo, useRef } from "react";
 
 interface QuantityToggleProps {
@@ -73,10 +74,10 @@ export const QuantityPanel = memo(
                 <TextField
                     fullWidth
                     variant="outlined"
-                    placeholder="Menge"
+                    placeholder={t("lists.quantity")}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    onKeyPress={onKeyPress}
+                    onKeyDown={onKeyPress}
                     onClick={(e) => e.stopPropagation()}
                     disabled={isLoading}
                     size="small"

@@ -10,6 +10,7 @@ import {
     MenuItem,
 } from "@mui/material";
 import React, { memo, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SortableItem } from "../common/sortable/SortableItem";
 import type { SortableItemInterface } from "./SortableList";
 
@@ -36,6 +37,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
     showCheckbox = false,
     renderContent,
 }: SortableListItemProps<T>) {
+    const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
     const handleMenuOpen = useCallback(
@@ -170,14 +172,14 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                     >
                         <MenuItem onClick={handleEdit}>
                             <Edit fontSize="small" sx={{ mr: 1 }} />
-                            Edit
+                            {t("common.edit")}
                         </MenuItem>
                         <MenuItem
                             onClick={handleDelete}
                             sx={{ color: "error.main" }}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />
-                            Delete
+                            {t("common.delete")}
                         </MenuItem>
                     </Menu>
                 </Box>

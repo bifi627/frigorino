@@ -2,11 +2,12 @@ import { ShoppingBag } from "@mui/icons-material";
 import {
     Box,
     ListItemText,
-    Typography,
-    Tooltip,
     Snackbar,
+    Tooltip,
+    Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { InventoryItemDto } from "../../lib/api";
 import { getExpiryColor, getExpiryInfo } from "../../utils/dateUtils";
 
@@ -14,10 +15,17 @@ interface Props {
     item: InventoryItemDto;
 }
 export function InventoryItemContent({ item }: Props) {
+    const { t } = useTranslation();
     const [showDateSnackbar, setShowDateSnackbar] = useState(false);
 
     const handleDateClick = () => {
         setShowDateSnackbar(true);
+    };
+
+    // Create a type-safe wrapper for the translation function
+    const translateKey = (key: string): string => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return t(key as any);
     };
 
     return (
@@ -78,10 +86,10 @@ export function InventoryItemContent({ item }: Props) {
                         {/* Right side - Human readable date with tooltip and mobile support */}
                         <Box>
                             {item.expiryDate &&
-                                getExpiryInfo(item.expiryDate)
+                                getExpiryInfo(item.expiryDate, translateKey)
                                     .humanReadable && (
                                     <Tooltip
-                                        title={`Expiry date: ${new Date(item.expiryDate).toLocaleDateString()}`}
+                                        title={`${t("inventory.expiryDate")}: ${new Date(item.expiryDate).toLocaleDateString()}`}
                                         arrow
                                     >
                                         <Typography
@@ -100,8 +108,10 @@ export function InventoryItemContent({ item }: Props) {
                                             }}
                                         >
                                             {
-                                                getExpiryInfo(item.expiryDate)
-                                                    .humanReadable
+                                                getExpiryInfo(
+                                                    item.expiryDate,
+                                                    translateKey,
+                                                ).humanReadable
                                             }
                                         </Typography>
                                     </Tooltip>
@@ -117,7 +127,7 @@ export function InventoryItemContent({ item }: Props) {
                 onClose={() => setShowDateSnackbar(false)}
                 message={
                     item.expiryDate
-                        ? `Expiry date: ${new Date(item.expiryDate).toLocaleDateString()}`
+                        ? `${t("inventory.expiryDate")}: ${new Date(item.expiryDate).toLocaleDateString()}`
                         : ""
                 }
                 autoHideDuration={2000}

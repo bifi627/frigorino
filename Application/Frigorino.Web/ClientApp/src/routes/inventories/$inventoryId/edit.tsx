@@ -30,6 +30,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
 import { useCurrentHouseholdWithDetails } from "../../../hooks/useHouseholdQueries";
 import {
@@ -49,6 +50,7 @@ function InventoryEditPage() {
     const router = useRouter();
     const { inventoryId } = Route.useParams();
     const inventoryIdNum = parseInt(inventoryId, 10);
+    const { t } = useTranslation();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -185,7 +187,7 @@ function InventoryEditPage() {
             >
                 <Box>
                     <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        Failed to load inventory information
+                        {t("inventory.failedToLoadInventoryInformation")}
                     </Alert>
                 </Box>
             </Container>
@@ -200,7 +202,7 @@ function InventoryEditPage() {
             >
                 <Box>
                     <Alert severity="info" sx={{ borderRadius: 2 }}>
-                        You need to create or select a household first.
+                        {t("common.createOrSelectHouseholdFirst")}
                     </Alert>
                 </Box>
             </Container>
@@ -215,14 +217,14 @@ function InventoryEditPage() {
             >
                 <Box>
                     <Alert severity="warning" sx={{ borderRadius: 2 }}>
-                        Inventory not found or you don't have access to it.
+                        {t("inventory.inventoryNotFoundOrNoAccess")}
                     </Alert>
                 </Box>
             </Container>
         );
     }
 
-    const inventoryName = inventory.name || "Untitled Inventory";
+    const inventoryName = inventory.name || t("inventory.untitledInventory");
     const isFormValid = editedName.trim().length > 0;
 
     return (
@@ -254,7 +256,7 @@ function InventoryEditPage() {
                                 flexGrow: 1,
                             }}
                         >
-                            Edit Inventory
+                            {t("inventory.editInventory")}
                         </Typography>
 
                         <IconButton
@@ -312,12 +314,12 @@ function InventoryEditPage() {
                                     variant="h6"
                                     sx={{ fontWeight: 600 }}
                                 >
-                                    Edit Inventory Details
+                                    {t("inventory.editInventoryDetails")}
                                 </Typography>
                             </Box>
 
                             <TextField
-                                label="Inventory Name"
+                                label={t("inventory.inventoryName")}
                                 value={editedName}
                                 onChange={(e) => setEditedName(e.target.value)}
                                 fullWidth
@@ -325,7 +327,7 @@ function InventoryEditPage() {
                                 error={editedName.trim().length === 0}
                                 helperText={
                                     editedName.trim().length === 0
-                                        ? "Inventory name is required"
+                                        ? t("inventory.inventoryNameRequired")
                                         : ""
                                 }
                                 sx={{
@@ -351,7 +353,7 @@ function InventoryEditPage() {
                             disabled={updateInventoryMutation.isPending}
                             sx={{ borderRadius: 2, minWidth: 100 }}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             variant="contained"
@@ -364,8 +366,8 @@ function InventoryEditPage() {
                             sx={{ borderRadius: 2, minWidth: 100 }}
                         >
                             {updateInventoryMutation.isPending
-                                ? "Saving..."
-                                : "Save"}
+                                ? t("common.saving")
+                                : t("common.save")}
                         </Button>
                     </Box>
                 </Box>
@@ -402,7 +404,7 @@ function InventoryEditPage() {
                     <ListItemIcon>
                         <Delete fontSize="small" color="error" />
                     </ListItemIcon>
-                    <ListItemText primary="Delete Inventory" />
+                    <ListItemText primary={t("inventory.deleteInventory")} />
                 </MenuItem>
             </Menu>
 
@@ -418,13 +420,14 @@ function InventoryEditPage() {
                         component="div"
                         sx={{ fontWeight: 600 }}
                     >
-                        Delete Inventory
+                        {t("inventory.deleteInventory")}
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Are you sure you want to delete "{inventoryName}"? This
-                        action cannot be undone.
+                        {t("inventory.confirmDeleteInventory", {
+                            inventoryName,
+                        })}
                     </DialogContentText>
 
                     <Box
@@ -442,26 +445,26 @@ function InventoryEditPage() {
                             color="error.dark"
                             sx={{ fontWeight: 500 }}
                         >
-                            ⚠️ Warning: This will permanently delete:
+                            {t("common.warningPermanentlyDelete")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ mt: 1, ml: 2 }}
                         >
-                            • The entire inventory
+                            {t("inventory.entireInventory")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All inventory items
+                            {t("inventory.allInventoryItems")}
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                        To confirm, please type the inventory name:{" "}
+                        {t("inventory.confirmTypeInventoryName")}{" "}
                         <strong>{inventoryName}</strong>
                     </Typography>
                     <TextField
@@ -469,7 +472,9 @@ function InventoryEditPage() {
                         variant="outlined"
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
-                        placeholder={`Type "${inventoryName}" to confirm`}
+                        placeholder={t("inventory.typeInventoryNameToConfirm", {
+                            inventoryName,
+                        })}
                         disabled={deleteInventoryMutation.isPending}
                         error={
                             confirmationText.length > 0 &&
@@ -478,7 +483,7 @@ function InventoryEditPage() {
                         helperText={
                             confirmationText.length > 0 &&
                             confirmationText !== inventoryName
-                                ? "Name doesn't match"
+                                ? t("common.nameDoesNotMatch")
                                 : ""
                         }
                         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
@@ -490,7 +495,7 @@ function InventoryEditPage() {
                         disabled={deleteInventoryMutation.isPending}
                         sx={{ borderRadius: 2 }}
                     >
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         onClick={handleDeleteConfirm}
@@ -503,8 +508,8 @@ function InventoryEditPage() {
                         sx={{ borderRadius: 2, fontWeight: 600, minWidth: 120 }}
                     >
                         {deleteInventoryMutation.isPending
-                            ? "Deleting..."
-                            : "Delete Inventory"}
+                            ? t("common.deleting")
+                            : t("inventory.deleteInventory")}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -7,6 +7,7 @@ import {
     Typography,
 } from "@mui/material";
 import { memo, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useAddInputContext } from "../hooks/useAddInputContext";
 import { useAddInputStyles } from "../hooks/useAddInputStyles";
 import type { ListItem } from "../types";
@@ -25,6 +26,7 @@ export const AutocompleteInput = memo(
         onKeyDown,
         inputRef,
     }: AutocompleteInputProps) => {
+        const { t } = useTranslation();
         const {
             text,
             existingItems,
@@ -88,8 +90,8 @@ export const AutocompleteInput = memo(
                     }}
                     noOptionsText={
                         text.trim().length >= 3
-                            ? "No matching items"
-                            : "Type at least 3 characters"
+                            ? t("common.noMatchingItems")
+                            : t("common.typeAtLeastCharacters")
                     }
                     renderOption={(props, option) => (
                         <Box component="li" {...props} key={option.id}>
@@ -134,15 +136,15 @@ export const AutocompleteInput = memo(
                             variant="outlined"
                             placeholder={
                                 isEditing
-                                    ? "Bearbeite Artikel..."
-                                    : "Füge Artikel hinzu..."
+                                    ? t("common.editItem")
+                                    : t("common.addItemPlaceholder")
                             }
                             disabled={isLoading}
                             inputRef={inputRef}
                             error={hasDuplicate}
                             helperText={
                                 hasDuplicate && existingItem
-                                    ? `"${existingItem.text}" already exists${existingItem.status ? " (completed)" : ""}`
+                                    ? `"${existingItem.text}" ${t("common.alreadyExists")}${existingItem.status ? ` (${t("common.completed")})` : ""}`
                                     : undefined
                             }
                             onKeyDown={(event) => {

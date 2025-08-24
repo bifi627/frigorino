@@ -23,6 +23,7 @@ import {
     Typography,
 } from "@mui/material";
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SortableListItem } from "./SortableListItem";
 
 // Minimal interface that sortable items must implement
@@ -71,6 +72,7 @@ export const SortableList = <T extends SortableItemInterface>({
     sortMode = "custom",
     skipInternalSort = false,
 }: SortableListProps<T>) => {
+    const { t } = useTranslation();
     const [activeItem, setActiveItem] = useState<T | null>(null);
     const dividerRef = useRef<HTMLHRElement | null>(null);
 
@@ -257,7 +259,7 @@ export const SortableList = <T extends SortableItemInterface>({
     if (error) {
         return (
             <Alert severity="error" sx={{ mx: 2 }}>
-                Failed to load list items. Please try again.
+                {t("lists.failedToLoadList")}
             </Alert>
         );
     }

@@ -30,6 +30,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
 import { useCurrentHouseholdWithDetails } from "../../../hooks/useHouseholdQueries";
 import {
@@ -48,6 +49,7 @@ function ListEditPage() {
     const navigate = useNavigate();
     const router = useRouter();
     const { listId } = Route.useParams();
+    const { t } = useTranslation();
     const listIdNum = parseInt(listId, 10);
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -192,7 +194,7 @@ function ListEditPage() {
             >
                 <Box>
                     <Alert severity="error" sx={{ borderRadius: 2 }}>
-                        Failed to load list information
+                        {t("lists.failedToLoadListInformation")}
                     </Alert>
                 </Box>
             </Container>
@@ -207,7 +209,7 @@ function ListEditPage() {
             >
                 <Box>
                     <Alert severity="info" sx={{ borderRadius: 2 }}>
-                        You need to create or select a household first.
+                        {t("common.createOrSelectHouseholdFirst")}
                     </Alert>
                 </Box>
             </Container>
@@ -222,14 +224,14 @@ function ListEditPage() {
             >
                 <Box>
                     <Alert severity="warning" sx={{ borderRadius: 2 }}>
-                        List not found or you don't have access to it.
+                        {t("lists.listNotFoundOrNoAccess")}
                     </Alert>
                 </Box>
             </Container>
         );
     }
 
-    const listName = list.name || "Untitled List";
+    const listName = list.name || t("lists.untitledList");
     const isFormValid = editedName.trim().length > 0;
 
     return (
@@ -263,7 +265,7 @@ function ListEditPage() {
                                 flexGrow: 1,
                             }}
                         >
-                            Edit List
+                            {t("lists.editList")}
                         </Typography>
 
                         {/* Menu button */}
@@ -325,12 +327,12 @@ function ListEditPage() {
                                     variant="h6"
                                     sx={{ fontWeight: 600 }}
                                 >
-                                    Edit List Details
+                                    {t("lists.editListDetails")}
                                 </Typography>
                             </Box>
 
                             <TextField
-                                label="List Name"
+                                label={t("lists.listName")}
                                 value={editedName}
                                 onChange={(e) => setEditedName(e.target.value)}
                                 fullWidth
@@ -338,7 +340,7 @@ function ListEditPage() {
                                 error={editedName.trim().length === 0}
                                 helperText={
                                     editedName.trim().length === 0
-                                        ? "List name is required"
+                                        ? t("lists.listNameRequired")
                                         : ""
                                 }
                                 sx={{
@@ -365,7 +367,7 @@ function ListEditPage() {
                             disabled={updateListMutation.isPending}
                             sx={{ borderRadius: 2, minWidth: 100 }}
                         >
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                         <Button
                             variant="contained"
@@ -377,8 +379,8 @@ function ListEditPage() {
                             sx={{ borderRadius: 2, minWidth: 100 }}
                         >
                             {updateListMutation.isPending
-                                ? "Saving..."
-                                : "Save"}
+                                ? t("common.saving")
+                                : t("common.save")}
                         </Button>
                     </Box>
                 </Box>
@@ -422,7 +424,7 @@ function ListEditPage() {
                     <ListItemIcon>
                         <Delete fontSize="small" color="error" />
                     </ListItemIcon>
-                    <ListItemText primary="Delete List" />
+                    <ListItemText primary={t("lists.deleteList")} />
                 </MenuItem>
             </Menu>
 
@@ -439,13 +441,13 @@ function ListEditPage() {
                         component="div"
                         sx={{ fontWeight: 600 }}
                     >
-                        Delete List
+                        {t("lists.deleteList")}
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText sx={{ mb: 2 }}>
-                        Are you sure you want to delete "{listName}"? This
-                        action cannot be undone.
+                        {t("common.confirmDelete")} "{listName}"?{" "}
+                        {t("lists.actionCannotBeUndone")}
                     </DialogContentText>
 
                     <Box
@@ -463,34 +465,33 @@ function ListEditPage() {
                             color="error.dark"
                             sx={{ fontWeight: 500 }}
                         >
-                            ⚠️ Warning: This will permanently delete:
+                            {t("common.warningPermanentlyDelete")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ mt: 1, ml: 2 }}
                         >
-                            • The entire list and its settings
+                            {t("lists.entireListAndSettings")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All list items (future: when items are
-                            implemented)
+                            {t("lists.allListItemsFuture")}
                         </Typography>
                         <Typography
                             variant="body2"
                             color="error.dark"
                             sx={{ ml: 2 }}
                         >
-                            • All associated data and history
+                            {t("lists.allAssociatedDataHistory")}
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                        To confirm, please type the list name:{" "}
+                        {t("lists.confirmTypeListName")}{" "}
                         <strong>{listName}</strong>
                     </Typography>
                     <TextField
@@ -498,7 +499,7 @@ function ListEditPage() {
                         variant="outlined"
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
-                        placeholder={`Type "${listName}" to confirm`}
+                        placeholder={t("lists.typeNameToConfirm", { listName })}
                         disabled={deleteListMutation.isPending}
                         error={
                             confirmationText.length > 0 &&
@@ -507,7 +508,7 @@ function ListEditPage() {
                         helperText={
                             confirmationText.length > 0 &&
                             confirmationText !== listName
-                                ? "Name doesn't match"
+                                ? t("lists.nameDoesntMatch")
                                 : ""
                         }
                         sx={{
@@ -523,7 +524,7 @@ function ListEditPage() {
                         disabled={deleteListMutation.isPending}
                         sx={{ borderRadius: 2 }}
                     >
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         onClick={handleDeleteConfirm}
@@ -540,8 +541,8 @@ function ListEditPage() {
                         }}
                     >
                         {deleteListMutation.isPending
-                            ? "Deleting..."
-                            : "Delete List"}
+                            ? t("common.deleting")
+                            : t("lists.deleteList")}
                     </Button>
                 </DialogActions>
             </Dialog>

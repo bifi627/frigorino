@@ -4,7 +4,10 @@ export interface ExpiryInfo {
     isOverdue: boolean;
 }
 
-export function getExpiryInfo(expiryDate: string): ExpiryInfo {
+export function getExpiryInfo(
+    expiryDate: string,
+    t: (key: string) => string,
+): ExpiryInfo {
     const now = new Date();
     const expiry = new Date(expiryDate);
     const diffMs = expiry.getTime() - now.getTime();
@@ -15,20 +18,20 @@ export function getExpiryInfo(expiryDate: string): ExpiryInfo {
         const overdueDays = Math.abs(diffDays);
         if (overdueDays === 1) {
             return {
-                humanReadable: "expired yesterday",
+                humanReadable: `${t("common.expired")} ${t("common.yesterday")}`,
                 color: "error",
                 isOverdue: true,
             };
         } else if (overdueDays < 7) {
             return {
-                humanReadable: `expired ${overdueDays} days ago`,
+                humanReadable: `${t("common.expired")} ${t("common.ago")} ${overdueDays} ${overdueDays === 1 ? t("common.day") : t("common.days")}`,
                 color: "error",
                 isOverdue: true,
             };
         } else {
             const overdueWeeks = Math.round(overdueDays / 7);
             return {
-                humanReadable: `expired ${overdueWeeks} week${overdueWeeks > 1 ? "s" : ""} ago`,
+                humanReadable: `${t("common.expired")} ${t("common.ago")} ${overdueWeeks} ${overdueWeeks > 1 ? t("common.weeks") : t("common.week")}`,
                 color: "error",
                 isOverdue: true,
             };
@@ -38,39 +41,39 @@ export function getExpiryInfo(expiryDate: string): ExpiryInfo {
     // Future dates
     if (diffDays === 0) {
         return {
-            humanReadable: "expires today",
+            humanReadable: `${t("common.expires")} ${t("common.today")}`,
             color: "error",
             isOverdue: false,
         };
     } else if (diffDays === 1) {
         return {
-            humanReadable: "expires tomorrow",
+            humanReadable: `${t("common.expires")} ${t("common.tomorrow")}`,
             color: "error",
             isOverdue: false,
         };
     } else if (diffDays < 2) {
         return {
-            humanReadable: "expires in 1 day",
+            humanReadable: `${t("common.expires")} ${t("common.in")} 1 ${t("common.day")}`,
             color: "error",
             isOverdue: false,
         };
     } else if (diffDays < 7) {
         return {
-            humanReadable: `expires in ${diffDays} days`,
+            humanReadable: `${t("common.expires")} ${t("common.in")} ${diffDays} ${t("common.days")}`,
             color: "error",
             isOverdue: false,
         };
     } else if (diffDays < 14) {
         const weeks = Math.round(diffDays / 7);
         return {
-            humanReadable: `expires in ${weeks} week${weeks > 1 ? "s" : ""}`,
+            humanReadable: `${t("common.expires")} ${t("common.in")} ${weeks} ${weeks > 1 ? t("common.weeks") : t("common.week")}`,
             color: "warning",
             isOverdue: false,
         };
     } else if (diffDays < 30) {
         const weeks = Math.round(diffDays / 7);
         return {
-            humanReadable: `expires in ${weeks} weeks`,
+            humanReadable: `${t("common.expires")} ${t("common.in")} ${weeks} ${t("common.weeks")}`,
             color: "info",
             isOverdue: false,
         };

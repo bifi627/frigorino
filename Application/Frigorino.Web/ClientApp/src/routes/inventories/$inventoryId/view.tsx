@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
 import { InventoryContainer } from "../../../components/inventory/InventoryContainer";
 import { InventoryFooter } from "../../../components/inventory/InventoryFooter";
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/inventories/$inventoryId/view")({
 
 function RouteComponent() {
     const router = useRouter();
+    const { t } = useTranslation();
     const params = Route.useParams();
     const inventoryId = parseInt(params.inventoryId);
     // const [showDragHandles, setShowDragHandles] = useState(false);
@@ -199,7 +201,7 @@ function RouteComponent() {
         return (
             <Container maxWidth="sm" sx={{ py: 4 }}>
                 <Alert severity="warning">
-                    Please select a household first.
+                    {t("common.pleaseSelectHouseholdFirst")}
                 </Alert>
             </Container>
         );
@@ -210,7 +212,7 @@ function RouteComponent() {
             <Container maxWidth="sm" sx={{ py: 4, textAlign: "center" }}>
                 <CircularProgress />
                 <Typography variant="body2" sx={{ mt: 2 }}>
-                    Loading inventory...
+                    {t("inventory.loadingInventory")}
                 </Typography>
             </Container>
         );
@@ -220,7 +222,7 @@ function RouteComponent() {
         return (
             <Container maxWidth="sm" sx={{ py: 4 }}>
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    Failed to load inventory. Please try again.
+                    {t("inventory.failedToLoadInventory")}
                 </Alert>
             </Container>
         );
@@ -251,7 +253,7 @@ function RouteComponent() {
         >
             {/* Header Section */}
             <PageHeadActionBar
-                title={inventory.name || "Untitled Inventory"}
+                title={inventory.name || t("inventory.untitledInventory")}
                 subtitle={inventory.description || undefined}
                 directActions={directActions}
                 menuActions={menuActions}

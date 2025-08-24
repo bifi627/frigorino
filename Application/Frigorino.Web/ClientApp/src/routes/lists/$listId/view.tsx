@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
 import { ListContainer } from "../../../components/list/ListContainer";
 import { ListFooter } from "../../../components/list/ListFooter";
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/lists/$listId/view")({
 function RouteComponent() {
     const router = useRouter();
     const { listId } = Route.useParams();
+    const { t } = useTranslation();
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
@@ -94,15 +96,13 @@ function RouteComponent() {
                 householdId: currentHousehold.householdId,
                 listId: parseInt(listId),
             });
-            setSnackbarMessage("List order compacted successfully!");
+            setSnackbarMessage(t("lists.listOrderCompactedSuccessfully"));
             setSnackbarOpen(true);
         } catch {
-            setSnackbarMessage(
-                "Failed to compact list order. Please try again.",
-            );
+            setSnackbarMessage(t("lists.failedToCompactListOrder"));
             setSnackbarOpen(true);
         }
-    }, [compactListItems, currentHousehold?.householdId, listId]);
+    }, [compactListItems, currentHousehold?.householdId, listId, t]);
 
     const handleEdit = useCallback(() => {
         router.navigate({
@@ -182,7 +182,7 @@ function RouteComponent() {
         return (
             <Container maxWidth="sm" sx={{ py: 4 }}>
                 <Alert severity="warning">
-                    Please select a household first.
+                    {t("common.pleaseSelectHouseholdFirst")}
                 </Alert>
             </Container>
         );
@@ -193,7 +193,7 @@ function RouteComponent() {
             <Container maxWidth="sm" sx={{ py: 4, textAlign: "center" }}>
                 <CircularProgress />
                 <Typography variant="body2" sx={{ mt: 2 }}>
-                    Loading list...
+                    {t("lists.loadingList")}
                 </Typography>
             </Container>
         );
@@ -203,14 +203,14 @@ function RouteComponent() {
         return (
             <Container maxWidth="sm" sx={{ py: 4 }}>
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    Failed to load list. Please try again.
+                    {t("lists.failedToLoadList")}
                 </Alert>
                 <Button
                     variant="outlined"
                     startIcon={<ArrowBack />}
                     onClick={() => window.history.back()}
                 >
-                    Back to Lists
+                    {t("lists.backToLists")}
                 </Button>
             </Container>
         );
@@ -227,14 +227,16 @@ function RouteComponent() {
     const menuActions = [
         {
             icon: <DragIndicator fontSize="small" />,
-            text: showDragHandles ? "Hide Drag Handles" : "Show Drag Handles",
-            secondaryText: "Toggle reorder handles visibility",
+            text: showDragHandles
+                ? t("lists.hideDragHandles")
+                : t("lists.showDragHandles"),
+            secondaryText: t("lists.toggleReorderHandlesVisibility"),
             onClick: handleToggleDragHandles,
         },
         {
             icon: <Compress fontSize="small" />,
-            text: "Compact List Order",
-            secondaryText: "Reorganize item sort order",
+            text: t("lists.compactListOrder"),
+            secondaryText: t("lists.reorganizeItemSortOrder"),
             onClick: handleCompact,
         },
     ];
@@ -250,7 +252,7 @@ function RouteComponent() {
         >
             {/* Header Section */}
             <PageHeadActionBar
-                title={list.name || "Untitled List"}
+                title={list.name || t("lists.untitledList")}
                 subtitle={list.description || undefined}
                 directActions={directActions}
                 menuActions={menuActions}
