@@ -8,7 +8,7 @@ import {
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requireAuth } from "../../../common/authGuard";
 import { InventoryContainer } from "../../../components/inventory/InventoryContainer";
 import { InventoryFooter } from "../../../components/inventory/InventoryFooter";
@@ -42,10 +42,36 @@ function RouteComponent() {
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // LocalStorage key for sort mode persistence
+    const SORT_MODE_STORAGE_KEY = `frigorino-inventory-sort-mode-${inventoryId}`;
+
+    // Load sort mode from localStorage with error handling
+    const loadSortMode = (): SortMode => {
+        try {
+            const saved = localStorage.getItem(SORT_MODE_STORAGE_KEY);
+            if (saved && ['custom', 'expiryDateAsc', 'expiryDateDesc'].includes(saved)) {
+                return saved as SortMode;
+            }
+            return 'custom';
+        } catch (error) {
+            console.warn('Failed to load sort mode from localStorage:', error);
+            return 'custom';
+        }
+    };
+
     const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
         null,
     );
-    const [sortMode, setSortMode] = useState<SortMode>('custom');
+    const [sortMode, setSortMode] = useState<SortMode>(loadSortMode());
+
+    // Persist sort mode changes to localStorage
+    useEffect(() => {
+        try {
+            localStorage.setItem(SORT_MODE_STORAGE_KEY, sortMode);
+        } catch (error) {
+            console.warn('Failed to save sort mode to localStorage:', error);
+        }
+    }, [sortMode, SORT_MODE_STORAGE_KEY]);
 
     const { data: currentHousehold } = useCurrentHousehold();
     const {
