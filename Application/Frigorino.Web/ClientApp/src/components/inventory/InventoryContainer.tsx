@@ -6,6 +6,7 @@ import {
 } from "../../hooks/useInventoryItemQueries";
 import type { InventoryItemDto } from "../../lib/api";
 import { SortableList } from "../sortables/SortableList";
+import { InventoryItemContent } from "./InventoryItemContent";
 
 interface ContainerProps {
     inventoryId: number;
@@ -73,7 +74,7 @@ export const InventoryContainer = memo(
                         minHeight: 0,
                     }}
                 >
-                    <SortableList<InventoryItemDto>
+                    <SortableList
                         items={items}
                         isLoading={isLoading}
                         error={error}
@@ -83,6 +84,9 @@ export const InventoryContainer = memo(
                         onDelete={handleDelete}
                         editingItem={editingItem}
                         showDragHandles={false}
+                        renderContent={(item) => (
+                            <InventoryItemContent item={item} />
+                        )}
                     />
                 </Container>
             );

@@ -1,10 +1,5 @@
 import { CalendarToday, Clear, Today } from "@mui/icons-material";
-import {
-    Box,
-    IconButton,
-    TextField,
-    Typography,
-} from "@mui/material";
+import { Box, IconButton, TextField, Typography } from "@mui/material";
 import { memo, useRef } from "react";
 
 interface DateToggleProps {

@@ -205,11 +205,19 @@ function RouteComponent() {
             <InventoryFooter
                 editingItem={editingItem}
                 existingItems={items}
-                onAddItem={(data, quantity) =>
-                    handleAddItem({ text: data, quantity: quantity })
+                onAddItem={(data, quantity, expiryDate) =>
+                    handleAddItem({
+                        text: data,
+                        quantity: quantity,
+                        expiryDate: expiryDate?.toISOString(),
+                    })
                 }
-                onUpdateItem={(data, quantity) =>
-                    handleUpdateItem({ text: data, quantity: quantity })
+                onUpdateItem={(data, quantity, expiryDate) =>
+                    handleUpdateItem({
+                        text: data,
+                        quantity: quantity,
+                        expiryDate: expiryDate?.toISOString(),
+                    })
                 }
                 onCancelEdit={() => setEditingItem(null)}
                 onUncheckExisting={() => {}}

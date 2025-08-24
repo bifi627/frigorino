@@ -79,9 +79,9 @@ export const useCreateInventory = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousInventories = queryClient.getQueryData<InventoryDto[]>(
-                inventoryKeys.byHousehold(variables.householdId),
-            );
+            const previousInventories = queryClient.getQueryData<
+                InventoryDto[]
+            >(inventoryKeys.byHousehold(variables.householdId));
 
             // Create optimistic inventory with temporary ID
             const optimisticInventory: InventoryDto = {
@@ -158,9 +158,9 @@ export const useUpdateInventory = () => {
             });
 
             // Snapshot the previous values for rollback
-            const previousInventories = queryClient.getQueryData<InventoryDto[]>(
-                inventoryKeys.byHousehold(variables.householdId),
-            );
+            const previousInventories = queryClient.getQueryData<
+                InventoryDto[]
+            >(inventoryKeys.byHousehold(variables.householdId));
             const previousInventory = queryClient.getQueryData<InventoryDto>(
                 inventoryKeys.detail(variables.inventoryId),
             );
@@ -175,7 +175,9 @@ export const useUpdateInventory = () => {
                             ? {
                                   ...inventory,
                                   name: variables.data.name || inventory.name,
-                                  description: variables.data.description || inventory.description,
+                                  description:
+                                      variables.data.description ||
+                                      inventory.description,
                                   updatedAt: new Date().toISOString(),
                               }
                             : inventory,
@@ -190,7 +192,9 @@ export const useUpdateInventory = () => {
                     {
                         ...previousInventory,
                         name: variables.data.name || previousInventory.name,
-                        description: variables.data.description || previousInventory.description,
+                        description:
+                            variables.data.description ||
+                            previousInventory.description,
                         updatedAt: new Date().toISOString(),
                     },
                 );
@@ -253,16 +257,18 @@ export const useDeleteInventory = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousInventories = queryClient.getQueryData<InventoryDto[]>(
-                inventoryKeys.byHousehold(variables.householdId),
-            );
+            const previousInventories = queryClient.getQueryData<
+                InventoryDto[]
+            >(inventoryKeys.byHousehold(variables.householdId));
 
             // Optimistically remove the inventory from the cache
             queryClient.setQueryData<InventoryDto[]>(
                 inventoryKeys.byHousehold(variables.householdId),
                 (old) => {
                     if (!old) return old;
-                    return old.filter((inventory) => inventory.id !== variables.inventoryId);
+                    return old.filter(
+                        (inventory) => inventory.id !== variables.inventoryId,
+                    );
                 },
             );
 

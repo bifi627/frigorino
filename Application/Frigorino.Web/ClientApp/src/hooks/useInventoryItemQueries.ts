@@ -158,10 +158,12 @@ export const useUpdateInventoryItem = () => {
                             ? {
                                   ...item,
                                   text: variables.data.text || item.text,
-                                  quantity: variables.data.quantity || item.quantity,
-                                  expiryDate: variables.data.expiryDate !== undefined 
-                                      ? variables.data.expiryDate 
-                                      : item.expiryDate,
+                                  quantity:
+                                      variables.data.quantity || item.quantity,
+                                  expiryDate:
+                                      variables.data.expiryDate !== undefined
+                                          ? variables.data.expiryDate
+                                          : item.expiryDate,
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -176,10 +178,12 @@ export const useUpdateInventoryItem = () => {
                     {
                         ...previousItem,
                         text: variables.data.text || previousItem.text,
-                        quantity: variables.data.quantity || previousItem.quantity,
-                        expiryDate: variables.data.expiryDate !== undefined 
-                            ? variables.data.expiryDate 
-                            : previousItem.expiryDate,
+                        quantity:
+                            variables.data.quantity || previousItem.quantity,
+                        expiryDate:
+                            variables.data.expiryDate !== undefined
+                                ? variables.data.expiryDate
+                                : previousItem.expiryDate,
                         updatedAt: new Date().toISOString(),
                     },
                 );

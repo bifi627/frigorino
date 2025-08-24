@@ -8,8 +8,8 @@ import { QuantityPanel, QuantityToggle } from "../list/QuantityPanel";
 interface ListFooterProps {
     editingItem: InventoryItemDto | null;
     existingItems: InventoryItemDto[];
-    onAddItem: (data: string, quantity?: string) => void;
-    onUpdateItem: (data: string, quantity?: string) => void;
+    onAddItem: (data: string, quantity?: string, expiryDate?: Date) => void;
+    onUpdateItem: (data: string, quantity?: string, expiryDate?: Date) => void;
     onCancelEdit: () => void;
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
@@ -45,18 +45,27 @@ export const InventoryFooter = memo(
 
         const handleAddItem = useCallback(
             (data: string) => {
-                onAddItem(data, quantity.trim() || undefined);
+                onAddItem(
+                    data,
+                    quantity.trim() || undefined,
+                    date || undefined,
+                );
                 setQuantity("");
+                setDate(null);
                 onScrollToLastUnchecked();
             },
-            [onAddItem, quantity, onScrollToLastUnchecked],
+            [onAddItem, quantity, onScrollToLastUnchecked, date],
         );
 
         const handleUpdateItem = useCallback(
             (data: string) => {
-                onUpdateItem(data, quantity.trim() || undefined);
+                onUpdateItem(
+                    data,
+                    quantity.trim() || undefined,
+                    date || undefined,
+                );
             },
-            [onUpdateItem, quantity],
+            [onUpdateItem, quantity, date],
         );
 
         const handleToggleQuantityPanel = useCallback(() => {

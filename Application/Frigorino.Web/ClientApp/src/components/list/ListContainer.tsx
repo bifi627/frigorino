@@ -1,4 +1,4 @@
-import { Container, ListItemText, Typography } from "@mui/material";
+import { Container } from "@mui/material";
 import { forwardRef, memo, useCallback } from "react";
 import type { ListItemDto } from "../../hooks/useListItemQueries";
 import {
@@ -8,6 +8,7 @@ import {
     useToggleListItemStatus,
 } from "../../hooks/useListItemQueries";
 import { SortableList } from "../sortables/SortableList";
+import { ListItemContent } from "./ListItemContent";
 
 interface ListContainerProps {
     householdId: number;
@@ -92,38 +93,7 @@ export const ListContainer = memo(
                         showDragHandles={showDragHandles}
                         showCheckbox={true}
                         renderContent={(item) => (
-                            <>
-                                <ListItemText
-                                    primary={
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                fontWeight: 500,
-                                                wordBreak: "break-word",
-                                            }}
-                                        >
-                                            {item.text}
-                                        </Typography>
-                                    }
-                                    secondary={
-                                        item.quantity && (
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: item.status
-                                                        ? "text.disabled"
-                                                        : "text.secondary",
-                                                    textDecoration: item.status
-                                                        ? "line-through"
-                                                        : "none",
-                                                }}
-                                            >
-                                                {item.quantity}
-                                            </Typography>
-                                        )
-                                    }
-                                />
-                            </>
+                            <ListItemContent item={item} />
                         )}
                     />
                 </Container>
