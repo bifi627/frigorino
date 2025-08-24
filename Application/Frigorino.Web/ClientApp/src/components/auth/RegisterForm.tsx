@@ -10,6 +10,7 @@ import {
     Typography,
 } from "@mui/material";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 
 interface RegisterFormProps {
@@ -19,6 +20,7 @@ interface RegisterFormProps {
 export const RegisterForm: React.FC<RegisterFormProps> = ({
     onSwitchToLogin,
 }) => {
+    const { t } = useTranslation();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,12 +32,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         setLocalError(null);
 
         if (password !== confirmPassword) {
-            setLocalError("Passwords do not match");
+            setLocalError(t("auth.passwordMismatch"));
             return;
         }
 
         if (password.length < 6) {
-            setLocalError("Password must be at least 6 characters");
+            setLocalError(t("auth.passwordMinLength"));
             return;
         }
 
@@ -68,7 +70,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                     fontWeight: 600,
                 }}
             >
-                Register
+                {t("auth.register")}
             </Typography>
 
             {displayError && (
@@ -80,7 +82,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             <Box component="form" onSubmit={handleSubmit}>
                 <TextField
                     fullWidth
-                    label="Email"
+                    label={t("auth.email")}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -89,7 +91,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 />
                 <TextField
                     fullWidth
-                    label="Password"
+                    label={t("auth.password")}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -98,7 +100,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 />
                 <TextField
                     fullWidth
-                    label="Confirm Password"
+                    label={t("auth.confirmPassword")}
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -112,10 +114,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                     sx={{ mt: 3, mb: 2 }}
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress size={24} /> : "Register"}
+                    {loading ? (
+                        <CircularProgress size={24} />
+                    ) : (
+                        t("auth.register")
+                    )}
                 </Button>
 
-                <Divider sx={{ my: 2 }}>OR</Divider>
+                <Divider sx={{ my: 2 }}>{t("auth.or")}</Divider>
 
                 <Button
                     fullWidth
@@ -125,11 +131,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                     sx={{ mb: 2 }}
                     startIcon={<Google />}
                 >
-                    Continue with Google
+                    {t("auth.continueWithGoogle")}
                 </Button>
 
                 <Button fullWidth variant="text" onClick={onSwitchToLogin}>
-                    Already have an account? Login
+                    {t("auth.hasAccountLogin")}
                 </Button>
             </Box>
         </Paper>

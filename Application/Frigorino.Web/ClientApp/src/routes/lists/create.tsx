@@ -18,6 +18,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useCreateList } from "../../hooks/useListQueries";
@@ -33,6 +34,7 @@ interface CreateListFormData {
 }
 
 function CreateListPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const router = useRouter();
     const createListMutation = useCreateList();
@@ -87,12 +89,12 @@ function CreateListPage() {
         return (
             <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
                 <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    You need to select a household before creating a list.
+                    {t("common.selectHouseholdFirst")}
                     <Button
                         onClick={handleBack}
                         sx={{ mt: 1, display: "block" }}
                     >
-                        Go back to dashboard
+                        {t("common.goBackToDashboard")}
                     </Button>
                 </Alert>
             </Container>
@@ -121,7 +123,7 @@ function CreateListPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    Neue Einkaufsliste erstellen
+                    {t("lists.createNewList")}
                 </Typography>
             </Box>
 
@@ -152,7 +154,7 @@ function CreateListPage() {
                                 variant="h6"
                                 sx={{ fontWeight: 600, mb: 0.5 }}
                             >
-                                Einkaufsliste
+                                {t("lists.shoppingList")}
                             </Typography>
                             {/* <Typography variant="body2" sx={{ opacity: 0.9 }}>
                                 Create organized lists for your household
@@ -181,7 +183,7 @@ function CreateListPage() {
                                 >
                                     {error instanceof Error
                                         ? error.message
-                                        : "An error occurred"}
+                                        : t("common.errorOccurred")}
                                 </Alert>
                             )}
 
@@ -191,7 +193,7 @@ function CreateListPage() {
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    Name *
+                                    {t("common.name")} *
                                 </Typography>
                                 <TextField
                                     fullWidth
@@ -205,7 +207,7 @@ function CreateListPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? "Name is required"
+                                            ? t("common.nameRequired")
                                             : ""
                                     }
                                     sx={{
@@ -264,7 +266,9 @@ function CreateListPage() {
                                     mt: 2,
                                 }}
                             >
-                                {isLoading ? "Creating..." : "Create List"}
+                                {isLoading
+                                    ? t("common.creating")
+                                    : t("lists.createList")}
                             </Button>
                         </Stack>
                     </form>

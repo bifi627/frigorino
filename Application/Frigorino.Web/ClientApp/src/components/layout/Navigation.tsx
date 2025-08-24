@@ -14,9 +14,12 @@ import {
 } from "@mui/material";
 import { Link, useRouter } from "@tanstack/react-router";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
+import { LanguageSwitcher } from "../common/LanguageSwitcher";
 
 export const Navigation: React.FC = () => {
+    const { t } = useTranslation();
     const { isAuthenticated, logout, user } = useAuth();
     const router = useRouter();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -46,7 +49,8 @@ export const Navigation: React.FC = () => {
                         Frigorino
                     </Link>
                 </Typography>
-                <Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LanguageSwitcher />
                     {isAuthenticated ? (
                         <>
                             <IconButton
@@ -96,7 +100,7 @@ export const Navigation: React.FC = () => {
                                     <ListItemIcon>
                                         <Logout fontSize="small" />
                                     </ListItemIcon>
-                                    <ListItemText primary="Logout" />
+                                    <ListItemText primary={t("auth.logout")} />
                                 </MenuItem>
                             </Menu>
                         </>
@@ -106,7 +110,7 @@ export const Navigation: React.FC = () => {
                             component={Link}
                             to="/auth/login"
                         >
-                            Login
+                            {t("auth.login")}
                         </Button>
                     )}
                 </Box>

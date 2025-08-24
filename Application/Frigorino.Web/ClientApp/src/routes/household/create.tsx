@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import {
     useCreateHousehold,
@@ -31,6 +32,7 @@ interface CreateHouseholdFormData {
 }
 
 function CreateHouseholdPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const createHouseholdMutation = useCreateHousehold();
     const setCurrentHouseholdMutation = useSetCurrentHousehold();
@@ -106,7 +108,7 @@ function CreateHouseholdPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    Create New Household
+                    {t("household.createNewHousehold")}
                 </Typography>
             </Box>
 
@@ -128,7 +130,7 @@ function CreateHouseholdPage() {
                                 >
                                     {error instanceof Error
                                         ? error.message
-                                        : "An error occurred"}
+                                        : t("common.errorOccurred")}
                                 </Alert>
                             )}
 
@@ -138,7 +140,7 @@ function CreateHouseholdPage() {
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    Household Name *
+                                    {t("household.householdName")} *
                                 </Typography>
                                 <TextField
                                     fullWidth
@@ -152,8 +154,12 @@ function CreateHouseholdPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? "Household name is required"
-                                            : "Choose a name that everyone in your household will recognize"
+                                            ? t(
+                                                  "household.householdNameRequired",
+                                              )
+                                            : t(
+                                                  "household.chooseRecognizableName",
+                                              )
                                     }
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
@@ -187,7 +193,9 @@ function CreateHouseholdPage() {
                                     mt: 2,
                                 }}
                             >
-                                {isLoading ? "Creating..." : "Create Household"}
+                                {isLoading
+                                    ? t("common.creating")
+                                    : t("household.createHousehold")}
                             </Button>
                         </Stack>
                     </form>

@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdInventories } from "../../hooks/useInventoryQueries";
@@ -33,6 +34,7 @@ import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     // Local storage key for expanded sections
     const EXPANDED_SECTIONS_KEY = "frigorino-welcome-expanded-sections";
@@ -118,7 +120,14 @@ export const WelcomePage = () => {
             icon: <KitchenOutlined />,
             color: "#2196F3",
             items: listsLoading
-                ? [{ name: "Loading...", count: "", status: "Loading", id: 0 }]
+                ? [
+                      {
+                          name: t("common.loading"),
+                          count: "",
+                          status: "Loading",
+                          id: 0,
+                      },
+                  ]
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
@@ -143,7 +152,14 @@ export const WelcomePage = () => {
             icon: <TimerOutlined />,
             color: "#FF9800",
             items: inventoriesLoading
-                ? [{ name: "Loading...", count: "", status: "Loading", id: 0 }]
+                ? [
+                      {
+                          name: t("common.loading"),
+                          count: "",
+                          status: "Loading",
+                          id: 0,
+                      },
+                  ]
                 : inventories.length > 0
                   ? inventories.map((inventory) => ({
                         name: inventory.name || "Unnamed Inventory",
@@ -239,7 +255,7 @@ export const WelcomePage = () => {
                     fontSize: { xs: "1.1rem", sm: "1.25rem" },
                 }}
             >
-                Overview
+                {t("common.overview")}
             </Typography>
 
             <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>

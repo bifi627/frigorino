@@ -1,6 +1,7 @@
 import { Delete } from "@mui/icons-material";
 import { Box, IconButton, Paper } from "@mui/material";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { ActionButton } from "./components/ActionButton";
 import { AutocompleteInput } from "./components/AutocompleteInput";
 import { EditingHeader } from "./components/EditingHeader";
@@ -25,6 +26,7 @@ export const AddInput = memo(
         bottomPanels = [],
         rightControls = [],
     }: AddInputProps) => {
+        const { t } = useTranslation();
         const isEditing = Boolean(editingItem);
 
         const { text, setText, clearText, inputRef, focusInput } =
@@ -142,7 +144,7 @@ export const AddInput = memo(
                                 onClick={handleDiscard}
                                 size="medium"
                                 sx={styles.discardButtonStyles}
-                                title="Discard input"
+                                title={t("common.discardInput")}
                             >
                                 <Delete />
                             </IconButton>

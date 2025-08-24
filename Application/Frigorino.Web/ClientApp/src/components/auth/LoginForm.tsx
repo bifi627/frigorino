@@ -10,6 +10,7 @@ import {
     Typography,
 } from "@mui/material";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 
 interface LoginFormProps {
@@ -17,6 +18,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
+    const { t } = useTranslation();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const { login, loginWithGoogle, loading, error } = useAuth();
@@ -53,7 +55,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                     fontWeight: 600,
                 }}
             >
-                Login
+                {t("auth.login")}
             </Typography>
 
             {error && (
@@ -65,7 +67,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             <Box component="form" onSubmit={handleSubmit}>
                 <TextField
                     fullWidth
-                    label="Email"
+                    label={t("auth.email")}
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -74,7 +76,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                 />
                 <TextField
                     fullWidth
-                    label="Password"
+                    label={t("auth.password")}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -88,10 +90,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                     sx={{ mt: 3, mb: 2 }}
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress size={24} /> : "Login"}
+                    {loading ? <CircularProgress size={24} /> : t("auth.login")}
                 </Button>
 
-                <Divider sx={{ my: 2 }}>OR</Divider>
+                <Divider sx={{ my: 2 }}>{t("auth.or")}</Divider>
 
                 <Button
                     fullWidth
@@ -101,11 +103,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
                     sx={{ mb: 2 }}
                     startIcon={<Google />}
                 >
-                    Continue with Google
+                    {t("auth.continueWithGoogle")}
                 </Button>
 
                 <Button fullWidth variant="text" onClick={onSwitchToRegister}>
-                    Don't have an account? Register
+                    {t("auth.noAccountRegister")}
                 </Button>
             </Box>
         </Paper>

@@ -18,6 +18,7 @@ import {
     useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useCreateInventory } from "../../hooks/useInventoryQueries";
@@ -33,6 +34,7 @@ interface CreateInventoryFormData {
 }
 
 function CreateInventoryPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const router = useRouter();
     const createInventoryMutation = useCreateInventory();
@@ -85,12 +87,12 @@ function CreateInventoryPage() {
         return (
             <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
                 <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    You need to select a household before creating an inventory.
+                    {t("common.selectHouseholdFirst")}
                     <Button
                         onClick={handleBack}
                         sx={{ mt: 1, display: "block" }}
                     >
-                        Go back to dashboard
+                        {t("common.goBackToDashboard")}
                     </Button>
                 </Alert>
             </Container>
@@ -119,7 +121,7 @@ function CreateInventoryPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    Create Inventory
+                    {t("inventory.createNewInventory")}
                 </Typography>
             </Box>
 
@@ -150,7 +152,7 @@ function CreateInventoryPage() {
                                 variant="h6"
                                 sx={{ fontWeight: 600, mb: 0.5 }}
                             >
-                                Household Inventory
+                                {t("inventory.title")}
                             </Typography>
                         </Box>
                     </Box>
@@ -174,7 +176,7 @@ function CreateInventoryPage() {
                                 >
                                     {error instanceof Error
                                         ? error.message
-                                        : "An error occurred"}
+                                        : t("common.errorOccurred")}
                                 </Alert>
                             )}
 
@@ -183,7 +185,7 @@ function CreateInventoryPage() {
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    Name *
+                                    {t("common.name")} *
                                 </Typography>
                                 <TextField
                                     fullWidth
@@ -197,7 +199,7 @@ function CreateInventoryPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? "Name is required"
+                                            ? t("common.nameRequired")
                                             : ""
                                     }
                                     sx={{
@@ -247,7 +249,9 @@ function CreateInventoryPage() {
                                     mt: 2,
                                 }}
                             >
-                                {isLoading ? "Creating..." : "Create Inventory"}
+                                {isLoading
+                                    ? t("common.creating")
+                                    : t("inventory.createInventory")}
                             </Button>
                         </Stack>
                     </form>

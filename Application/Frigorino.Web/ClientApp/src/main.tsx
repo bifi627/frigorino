@@ -1,12 +1,19 @@
 import "./common/auth"; // Ensure Firebase is initialized
+import "./i18n"; // Initialize i18n
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 
 // Import the generated route tree
-import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import {
+    Box,
+    CircularProgress,
+    createTheme,
+    CssBaseline,
+    ThemeProvider,
+} from "@mui/material";
 import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
@@ -40,7 +47,20 @@ createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={darkTheme}>
                 <CssBaseline />
-                <RouterProvider router={router} />
+                <Suspense
+                    fallback={
+                        <Box
+                            display="flex"
+                            justifyContent="center"
+                            alignItems="center"
+                            minHeight="100vh"
+                        >
+                            <CircularProgress />
+                        </Box>
+                    }
+                >
+                    <RouterProvider router={router} />
+                </Suspense>
                 {/* <App /> */}
             </ThemeProvider>
         </QueryClientProvider>
