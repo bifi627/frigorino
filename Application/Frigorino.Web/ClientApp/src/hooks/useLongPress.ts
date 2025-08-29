@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 
 interface UseLongPressOptions {
     onLongPress: () => void;
@@ -42,13 +42,7 @@ export const useLongPress = ({
     }, [onLongPress, delay]);
 
     const handleTouchEnd = useCallback(() => {
-        // Add a small delay before clearing to ensure toast has time to display
-        if (longPressTriggered.current) {
-            // If long press was triggered, delay clearing to let toast show
-            setTimeout(clearTimer, 100);
-        } else {
-            clearTimer();
-        }
+        clearTimer();
     }, [clearTimer]);
 
     const handleTouchMove = useCallback(() => {
@@ -68,6 +62,13 @@ export const useLongPress = ({
         },
         [shouldPreventDefault],
     );
+
+    // Cleanup timer on unmount to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            clearTimer();
+        };
+    }, [clearTimer]);
 
     return {
         onTouchStart: handleTouchStart,
