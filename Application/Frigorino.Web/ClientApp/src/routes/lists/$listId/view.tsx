@@ -5,7 +5,6 @@ import {
     Button,
     CircularProgress,
     Container,
-    Snackbar,
     Typography,
 } from "@mui/material";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -37,8 +36,6 @@ function RouteComponent() {
     const router = useRouter();
     const { listId } = Route.useParams();
     const { t } = useTranslation();
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage] = useState("");
     const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
     const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -98,10 +95,6 @@ function RouteComponent() {
     const handleToggleDragHandles = useCallback(() => {
         setShowDragHandles(!showDragHandles);
     }, [showDragHandles]);
-
-    const handleSnackbarClose = useCallback(() => {
-        setSnackbarOpen(false);
-    }, []);
 
     // AddInput handlers
     const handleAddItem = useCallback(
@@ -252,15 +245,6 @@ function RouteComponent() {
                 onUncheckExisting={handleUncheckExisting}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
-            />
-
-            {/* Snackbar for feedback */}
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={4000}
-                onClose={handleSnackbarClose}
-                message={snackbarMessage}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             />
         </Box>
     );

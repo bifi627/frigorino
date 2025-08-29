@@ -14,6 +14,7 @@ import {
     CssBaseline,
     ThemeProvider,
 } from "@mui/material";
+import { Toaster } from "sonner";
 import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
@@ -61,6 +62,7 @@ createRoot(document.getElementById("root")!).render(
                 >
                     <RouterProvider router={router} />
                 </Suspense>
+                <Toaster />
                 {/* <App /> */}
             </ThemeProvider>
         </QueryClientProvider>

@@ -24,10 +24,12 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useAuth } from "../../hooks/useAuth";
 import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
 import { useHouseholdInventories } from "../../hooks/useInventoryQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
+import { useLongPress } from "../../hooks/useLongPress";
 import { HeroImage } from "../common/HeroImage";
 import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
@@ -196,13 +198,24 @@ export const WelcomePage = () => {
         },
     ];
 
+    const events = useLongPress({
+        shouldPreventDefault: true,
+        onLongPress: () => {
+            navigator.vibrate(100);
+            navigator.clipboard.writeText(user?.email ?? "");
+            toast.success(t("common.textCopiedToClipboard"), {
+                duration: 2000,
+            });
+        },
+    });
+
     return (
         <Container
             maxWidth="sm"
             sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 2 } }}
         >
             {/* Header with User Info and Household Switcher */}
-            <Box sx={{ mb: { xs: 3, sm: 4 } }}>
+            <Box sx={{ mb: { xs: 3, sm: 4 }, userSelect: "none" }} {...events}>
                 {/* Top Row - User Email and Household Switcher */}
                 <Box
                     sx={{
