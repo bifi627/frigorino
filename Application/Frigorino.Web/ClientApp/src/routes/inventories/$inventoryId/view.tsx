@@ -94,7 +94,6 @@ function RouteComponent() {
 
     const createMutation = useCreateInventoryItem();
     const updateMutation = useUpdateInventoryItem();
-    // const deleteMutation = useDeleteInventoryItem();
 
     // Function to scroll to the last item in the unchecked section
     const scrollToLastUncheckedItem = useCallback(() => {
@@ -118,10 +117,6 @@ function RouteComponent() {
             }
         }
     }, []);
-
-    // const handleBack = () => {
-    //     router.history.back();
-    // };
 
     const handleEdit = () => {
         router.navigate({ to: `/inventories/${inventoryId}/edit` });
@@ -155,17 +150,6 @@ function RouteComponent() {
         }
     };
 
-    // const handleEditItem = useCallback((item: InventoryItemDto) => {
-    //     setEditingItem(item);
-    // }, []);
-
-    // const handleCancelEdit = useCallback(() => {
-    //     setEditingItem(null);
-    // }, []);
-    // const handleToggleDragHandles = useCallback(() => {
-    //     setShowDragHandles(!showDragHandles);
-    // }, [showDragHandles]);
-
     const handleAddItem = useCallback(
         (data: CreateInventoryItemRequest) => {
             createMutation.mutate({
@@ -189,13 +173,6 @@ function RouteComponent() {
         },
         [editingItem?.id, updateMutation, inventoryId],
     );
-
-    // const handleDeleteItem = useCallback(
-    //     (itemId: number) => {
-    //         deleteMutation.mutate({ inventoryId, itemId });
-    //     },
-    //     [deleteMutation, inventoryId],
-    // );
 
     if (!currentHousehold?.householdId) {
         return (

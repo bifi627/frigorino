@@ -8,6 +8,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { useLongPress } from "../../hooks/useLongPress";
 import type { InventoryItemDto } from "../../lib/api";
 import { getExpiryColor, getExpiryInfo } from "../../utils/dateUtils";
 
@@ -17,6 +19,16 @@ interface Props {
 export function InventoryItemContent({ item }: Props) {
     const { t } = useTranslation();
     const [showDateSnackbar, setShowDateSnackbar] = useState(false);
+
+    const events = useLongPress({
+        shouldPreventDefault: true,
+        onLongPress: () => {
+            navigator.clipboard.writeText(item.text ?? "");
+            toast.success(t("common.textCopiedToClipboard"), {
+                duration: 2000,
+            });
+        },
+    });
 
     const handleDateClick = () => {
         setShowDateSnackbar(true);
@@ -46,6 +58,7 @@ export function InventoryItemContent({ item }: Props) {
             )}
 
             <ListItemText
+                {...events}
                 sx={{ pl: item.expiryDate ? 2 : 0 }} // Add padding when highlight bar is present
                 primary={
                     <Typography
