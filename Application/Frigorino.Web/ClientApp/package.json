@@ -12,6 +12,7 @@
         "lint": "eslint .",
         "prettier": "prettier --write .",
         "fix": "eslint . --fix && prettier --write .",
+        "tsc": "tsc -b",
         "sql": "docker run -p 8080:80 -e \"PGADMIN_DEFAULT_EMAIL=test@test.de\" -e \"PGADMIN_DEFAULT_PASSWORD=test\" -v pgadmin-data:/var/lib/pgadmin --name pgadmin -d dpage/pgadmin4"
     },
     "dependencies": {

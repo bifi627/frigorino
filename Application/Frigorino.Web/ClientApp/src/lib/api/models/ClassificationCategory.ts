@@ -2,4 +2,4 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type HouseholdRole = 'Member' | 'Admin' | 'Owner';
+export type ClassificationCategory = 'None' | 'Fixed' | 'Estimated' | 'Error';

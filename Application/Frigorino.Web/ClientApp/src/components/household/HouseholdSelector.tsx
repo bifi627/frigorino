@@ -70,20 +70,20 @@ export const HouseholdSelector: React.FC<HouseholdSelectorProps> = ({
         | "success"
         | "warning" => {
         switch (role) {
-            case 2: // Owner
+            case "Owner": // Owner
                 return "error";
-            case 1: // Admin
+            case "Admin": // Admin
                 return "warning";
             default: // Member or undefined
                 return "default";
         }
     };
 
-    const getRoleText = (role: HouseholdRole | undefined) => {
+    const getRoleText = (role: HouseholdRole) => {
         switch (role) {
-            case 2: // Owner
+            case "Owner": // Owner
                 return "Owner";
-            case 1: // Admin
+            case "Admin": // Admin
                 return "Admin";
             default: // Member or undefined
                 return "Member";
@@ -180,7 +180,7 @@ export const HouseholdSelector: React.FC<HouseholdSelectorProps> = ({
                                 >
                                     <Chip
                                         label={getRoleText(
-                                            currentHousehold?.role,
+                                            currentHousehold?.role ?? "Member",
                                         )}
                                         size="small"
                                         color={getRoleColor(
@@ -292,11 +292,13 @@ export const HouseholdSelector: React.FC<HouseholdSelectorProps> = ({
                                 >
                                     <Chip
                                         label={getRoleText(
-                                            household.currentUserRole,
+                                            household.currentUserRole ??
+                                                "Member",
                                         )}
                                         size="small"
                                         color={getRoleColor(
-                                            household.currentUserRole,
+                                            household.currentUserRole ??
+                                                "Member",
                                         )}
                                         sx={{ fontSize: "0.7rem", height: 20 }}
                                     />

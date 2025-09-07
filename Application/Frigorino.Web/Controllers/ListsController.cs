@@ -119,8 +119,8 @@ public class ListsController : ControllerBase
     /// <summary>
     /// Delete a list (Creator/Admin/Owner only)
     /// </summary>
-    [HttpPost("{listId}")]
-    public async Task<ActionResult> DeleteList(int _, int listId)
+    [HttpDelete("{listId}")]
+    public async Task<ActionResult> DeleteList(int householdId, int listId)
     {
         try
         {

@@ -1538,6 +1538,43 @@
                 }
             }
         },
+        "/api/household/{householdId}/lists/{listId}/ListItems/{itemId}/update-classification": {
+            "post": {
+                "tags": ["ListItems"],
+                "parameters": [
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "householdId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "listId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/household/{householdId}/Lists": {
             "get": {
                 "tags": ["Lists"],
@@ -1769,6 +1806,35 @@
                         "schema": {
                             "type": "integer",
                             "format": "int32"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/household/{householdId}/Lists/{listId}/classify": {
+            "post": {
+                "tags": ["Lists"],
+                "parameters": [
+                    {
+                        "name": "listId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    },
+                    {
+                        "name": "householdId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -2049,6 +2115,10 @@
                 },
                 "additionalProperties": false
             },
+            "ClassificationCategory": {
+                "enum": ["None", "Fixed", "Estimated", "Error"],
+                "type": "string"
+            },
             "CreateHouseholdRequest": {
                 "type": "object",
                 "properties": {
@@ -2201,9 +2271,8 @@
                 "additionalProperties": false
             },
             "HouseholdRole": {
-                "enum": [0, 1, 2],
-                "type": "integer",
-                "format": "int32"
+                "enum": ["Member", "Admin", "Owner"],
+                "type": "string"
             },
             "InventoryDto": {
                 "type": "object",
@@ -2325,6 +2394,9 @@
                     "checkedCount": {
                         "type": "integer",
                         "format": "int32"
+                    },
+                    "isFullyCategorized": {
+                        "type": "boolean"
                     }
                 },
                 "additionalProperties": false
@@ -2362,6 +2434,22 @@
                     "updatedAt": {
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/ClassificationCategory"
+                    },
+                    "expirationDuration": {
+                        "type": "integer",
+                        "format": "int32",
+                        "nullable": true
+                    },
+                    "hintEstimation": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "hintCategory": {
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "additionalProperties": false

@@ -106,4 +106,23 @@ export class ListsService {
             },
         });
     }
+    /**
+     * @param listId
+     * @param householdId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public postApiHouseholdListsClassify(
+        listId: number,
+        householdId: string,
+    ): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/household/{householdId}/Lists/{listId}/classify',
+            path: {
+                'listId': listId,
+                'householdId': householdId,
+            },
+        });
+    }
 }

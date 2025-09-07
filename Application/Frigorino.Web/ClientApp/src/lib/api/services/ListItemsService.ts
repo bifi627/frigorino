@@ -189,4 +189,26 @@ export class ListItemsService {
             },
         });
     }
+    /**
+     * @param itemId
+     * @param householdId
+     * @param listId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public postApiHouseholdListsListItemsUpdateClassification(
+        itemId: number,
+        householdId: string,
+        listId: string,
+    ): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/household/{householdId}/lists/{listId}/ListItems/{itemId}/update-classification',
+            path: {
+                'itemId': itemId,
+                'householdId': householdId,
+                'listId': listId,
+            },
+        });
+    }
 }

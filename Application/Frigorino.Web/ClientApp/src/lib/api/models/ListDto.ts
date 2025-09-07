@@ -13,5 +13,6 @@ export type ListDto = {
     createdByUser?: UserDto;
     uncheckedCount?: number;
     checkedCount?: number;
+    isFullyCategorized?: boolean;
 };
 

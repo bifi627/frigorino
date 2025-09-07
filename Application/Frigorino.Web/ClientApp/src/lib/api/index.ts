@@ -11,6 +11,7 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AddMemberRequest } from './models/AddMemberRequest';
+export type { ClassificationCategory } from './models/ClassificationCategory';
 export type { CreateHouseholdRequest } from './models/CreateHouseholdRequest';
 export type { CreateInventoryItemRequest } from './models/CreateInventoryItemRequest';
 export type { CreateInventoryRequest } from './models/CreateInventoryRequest';

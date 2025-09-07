@@ -38,14 +38,14 @@ interface HouseholdMembersProps {
     currentUserRole?: HouseholdRole;
 }
 
-const roleLabels: Record<number, string> = {
-    0: "Member",
-    1: "Admin",
-    2: "Owner",
+const roleLabels: Record<string, string> = {
+    Member: "Member",
+    Admin: "Admin",
+    Owner: "Owner",
 };
 
 const roleColors: Record<
-    number,
+    string,
     | "default"
     | "primary"
     | "secondary"
@@ -54,9 +54,9 @@ const roleColors: Record<
     | "success"
     | "warning"
 > = {
-    0: "default",
-    1: "primary",
-    2: "warning",
+    Member: "default",
+    Admin: "primary",
+    Owner: "warning",
 };
 
 export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
@@ -116,18 +116,21 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
         }
     };
 
-    const canManageMembers = currentUserRole >= 1; // Admin or Owner
+    const canManageMembers =
+        currentUserRole === "Admin" || currentUserRole === "Owner"; // Admin or Owner
     const canRemoveMember = (member: HouseholdMemberDto): boolean => {
         if (!canManageMembers) return false;
-        if (member.role === 2) return false; // Cannot remove owner
-        if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot remove another admin
+        if (member.role === "Owner") return false; // Cannot remove owner
+        if (currentUserRole === "Admin" && member.role === "Admin")
+            return false; // Admin cannot remove another admin
         return true;
     };
 
     const canChangeRole = (member: HouseholdMemberDto): boolean => {
         if (!canManageMembers) return false;
-        if (member.role === 2) return false; // Cannot change owner role
-        if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot change another admin's role
+        if (member.role === "Owner") return false; // Cannot change owner role
+        if (currentUserRole === "Admin" && member.role === "Admin")
+            return false; // Admin cannot change another admin's role
         return true;
     };
 
@@ -332,10 +335,10 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
             >
                 {selectedMember && canChangeRole(selectedMember) && (
                     <>
-                        <MenuItem onClick={() => handleRoleChange(0)}>
+                        <MenuItem onClick={() => handleRoleChange("Member")}>
                             Make Member
                         </MenuItem>
-                        <MenuItem onClick={() => handleRoleChange(1)}>
+                        <MenuItem onClick={() => handleRoleChange("Admin")}>
                             Make Admin
                         </MenuItem>
                     </>

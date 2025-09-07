@@ -163,16 +163,16 @@ function HouseholdManagePage() {
     const householdName =
         currentHouseholdDetails?.name || t("household.household");
     const memberCount = currentHouseholdDetails?.memberCount || 0;
-    const userRole = currentHousehold.role || 0;
+    const userRole = currentHousehold.role ?? "Member";
 
-    const roleLabels: Record<number, string> = {
-        0: t("household.member"),
-        1: t("household.admin"),
-        2: t("household.owner"),
+    const roleLabels: Record<string, string> = {
+        Member: t("household.member"),
+        Admin: t("household.admin"),
+        Owner: t("household.owner"),
     };
 
     const roleColors: Record<
-        number,
+        string,
         | "default"
         | "primary"
         | "secondary"
@@ -181,9 +181,9 @@ function HouseholdManagePage() {
         | "success"
         | "warning"
     > = {
-        0: "default",
-        1: "primary",
-        2: "warning",
+        Member: "default",
+        Admin: "primary",
+        Owner: "warning",
     };
 
     return (
@@ -221,7 +221,7 @@ function HouseholdManagePage() {
                         </Typography>
 
                         {/* Menu button for household owner */}
-                        {userRole === 2 && ( // Only show for owners
+                        {userRole === "Owner" && ( // Only show for owners
                             <IconButton
                                 onClick={handleMenuClick}
                                 size="small"

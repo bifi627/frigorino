@@ -40,7 +40,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     householdId,
 }) => {
     const [email, setEmail] = useState("");
-    const [role, setRole] = useState<HouseholdRole>(0);
+    const [role, setRole] = useState<HouseholdRole>("Member");
     const [error, setError] = useState<string | null>(null);
 
     const queryClient = useQueryClient();
@@ -67,7 +67,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
     const handleClose = () => {
         setEmail("");
-        setRole(0);
+        setRole("Member");
         setError(null);
         onClose();
     };
