@@ -2,9 +2,9 @@
 {
     public enum ClassificationCategory
     {
-        None,
-        Fixed,
+        Fixed = 1,
         Estimated,
+        None,
         Error,
     }
 

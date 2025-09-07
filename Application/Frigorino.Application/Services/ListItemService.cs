@@ -24,7 +24,7 @@ namespace Frigorino.Application.Services
             // First check if user has access to this list
             await ValidateListAccessAsync(listId, userId);
 
-            var items = await _dbContext.ListItems
+            var items = await _dbContext.ListItems.Include(l => l.Classification)
                 .Where(li => li.ListId == listId && li.IsActive)
                 .OrderBy(li => li.SortOrder)
                 .ToListAsync();
@@ -35,7 +35,7 @@ namespace Frigorino.Application.Services
         public async Task<ListItemDto?> GetItemAsync(int itemId, string userId)
         {
             var item = await _dbContext.ListItems
-                .Include(li => li.List)
+                .Include(li => li.List).Include(l => l.Classification)
                 .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
 
             if (item == null)
@@ -87,7 +87,7 @@ namespace Frigorino.Application.Services
         public async Task<ListItemDto?> UpdateItemAsync(int itemId, UpdateListItemRequest request, string userId)
         {
             var item = await _dbContext.ListItems
-                .Include(li => li.List)
+                .Include(li => li.List).Include(li => li.Classification)
                 .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
 
             if (item == null)
@@ -109,12 +109,18 @@ namespace Frigorino.Application.Services
                 item.SortOrder = sortOrder;
             }
 
+            var textChanged = item.Text != request.Text;
+            if (textChanged)
+            {
+                item.Classification = null;
+            }
+
             item.UpdateFromRequest(request);
 
             await _dbContext.SaveChangesAsync();
 
             // When changing from checked to unchecked, reclassify the item
-            if (statusChanged && request.Status is not null && request.Status == false)
+            if (statusChanged || textChanged)
             {
                 Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(new List<int> { item.Id }));
             }
@@ -258,6 +264,29 @@ namespace Frigorino.Application.Services
 
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task RecalculateClassification(int itemId, string userId)
+        {
+            var item = await _dbContext.ListItems
+               .Include(li => li.List).ThenInclude(l => l.ListItems).ThenInclude(l => l.Classification)
+               .FirstOrDefaultAsync(li => li.Id == itemId && li.IsActive);
+
+            if (item == null)
+            {
+                return;
+            }
+
+            // Validate user access
+            await ValidateListAccessAsync(item.ListId, userId);
+
+            if (item.Classification is not null)
+            {
+                _dbContext.ArticleClassifications.Remove(item.Classification);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(new List<int> { item.Id }));
         }
 
         #region Private Helper Methods

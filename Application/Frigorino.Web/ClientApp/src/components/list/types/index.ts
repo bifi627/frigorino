@@ -3,11 +3,15 @@
  * These are component-specific interfaces, decoupled from API types
  */
 
+import type { ClassificationCategory } from "../../../lib/api";
+
 export interface ListItem {
     id?: number;
     text?: string | null;
     secondaryText?: string | null;
     status?: boolean;
+    category?: ClassificationCategory;
+    hintCategory?: string;
 }
 
 export interface AddInputProps {

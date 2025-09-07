@@ -11,6 +11,7 @@ namespace Frigorino.Domain.DTOs
         public UserDto CreatedByUser { get; set; } = null!;
         public int UncheckedCount { get; set; }
         public int CheckedCount { get; set; }
+        public bool IsFullyCategorized { get; set; }
     }
 
     public class CreateListRequest

@@ -1,3 +1,5 @@
+using Frigorino.Domain.Entities;
+
 namespace Frigorino.Domain.DTOs
 {
     public class ListItemDto
@@ -10,6 +12,10 @@ namespace Frigorino.Domain.DTOs
         public int SortOrder { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public ClassificationCategory Category { get; set; }
+        public int? ExpirationDuration { get; set; }
+        public string HintEstimation { get; set; } = string.Empty;
+        public string HintCategory { get; set; } = string.Empty;
     }
 
     public class CreateListItemRequest

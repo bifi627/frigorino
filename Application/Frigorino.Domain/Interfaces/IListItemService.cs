@@ -17,5 +17,6 @@ namespace Frigorino.Domain.Interfaces
 
         // Utility operations
         Task<bool> RecalculateFullSortOrder(int listId, string userId, bool isBackgroundJob = false);
+        Task RecalculateClassification(int itemId, string userId);
     }
 }

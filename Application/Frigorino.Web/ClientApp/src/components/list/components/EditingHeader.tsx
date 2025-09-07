@@ -1,6 +1,7 @@
-import { Close, Edit } from "@mui/icons-material";
+import { Close, Edit, Icecream, Shelves } from "@mui/icons-material";
 import { Box, Chip, IconButton, Typography } from "@mui/material";
 import { memo } from "react";
+import { toast } from "sonner";
 import { useAddInputStyles } from "../hooks/useAddInputStyles";
 import type { ListItem } from "../types";
 
@@ -32,6 +33,26 @@ export const EditingHeader = memo(
                             variant="outlined"
                         />
                     )}
+                    {editingItem.category &&
+                        editingItem.category !== "None" &&
+                        editingItem.category !== "Error" && (
+                            <Chip
+                                sx={{ paddingTop: "5px" }}
+                                onClick={() =>
+                                    toast.info(`${editingItem.hintCategory}`)
+                                }
+                                label={
+                                    editingItem.category === "Estimated" ? (
+                                        <Shelves fontSize="medium" />
+                                    ) : editingItem.category === "Fixed" ? (
+                                        <Icecream fontSize="medium" />
+                                    ) : null
+                                }
+                                size="medium"
+                                color="success"
+                                variant="outlined"
+                            />
+                        )}
                 </Box>
                 <IconButton
                     size="small"

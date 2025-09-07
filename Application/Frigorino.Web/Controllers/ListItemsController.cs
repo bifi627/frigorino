@@ -242,4 +242,23 @@ public class ListItemsController : ControllerBase
             return Forbid(ex.Message);
         }
     }
+
+    [HttpPost("{itemId}/update-classification")]
+    public async Task<ActionResult> RecalculateClassification(int itemId)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId;
+            await _listItemService.RecalculateClassification(itemId, userId);
+            return Ok(new { message = "Classification requested successfully." });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
 }

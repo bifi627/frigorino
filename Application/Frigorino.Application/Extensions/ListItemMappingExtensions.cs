@@ -16,7 +16,12 @@ namespace Frigorino.Application.Extensions
                 Status = listItem.Status,
                 SortOrder = listItem.SortOrder,
                 CreatedAt = listItem.CreatedAt,
-                UpdatedAt = listItem.UpdatedAt
+                UpdatedAt = listItem.UpdatedAt,
+
+                Category = listItem.Classification?.Category ?? ClassificationCategory.None,
+                ExpirationDuration = listItem.Classification?.ExpirationDuration ?? 0,
+                HintCategory = listItem.Classification?.HintCategory ?? string.Empty,
+                HintEstimation = listItem.Classification?.HintEstimation ?? string.Empty,
             };
         }
 
