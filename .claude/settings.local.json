@@ -15,7 +15,9 @@
       "mcp__playwright__browser_press_key",
       "Bash(npm run lint:*)",
       "WebSearch",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet build:*)"
     ],
     "deny": [],
     "ask": []
