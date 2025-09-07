@@ -27,7 +27,7 @@ namespace Frigorino.Test.Services
             // Ensure the database is created
             _dbContext.Database.EnsureCreated();
 
-            _service = new ListItemService(_dbContext);
+            _service = new ListItemService(_dbContext, null);
 
             SeedTestData();
         }

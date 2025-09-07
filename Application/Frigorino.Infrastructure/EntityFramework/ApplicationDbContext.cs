@@ -18,6 +18,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<ListItem> ListItems { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<ArticleClassification> ArticleClassifications { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

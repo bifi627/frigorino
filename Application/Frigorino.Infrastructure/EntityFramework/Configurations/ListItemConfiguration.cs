@@ -46,6 +46,8 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .HasForeignKey(li => li.ListId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasOne(li => li.Classification).WithMany().OnDelete(DeleteBehavior.SetNull);
+
             // Indexes for performance
             builder.HasIndex(li => li.ListId);
             builder.HasIndex(li => li.SortOrder);

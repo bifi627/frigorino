@@ -13,7 +13,8 @@ namespace Frigorino.Application
             services.AddScoped<IListItemService, ListItemService>();
             services.AddScoped<IInventoryService, InventoryService>();
             services.AddScoped<IInventoryItemService, InventoryItemService>();
-            
+            services.AddScoped<IClassificationService, ClassificationService>();
+
             return services;
         }
     }

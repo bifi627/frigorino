@@ -14,5 +14,7 @@ namespace Frigorino.Domain.Entities
 
         // Navigation properties
         public List List { get; set; } = null!;
+
+        public ArticleClassification? Classification { get; set; } = null!;
     }
 }

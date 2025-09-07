@@ -18,10 +18,15 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.7" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+    <PackageReference Include="OpenAI" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Frigorino.Domain\Frigorino.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="OpenAiClient\" />
   </ItemGroup>
 
 </Project>

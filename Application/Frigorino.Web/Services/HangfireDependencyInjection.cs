@@ -37,6 +37,7 @@ namespace Frigorino.Web.Services
             services.AddScoped<DatabaseCleanupJob>();
             services.AddScoped<SortOrderRecalculationJob>();
             services.AddScoped<DatabaseHealthCheckJob>();
+            services.AddScoped<ClassifyListsJob>();
 
             return services;
         }
@@ -66,6 +67,16 @@ namespace Frigorino.Web.Services
                 "sort-order-recalculation",
                 job => job.ExecuteAsync(),
                 Cron.Daily,
+                new RecurringJobOptions
+                {
+                    TimeZone = TimeZoneInfo.Utc
+                });
+
+
+            RecurringJob.AddOrUpdate<ClassifyListsJob>(
+                "classify-lists",
+                job => job.ExecuteAsync(),
+                Cron.Never,
                 new RecurringJobOptions
                 {
                     TimeZone = TimeZoneInfo.Utc

@@ -119,13 +119,34 @@ public class ListsController : ControllerBase
     /// <summary>
     /// Delete a list (Creator/Admin/Owner only)
     /// </summary>
-    [HttpDelete("{listId}")]
-    public async Task<ActionResult> DeleteList(int householdId, int listId)
+    [HttpPost("{listId}")]
+    public async Task<ActionResult> DeleteList(int _, int listId)
     {
         try
         {
             var userId = _currentUserService.UserId;
             var success = await _listService.DeleteListAsync(listId, userId);
+
+            if (!success)
+            {
+                return NotFound("List not found or you don't have access to it.");
+            }
+
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    [HttpPost("{listId}/classify")]
+    public async Task<ActionResult> ClassifyListItems(int listId)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId;
+            var success = await _listService.ClassifyItems(listId, userId);
 
             if (!success)
             {

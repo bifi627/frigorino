@@ -10,10 +10,12 @@ namespace Frigorino.Application.Services
     public class ListService : IListService
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly IClassificationService _classificationService;
 
-        public ListService(ApplicationDbContext dbContext)
+        public ListService(ApplicationDbContext dbContext, IClassificationService classificationService)
         {
             _dbContext = dbContext;
+            _classificationService = classificationService;
         }
 
         public async Task<IEnumerable<ListDto>> GetAllLists(int householdId, string userId)
@@ -152,6 +154,45 @@ namespace Frigorino.Application.Services
             list.IsActive = false;
             list.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> ClassifyItems(int listId, string userId, bool isBackgroundJob = false)
+        {
+            var list = await _dbContext.Lists
+                .Include(l => l.Household)
+                .FirstOrDefaultAsync(l => l.Id == listId && l.IsActive);
+
+            if (list == null)
+            {
+                return false;
+            }
+
+            if (isBackgroundJob == false)
+            {
+                // Check if user has access to the household and permission to delete
+                var userAccess = await _dbContext.UserHouseholds
+                    .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == list.HouseholdId && uh.IsActive);
+
+                if (userAccess == null)
+                {
+                    throw new UnauthorizedAccessException("You don't have access to this household.");
+                }
+            }
+
+            var items = await _dbContext.ListItems
+             .Where(li => li.ListId == listId && li.IsActive)
+             .Select(li => li.Id)
+             .ToListAsync();
+
+            // Batch items into groups of 10
+            const int batchSize = 10;
+            for (int i = 0; i < items.Count; i += batchSize)
+            {
+                var batch = items.Skip(i).Take(batchSize).ToList();
+                Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(batch));
+            }
 
             return true;
         }

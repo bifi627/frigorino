@@ -10,5 +10,6 @@ namespace Frigorino.Domain.Interfaces
         Task<ListDto> CreateListAsync(int householdId, CreateListRequest request, string userId);
         Task<ListDto?> UpdateListAsync(int listId, UpdateListRequest request, string userId);
         Task<bool> DeleteListAsync(int listId, string userId);
+        Task<bool> ClassifyItems(int listId, string userId, bool isBackgroundJob = false);
     }
 }

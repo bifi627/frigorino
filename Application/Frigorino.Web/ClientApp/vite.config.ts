@@ -103,6 +103,10 @@ export default defineConfig({
                 target,
                 secure: false,
             },
+            "^/hangfire/*": {
+                target,
+                secure: false,
+            },
         },
         port: 44375,
         https: {

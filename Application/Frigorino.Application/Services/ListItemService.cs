@@ -11,10 +11,12 @@ namespace Frigorino.Application.Services
     public class ListItemService : IListItemService
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly IClassificationService _classificationService;
 
-        public ListItemService(ApplicationDbContext dbContext)
+        public ListItemService(ApplicationDbContext dbContext, IClassificationService classificationService)
         {
             _dbContext = dbContext;
+            _classificationService = classificationService;
         }
 
         public async Task<IEnumerable<ListItemDto>> GetItemsByListIdAsync(int listId, string userId)
@@ -77,6 +79,8 @@ namespace Frigorino.Application.Services
             _dbContext.ListItems.Add(item);
             await _dbContext.SaveChangesAsync();
 
+            Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(new List<int> { item.Id }));
+
             return item.ToDto();
         }
 
@@ -108,10 +112,17 @@ namespace Frigorino.Application.Services
             item.UpdateFromRequest(request);
 
             await _dbContext.SaveChangesAsync();
+
+            // When changing from checked to unchecked, reclassify the item
+            if (statusChanged && request.Status is not null && request.Status == false)
+            {
+                Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(new List<int> { item.Id }));
+            }
+
             return item.ToDto();
         }
 
-        public static int UpdateSortOrder(IEnumerable<Domain.Entities.ListItem> allEntries, bool status, int? after, int? before)
+        public static int UpdateSortOrder(IEnumerable<ListItem> allEntries, bool status, int? after, int? before)
         {
             var existingItems = allEntries.Where(x => x.Status == status).OrderBy(x => x.SortOrder).ToList();
             var first = existingItems.FirstOrDefault()?.SortOrder ?? null;
@@ -199,6 +210,12 @@ namespace Frigorino.Application.Services
             item.Status = !item.Status; // Toggle status
 
             await _dbContext.SaveChangesAsync();
+
+            if (!item.Status)
+            {
+                Hangfire.BackgroundJob.Enqueue(() => _classificationService.Classify(new List<int> { item.Id }));
+            }
+
             return item.ToDto();
         }
 
