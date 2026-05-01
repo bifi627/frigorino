@@ -1,232 +1,99 @@
 # CLAUDE.md
 
-## Development Commands
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-### Backend (.NET 8)
+## Project overview
 
-- `dotnet run --project Application/Frigorino.Web` - Start server (https://localhost:5001)
-- `dotnet build Application/Frigorino.sln` - Build solution
-- `dotnet test Application/Frigorino.Test` - Run tests
-- `dotnet ef migrations add [Name] --project Application/Frigorino.Infrastructure --startup-project Application/Frigorino.Web`
-- `dotnet ef database update --project Application/Frigorino.Infrastructure --startup-project Application/Frigorino.Web`
+Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 8 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/swagger/hangfire calls to the backend.
 
-### Frontend (React + Vite)
-
-Navigate to `Application/Frigorino.Web/ClientApp/`:
-
-- `npm run dev` - Start dev server (Vite)
-- `npm run build` - Build production bundle
-- `npm run lint` - ESLint
-- `npm run prettier` - Format code
-- `npm run fix` - Lint + prettier
-- `npm run api` - Regenerate API client from swagger.json
-
-### Database
-
-- `npm run sql` - pgAdmin4 Docker (localhost:8080, test@test.de/test)
-- PostgreSQL + Entity Framework Core with migrations
-
-## Architecture
-
-### Backend (.NET Clean Architecture)
-
-- **Domain**: Entities (User, Household, List, ListItem, Inventory, InventoryItem), DTOs, interfaces
-- **Application**: Business logic, services, use cases
-- **Infrastructure**: EF Core data access, Firebase auth, maintenance tasks
-- **Web**: Controllers, middleware, SPA hosting
-
-### Frontend (React + TypeScript)
-
-- **Router**: TanStack Router (file-based routing)
-- **State**: TanStack Query (server state) + Zustand (client state)
-- **UI**: Material-UI with dark theme
-- **Auth**: Firebase Auth + JWT Bearer tokens
-- **API**: Auto-generated TypeScript client from OpenAPI
-
-### Key Features
-
-- Multi-tenant households with roles (Owner/Admin/Member)
-- Firebase authentication with automatic user creation
-- Drag-and-drop list reordering
-- Session-based household context switching
-- Soft deletes (IsActive flag)
-- Background maintenance tasks
-- React Query with 5min staleTime
-- PostgreSQL + EF Core migrations
-
-## API Client
-
-Auto-generated TypeScript client from OpenAPI spec (`src/common/apiClient.ts`):
-
-```typescript
-export const ClientApi = new FrigorinoApiClient(getClientApiConfig());
-```
-
-### Features
-
-- Auto-generated types and services
-- Firebase JWT authentication (dynamic token retrieval)
-- Session-based household context
-- Type-safe API operations
-
-### Services
-
-- AuthService, CurrentHouseholdService, HouseholdService, MembersService
-- ListsService, ListItemsService, InventoriesService, InventoryItemsService
-- ItemsService, DemoService, WeatherForecastService
-
-### Token Management
-
-```typescript
-const apiConfig: OpenAPIConfig = {
-  ...OpenAPI,
-  TOKEN: async () => (await getAuth().currentUser?.getIdToken()) ?? "",
-};
-```
-
-Regenerate after backend changes: `npm run api`
-
-## Backend Details
-
-### Clean Architecture
-
-- **Domain**: Entities, DTOs, interfaces
-- **Application**: Services, mapping extensions, utilities (SortOrderCalculator)
-- **Infrastructure**: EF Core context, Firebase auth, maintenance tasks
-- **Web**: Controllers, middleware (InitialConnectionMiddleware), startup
-
-### Entities
-
-**User**: ExternalId (Firebase UID/PK), Name, Email, CreatedAt/LastLoginAt, IsActive
-
-- Relations: UserHouseholds (M:M), CreatedHouseholds (1:M)
-
-**Household**: Id (PK), Name/Description, CreatedByUserId (FK), CreatedAt/UpdatedAt, IsActive
-
-- Relations: CreatedByUser, UserHouseholds (M:M), Lists (1:M), Inventories (1:M)
-
-**List**: Id (PK), HouseholdId (FK), Name/Description, IsActive
-
-- Relations: Household, Items (1:M)
-
-**ListItem**: Id (PK), ListId (FK), Name, Status, SortOrder, CreatedAt/UpdatedAt, IsActive
-
-**UserHousehold**: UserId (FK), HouseholdId (FK), Role (Owner/Admin/Member), JoinedAt
-
-**Database**: PostgreSQL, auto-increment PKs (except User), soft deletes (IsActive), automatic timestamps
-
-### Services
-
-- ICurrentUserService, ICurrentHouseholdService
-- IHouseholdService, IListService, IListItemService
-- IInventoryService, IInventoryItemService
-- Scoped per-request, ApplicationDbContext, session management
-
-### Maintenance System
-
-- **IMaintenanceTask**: Background service interface
-- **MaintenanceHostedService**: Runs tasks on startup (5s delay)
-- **Tasks**: DeleteInactiveItems (30+ days), RecalculateSortOrderTask, DemoMaintenanceTask
-- Each task runs in own DI scope with error isolation
-
-```csharp
-public interface IMaintenanceTask
-{
-    Task Run(CancellationToken cancellationToken = default);
-}
-```
-
-## Frontend Details
-
-### Tech Stack
-
-React 19.1.0 + TypeScript 5.8.3, Vite 7.0.4, TanStack Router 1.128.8, TanStack Query 5.83.0 + Zustand 5.0.6, Material-UI 7.2.0, Firebase 12.0.0, @dnd-kit/sortable 10.0.0, react-window 1.8.11
-
-### Structure
+## Repository layout
 
 ```
-src/
-├── components/ (auth, common, dashboard, household, layout, list, inventory)
-├── hooks/ (useAuth, useHouseholdQueries)
-├── lib/api/ (models, services, core)
-├── routes/ (__root.tsx, index.tsx, auth/, household/, lists/, inventories/)
-└── common/ (auth setup, API config)
+Application/
+  Frigorino.sln
+  Frigorino.Domain/          # Entities, DTOs, service interfaces (no dependencies)
+  Frigorino.Application/     # Service implementations, DTO mapping extensions
+  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, Hangfire jobs, OpenAI client
+  Frigorino.Web/             # ASP.NET Core host, controllers, middleware, Hangfire wiring
+    ClientApp/               # React 19 + Vite + TanStack Router SPA
+  Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory
+  Dockerfile                 # Multi-stage: builds backend + ClientApp, copies build → wwwroot
+knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-### Query Configuration
+The Clean Architecture dependency direction is enforced by project references: `Web → Application → Domain` and `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddHangfireServices`) called from `Frigorino.Web/Program.cs`.
 
-```typescript
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-    },
-  },
-});
+## Common commands
+
+Backend (run from repo root or `Application/`):
+```powershell
+dotnet restore Application/Frigorino.sln
+dotnet build   Application/Frigorino.sln
+dotnet run     --project Application/Frigorino.Web         # starts API on https://localhost:5001
+dotnet test    Application/Frigorino.sln                   # runs all xUnit tests
+dotnet test    Application/Frigorino.Test --filter "FullyQualifiedName~ListItemServiceSortOrderTests"
+dotnet ef migrations add <Name> --project Application/Frigorino.Infrastructure --startup-project Application/Frigorino.Web
+```
+Migrations are applied automatically at startup via `context.Database.MigrateAsync()` in `Program.cs`.
+
+Frontend (run from `Application/Frigorino.Web/ClientApp/`):
+```powershell
+npm install
+npm run dev            # Vite dev server on https://localhost:44375 (proxies /api, /swagger, /hangfire to :5001)
+npm run build          # tsc -b && vite build → outputs to ClientApp/build (copied to wwwroot in Docker)
+npm run lint           # eslint .
+npm run fix            # eslint --fix && prettier --write .
+npm run tsc            # type-check only
+npm run api            # regenerate ./src/lib/api from ./src/lib/swagger.json (run after backend API changes)
 ```
 
-**Stale Times**: Household (5min), List/Inventory (2min), Collaborative items (30s)
-**Keys**: Hierarchical (`['households']`, `['lists', householdId]`, `['list-items', listId]`)
-
-### Performance
-
-- **React**: React.memo, useMemo (sorting), useCallback, useRef
-- **Drag-Drop**: Proper sensors, memoized arrays, optimistic updates, touch support
-- **Bundle**: Vite code splitting, tree shaking, virtual scrolling, lazy loading
-
-### UI/UX
-
-- **Theme**: Material-UI dark theme, responsive breakpoints, 8px grid spacing
-- **Mobile-First**: The app is only designed for mobile, do not put effort for making it nice for desktop
-- **States**: Loading skeletons, error messages, empty state illustrations
-
-### State Management
-
-**TanStack Query**: Server state, cache management, optimistic updates, auto retry/error handling
-**Zustand**: Local UI state (modals, forms, selections), user preferences, session data
-**Firebase Auth**: User auth, token management, auto refresh, route protection
-**Forms**: Local useState, client validation, API integration
-
-```typescript
-export const useListItems = (listId: string) => {
-  return useQuery({
-    queryKey: ["list-items", listId],
-    queryFn: () => ClientApi.listItemsService.getListItems(listId),
-    staleTime: 1000 * 30, // 30 seconds
-  });
-};
+Docker (full stack image, used in deployment):
+```powershell
+docker build -f Application/Dockerfile -t frigorino .
 ```
+The Dockerfile builds the .NET solution and the SPA in parallel stages, then copies the SPA `build/` output into `wwwroot/` of the final image.
 
-### Components
+## Configuration
 
-**Patterns**: Container/Presentation, Compound Components, Render Props, Custom Hooks
-**Types**: Layout (nav, headers), Feature (lists, inventories), Common (buttons, inputs), Auth
+`Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
+- `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (converted by `PostgresHelper.ConvertPostgresUrlToConnectionString`).
+- `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
+- `HangfireAuth:Username` / `Password` — basic-auth gate for the `/hangfire` dashboard. **Startup throws if password is empty**, so the app will not boot without these set.
+- `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
-### Build & Testing
+## Architecture notes
 
-**Vite**: React plugin, Fast Refresh, TypeScript strict mode, absolute imports, HMR
-**Testing**: Jest + React Testing Library, MSW (API mocking), Cypress/Playwright (E2E)
+### Request pipeline (`Frigorino.Web/Program.cs`)
+Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`, then `InitialConnectionMiddleware` runs after auth (it reads the authenticated user). `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
-### Routes
+### Multi-tenant household context
+- `ICurrentUserService` resolves the user from the Firebase JWT and lazily creates a `User` row on first login.
+- `ICurrentHouseholdService` keeps the active household ID in the **HTTP session** (`AddSession`, 30-min idle). Switching households mutates session state, not the JWT — this is why session middleware is mandatory.
+- All household-scoped controllers/services should go through these interfaces rather than reading claims directly.
+- `UserHousehold` is the join entity carrying a `Role` (Owner/Admin/Member) — permission checks live in the service layer.
+- `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext`. New entities should follow the same pattern instead of setting timestamps in services.
 
-```
-/ - Dashboard
-/auth/login - Auth
-/household/create - Create household
-/household/manage - Manage household
-/lists/ - List management
-/lists/$listId/view - Individual list
-/inventories/ - Inventory management
-/inventories/create - Create inventory
-```
+### Background jobs (Hangfire)
+The previous in-process `IMaintenanceTask` / `MaintenanceHostedService` system has been **replaced by Hangfire** backed by Postgres (`schema=hangfire`). `MaintenanceService.cs` is now empty and should not be used. Knowledge docs in `knowledge/Backend_Architecture.md` predate this change — trust the code.
 
-### IMPORTANT WORKFLOW
+Wiring lives in `Frigorino.Web/Services/HangfireDependencyInjection.cs`:
+- Jobs are registered as scoped services and discovered by Hangfire's DI activator.
+- `ConfigureHangfireJobs()` (called at the end of `Program.cs`) declares recurring jobs via `RecurringJob.AddOrUpdate<T>(...)`. Adding a new recurring job means: implement `Frigorino.Infrastructure.Jobs.<JobName>` with an `ExecuteAsync()` method, register it in `AddHangfireServices`, and add an `AddOrUpdate` entry here.
+- `Cron.Never` is used to register manually-triggered jobs (e.g. `ClassifyListsJob`) so they appear in the dashboard but don't run on a schedule.
+- The dashboard at `/hangfire` is gated by `HangfireAuthorizationFilter` (basic auth from `HangfireAuth:*` config).
 
-**Always run these commands in this order after you are finished to ensure the code standards are met**
+### API surface
+- Controllers in `Frigorino.Web/Controllers/` expose REST endpoints; Swagger is mounted in Development.
+- `JsonStringEnumConverter` is registered globally — enums serialize as strings on the wire, and the frontend's generated client expects string enums.
+- The frontend client is generated by `npm run api` from `src/lib/swagger.json`. The workflow is: change controllers/DTOs → run the backend → fetch updated `swagger.json` into `ClientApp/src/lib/swagger.json` → run `npm run api`. The generated code under `src/lib/api/` is committed.
 
-## Frontend
+### Frontend
+- TanStack Router uses **file-based routing**; `routeTree.gen.ts` is auto-generated by the `@tanstack/router-plugin/vite` plugin — do not edit by hand.
+- `_protected.tsx` is the auth-gated layout; routes inside it require a Firebase user.
+- Server state goes through TanStack Query hooks in `src/hooks/use*Queries.ts`; client state uses Zustand. Do not introduce a third state layer (Redux, Context-as-store) for new features.
+- All API calls go through `ClientApi` (singleton in `src/common/apiClient.ts`) which injects Firebase ID tokens via the `TOKEN` async resolver.
+- i18n is wired via `i18next` + `i18next-http-backend` — translation files live under `src/i18n/`.
 
-1. npm run fix
-2. npm run lint
-3. npm run build
+## Testing
+
+Tests live in `Frigorino.Test/` and use xUnit + FakeItEasy. Database-touching tests use `Microsoft.EntityFrameworkCore.InMemory` via `TestApplicationDbContext`. There is no frontend test runner configured despite `knowledge/Frontend_Architecture.md` mentioning Jest — that section is aspirational, not current.

@@ -15,7 +15,16 @@
       "mcp__playwright__browser_press_key",
       "Bash(npm run lint:*)",
       "WebSearch",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(dotnet add package:*)",
+      "Bash(dotnet build:*)",
+      "Bash(npm audit *)",
+      "Bash(npm ls *)",
+      "Bash(npm view *)",
+      "WebFetch(domain:api.nuget.org)",
+      "Bash(dotnet list *)",
+      "Bash(dotnet test *)",
+      "WebFetch(domain:mcr.microsoft.com)"
     ],
     "deny": [],
     "ask": []
