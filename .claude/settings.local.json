@@ -24,7 +24,10 @@
       "WebFetch(domain:api.nuget.org)",
       "Bash(dotnet list *)",
       "Bash(dotnet test *)",
-      "WebFetch(domain:mcr.microsoft.com)"
+      "WebFetch(domain:mcr.microsoft.com)",
+      "Bash(xargs grep *)",
+      "Bash(dotnet sln *)",
+      "Bash(dotnet restore *)"
     ],
     "deny": [],
     "ask": []

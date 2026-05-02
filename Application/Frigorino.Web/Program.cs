@@ -17,7 +17,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddEntityFramework(builder.Configuration);
 builder.Services.AddApplicationServices();
-builder.Services.AddFirebaseAuth(builder.Configuration);
+if (!builder.Environment.IsEnvironment("IntegrationTest"))
+    builder.Services.AddFirebaseAuth(builder.Configuration);
 builder.Services.AddMaintenanceServices();
 
 builder.Services.AddHttpContextAccessor();
@@ -88,3 +89,5 @@ app.UseSpa(spa =>
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+public partial class Program { }

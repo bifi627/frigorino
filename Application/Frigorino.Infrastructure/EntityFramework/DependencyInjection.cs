@@ -35,7 +35,7 @@ namespace Frigorino.Infrastructure.EntityFramework
             var match = Regex.Match(url, pattern);
 
             if (!match.Success)
-                throw new ArgumentException("Invalid PostgreSQL URL format.");
+                return url; // already an Npgsql connection string — use as-is
 
             var user = match.Groups[1].Value;
             var password = match.Groups[2].Value;
