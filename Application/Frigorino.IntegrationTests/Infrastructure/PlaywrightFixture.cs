@@ -16,7 +16,7 @@ public sealed class PlaywrightFixture : IAsyncDisposable
             throw new InvalidOperationException($"Playwright browser install failed (exit {exitCode}).");
 
         _playwright = await Playwright.CreateAsync();
-        Browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+        Browser = await _playwright.Chromium.LaunchAsync(new() { Headless = false });
     }
 
     public async ValueTask DisposeAsync()

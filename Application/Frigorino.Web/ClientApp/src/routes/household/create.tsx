@@ -171,6 +171,7 @@ function CreateHouseholdPage() {
 
                             {/* Submit Button */}
                             <Button
+                                data-testid="household-create-submit-button"
                                 type="submit"
                                 variant="contained"
                                 size="large"

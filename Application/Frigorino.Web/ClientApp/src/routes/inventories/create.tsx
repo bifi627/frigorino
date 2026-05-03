@@ -227,6 +227,7 @@ function CreateInventoryPage() {
                             </Box> */}
 
                             <Button
+                                data-testid="inventory-create-submit-button"
                                 type="submit"
                                 variant="contained"
                                 size="large"

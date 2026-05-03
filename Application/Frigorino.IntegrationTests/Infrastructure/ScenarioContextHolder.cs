@@ -7,4 +7,7 @@ public class ScenarioContextHolder
     public IPage Page { get; set; } = null!;
     public TestUserContext UserContext { get; set; } = null!;
     public string DatabaseName { get; set; } = null!;
+    public int HouseholdId { get; set; }
+    public Dictionary<string, int> ListIds { get; } = new();
+    public Dictionary<string, int> InventoryIds { get; } = new();
 }

@@ -248,6 +248,7 @@ function CreateListPage() {
                                 variant="contained"
                                 size="large"
                                 disabled={isLoading || !formData.name.trim()}
+                                data-testid="list-create-submit-button"
                                 startIcon={
                                     isLoading ? (
                                         <CircularProgress

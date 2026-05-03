@@ -27,6 +27,7 @@ export const ActionButton = memo(({ onSubmit }: ActionButtonProps) => {
 
     return (
         <IconButton
+            data-testid="autocomplete-input-submit-button"
             onClick={onSubmit}
             disabled={!hasText || isLoading}
             color={styles.getActionButtonColor()}

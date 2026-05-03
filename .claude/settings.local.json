@@ -27,7 +27,8 @@
       "WebFetch(domain:mcr.microsoft.com)",
       "Bash(xargs grep *)",
       "Bash(dotnet sln *)",
-      "Bash(dotnet restore *)"
+      "Bash(dotnet restore *)",
+      "Bash(xargs cat *)"
     ],
     "deny": [],
     "ask": []

@@ -67,6 +67,7 @@ export const AutocompleteInput = memo(
         return (
             <Box sx={{ flex: 1 }}>
                 <Autocomplete
+                    data-testid="autocomplete-input-textfield"
                     freeSolo
                     options={text.trim().length >= 3 ? autocompleteOptions : []}
                     getOptionLabel={(option) =>
@@ -162,6 +163,10 @@ export const AutocompleteInput = memo(
                                     ...params.InputProps,
                                     sx: styles.inputContainerStyles,
                                 },
+                                // htmlInput: {
+                                //     "data-testid":
+                                //         "autocomplete-input-textfield",
+                                // },
                             }}
                             sx={styles.textFieldStyles}
                         />

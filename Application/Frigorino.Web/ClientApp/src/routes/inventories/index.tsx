@@ -222,6 +222,7 @@ function InventoriesPage() {
                 <Stack spacing={2}>
                     {inventories.map((inventory) => (
                         <Card
+                            data-testid={`inventory-item-${inventory.name}`}
                             key={inventory.id}
                             sx={{
                                 borderRadius: 2,
@@ -266,6 +267,7 @@ function InventoriesPage() {
                                                     sx={{ fontSize: "0.7rem" }}
                                                 />
                                                 <IconButton
+                                                    data-testid={`inventory-item-menu-button-${inventory.name}`}
                                                     size="small"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -324,6 +326,7 @@ function InventoriesPage() {
                     {t("common.edit")}
                 </MenuItem>
                 <MenuItem
+                    data-testid="delete-inventory-button"
                     onClick={handleDeleteInventory}
                     disabled={deleteInventoryMutation.isPending}
                     sx={{ color: "error.main" }}
