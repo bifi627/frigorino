@@ -122,6 +122,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                         <ListItemIcon
                             sx={{ minWidth: 32 }}
                             onClick={handleToggle}
+                            data-testid={`toggle-item-${String(item.text ?? item.id)}`}
                         >
                             <Checkbox
                                 edge="start"

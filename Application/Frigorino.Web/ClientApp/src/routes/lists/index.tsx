@@ -230,6 +230,7 @@ function ListsPage() {
                             <CardContent sx={{ py: 2 }}>
                                 <MuiList disablePadding>
                                     <ListItem
+                                        data-testid={`list-item-${list.name}`}
                                         sx={{
                                             px: 0,
                                             cursor: "pointer",
@@ -262,6 +263,7 @@ function ListsPage() {
                                                 />
                                                 <IconButton
                                                     size="small"
+                                                    data-testid={`list-item-menu-button-${list.name}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleMenuOpen(e, list);
@@ -320,6 +322,7 @@ function ListsPage() {
                 <MenuItem
                     onClick={handleDeleteList}
                     disabled={deleteListMutation.isPending}
+                    data-testid="delete-list-button"
                     sx={{ color: "error.main" }}
                 >
                     <Delete fontSize="small" sx={{ mr: 1 }} />

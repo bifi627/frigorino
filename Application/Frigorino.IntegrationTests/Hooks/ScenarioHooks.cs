@@ -27,6 +27,15 @@ public class ScenarioHooks(ScenarioContextHolder ctx, TestUserContext userContex
             IgnoreHTTPSErrors = true,
         });
 
+        // Bypass Firebase auth guard: inject a fake user before any page JS runs
+        await browserContext.AddInitScriptAsync(@"
+            window.__PLAYWRIGHT_TEST_USER__ = {
+                uid: 'playwright-test-user',
+                email: 'test@playwright.local',
+                displayName: 'Playwright Test',
+            };
+        ");
+
         // Inject test-user identity headers on every API call
         await browserContext.RouteAsync("**/api/**", async route =>
         {

@@ -18,6 +18,13 @@ export const useAuthStore = create<AuthState>((set) => ({
             unsubscribe();
         }
 
+        // Playwright integration test bypass: skip Firebase if a test user is injected
+        const testUser = (window as unknown as Record<string, unknown>).__PLAYWRIGHT_TEST_USER__;
+        if (testUser) {
+            set({ user: testUser as User, loading: false });
+            return;
+        }
+
         // Set up new subscription
         unsubscribe = onAuthStateChanged(getAuth(), (user) => {
             window.console.log("Auth state changed:", user);

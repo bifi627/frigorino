@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll.Microsoft.Extensions.DependencyInjection;
 
-namespace Frigorino.IntegrationTests.StepDefinitions;
+namespace Frigorino.IntegrationTests.Shared;
 
 [Binding]
 public class TestStartup
@@ -12,6 +12,7 @@ public class TestStartup
         var services = new ServiceCollection();
         services.AddScoped<TestUserContext>();
         services.AddScoped<ScenarioContextHolder>();
+        services.AddScoped<TestApiClient>();
         return services;
     }
 }
