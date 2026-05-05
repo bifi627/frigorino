@@ -51,7 +51,7 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var item = ctx.Page.GetByTestId($"toggle-item-{itemText}");
         var selector = $"[data-testid='toggle-item-{itemText}']";
-        var visible = await item.IsVisibleAsync();
+        await item.WaitForAsync();
         await ctx.Page.DispatchEventAsync(selector, "click");
     }
 

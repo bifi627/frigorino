@@ -17,8 +17,8 @@ public class ScenarioHooks(ScenarioContextHolder ctx, TestUserContext userContex
             ConnectionString = PostgresFixture.Instance.ConnectionStringFor(dbName),
         };
 
-        // Access Services to trigger host initialisation (starts Kestrel, runs EF migrations)
-        _ = factory.Services;
+        // Boot the host (single Kestrel build, kernel-allocated port, runs EF migrations)
+        factory.StartServer();
         ctx.Factory = factory;
 
         var browserContext = await PlaywrightFixture.Instance.Browser.NewContextAsync(new()

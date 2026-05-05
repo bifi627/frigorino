@@ -60,7 +60,8 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     [Then("{string} appears in the inventory overview")]
     public async Task ThenAppearsInTheInventoryOverview(string inventoryName)
     {
-        await ctx.Page.GetByTestId($"inventory-item-{inventoryName}").IsVisibleAsync();
+        var item = ctx.Page.GetByTestId($"inventory-item-{inventoryName}");
+        await Assertions.Expect(item).ToBeVisibleAsync();
     }
 
     [Then("{string} appears in the inventory")]
@@ -73,7 +74,6 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task ThenNoLongerAppearsInTheInventoryOverview(string inventoryName)
     {
         var item = ctx.Page.GetByTestId($"inventory-item-{inventoryName}");
-        var visible = await item.IsVisibleAsync();
-        Assert.False(visible);
+        await Assertions.Expect(item).Not.ToBeVisibleAsync();
     }
 }
