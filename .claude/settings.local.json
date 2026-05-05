@@ -28,7 +28,8 @@
       "Bash(xargs grep *)",
       "Bash(dotnet sln *)",
       "Bash(dotnet restore *)",
-      "Bash(xargs cat *)"
+      "Bash(xargs cat *)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
