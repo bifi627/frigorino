@@ -48,24 +48,6 @@ public class HouseholdController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new household
-    /// </summary>
-    [HttpPost]
-    public async Task<ActionResult<HouseholdDto>> CreateHousehold(CreateHouseholdRequest request)
-    {
-        try
-        {
-            var userId = _currentUserService.UserId;
-            var household = await _householdService.CreateHouseholdAsync(request, userId);
-            return Ok(household);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    /// <summary>
     /// Update a household (Admin/Owner only)
     /// </summary>
     [HttpPut("{id}")]

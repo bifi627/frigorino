@@ -43,6 +43,7 @@ namespace Frigorino.Application.Services
             return userHousehold?.ToDto();
         }
 
+        [Obsolete("Replaced by CreateHousehold vertical slice in Frigorino.Features. Will be removed once all household actions are migrated.")]
         public async Task<HouseholdDto> CreateHouseholdAsync(CreateHouseholdRequest request, string userId)
         {
             if (string.IsNullOrWhiteSpace(request.Name))

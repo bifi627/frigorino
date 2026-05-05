@@ -63,6 +63,7 @@ namespace Frigorino.Application.Extensions
             };
         }
 
+#pragma warning disable CS0618 // Bridge method for the obsolete legacy CreateHouseholdRequest; removed when the legacy service is deleted.
         public static Household ToEntity(this CreateHouseholdRequest request, string userId)
         {
             return new Household
@@ -75,6 +76,7 @@ namespace Frigorino.Application.Extensions
                 IsActive = true
             };
         }
+#pragma warning restore CS0618
 
         public static void UpdateFromRequest(this Household household, UpdateHouseholdRequest request)
         {
