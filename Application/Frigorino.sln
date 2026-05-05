@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.Test", "Frigorino
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.IntegrationTests", "Frigorino.IntegrationTests\Frigorino.IntegrationTests.csproj", "{B8CD359E-E5B9-420A-91F4-D999A9BA94FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frigorino.Features", "Frigorino.Features\Frigorino.Features.csproj", "{EF88615A-7C5C-4D8F-97AD-EFB19118A212}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{B8CD359E-E5B9-420A-91F4-D999A9BA94FA}.Release|x64.Build.0 = Release|Any CPU
 		{B8CD359E-E5B9-420A-91F4-D999A9BA94FA}.Release|x86.ActiveCfg = Release|Any CPU
 		{B8CD359E-E5B9-420A-91F4-D999A9BA94FA}.Release|x86.Build.0 = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|x64.Build.0 = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Debug|x86.Build.0 = Debug|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|x64.ActiveCfg = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|x64.Build.0 = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|x86.ActiveCfg = Release|Any CPU
+		{EF88615A-7C5C-4D8F-97AD-EFB19118A212}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

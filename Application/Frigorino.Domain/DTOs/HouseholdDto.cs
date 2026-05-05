@@ -29,6 +29,7 @@ namespace Frigorino.Domain.DTOs
         public string Email { get; set; } = string.Empty;
     }
 
+    [Obsolete("Use Frigorino.Features.Households.CreateHouseholdRequest.")]
     public class CreateHouseholdRequest
     {
         public string Name { get; set; } = string.Empty;

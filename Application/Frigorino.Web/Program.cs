@@ -1,5 +1,6 @@
 using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Features.Households;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
 using Frigorino.Infrastructure.Services;
@@ -20,6 +21,7 @@ builder.Services.AddApplicationServices();
 if (!builder.Environment.IsEnvironment("IntegrationTest"))
     builder.Services.AddFirebaseAuth(builder.Configuration);
 builder.Services.AddMaintenanceServices();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -74,6 +76,7 @@ app.UseMiddleware<InitialConnectionMiddleware>();
 
 // API endpoints
 app.MapControllers();
+app.MapCreateHousehold();
 
 // SPA configuration
 app.UseSpa(spa =>
