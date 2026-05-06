@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { HouseholdRole } from './HouseholdRole';
-export type CurrentHouseholdResponse = {
+export type ActiveHouseholdResponse = {
     householdId?: number | null;
     role?: HouseholdRole;
     hasActiveHousehold?: boolean;

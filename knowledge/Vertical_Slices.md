@@ -103,10 +103,11 @@ Frigorino.Features/
       UpdateMemberRole.cs
       RemoveMember.cs
       MemberResponse.cs
-  CurrentHousehold/                 ← peer of Households (not nested — see below)
-    GetCurrentHousehold.cs          ← already migrated
-    SetCurrentHousehold.cs          ← already migrated
-    CurrentHouseholdResponse.cs     ← already shared between the two
+  Me/                               ← user/session-scoped concerns
+    ActiveHousehold/
+      GetActiveHousehold.cs         ← already migrated
+      SetActiveHousehold.cs         ← already migrated
+      ActiveHouseholdResponse.cs    ← shared between the two
   Lists/
     CreateList.cs
     GetLists.cs
@@ -128,8 +129,9 @@ Frigorino.Features/
 
 ## When to nest, when not to
 
-- **Nest** when a sub-area has its own lifecycle bound to a parent and shares a URL prefix. `Members/` under `Households/` fits — the route is `/api/household/{id}/members`, members can't exist without a household, and member operations rarely change at the same time as household-level CRUD.
-- **Don't nest** when the area is conceptually peer-level even if it relates to a parent entity. `CurrentHousehold/` is its own resource (`/api/currenthousehold`), is session/context state rather than entity CRUD, and would be hidden under `Households/` in a way that hurts discoverability.
+- **Nest** when a sub-area has its own lifecycle bound to a parent and shares a URL prefix. `Members/` under `Households/` fits — the route is `/api/household/{id}/members`, members can't exist without a household, and member operations rarely change at the same time as household-level CRUD. `ActiveHousehold/` under `Me/` fits the same way: the route is `/api/me/active-household`, and the resource is scoped to the calling user.
+- **Don't nest** when there's no meaningful parent. The `Households/` folder is a top-level entity area, not under anything.
+- **Let the URL guide the folder hierarchy.** When the route is `/api/me/active-household`, the file goes at `Me/ActiveHousehold/SetActiveHousehold.cs`. When the route is `/api/household/{id}/members`, the file goes at `Households/Members/AddMember.cs`. Folder depth ≈ URL depth (minus the leading `/api/`).
 - **Heuristic for new folders:** start flat. Only nest when a folder has ~8+ items or an obvious sub-cluster forms with its own response shape and 3+ slices. Premature trees add navigation cost without payoff.
 - **One headliner per folder:** the most-common operation sits at the top, not buried. `CreateHousehold.cs` lives at `Households/CreateHousehold.cs`, not at `Households/Lifecycle/Create/CreateHousehold.cs`.
 
@@ -145,8 +147,8 @@ Frigorino.Features/
 
 What's done:
 - `POST /api/household` → `Households/CreateHousehold.cs`
-- `GET /api/currenthousehold` → `CurrentHousehold/GetCurrentHousehold.cs`
-- `POST /api/currenthousehold/{id}` → `CurrentHousehold/SetCurrentHousehold.cs`
+- `GET /api/me/active-household` → `Me/ActiveHousehold/GetActiveHousehold.cs`
+- `PUT /api/me/active-household` → `Me/ActiveHousehold/SetActiveHousehold.cs`
 
 What's still in the legacy controller/service layer (in priority-ish order):
 - `GET /api/household` (list user households)

@@ -4,22 +4,22 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 
-namespace Frigorino.Features.CurrentHousehold
+namespace Frigorino.Features.Me.ActiveHousehold
 {
-    public static class GetCurrentHouseholdEndpoint
+    public static class GetActiveHouseholdEndpoint
     {
-        public static IEndpointRouteBuilder MapGetCurrentHousehold(this IEndpointRouteBuilder app)
+        public static IEndpointRouteBuilder MapGetActiveHousehold(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/currenthousehold", Handle)
+            app.MapGet("/api/me/active-household", Handle)
                .RequireAuthorization()
-               .WithName("GetCurrentHousehold")
-               .WithTags("CurrentHousehold")
-               .Produces<CurrentHouseholdResponse>()
+               .WithName("GetActiveHousehold")
+               .WithTags("Me")
+               .Produces<ActiveHouseholdResponse>()
                .Produces(StatusCodes.Status404NotFound);
             return app;
         }
 
-        private static async Task<Results<Ok<CurrentHouseholdResponse>, NotFound>> Handle(
+        private static async Task<Results<Ok<ActiveHouseholdResponse>, NotFound>> Handle(
             ICurrentHouseholdService currentHousehold)
         {
             var householdId = await currentHousehold.GetCurrentHouseholdIdAsync();
@@ -29,7 +29,7 @@ namespace Frigorino.Features.CurrentHousehold
             }
 
             var role = await currentHousehold.GetCurrentHouseholdRoleAsync();
-            return TypedResults.Ok(new CurrentHouseholdResponse(householdId.Value, role, true));
+            return TypedResults.Ok(new ActiveHouseholdResponse(householdId.Value, role, true));
         }
     }
 }

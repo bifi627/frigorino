@@ -1,8 +1,8 @@
 using Frigorino.Domain.Entities;
 
-namespace Frigorino.Features.CurrentHousehold
+namespace Frigorino.Features.Me.ActiveHousehold
 {
-    public sealed record CurrentHouseholdResponse(
+    public sealed record ActiveHouseholdResponse(
         int? HouseholdId,
         HouseholdRole? Role,
         bool HasActiveHousehold);

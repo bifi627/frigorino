@@ -48,63 +48,6 @@
         }
       }
     },
-    "/api/currenthousehold": {
-      "get": {
-        "tags": [
-          "CurrentHousehold"
-        ],
-        "operationId": "GetCurrentHousehold",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentHouseholdResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/api/currenthousehold/{householdId}": {
-      "post": {
-        "tags": [
-          "CurrentHousehold"
-        ],
-        "operationId": "SetCurrentHousehold",
-        "parameters": [
-          {
-            "name": "householdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentHouseholdResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
     "/api/Demo": {
       "get": {
         "tags": [
@@ -1839,6 +1782,60 @@
         }
       }
     },
+    "/api/me/active-household": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "GetActiveHousehold",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "SetActiveHousehold",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveHouseholdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/Members": {
       "get": {
         "tags": [
@@ -2108,6 +2105,23 @@
   },
   "components": {
     "schemas": {
+      "ActiveHouseholdResponse": {
+        "type": "object",
+        "properties": {
+          "householdId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "role": {
+            "$ref": "#/components/schemas/HouseholdRole"
+          },
+          "hasActiveHousehold": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "AddMemberRequest": {
         "type": "object",
         "properties": {
@@ -2192,23 +2206,6 @@
           "description": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "CurrentHouseholdResponse": {
-        "type": "object",
-        "properties": {
-          "householdId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "role": {
-            "$ref": "#/components/schemas/HouseholdRole"
-          },
-          "hasActiveHousehold": {
-            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -2516,6 +2513,16 @@
         "type": "object",
         "properties": {
           "afterId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetActiveHouseholdRequest": {
+        "type": "object",
+        "properties": {
+          "householdId": {
             "type": "integer",
             "format": "int32"
           }

@@ -36,6 +36,18 @@ public class TestApiClient(ScenarioContextHolder ctx)
             throw new Exception($"API POST {url} failed: {response.Status} {response.StatusText}");
     }
 
+    private async Task PutVoidAsync(string url, object body)
+    {
+        var response = await ctx.BrowserContext.APIRequest.PutAsync(url, new APIRequestContextOptions
+        {
+            DataObject = body,
+            Headers = AuthHeaders,
+        });
+
+        if (!response.Ok)
+            throw new Exception($"API PUT {url} failed: {response.Status} {response.StatusText}");
+    }
+
     public async Task<int> CreateHouseholdAsync(string name)
     {
         var json = await PostAsync("/api/household", new { name });
@@ -44,7 +56,7 @@ public class TestApiClient(ScenarioContextHolder ctx)
 
     public async Task SetCurrentHouseholdAsync(int householdId)
     {
-        await PostVoidAsync($"/api/currenthousehold/{householdId}");
+        await PutVoidAsync("/api/me/active-household", new { householdId });
     }
 
     public async Task<int> CreateListAsync(string name)
