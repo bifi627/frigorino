@@ -14,6 +14,8 @@ COPY Application/Frigorino.Application/Frigorino.Application.csproj ./Applicatio
 COPY Application/Frigorino.Infrastructure/Frigorino.Infrastructure.csproj ./Application/Frigorino.Infrastructure/
 COPY Application/Frigorino.Web/Frigorino.Web.csproj ./Application/Frigorino.Web/
 COPY Application/Frigorino.Test/Frigorino.Test.csproj ./Application/Frigorino.Test/
+COPY Application/Frigorino.Features/Frigorino.Features.csproj ./Application/Frigorino.Features/
+COPY Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj ./Application/Frigorino.IntegrationTests/
 RUN dotnet restore ./Application/Frigorino.sln
 COPY . .
 RUN dotnet publish "./Application/Frigorino.sln" -c $BUILD_CONFIGURATION --no-restore -o /app/publish /p:UseAppHost=false
