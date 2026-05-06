@@ -2,7 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateHouseholdRequest } from '../models/CreateHouseholdRequest';
 import type { HouseholdDto } from '../models/HouseholdDto';
 import type { UpdateHouseholdRequest } from '../models/UpdateHouseholdRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -17,21 +16,6 @@ export class HouseholdService {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/Household',
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns HouseholdDto OK
-     * @throws ApiError
-     */
-    public postApiHousehold(
-        requestBody?: CreateHouseholdRequest,
-    ): CancelablePromise<HouseholdDto> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/Household',
-            body: requestBody,
-            mediaType: 'application/json',
         });
     }
     /**

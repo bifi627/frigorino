@@ -1,8 +1,3 @@
-using Frigorino.Domain.Entities;
-using Org.BouncyCastle.Crypto.Engines;
-using Xunit;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace Frigorino.IntegrationTests.Slices.Inventories;
 
 [Binding]
@@ -48,7 +43,6 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         await ctx.Page.GetByTestId($"inventory-item-menu-button-{inventoryName}").ClickAsync();
         await ctx.Page.GetByTestId("delete-inventory-button").ClickAsync();
-        //await ctx.Page.WaitForResponseAsync("**/api/**/inventories/**");
     }
 
     [Then("I am on the inventory view page")]

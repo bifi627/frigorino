@@ -30,12 +30,22 @@ namespace Frigorino.Infrastructure.EntityFramework
 
         static string ConvertPostgresUrlToConnectionString(string url)
         {
-            // Regex pattern to parse the PostgreSQL URL
+            // Already an Npgsql key=value connection string — pass through unchanged.
+            if (url.Contains("Host=", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("Server=", StringComparison.OrdinalIgnoreCase))
+            {
+                return url;
+            }
+
+            // Otherwise treat it as a postgres:// URL and parse it.
             var pattern = @"^postgres(?:ql)?://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)$";
             var match = Regex.Match(url, pattern);
 
             if (!match.Success)
-                return url; // already an Npgsql connection string — use as-is
+            {
+                throw new ArgumentException(
+                    "ConnectionStrings:Database must be either a postgres:// URL or a Npgsql key=value connection string (containing Host= or Server=).");
+            }
 
             var user = match.Groups[1].Value;
             var password = match.Groups[2].Value;

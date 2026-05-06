@@ -19,7 +19,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddEntityFramework(builder.Configuration);
 builder.Services.AddApplicationServices();
 if (!builder.Environment.IsEnvironment("IntegrationTest"))
+{
     builder.Services.AddFirebaseAuth(builder.Configuration);
+}
 builder.Services.AddMaintenanceServices();
 builder.Services.AddProblemDetails();
 

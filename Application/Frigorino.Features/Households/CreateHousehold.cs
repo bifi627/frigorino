@@ -10,7 +10,7 @@
 //  8. `CancellationToken` is always passed and threaded into `SaveChangesAsync(ct)`.
 //  9. Use `TypedResults` (not `Results`). Endpoint return type is `Results<TSuccess, ValidationProblem>` (or other unions).
 // 10. `RequireAuthorization()` on protected endpoints.
-// 11. Wire format stays consistent: enums serialize as integers (no `JsonStringEnumConverter` is registered).
+// 11. Wire format stays consistent: enums serialize as strings (`JsonStringEnumConverter` is globally registered in Program.cs).
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Results;
