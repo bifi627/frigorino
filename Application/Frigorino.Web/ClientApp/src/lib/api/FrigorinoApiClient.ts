@@ -9,6 +9,7 @@ import { AuthService } from './services/AuthService';
 import { CurrentHouseholdService } from './services/CurrentHouseholdService';
 import { DemoService } from './services/DemoService';
 import { HouseholdService } from './services/HouseholdService';
+import { HouseholdsService } from './services/HouseholdsService';
 import { InventoriesService } from './services/InventoriesService';
 import { InventoryItemsService } from './services/InventoryItemsService';
 import { ItemsService } from './services/ItemsService';
@@ -22,6 +23,7 @@ export class FrigorinoApiClient {
     public readonly currentHousehold: CurrentHouseholdService;
     public readonly demo: DemoService;
     public readonly household: HouseholdService;
+    public readonly households: HouseholdsService;
     public readonly inventories: InventoriesService;
     public readonly inventoryItems: InventoryItemsService;
     public readonly items: ItemsService;
@@ -46,6 +48,7 @@ export class FrigorinoApiClient {
         this.currentHousehold = new CurrentHouseholdService(this.request);
         this.demo = new DemoService(this.request);
         this.household = new HouseholdService(this.request);
+        this.households = new HouseholdsService(this.request);
         this.inventories = new InventoriesService(this.request);
         this.inventoryItems = new InventoryItemsService(this.request);
         this.items = new ItemsService(this.request);

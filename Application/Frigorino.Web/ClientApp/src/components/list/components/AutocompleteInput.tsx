@@ -163,10 +163,6 @@ export const AutocompleteInput = memo(
                                     ...params.InputProps,
                                     sx: styles.inputContainerStyles,
                                 },
-                                // htmlInput: {
-                                //     "data-testid":
-                                //         "autocomplete-input-textfield",
-                                // },
                             }}
                             sx={styles.textFieldStyles}
                         />

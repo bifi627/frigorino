@@ -67,7 +67,7 @@ export const useCreateHousehold = () => {
 
     return useMutation({
         mutationFn: (data: CreateHouseholdRequest) =>
-            ClientApi.household.postApiHousehold(data),
+            ClientApi.households.createHousehold(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
         },

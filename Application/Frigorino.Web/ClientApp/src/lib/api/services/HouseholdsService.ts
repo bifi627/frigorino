@@ -1,0 +1,29 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* eslint-disable */
+import type { CreateHouseholdRequest } from '../models/CreateHouseholdRequest';
+import type { HouseholdResponse } from '../models/HouseholdResponse';
+import type { CancelablePromise } from '../core/CancelablePromise';
+import type { BaseHttpRequest } from '../core/BaseHttpRequest';
+export class HouseholdsService {
+    constructor(public readonly httpRequest: BaseHttpRequest) {}
+    /**
+     * @param requestBody
+     * @returns HouseholdResponse Created
+     * @throws ApiError
+     */
+    public createHousehold(
+        requestBody: CreateHouseholdRequest,
+    ): CancelablePromise<HouseholdResponse> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/household',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+            },
+        });
+    }
+}
