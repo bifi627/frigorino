@@ -1,5 +1,6 @@
 using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Features.CurrentHousehold;
 using Frigorino.Features.Households;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -79,6 +80,8 @@ app.UseMiddleware<InitialConnectionMiddleware>();
 // API endpoints
 app.MapControllers();
 app.MapCreateHousehold();
+app.MapGetCurrentHousehold();
+app.MapSetCurrentHousehold();
 
 // SPA configuration
 app.UseSpa(spa =>

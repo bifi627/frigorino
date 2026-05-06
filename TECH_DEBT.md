@@ -34,6 +34,20 @@ Format per item:
   - **Reqnroll scenario:** add a "User submits an empty household name" flow that POSTs an empty `name` (via `TestApiClient` rather than the form, to bypass HTML5 validation) and asserts a 400 with a `name` validation error. This exercises `Result<T>.ToValidationProblem()` end-to-end.
 - **Risk if left:** The whole point of moving to `Result<T>` is validation without exceptions, and that branch is currently unexercised. Regressions in `ResultExtensions.ToValidationProblem` (e.g. wrong metadata key, missing grouping) would ship undetected.
 
+## Add an integration test for non-member `SetCurrentHousehold` returning 403
+
+- **Where:** `Application/Frigorino.Features/CurrentHousehold/SetCurrentHousehold.cs` (slice handler), `Application/Frigorino.IntegrationTests/Slices/CurrentHousehold/` (no scenarios yet).
+- **Why deferred:** The CurrentHousehold slice migration was behavior-equivalent to the legacy controller — adding the test alongside the migration would have validated the underlying `ICurrentHouseholdService` (which already throws `UnauthorizedAccessException`), not the migration itself. Worth its own focused PR.
+- **Plan:** Add a Reqnroll scenario under `Slices/CurrentHousehold/`: seed a household owned by user B, log in as user A (not a member), `POST /api/currenthousehold/{id}` via `TestApiClient`, assert 403. Bypass the UI — the household selector wouldn't expose another user's household to begin with, so this needs a direct API call to test the security branch.
+- **Risk if left:** A future refactor of `CurrentHouseholdService.SetCurrentHouseholdAsync` (e.g. moving from exception-based auth to `Result`-based) could silently drop the membership check. No test would catch a regression that lets users switch into other people's households — a multi-tenancy boundary failure.
+
+## Make local DB spin-up trivial
+
+- **Where:** `Application/Frigorino.Web/ClientApp/package.json:15` (the misleadingly-named `sql` script), repo root (no docker-compose).
+- **Why deferred:** Running the backend locally currently requires a Postgres connection string in `dotnet user-secrets`. Today's `npm run sql` script only starts **pgAdmin** (`dpage/pgadmin4`), not Postgres itself — so a fresh clone has no one-command way to bring up a working DB. We've been getting by with personal Railway/cloud connection strings, but that breaks any contributor (or AI agent) that doesn't have one.
+- **Plan:** Add a `docker-compose.yml` at the repo root (or `Application/`) that spins up Postgres 16 + pgAdmin together, with default credentials matching what `appsettings.Development.json` could point at out of the box. Replace `npm run sql` with `npm run db` (or move it to a root-level script) that runs `docker compose up -d`. Update `appsettings.Development.json` (committed) to default to the local container's connection string, so user-secrets is only needed for cloud overrides.
+- **Risk if left:** New contributors / agents can't start the backend without manual setup. Day-to-day this means swagger regen, migration testing, and integration smoke runs all require the original developer's machine.
+
 ## Make `SpaBuildHelper` CI-friendly
 
 - **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/SpaBuildHelper.cs`.

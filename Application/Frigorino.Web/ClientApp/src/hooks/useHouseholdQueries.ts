@@ -36,7 +36,7 @@ export const householdKeys = {
 export const useCurrentHousehold = () => {
     return useQuery({
         queryKey: householdKeys.current(),
-        queryFn: () => ClientApi.currentHousehold.getApiCurrentHousehold(),
+        queryFn: () => ClientApi.currentHousehold.getCurrentHousehold(),
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: false, // Don't retry if no current household
     });
@@ -80,7 +80,7 @@ export const useSetCurrentHousehold = () => {
 
     return useMutation({
         mutationFn: (householdId: number) =>
-            ClientApi.currentHousehold.postApiCurrentHousehold(householdId),
+            ClientApi.currentHousehold.setCurrentHousehold(householdId),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.current(),

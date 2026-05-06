@@ -11,10 +11,13 @@ export class CurrentHouseholdService {
      * @returns CurrentHouseholdResponse OK
      * @throws ApiError
      */
-    public getApiCurrentHousehold(): CancelablePromise<CurrentHouseholdResponse> {
+    public getCurrentHousehold(): CancelablePromise<CurrentHouseholdResponse> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/CurrentHousehold',
+            url: '/api/currenthousehold',
+            errors: {
+                404: `Not Found`,
+            },
         });
     }
     /**
@@ -22,14 +25,17 @@ export class CurrentHouseholdService {
      * @returns CurrentHouseholdResponse OK
      * @throws ApiError
      */
-    public postApiCurrentHousehold(
+    public setCurrentHousehold(
         householdId: number,
     ): CancelablePromise<CurrentHouseholdResponse> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/CurrentHousehold/{householdId}',
+            url: '/api/currenthousehold/{householdId}',
             path: {
                 'householdId': householdId,
+            },
+            errors: {
+                403: `Forbidden`,
             },
         });
     }
