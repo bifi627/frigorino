@@ -459,3 +459,6 @@ Peperino/appsettings.Development.json
 
 peperino.ui/public/sw.js.map
 Application/Frigorino.Web/ClientApp/build/
+
+# Reqnroll-generated test code (regenerated on build by Reqnroll.Tools.MsBuild.Generation)
+*.feature.cs

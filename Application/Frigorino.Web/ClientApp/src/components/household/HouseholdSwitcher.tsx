@@ -91,6 +91,7 @@ export const HouseholdSwitcher = ({
                 size="small"
                 endIcon={<KeyboardArrowDown sx={{ fontSize: 16 }} />}
                 disabled={isSwitching}
+                data-testid="household-switcher-toggle"
                 sx={{
                     borderRadius: 2,
                     textTransform: "none",
@@ -118,6 +119,7 @@ export const HouseholdSwitcher = ({
                     <Business sx={{ fontSize: { xs: 14, sm: 16 } }} />
                     <Typography
                         variant="body2"
+                        data-testid="household-switcher-current-name"
                         sx={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -160,6 +162,7 @@ export const HouseholdSwitcher = ({
                     households.map((household) => (
                         <MenuItem
                             key={household.id}
+                            data-testid={`household-switcher-option-${household.name}`}
                             onClick={() => handleHouseholdSelect(household.id!)}
                             selected={
                                 household.id === currentHousehold?.householdId
