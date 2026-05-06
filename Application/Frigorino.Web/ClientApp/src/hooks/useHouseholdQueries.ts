@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ClientApi } from "../common/apiClient";
 import type {
+    ActiveHouseholdResponse,
     AddMemberRequest,
     CreateHouseholdRequest,
-    CurrentHouseholdResponse,
     HouseholdDto,
     HouseholdRole,
     UpdateHouseholdRequest,
@@ -13,8 +13,8 @@ import type {
 
 // Re-export types for convenience
 export type {
+    ActiveHouseholdResponse,
     CreateHouseholdRequest,
-    CurrentHouseholdResponse,
     HouseholdDto,
     HouseholdRole,
 };
@@ -36,7 +36,7 @@ export const householdKeys = {
 export const useCurrentHousehold = () => {
     return useQuery({
         queryKey: householdKeys.current(),
-        queryFn: () => ClientApi.currentHousehold.getCurrentHousehold(),
+        queryFn: () => ClientApi.me.getActiveHousehold(),
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: false, // Don't retry if no current household
     });
@@ -80,7 +80,7 @@ export const useSetCurrentHousehold = () => {
 
     return useMutation({
         mutationFn: (householdId: number) =>
-            ClientApi.currentHousehold.setCurrentHousehold(householdId),
+            ClientApi.me.setActiveHousehold({ householdId }),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.current(),
