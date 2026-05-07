@@ -2,4 +2,4 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type HouseholdRole = 0 | 1 | 2;
+export type HouseholdRole = number;

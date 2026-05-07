@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UpdateInventoryRequest = {
-    name?: string | null;
+    name: string;
     description?: string | null;
 };
 

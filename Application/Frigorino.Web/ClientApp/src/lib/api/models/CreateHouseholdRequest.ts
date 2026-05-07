@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type CreateHouseholdRequest = {
-    name?: string | null;
-    description?: string | null;
+    name: string;
+    description: string | null;
 };
 

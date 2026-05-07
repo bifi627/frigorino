@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type CreateListItemRequest = {
-    text?: string | null;
+    text: string;
     quantity?: string | null;
 };
 

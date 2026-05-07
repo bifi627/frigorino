@@ -3,13 +3,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export type ListItemDto = {
-    id?: number;
-    listId?: number;
-    text?: string | null;
+    id: number;
+    listId: number;
+    text: string;
     quantity?: string | null;
-    status?: boolean;
-    sortOrder?: number;
-    createdAt?: string;
-    updatedAt?: string;
+    status: boolean;
+    sortOrder: number;
+    createdAt: string;
+    updatedAt: string;
 };
 

@@ -4,7 +4,7 @@
 /* eslint-disable */
 import type { HouseholdRole } from './HouseholdRole';
 export type AddMemberRequest = {
-    email?: string | null;
-    role?: HouseholdRole;
+    email: string;
+    role?: (null | HouseholdRole);
 };
 

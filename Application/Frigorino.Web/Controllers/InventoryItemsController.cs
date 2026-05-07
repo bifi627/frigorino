@@ -148,7 +148,7 @@ public class InventoryItemsController : ControllerBase
     /// Reorder an item within its status section (checked or unchecked)
     /// </summary>
     [HttpPatch("{inventoryItemId}/reorder")]
-    public async Task<ActionResult<InventoryItemDto>> ReorderItem(int householdId, int inventoryId, int inventoryItemId, ReorderItemRequest request)
+    public async Task<ActionResult<InventoryItemDto>> ReorderItem(int inventoryId, int inventoryItemId, ReorderItemRequest request)
     {
         try
         {

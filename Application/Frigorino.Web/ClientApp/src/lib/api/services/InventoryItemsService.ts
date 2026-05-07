@@ -34,7 +34,7 @@ export class InventoryItemsService {
      */
     public postApiInventoryInventoryItems(
         inventoryId: number,
-        requestBody?: CreateInventoryItemRequest,
+        requestBody: CreateInventoryItemRequest,
     ): CancelablePromise<InventoryItemDto> {
         return this.httpRequest.request({
             method: 'POST',
@@ -75,7 +75,7 @@ export class InventoryItemsService {
     public putApiInventoryInventoryItems(
         inventoryId: number,
         inventoryItemId: number,
-        requestBody?: UpdateInventoryItemRequest,
+        requestBody: UpdateInventoryItemRequest,
     ): CancelablePromise<InventoryItemDto> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -110,7 +110,6 @@ export class InventoryItemsService {
     /**
      * @param inventoryId
      * @param inventoryItemId
-     * @param householdId
      * @param requestBody
      * @returns InventoryItemDto OK
      * @throws ApiError
@@ -118,8 +117,7 @@ export class InventoryItemsService {
     public patchApiInventoryInventoryItemsReorder(
         inventoryId: number,
         inventoryItemId: number,
-        householdId?: number,
-        requestBody?: ReorderItemRequest,
+        requestBody: ReorderItemRequest,
     ): CancelablePromise<InventoryItemDto> {
         return this.httpRequest.request({
             method: 'PATCH',
@@ -127,9 +125,6 @@ export class InventoryItemsService {
             path: {
                 'inventoryId': inventoryId,
                 'inventoryItemId': inventoryItemId,
-            },
-            query: {
-                'householdId': householdId,
             },
             body: requestBody,
             mediaType: 'application/json',

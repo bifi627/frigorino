@@ -3,9 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WeatherForecast = {
-    date?: string;
-    temperatureC?: number;
-    readonly temperatureF?: number;
+    date: string;
+    temperatureC: number;
+    temperatureF: number;
     summary?: string | null;
 };
 

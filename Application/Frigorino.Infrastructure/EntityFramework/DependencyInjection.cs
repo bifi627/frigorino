@@ -30,6 +30,11 @@ namespace Frigorino.Infrastructure.EntityFramework
 
         static string ConvertPostgresUrlToConnectionString(string url)
         {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return string.Empty;
+            }
+
             // Already an Npgsql key=value connection string — pass through unchanged.
             if (url.Contains("Host=", StringComparison.OrdinalIgnoreCase)
                 || url.Contains("Server=", StringComparison.OrdinalIgnoreCase))

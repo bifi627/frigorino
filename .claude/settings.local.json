@@ -29,7 +29,8 @@
       "Bash(dotnet sln *)",
       "Bash(dotnet restore *)",
       "Bash(xargs cat *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(dotnet --list-sdks)"
     ],
     "deny": [],
     "ask": []

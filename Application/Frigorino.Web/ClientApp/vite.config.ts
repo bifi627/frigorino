@@ -62,7 +62,11 @@ export default defineConfig(({ command }) => ({
                 target,
                 secure: false,
             },
-            "^/swagger/*": {
+            "^/openapi/*": {
+                target,
+                secure: false,
+            },
+            "^/scalar/*": {
                 target,
                 secure: false,
             },

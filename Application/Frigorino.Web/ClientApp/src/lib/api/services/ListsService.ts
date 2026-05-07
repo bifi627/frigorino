@@ -33,7 +33,7 @@ export class ListsService {
      */
     public postApiHouseholdLists(
         householdId: number,
-        requestBody?: CreateListRequest,
+        requestBody: CreateListRequest,
     ): CancelablePromise<ListDto> {
         return this.httpRequest.request({
             method: 'POST',
@@ -74,7 +74,7 @@ export class ListsService {
     public putApiHouseholdLists(
         householdId: number,
         listId: number,
-        requestBody?: UpdateListRequest,
+        requestBody: UpdateListRequest,
     ): CancelablePromise<ListDto> {
         return this.httpRequest.request({
             method: 'PUT',

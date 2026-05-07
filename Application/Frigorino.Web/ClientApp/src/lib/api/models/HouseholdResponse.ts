@@ -4,12 +4,12 @@
 /* eslint-disable */
 import type { HouseholdRole } from './HouseholdRole';
 export type HouseholdResponse = {
-    id?: number;
-    name?: string | null;
-    description?: string | null;
-    createdAt?: string;
-    updatedAt?: string;
-    createdByUserId?: string | null;
-    currentUserRole?: HouseholdRole;
+    id: number;
+    name: string;
+    description: string | null;
+    createdAt: string;
+    updatedAt: string;
+    createdByUserId: string;
+    currentUserRole: HouseholdRole;
 };
 

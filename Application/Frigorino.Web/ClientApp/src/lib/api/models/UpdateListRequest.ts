@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UpdateListRequest = {
-    name?: string | null;
+    name: string;
     description?: string | null;
 };
 

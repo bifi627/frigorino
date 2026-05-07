@@ -91,6 +91,9 @@ export const useCreateInventory = () => {
                 householdId: variables.householdId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                createdByUser: { externalId: "", name: "", email: "" },
+                totalItems: 0,
+                expiringItems: 0,
             };
 
             // Optimistically add the inventory to the cache

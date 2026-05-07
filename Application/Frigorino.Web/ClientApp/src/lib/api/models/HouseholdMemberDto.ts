@@ -5,8 +5,8 @@
 import type { HouseholdRole } from './HouseholdRole';
 import type { UserDto } from './UserDto';
 export type HouseholdMemberDto = {
-    user?: UserDto;
-    role?: HouseholdRole;
-    joinedAt?: string;
+    user: UserDto;
+    role: HouseholdRole;
+    joinedAt: string;
 };
 

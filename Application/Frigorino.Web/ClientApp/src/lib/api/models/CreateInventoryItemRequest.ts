@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type CreateInventoryItemRequest = {
-    text?: string | null;
+    text: string;
     quantity?: string | null;
     expiryDate?: string | null;
 };
