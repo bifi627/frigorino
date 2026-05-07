@@ -33,7 +33,7 @@ export class ItemsService {
      */
     public putApiItems(
         itemId: number,
-        requestBody?: UpdateListItemRequest,
+        requestBody: UpdateListItemRequest,
     ): CancelablePromise<ListItemDto> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -85,7 +85,7 @@ export class ItemsService {
      */
     public patchApiItemsReorder(
         itemId: number,
-        requestBody?: ReorderItemRequest,
+        requestBody: ReorderItemRequest,
     ): CancelablePromise<ListItemDto> {
         return this.httpRequest.request({
             method: 'PATCH',

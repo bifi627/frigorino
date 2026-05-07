@@ -42,7 +42,7 @@ export class HouseholdService {
      */
     public putApiHousehold(
         id: number,
-        requestBody?: UpdateHouseholdRequest,
+        requestBody: UpdateHouseholdRequest,
     ): CancelablePromise<HouseholdDto> {
         return this.httpRequest.request({
             method: 'PUT',

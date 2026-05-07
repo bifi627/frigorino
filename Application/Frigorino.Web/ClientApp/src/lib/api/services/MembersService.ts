@@ -33,7 +33,7 @@ export class MembersService {
      */
     public postApiHouseholdMembers(
         householdId: number,
-        requestBody?: AddMemberRequest,
+        requestBody: AddMemberRequest,
     ): CancelablePromise<HouseholdMemberDto> {
         return this.httpRequest.request({
             method: 'POST',
@@ -55,7 +55,7 @@ export class MembersService {
     public putApiHouseholdMembersRole(
         householdId: number,
         targetUserId: string,
-        requestBody?: UpdateMemberRoleRequest,
+        requestBody: UpdateMemberRoleRequest,
     ): CancelablePromise<HouseholdMemberDto> {
         return this.httpRequest.request({
             method: 'PUT',

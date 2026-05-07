@@ -3,8 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UserDto = {
-    externalId?: string | null;
-    name?: string | null;
-    email?: string | null;
+    externalId: string;
+    name: string;
+    email: string;
 };
 

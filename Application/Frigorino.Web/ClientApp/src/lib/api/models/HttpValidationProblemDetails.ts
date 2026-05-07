@@ -2,4 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type HttpValidationProblemDetails = Record<string, any>;
+export type HttpValidationProblemDetails = {
+    type?: string | null;
+    title?: string | null;
+    status?: number;
+    detail?: string | null;
+    instance?: string | null;
+    errors: Record<string, Array<string>>;
+};
+

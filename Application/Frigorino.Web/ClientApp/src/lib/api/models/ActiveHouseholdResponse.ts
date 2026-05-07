@@ -4,8 +4,8 @@
 /* eslint-disable */
 import type { HouseholdRole } from './HouseholdRole';
 export type ActiveHouseholdResponse = {
-    householdId?: number | null;
-    role?: HouseholdRole;
-    hasActiveHousehold?: boolean;
+    householdId: number;
+    role: (null | HouseholdRole);
+    hasActiveHousehold: boolean;
 };
 

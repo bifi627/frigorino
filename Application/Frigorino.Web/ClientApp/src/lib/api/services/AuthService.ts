@@ -23,7 +23,7 @@ export class AuthService {
      * @throws ApiError
      */
     public putApiAuthProfile(
-        requestBody?: UpdateProfileRequest,
+        requestBody: UpdateProfileRequest,
     ): CancelablePromise<any> {
         return this.httpRequest.request({
             method: 'PUT',

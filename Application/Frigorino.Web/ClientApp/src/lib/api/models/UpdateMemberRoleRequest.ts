@@ -4,6 +4,6 @@
 /* eslint-disable */
 import type { HouseholdRole } from './HouseholdRole';
 export type UpdateMemberRoleRequest = {
-    role?: HouseholdRole;
+    role: HouseholdRole;
 };
 

@@ -6,14 +6,14 @@ import type { HouseholdMemberDto } from './HouseholdMemberDto';
 import type { HouseholdRole } from './HouseholdRole';
 import type { UserDto } from './UserDto';
 export type HouseholdDto = {
-    id?: number;
-    name?: string | null;
+    id: number;
+    name: string;
     description?: string | null;
-    createdAt?: string;
-    updatedAt?: string;
-    createdByUser?: UserDto;
-    currentUserRole?: HouseholdRole;
-    memberCount?: number;
-    members?: Array<HouseholdMemberDto> | null;
+    createdAt: string;
+    updatedAt: string;
+    createdByUser: UserDto;
+    currentUserRole: HouseholdRole;
+    memberCount: number;
+    members: Array<HouseholdMemberDto>;
 };
 

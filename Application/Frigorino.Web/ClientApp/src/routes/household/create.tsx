@@ -66,7 +66,7 @@ function CreateHouseholdPage() {
         try {
             const household = await createHouseholdMutation.mutateAsync({
                 name: formData.name.trim(),
-                description: formData.description.trim() || undefined,
+                description: formData.description.trim() || null,
             });
 
             // Set as current household

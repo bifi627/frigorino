@@ -3,14 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export type InventoryItemDto = {
-    id?: number;
-    inventoryId?: number;
-    text?: string | null;
+    id: number;
+    inventoryId: number;
+    text: string;
     quantity?: string | null;
     expiryDate?: string | null;
-    sortOrder?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    isExpiring?: boolean;
+    sortOrder: number;
+    createdAt: string;
+    updatedAt: string;
+    isExpiring: boolean;
 };
 

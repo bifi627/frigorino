@@ -1,3 +1,4 @@
+using System.Reflection;
 using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
@@ -7,19 +8,25 @@ using Frigorino.Infrastructure.EntityFramework;
 using Frigorino.Infrastructure.Services;
 using Frigorino.Web.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+
+var isBuildTimeOpenApi =
+    Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer<Frigorino.Web.OpenApi.IntegerSchemaTransformer>();
+    options.AddSchemaTransformer<Frigorino.Web.OpenApi.RequiredSchemaTransformer>();
+});
 
 builder.Services.AddEntityFramework(builder.Configuration);
 builder.Services.AddApplicationServices();
-if (!builder.Environment.IsEnvironment("IntegrationTest"))
+if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi)
 {
     builder.Services.AddFirebaseAuth(builder.Configuration);
 }
@@ -45,8 +52,9 @@ builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "
 var app = builder.Build();
 
 // Database migration
-using (var scope = app.Services.CreateScope())
+if (!isBuildTimeOpenApi)
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     await context.Database.MigrateAsync();
@@ -55,8 +63,8 @@ using (var scope = app.Services.CreateScope())
 // Configure middleware pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();

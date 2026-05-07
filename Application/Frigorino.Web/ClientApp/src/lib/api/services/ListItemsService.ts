@@ -39,7 +39,7 @@ export class ListItemsService {
     public postApiHouseholdListsListItems(
         householdId: number,
         listId: number,
-        requestBody?: CreateListItemRequest,
+        requestBody: CreateListItemRequest,
     ): CancelablePromise<ListItemDto> {
         return this.httpRequest.request({
             method: 'POST',
@@ -86,7 +86,7 @@ export class ListItemsService {
         householdId: number,
         listId: number,
         itemId: number,
-        requestBody?: UpdateListItemRequest,
+        requestBody: UpdateListItemRequest,
     ): CancelablePromise<ListItemDto> {
         return this.httpRequest.request({
             method: 'PUT',
@@ -156,7 +156,7 @@ export class ListItemsService {
         householdId: number,
         listId: number,
         itemId: number,
-        requestBody?: ReorderItemRequest,
+        requestBody: ReorderItemRequest,
     ): CancelablePromise<ListItemDto> {
         return this.httpRequest.request({
             method: 'PATCH',

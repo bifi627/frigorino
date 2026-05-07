@@ -1,10 +1,143 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.1.1",
   "info": {
-    "title": "Frigorino.Web",
-    "version": "1.0"
+    "title": "Frigorino.Web | v1",
+    "version": "1.0.0"
   },
   "paths": {
+    "/api/household": {
+      "post": {
+        "tags": [
+          "Households"
+        ],
+        "operationId": "CreateHousehold",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHouseholdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/active-household": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "GetActiveHousehold",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "SetActiveHousehold",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetActiveHouseholdRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/WeatherForecast": {
+      "get": {
+        "tags": [
+          "WeatherForecast"
+        ],
+        "operationId": "GetWeatherForecast",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Auth/me": {
       "get": {
         "tags": [
@@ -39,7 +172,8 @@
                 "$ref": "#/components/schemas/UpdateProfileRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -186,7 +320,8 @@
                 "$ref": "#/components/schemas/UpdateHouseholdRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -229,46 +364,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/household": {
-      "post": {
-        "tags": [
-          "Households"
-        ],
-        "operationId": "CreateHousehold",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateHouseholdRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
           }
         }
       }
@@ -353,7 +448,8 @@
                 "$ref": "#/components/schemas/CreateInventoryRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -468,7 +564,8 @@
                 "$ref": "#/components/schemas/UpdateInventoryRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -604,7 +701,8 @@
                 "$ref": "#/components/schemas/CreateInventoryItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -719,7 +817,8 @@
                 "$ref": "#/components/schemas/UpdateInventoryItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -782,14 +881,6 @@
         ],
         "parameters": [
           {
-            "name": "householdId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
             "name": "inventoryId",
             "in": "path",
             "required": true,
@@ -825,7 +916,8 @@
                 "$ref": "#/components/schemas/ReorderItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -922,7 +1014,8 @@
                 "$ref": "#/components/schemas/UpdateListItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1042,7 +1135,8 @@
                 "$ref": "#/components/schemas/ReorderItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1166,7 +1260,8 @@
                 "$ref": "#/components/schemas/CreateListItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1299,7 +1394,8 @@
                 "$ref": "#/components/schemas/UpdateListItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1473,7 +1569,8 @@
                 "$ref": "#/components/schemas/ReorderItemRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1611,7 +1708,8 @@
                 "$ref": "#/components/schemas/CreateListRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1726,7 +1824,8 @@
                 "$ref": "#/components/schemas/UpdateListRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1778,60 +1877,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/me/active-household": {
-      "get": {
-        "tags": [
-          "Me"
-        ],
-        "operationId": "GetActiveHousehold",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Me"
-        ],
-        "operationId": "SetActiveHousehold",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetActiveHouseholdRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ActiveHouseholdResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden"
           }
         }
       }
@@ -1916,7 +1961,8 @@
                 "$ref": "#/components/schemas/AddMemberRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1983,7 +2029,8 @@
                 "$ref": "#/components/schemas/UpdateMemberRoleRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -2062,155 +2109,162 @@
           }
         }
       }
-    },
-    "/api/WeatherForecast": {
-      "get": {
-        "tags": [
-          "WeatherForecast"
-        ],
-        "operationId": "GetWeatherForecast",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
       "ActiveHouseholdResponse": {
+        "required": [
+          "householdId",
+          "role",
+          "hasActiveHousehold"
+        ],
         "type": "object",
         "properties": {
           "householdId": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "role": {
-            "$ref": "#/components/schemas/HouseholdRole"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HouseholdRole"
+              }
+            ]
           },
           "hasActiveHousehold": {
             "type": "boolean"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "AddMemberRequest": {
+        "required": [
+          "email"
+        ],
         "type": "object",
         "properties": {
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
-            "$ref": "#/components/schemas/HouseholdRole"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HouseholdRole"
+              }
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CreateHouseholdRequest": {
+        "required": [
+          "name",
+          "description"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CreateInventoryItemRequest": {
+        "required": [
+          "text"
+        ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "expiryDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CreateInventoryRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CreateListItemRequest": {
+        "required": [
+          "text"
+        ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "CreateListRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "HouseholdDto": {
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt",
+          "createdByUser",
+          "currentUserRole",
+          "memberCount",
+          "members"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2218,12 +2272,13 @@
             "format": "int32"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -2247,13 +2302,16 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HouseholdMemberDto"
-            },
-            "nullable": true
+            }
           }
-        },
-        "additionalProperties": false
+        }
       },
       "HouseholdMemberDto": {
+        "required": [
+          "user",
+          "role",
+          "joinedAt"
+        ],
         "type": "object",
         "properties": {
           "user": {
@@ -2266,10 +2324,18 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "HouseholdResponse": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "createdAt",
+          "updatedAt",
+          "createdByUserId",
+          "currentUserRole"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2277,12 +2343,13 @@
             "format": "int32"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -2293,47 +2360,49 @@
             "format": "date-time"
           },
           "createdByUserId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "currentUserRole": {
             "$ref": "#/components/schemas/HouseholdRole"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "HouseholdRole": {
-        "enum": [
-          0,
-          1,
-          2
-        ],
-        "type": "integer",
-        "format": "int32"
+        "type": "integer"
       },
       "HttpValidationProblemDetails": {
+        "required": [
+          "errors"
+        ],
         "type": "object",
         "properties": {
           "type": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "title": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "status": {
             "type": "integer",
-            "format": "int32",
-            "nullable": true
+            "format": "int32"
           },
           "detail": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "instance": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "errors": {
             "type": "object",
@@ -2342,13 +2411,21 @@
               "items": {
                 "type": "string"
               }
-            },
-            "nullable": true
+            }
           }
-        },
-        "additionalProperties": { }
+        }
       },
       "InventoryDto": {
+        "required": [
+          "id",
+          "name",
+          "householdId",
+          "createdAt",
+          "updatedAt",
+          "createdByUser",
+          "totalItems",
+          "expiringItems"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2356,12 +2433,13 @@
             "format": "int32"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "householdId": {
             "type": "integer",
@@ -2386,10 +2464,18 @@
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "InventoryItemDto": {
+        "required": [
+          "id",
+          "inventoryId",
+          "text",
+          "sortOrder",
+          "createdAt",
+          "updatedAt",
+          "isExpiring"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2401,17 +2487,20 @@
             "format": "int32"
           },
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "expiryDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           },
           "sortOrder": {
             "type": "integer",
@@ -2428,10 +2517,19 @@
           "isExpiring": {
             "type": "boolean"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "ListDto": {
+        "required": [
+          "id",
+          "name",
+          "householdId",
+          "createdAt",
+          "updatedAt",
+          "createdByUser",
+          "uncheckedCount",
+          "checkedCount"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2439,12 +2537,13 @@
             "format": "int32"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "householdId": {
             "type": "integer",
@@ -2469,10 +2568,18 @@
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "ListItemDto": {
+        "required": [
+          "id",
+          "listId",
+          "text",
+          "status",
+          "sortOrder",
+          "createdAt",
+          "updatedAt"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -2484,12 +2591,13 @@
             "format": "int32"
           },
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "status": {
             "type": "boolean"
@@ -2506,146 +2614,177 @@
             "type": "string",
             "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "ReorderItemRequest": {
+        "required": [
+          "afterId"
+        ],
         "type": "object",
         "properties": {
           "afterId": {
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "SetActiveHouseholdRequest": {
+        "required": [
+          "householdId"
+        ],
         "type": "object",
         "properties": {
           "householdId": {
             "type": "integer",
             "format": "int32"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateHouseholdRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateInventoryItemRequest": {
+        "required": [
+          "text"
+        ],
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "expiryDate": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateInventoryRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateListItemRequest": {
         "type": "object",
         "properties": {
           "text": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "quantity": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "status": {
-            "type": "boolean",
-            "nullable": true
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateListRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateMemberRoleRequest": {
+        "required": [
+          "role"
+        ],
         "type": "object",
         "properties": {
           "role": {
             "$ref": "#/components/schemas/HouseholdRole"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UpdateProfileRequest": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "UserDto": {
+        "required": [
+          "externalId",
+          "name",
+          "email"
+        ],
         "type": "object",
         "properties": {
           "externalId": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "WeatherForecast": {
+        "required": [
+          "date",
+          "temperatureC",
+          "temperatureF"
+        ],
         "type": "object",
         "properties": {
           "date": {
@@ -2658,16 +2797,54 @@
           },
           "temperatureF": {
             "type": "integer",
-            "format": "int32",
-            "readOnly": true
+            "format": "int32"
           },
           "summary": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        },
-        "additionalProperties": false
+        }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Households"
+    },
+    {
+      "name": "Me"
+    },
+    {
+      "name": "WeatherForecast"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Demo"
+    },
+    {
+      "name": "Household"
+    },
+    {
+      "name": "Inventories"
+    },
+    {
+      "name": "InventoryItems"
+    },
+    {
+      "name": "Items"
+    },
+    {
+      "name": "ListItems"
+    },
+    {
+      "name": "Lists"
+    },
+    {
+      "name": "Members"
+    }
+  ]
 }

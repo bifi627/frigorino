@@ -304,7 +304,6 @@ export const useReorderInventoryItem = () => {
             return ClientApi.inventoryItems.patchApiInventoryInventoryItemsReorder(
                 inventoryId,
                 itemId,
-                undefined, // householdId - not needed as it's handled by auth
                 data,
             );
         },

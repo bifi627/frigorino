@@ -33,7 +33,7 @@ export class InventoriesService {
      */
     public postApiHouseholdInventories(
         householdId: number,
-        requestBody?: CreateInventoryRequest,
+        requestBody: CreateInventoryRequest,
     ): CancelablePromise<InventoryDto> {
         return this.httpRequest.request({
             method: 'POST',
@@ -74,7 +74,7 @@ export class InventoriesService {
     public putApiHouseholdInventories(
         householdId: number,
         inventoryId: number,
-        requestBody?: UpdateInventoryRequest,
+        requestBody: UpdateInventoryRequest,
     ): CancelablePromise<InventoryDto> {
         return this.httpRequest.request({
             method: 'PUT',

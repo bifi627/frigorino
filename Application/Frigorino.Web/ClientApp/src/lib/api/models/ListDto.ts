@@ -4,14 +4,14 @@
 /* eslint-disable */
 import type { UserDto } from './UserDto';
 export type ListDto = {
-    id?: number;
-    name?: string | null;
+    id: number;
+    name: string;
     description?: string | null;
-    householdId?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    createdByUser?: UserDto;
-    uncheckedCount?: number;
-    checkedCount?: number;
+    householdId: number;
+    createdAt: string;
+    updatedAt: string;
+    createdByUser: UserDto;
+    uncheckedCount: number;
+    checkedCount: number;
 };
 
