@@ -47,27 +47,4 @@ public class HouseholdController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Delete a household (Owner only)
-    /// </summary>
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteHousehold(int id)
-    {
-        try
-        {
-            var userId = _currentUserService.UserId;
-            var result = await _householdService.DeleteHouseholdAsync(id, userId);
-
-            if (!result)
-            {
-                return NotFound("Household not found or you don't have access to it.");
-            }
-
-            return NoContent();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
-    }
 }

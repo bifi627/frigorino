@@ -123,7 +123,7 @@ export const useDeleteHousehold = () => {
 
     return useMutation({
         mutationFn: (householdId: number) =>
-            ClientApi.household.deleteApiHousehold(householdId),
+            ClientApi.households.deleteHousehold(householdId),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.current(),

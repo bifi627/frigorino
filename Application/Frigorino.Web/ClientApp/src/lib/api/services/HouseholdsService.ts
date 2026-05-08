@@ -36,4 +36,24 @@ export class HouseholdsService {
             url: '/api/household',
         });
     }
+    /**
+     * @param id
+     * @returns void
+     * @throws ApiError
+     */
+    public deleteHousehold(
+        id: number,
+    ): CancelablePromise<void> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/api/household/{id}',
+            path: {
+                'id': id,
+            },
+            errors: {
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
+        });
+    }
 }

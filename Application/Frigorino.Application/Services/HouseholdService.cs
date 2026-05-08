@@ -61,40 +61,6 @@ namespace Frigorino.Application.Services
             return await GetHouseholdAsync(id, userId);
         }
 
-        public async Task<bool> DeleteHouseholdAsync(int id, string userId)
-        {
-            var userHousehold = await _dbContext.UserHouseholds
-                .Include(uh => uh.Household)
-                .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == id && uh.IsActive);
-
-            if (userHousehold == null)
-            {
-                return false;
-            }
-
-            // Check permissions (Only Owner can delete)
-            if (userHousehold.Role != HouseholdRole.Owner)
-            {
-                throw new UnauthorizedAccessException("Only the household owner can delete the household.");
-            }
-
-            // Soft delete household and all memberships
-            userHousehold.Household.IsActive = false;
-            userHousehold.Household.UpdatedAt = DateTime.UtcNow;
-
-            var allMemberships = await _dbContext.UserHouseholds
-                .Where(uh => uh.HouseholdId == id)
-                .ToListAsync();
-
-            foreach (var membership in allMemberships)
-            {
-                membership.IsActive = false;
-            }
-
-            await _dbContext.SaveChangesAsync();
-            return true;
-        }
-
         #region Member Management
 
         public async Task<IEnumerable<HouseholdMemberDto>> GetHouseholdMembersAsync(int householdId, string userId)
