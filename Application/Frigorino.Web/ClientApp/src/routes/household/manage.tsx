@@ -229,6 +229,7 @@ function HouseholdManagePage() {
                         {/* Menu button for household owner */}
                         {userRole === 2 && ( // Only show for owners
                             <IconButton
+                                data-testid="household-manage-menu-toggle"
                                 onClick={handleMenuClick}
                                 size="small"
                                 sx={{
@@ -372,6 +373,7 @@ function HouseholdManagePage() {
                 }}
             >
                 <MenuItem
+                    data-testid="household-manage-menu-delete"
                     onClick={handleDeleteClick}
                     sx={{
                         color: "error.main",
@@ -458,6 +460,11 @@ function HouseholdManagePage() {
                     <TextField
                         fullWidth
                         variant="outlined"
+                        slotProps={{
+                            htmlInput: {
+                                "data-testid": "household-delete-confirm-input",
+                            },
+                        }}
                         value={confirmationText}
                         onChange={(e) => setConfirmationText(e.target.value)}
                         placeholder={t("household.typeHouseholdNameToConfirm", {
@@ -483,6 +490,7 @@ function HouseholdManagePage() {
                 </DialogContent>
                 <DialogActions sx={{ p: 3, pt: 1 }}>
                     <Button
+                        data-testid="household-delete-cancel-button"
                         onClick={handleDeleteDialogClose}
                         disabled={deleteHouseholdMutation.isPending}
                         sx={{ borderRadius: 2 }}
@@ -490,6 +498,7 @@ function HouseholdManagePage() {
                         {t("common.cancel")}
                     </Button>
                     <Button
+                        data-testid="household-delete-confirm-button"
                         onClick={handleDeleteConfirm}
                         color="error"
                         variant="contained"
