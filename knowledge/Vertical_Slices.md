@@ -59,9 +59,11 @@ public static class CreateXxxEndpoint
 
 ### Non-negotiable rules (from `CreateHousehold.cs`)
 
-1. One slice = one file (request DTO + response DTO + endpoint registration + handler).
+1. One slice = one file: request DTO + endpoint registration + handler. The response DTO lives in the same file by default, but may be promoted to a folder-level file (e.g. `HouseholdResponse.cs`, `ActiveHouseholdResponse.cs`) when shared across multiple slices in the same folder.
 2. DTOs are sealed records.
-3. Response DTOs expose a static `From(EntityType e, ...)` factory. No mapping libraries.
+3. No mapping libraries (no AutoMapper). Two blessed patterns:
+   - **Write slices** that have an entity in hand after a domain factory: build the response with a static `XxxResponse.From(entity, ...)` factory method.
+   - **Read slices**: project directly into the response DTO inside the LINQ query. EF translates the projection to SQL — only the needed columns are fetched and no entity is tracked. The projection IS the mapping; do not materialise an entity and re-map in memory.
 4. The handler is a `private static` method on the endpoint class. No separate Handler class, no MediatR.
 5. Validation lives in the domain factory and returns `Result<T>`. Failures carry `Error`s with `WithMetadata("Property", ...)`. The endpoint never re-validates; on failure it calls `ToValidationProblem()`.
 6. No thrown exceptions for expected failures. Exceptions are reserved for genuine bugs / infrastructure faults.

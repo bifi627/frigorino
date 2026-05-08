@@ -5,9 +5,6 @@ namespace Frigorino.Domain.Interfaces
     public interface IHouseholdService
     {
         // Household management
-        Task<HouseholdDto?> GetHouseholdAsync(int id, string userId);
-        [Obsolete("Replaced by CreateHousehold vertical slice in Frigorino.Features. Will be removed once all household actions are migrated.")]
-        Task<HouseholdDto> CreateHouseholdAsync(CreateHouseholdRequest request, string userId);
         Task<HouseholdDto?> UpdateHouseholdAsync(int id, UpdateHouseholdRequest request, string userId);
         Task<bool> DeleteHouseholdAsync(int id, string userId);
 
