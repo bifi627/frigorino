@@ -3,7 +3,6 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { AddMemberRequest } from '../models/AddMemberRequest';
-import type { HouseholdMemberDto } from '../models/HouseholdMemberDto';
 import type { MemberResponse } from '../models/MemberResponse';
 import type { UpdateMemberRoleRequest } from '../models/UpdateMemberRoleRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -80,25 +79,30 @@ export class MembersService {
     }
     /**
      * @param householdId
-     * @param targetUserId
+     * @param userId
      * @param requestBody
-     * @returns HouseholdMemberDto OK
+     * @returns MemberResponse OK
      * @throws ApiError
      */
-    public putApiHouseholdMembersRole(
+    public updateMemberRole(
         householdId: number,
-        targetUserId: string,
+        userId: string,
         requestBody: UpdateMemberRoleRequest,
-    ): CancelablePromise<HouseholdMemberDto> {
+    ): CancelablePromise<MemberResponse> {
         return this.httpRequest.request({
             method: 'PUT',
-            url: '/api/household/{householdId}/Members/{targetUserId}/role',
+            url: '/api/household/{householdId}/members/{userId}/role',
             path: {
                 'householdId': householdId,
-                'targetUserId': targetUserId,
+                'userId': userId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
         });
     }
 }

@@ -71,6 +71,18 @@ public class MemberSteps(ScenarioContextHolder ctx)
         await ctx.Page.GetByTestId("household-member-action-remove").ClickAsync();
     }
 
+    [When("I click make admin from the member menu")]
+    public async Task WhenIClickMakeAdminFromTheMemberMenu()
+    {
+        await ctx.Page.GetByTestId("household-member-action-make-admin").ClickAsync();
+    }
+
+    [When("I click make member from the member menu")]
+    public async Task WhenIClickMakeMemberFromTheMemberMenu()
+    {
+        await ctx.Page.GetByTestId("household-member-action-make-member").ClickAsync();
+    }
+
     [When("I confirm the member removal")]
     public async Task WhenIConfirmTheMemberRemoval()
     {

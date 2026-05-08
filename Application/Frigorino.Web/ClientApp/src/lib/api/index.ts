@@ -17,7 +17,6 @@ export type { CreateInventoryItemRequest } from './models/CreateInventoryItemReq
 export type { CreateInventoryRequest } from './models/CreateInventoryRequest';
 export type { CreateListItemRequest } from './models/CreateListItemRequest';
 export type { CreateListRequest } from './models/CreateListRequest';
-export type { HouseholdMemberDto } from './models/HouseholdMemberDto';
 export type { HouseholdResponse } from './models/HouseholdResponse';
 export type { HouseholdRole } from './models/HouseholdRole';
 export type { HttpValidationProblemDetails } from './models/HttpValidationProblemDetails';

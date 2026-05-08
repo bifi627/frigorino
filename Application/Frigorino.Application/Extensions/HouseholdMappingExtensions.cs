@@ -14,15 +14,5 @@ namespace Frigorino.Application.Extensions
                 Email = user.Email ?? ""
             };
         }
-
-        public static HouseholdMemberDto ToMemberDto(this UserHousehold userHousehold)
-        {
-            return new HouseholdMemberDto
-            {
-                User = userHousehold.User.ToDto(),
-                Role = userHousehold.Role,
-                JoinedAt = userHousehold.JoinedAt
-            };
-        }
     }
 }

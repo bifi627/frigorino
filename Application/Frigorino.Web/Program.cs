@@ -94,6 +94,7 @@ app.MapDeleteHousehold();
 app.MapGetMembers();
 app.MapAddMember();
 app.MapRemoveMember();
+app.MapUpdateMemberRole();
 app.MapGetActiveHousehold();
 app.MapSetActiveHousehold();
 

@@ -60,3 +60,11 @@ Feature: Household Members
     Given I am logged in with an active household
     When I navigate to "/household/manage"
     Then the member menu for "owner" is not visible
+
+  Scenario: Owner promotes a Member to Admin
+    Given I am logged in with an active household
+    And the household also has "alice" as a "member"
+    When I navigate to "/household/manage"
+    And I open the member menu for "alice"
+    And I click make admin from the member menu
+    Then the household member "alice" has the role "Admin"
