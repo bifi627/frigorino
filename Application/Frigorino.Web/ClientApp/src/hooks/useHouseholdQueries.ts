@@ -148,7 +148,7 @@ export const useRemoveMember = (householdId: number) => {
 
     return useMutation({
         mutationFn: (userId: string) =>
-            ClientApi.members.deleteApiHouseholdMembers(householdId, userId),
+            ClientApi.members.removeMember(householdId, userId),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.members(householdId),

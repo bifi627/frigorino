@@ -289,6 +289,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                                                     }}
                                                 >
                                                     <IconButton
+                                                        data-testid={`household-member-${member.externalId}-menu-toggle`}
                                                         edge="end"
                                                         onClick={(e) =>
                                                             handleMenuClick(
@@ -347,7 +348,10 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                     </>
                 )}
                 {selectedMember && canRemoveMember(selectedMember) && (
-                    <MenuItem onClick={() => handleRemoveClick(selectedMember)}>
+                    <MenuItem
+                        data-testid="household-member-action-remove"
+                        onClick={() => handleRemoveClick(selectedMember)}
+                    >
                         Remove from Household
                     </MenuItem>
                 )}
@@ -374,10 +378,14 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setConfirmRemoveOpen(false)}>
+                    <Button
+                        data-testid="household-member-remove-cancel"
+                        onClick={() => setConfirmRemoveOpen(false)}
+                    >
                         Cancel
                     </Button>
                     <Button
+                        data-testid="household-member-remove-confirm"
                         onClick={() =>
                             memberToRemove?.externalId &&
                             removeMember(memberToRemove.externalId, {
