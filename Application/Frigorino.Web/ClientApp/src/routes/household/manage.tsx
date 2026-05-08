@@ -34,6 +34,7 @@ import { HouseholdMembers } from "../../components/household";
 import {
     useCurrentHouseholdWithDetails,
     useDeleteHousehold,
+    useHouseholdMembers,
 } from "../../hooks/useHouseholdQueries";
 
 export const Route = createFileRoute("/household/manage")({
@@ -56,6 +57,11 @@ function HouseholdManagePage() {
         error,
         hasActiveHousehold,
     } = useCurrentHouseholdWithDetails();
+
+    const { data: members } = useHouseholdMembers(
+        currentHousehold?.householdId ?? 0,
+        !!currentHousehold?.householdId,
+    );
 
     // Delete household mutation
     const deleteHouseholdMutation = useDeleteHousehold();
@@ -162,7 +168,7 @@ function HouseholdManagePage() {
 
     const householdName =
         currentHouseholdDetails?.name || t("household.household");
-    const memberCount = currentHouseholdDetails?.memberCount || 0;
+    const memberCount = members?.length ?? 0;
     const userRole = currentHousehold.role || 0;
 
     const roleLabels: Record<number, string> = {

@@ -20,17 +20,6 @@ public class HouseholdController : ControllerBase
     }
 
     /// <summary>
-    /// Get all households the current user belongs to
-    /// </summary>
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<HouseholdDto>>> GetUserHouseholds()
-    {
-        var userId = _currentUserService.UserId;
-        var households = await _householdService.GetUserHouseholdsAsync(userId);
-        return Ok(households);
-    }
-
-    /// <summary>
     /// Get a specific household by ID (if user has access)
     /// </summary>
     [HttpGet("{id}")]
