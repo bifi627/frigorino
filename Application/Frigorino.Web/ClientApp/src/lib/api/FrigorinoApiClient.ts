@@ -7,7 +7,6 @@ import type { OpenAPIConfig } from './core/OpenAPI';
 import { FetchHttpRequest } from './core/FetchHttpRequest';
 import { AuthService } from './services/AuthService';
 import { DemoService } from './services/DemoService';
-import { HouseholdService } from './services/HouseholdService';
 import { HouseholdsService } from './services/HouseholdsService';
 import { InventoriesService } from './services/InventoriesService';
 import { InventoryItemsService } from './services/InventoryItemsService';
@@ -21,7 +20,6 @@ type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 export class FrigorinoApiClient {
     public readonly auth: AuthService;
     public readonly demo: DemoService;
-    public readonly household: HouseholdService;
     public readonly households: HouseholdsService;
     public readonly inventories: InventoriesService;
     public readonly inventoryItems: InventoryItemsService;
@@ -46,7 +44,6 @@ export class FrigorinoApiClient {
         });
         this.auth = new AuthService(this.request);
         this.demo = new DemoService(this.request);
-        this.household = new HouseholdService(this.request);
         this.households = new HouseholdsService(this.request);
         this.inventories = new InventoriesService(this.request);
         this.inventoryItems = new InventoryItemsService(this.request);

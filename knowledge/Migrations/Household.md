@@ -2,7 +2,7 @@
 
 Status legend: ✅ Done · 🚧 In progress · ⬜ Not started · ❌ Dropped
 
-This tracker covers Household-level CRUD only (`/api/household` and `/api/household/{id}`). Member, list, inventory, and active-household concerns have separate trackers (or aren't tracked yet). When picking up work: read this file, find the next `⬜` slice, execute its scope, mark it `✅`, commit. The "Cross-slice cleanup" section runs after the remaining PUT slice lands.
+This tracker covers Household-level CRUD only (`/api/household` and `/api/household/{id}`). Member, list, inventory, and active-household concerns have separate trackers (or aren't tracked yet). **Status: complete** — the three live slices (POST, GET-list, DELETE) shipped; the two single-household reads/writes (GET/{id}, PUT/{id}) were dropped because they had zero UI consumers. Re-open if a real consumer appears.
 
 ## Conventions
 
@@ -30,42 +30,17 @@ Decision: drop entirely rather than migrate. Both the legacy controller action a
 
 Reintroduce only when a real consumer appears (e.g. an invite-preview screen or a `HouseholdDetailResponse` rich shape that the list can no longer back). At that point write the slice and the hook in the same change.
 
-**What stayed behind:** `HouseholdService.GetHouseholdAsync` (now `private`) and `HouseholdMappingExtensions.ToDto(this UserHousehold)` — both still consumed by the not-yet-migrated `UpdateHouseholdAsync`. They die naturally when the PUT slice migrates.
+**Carry-over status:** the private `HouseholdService.GetHouseholdAsync` and `HouseholdMappingExtensions.ToDto(this UserHousehold)` that initially survived this drop (kept alive by `UpdateHouseholdAsync`) were removed with the PUT drop — see below.
 
 ---
 
-### ⬜ PUT /api/household/{id} — UpdateHousehold
+### ❌ PUT /api/household/{id} — Dropped (not migrated)
 
-**Permission rule** (preserve from legacy): only `Owner` or `Admin` can update; `Member` is 403.
+Same story as GET/{id}: the legacy endpoint had **zero hand-written frontend consumers**. `useUpdateHousehold` (`src/hooks/useHouseholdQueries.ts`) was exported but never imported anywhere — no inline-rename UI, no household-settings dialog, neither household route (`create.tsx`, `manage.tsx`) consumes it. The hook plus the entire `HouseholdController` → `HouseholdService.UpdateHouseholdAsync` chain was orphan API surface.
 
-**Domain**
+Decision: drop entirely. Removed in one purge: the legacy controller (file deleted — no actions left), `IHouseholdService.UpdateHouseholdAsync`, `HouseholdService.UpdateHouseholdAsync`, the GET-carry-over private `HouseholdService.GetHouseholdAsync`, `HouseholdMappingExtensions.ToDto(this UserHousehold)`, `HouseholdMappingExtensions.UpdateFromRequest`, the legacy `Frigorino.Domain.DTOs.HouseholdDto`, the legacy `Frigorino.Domain.DTOs.UpdateHouseholdRequest`, the frontend `useUpdateHousehold` hook, and the dead `householdKeys.list/details/detail` query selectors that fell out of use.
 
-- Add instance method `Household.Update(string name, string? description) → Result<Household>` mirroring the static `Create` factory. Validates non-empty `name` (`WithMetadata("Property", nameof(Name))`), trims fields, sets `UpdatedAt = UtcNow`.
-- This replaces `HouseholdMappingExtensions.UpdateFromRequest` (removed in this slice).
-
-**Backend**
-
-- Create `Application/Frigorino.Features/Households/UpdateHousehold.cs`.
-  - Sealed record `UpdateHouseholdRequest(string Name, string? Description)` in the slice file.
-  - `MapPut("/api/household/{id:int}", Handle).RequireAuthorization().WithName("UpdateHousehold").WithTags("Households")`.
-  - Return type: `Results<Ok<HouseholdResponse>, NotFound, ForbidHttpResult, ValidationProblem>`.
-  - Handler steps:
-    1. Load `UserHousehold` with `Include(uh => uh.Household)` filtered by `(currentUser.UserId, id, IsActive=true, Household.IsActive=true)`. `NotFound` if null.
-    2. If `userHousehold.Role == Member`, `TypedResults.Forbid()`.
-    3. Call `userHousehold.Household.Update(request.Name, request.Description)` → `ToValidationProblem()` on failure.
-    4. `db.SaveChangesAsync(ct)` once.
-    5. `Ok(HouseholdResponse.From(household, userHousehold.Role))`.
-- Wire in `Program.cs`.
-- Remove from legacy: `HouseholdController.UpdateHousehold`, `IHouseholdService.UpdateHouseholdAsync`, `HouseholdService.UpdateHouseholdAsync`, `HouseholdMappingExtensions.UpdateFromRequest`, `Frigorino.Domain.DTOs.UpdateHouseholdRequest`.
-- Carried over from the GET decision (orphan endpoint dropped): `HouseholdService.GetHouseholdAsync` (now `private`, only consumer is `UpdateHouseholdAsync`) and `HouseholdMappingExtensions.ToDto(this UserHousehold)`. Both become dead the moment `UpdateHouseholdAsync` migrates — remove them in the same commit.
-
-**Frontend**
-
-- After regen: `ClientApi.household.putApiHousehold(id, body)` → `ClientApi.households.updateHousehold(id, body)`. Update `useUpdateHousehold` in `src/hooks/useHouseholdQueries.ts:96-117`.
-- `useUpdateHousehold` is currently exported but **has no UI consumer** — backend rename only.
-- Generated `UpdateHouseholdRequest` type shape unchanged (Name, Description); no caller adjustments.
-
-**Tests** — optional: owner+admin can update; member returns 403; empty name returns 400 ValidationProblem.
+Reintroduce only when a real consumer appears (an inline-rename UI or a `/household/{id}/settings` screen). At that point write the slice, add `Household.Update(name, description) → Result<Household>` as an instance method on the entity (mirroring the existing `Create` factory), validate non-empty name with `WithMetadata("Property", nameof(Name))`, return `Results<Ok<HouseholdResponse>, NotFound, ForbidHttpResult, ValidationProblem>`, preserve the legacy permission rule (Owner/Admin only; Member → 403), and add the matching hook in the same change.
 
 ---
 
@@ -75,27 +50,9 @@ File: `Application/Frigorino.Features/Households/DeleteHousehold.cs`. Owner-only
 
 ---
 
-## Cross-slice cleanup (run after PUT lands)
+## Cross-slice cleanup — done
 
-1. **`HouseholdController.cs`** — empty by then; delete the file.
-2. **`IHouseholdService` / `HouseholdService`** — keep. Member-management methods still live there until the Members tracker runs.
-3. **`HouseholdMappingExtensions.cs`**:
-   - Remove `UserHousehold.ToDto()` (already PUT-slice-deferred — see PUT entry above).
-   - Remove `UpdateFromRequest` (PUT migration removes it).
-   - Keep `User.ToDto()` and `UserHousehold.ToMemberDto()` — still consumed by member methods.
-4. **`Frigorino.Domain/DTOs/HouseholdDto.cs`**:
-   - Remove `HouseholdDto`. Verify with grep first.
-   - Remove `UpdateHouseholdRequest` (replaced by the slice record).
-   - Keep `UserDto`, `HouseholdMemberDto`, `AddMemberRequest`, `UpdateMemberRoleRequest` for the member methods.
-5. **Frontend regen** — final `npm run api` after cleanup. Confirm the generated `src/lib/api/services/HouseholdService.ts` (singular, legacy controller) is gone and only `HouseholdsService.ts` (plural, from `WithTags("Households")`) remains.
-
-## Recommended execution order
-
-Only **PUT** remains. (DELETE done; GET/{id} dropped — see slice entries.)
-
-PUT introduces the new `Household.Update` domain method (biggest design touch) and removes the most legacy code (`UpdateFromRequest`, the legacy `UpdateHouseholdRequest` DTO, plus the GET-decision carry-overs).
-
-Run `dotnet build` + `dotnet test` + `npm run api` + `npm run tsc` before landing.
+Folded into the PUT drop in one purge: `HouseholdController.cs` deleted (no actions left), `HouseholdMappingExtensions` shrunk to `User.ToDto()` + `UserHousehold.ToMemberDto()` (the only ones the member methods still need), `Frigorino.Domain/DTOs/HouseholdDto.cs` shrunk to `UserDto`, `HouseholdMemberDto`, `AddMemberRequest`, `UpdateMemberRoleRequest`. `IHouseholdService` / `HouseholdService` keep their member-management methods until the Members tracker runs. Final `npm run api` confirmed: only `HouseholdsService.ts` (plural, from `WithTags("Households")`) is generated; the legacy singular `HouseholdService.ts` and the `HouseholdDto.ts` / `UpdateHouseholdRequest.ts` model files are gone.
 
 ## Deferred / out of scope
 

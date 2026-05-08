@@ -5,25 +5,6 @@ namespace Frigorino.Application.Extensions
 {
     public static class HouseholdMappingExtensions
     {
-        public static HouseholdDto ToDto(this UserHousehold userHousehold)
-        {
-            return new HouseholdDto
-            {
-                Id = userHousehold.Household.Id,
-                Name = userHousehold.Household.Name,
-                Description = userHousehold.Household.Description,
-                CreatedAt = userHousehold.Household.CreatedAt,
-                UpdatedAt = userHousehold.Household.UpdatedAt,
-                CreatedByUser = userHousehold.Household.CreatedByUser.ToDto(),
-                CurrentUserRole = userHousehold.Role,
-                MemberCount = userHousehold.Household.UserHouseholds.Count(x => x.IsActive),
-                Members = userHousehold.Household.UserHouseholds
-                    .Where(x => x.IsActive)
-                    .Select(x => x.ToMemberDto())
-                    .ToList()
-            };
-        }
-
         public static UserDto ToDto(this User user)
         {
             return new UserDto
@@ -42,13 +23,6 @@ namespace Frigorino.Application.Extensions
                 Role = userHousehold.Role,
                 JoinedAt = userHousehold.JoinedAt
             };
-        }
-
-        public static void UpdateFromRequest(this Household household, UpdateHouseholdRequest request)
-        {
-            household.Name = request.Name.Trim();
-            household.Description = request.Description?.Trim();
-            household.UpdatedAt = DateTime.UtcNow;
         }
     }
 }

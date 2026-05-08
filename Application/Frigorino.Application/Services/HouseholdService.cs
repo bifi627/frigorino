@@ -16,51 +16,6 @@ namespace Frigorino.Application.Services
             _dbContext = dbContext;
         }
 
-        // Internal materialiser kept alive by UpdateHouseholdAsync. Removed when the PUT slice migrates.
-        private async Task<HouseholdDto?> GetHouseholdAsync(int id, string userId)
-        {
-            var userHousehold = await _dbContext.UserHouseholds
-                .Include(uh => uh.Household)
-                .ThenInclude(h => h.CreatedByUser)
-                .Include(uh => uh.Household)
-                .ThenInclude(h => h.UserHouseholds.Where(x => x.IsActive))
-                .ThenInclude(uh => uh.User)
-                .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == id && uh.IsActive);
-
-            return userHousehold?.ToDto();
-        }
-
-        public async Task<HouseholdDto?> UpdateHouseholdAsync(int id, UpdateHouseholdRequest request, string userId)
-        {
-            var userHousehold = await _dbContext.UserHouseholds
-                .Include(uh => uh.Household)
-                .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == id && uh.IsActive);
-
-            if (userHousehold == null)
-            {
-                return null;
-            }
-
-            // Check permissions (Admin or Owner can update)
-            if (userHousehold.Role == HouseholdRole.Member)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to update this household.");
-            }
-
-            // Validate input
-            if (string.IsNullOrWhiteSpace(request.Name))
-            {
-                throw new ArgumentException("Household name is required.");
-            }
-
-            // Update household using extension method
-            userHousehold.Household.UpdateFromRequest(request);
-            await _dbContext.SaveChangesAsync();
-
-            // Return updated household
-            return await GetHouseholdAsync(id, userId);
-        }
-
         #region Member Management
 
         public async Task<IEnumerable<HouseholdMemberDto>> GetHouseholdMembersAsync(int householdId, string userId)
