@@ -131,6 +131,61 @@
             "description": "Not Found"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "AddMember",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
       }
     },
     "/api/me/active-household": {
@@ -1812,66 +1867,6 @@
         }
       }
     },
-    "/api/household/{householdId}/Members": {
-      "post": {
-        "tags": [
-          "Members"
-        ],
-        "parameters": [
-          {
-            "name": "householdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddMemberRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddMemberRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddMemberRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdMemberDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdMemberDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdMemberDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/household/{householdId}/Members/{targetUserId}/role": {
       "put": {
         "tags": [
@@ -2026,7 +2021,8 @@
       },
       "AddMemberRequest": {
         "required": [
-          "email"
+          "email",
+          "role"
         ],
         "type": "object",
         "properties": {

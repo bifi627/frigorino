@@ -5,6 +5,6 @@
 import type { HouseholdRole } from './HouseholdRole';
 export type AddMemberRequest = {
     email: string;
-    role?: (null | HouseholdRole);
+    role: (null | HouseholdRole);
 };
 

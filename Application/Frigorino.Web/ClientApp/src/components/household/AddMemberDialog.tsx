@@ -13,14 +13,9 @@ import {
     Select,
     TextField,
 } from "@mui/material";
-import {
-    useMutation,
-    useQueryClient,
-    type DefaultError,
-} from "@tanstack/react-query";
 import React, { useState } from "react";
-import { ClientApi } from "../../common/apiClient";
-import { type AddMemberRequest, type HouseholdRole } from "../../lib/api";
+import { useAddMember } from "../../hooks/useHouseholdQueries";
+import { ApiError, type HouseholdRole } from "../../lib/api";
 
 interface AddMemberDialogProps {
     open: boolean;
@@ -34,6 +29,16 @@ const roleLabels: Record<number, string> = {
     2: "Owner",
 };
 
+function readEmailError(error: unknown): string {
+    if (error instanceof ApiError) {
+        const emailErrors = error.body?.errors?.email;
+        if (Array.isArray(emailErrors) && emailErrors.length > 0) {
+            return emailErrors[0];
+        }
+    }
+    return "Failed to add member";
+}
+
 export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     open,
     onClose,
@@ -43,27 +48,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     const [role, setRole] = useState<HouseholdRole>(0);
     const [error, setError] = useState<string | null>(null);
 
-    const queryClient = useQueryClient();
-
-    const addMemberMutation = useMutation({
-        mutationFn: async (request: AddMemberRequest) => {
-            return ClientApi.members.postApiHouseholdMembers(
-                householdId,
-                request,
-            );
-        },
-        onSuccess: () => {
-            // Invalidate and refetch household members
-            queryClient.invalidateQueries({
-                queryKey: ["household-members", householdId],
-            });
-            queryClient.invalidateQueries({ queryKey: ["user-households"] });
-            handleClose();
-        },
-        onError: (error: DefaultError) => {
-            setError(error.message || "Failed to add member");
-        },
-    });
+    const addMemberMutation = useAddMember(householdId);
 
     const handleClose = () => {
         setEmail("");
@@ -86,10 +71,13 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
             return;
         }
 
-        addMemberMutation.mutate({
-            email: email.trim(),
-            role,
-        });
+        addMemberMutation.mutate(
+            { email: email.trim(), role },
+            {
+                onSuccess: () => handleClose(),
+                onError: (err) => setError(readEmailError(err)),
+            },
+        );
     };
 
     return (
@@ -107,6 +95,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
                     >
                         {error && (
                             <Alert
+                                data-testid="household-add-member-error"
                                 severity="error"
                                 onClose={() => setError(null)}
                             >
@@ -123,11 +112,18 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
                             required
                             placeholder="user@example.com"
                             disabled={addMemberMutation.isPending}
+                            slotProps={{
+                                htmlInput: {
+                                    "data-testid":
+                                        "household-add-member-email-input",
+                                },
+                            }}
                         />
 
                         <FormControl fullWidth>
                             <InputLabel>Role</InputLabel>
                             <Select
+                                data-testid="household-add-member-role-select"
                                 value={role}
                                 onChange={(e) =>
                                     setRole(e.target.value as HouseholdRole)
@@ -145,12 +141,14 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
 
                 <DialogActions>
                     <Button
+                        data-testid="household-add-member-cancel"
                         onClick={handleClose}
                         disabled={addMemberMutation.isPending}
                     >
                         Cancel
                     </Button>
                     <Button
+                        data-testid="household-add-member-submit"
                         type="submit"
                         variant="contained"
                         disabled={addMemberMutation.isPending}

@@ -173,6 +173,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                         </Typography>
                         {canManageMembers && (
                             <Button
+                                data-testid="household-add-member-button"
                                 variant="contained"
                                 startIcon={
                                     <PersonAddIcon

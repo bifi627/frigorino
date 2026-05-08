@@ -163,6 +163,28 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
         await api.SetCurrentHouseholdAsync(household.Id);
     }
 
+    [Given("a user {string} exists")]
+    public async Task GivenAUserExists(string alias)
+    {
+        var scenarioSuffix = ctx.DatabaseName[^8..];
+        var externalId = $"user-{alias}-{scenarioSuffix}";
+
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var now = DateTime.UtcNow;
+        db.Users.Add(new User
+        {
+            ExternalId = externalId,
+            Name = alias,
+            Email = $"{alias}@test.frigorino.local",
+            CreatedAt = now,
+            LastLoginAt = now,
+            IsActive = true,
+        });
+        await db.SaveChangesAsync();
+    }
+
     [Given("the household also has {string} as a {string}")]
     public async Task GivenTheHouseholdAlsoHas(string alias, string roleName)
     {

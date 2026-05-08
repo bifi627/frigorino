@@ -17,12 +17,6 @@ namespace Frigorino.Domain.DTOs
     }
 
     // Member management DTOs
-    public class AddMemberRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public HouseholdRole? Role { get; set; } = HouseholdRole.Member;
-    }
-
     public class UpdateMemberRoleRequest
     {
         public HouseholdRole Role { get; set; }
