@@ -2,7 +2,7 @@
 
 Status legend: ✅ Done · 🚧 In progress · ⬜ Not started · ❌ Dropped
 
-This tracker covers Household-level CRUD only (`/api/household` and `/api/household/{id}`). Member, list, inventory, and active-household concerns have separate trackers (or aren't tracked yet). When picking up work: read this file, find the next `⬜` slice, execute its scope, mark it `✅`, commit. The "Cross-slice cleanup" section runs after the remaining PUT and DELETE slices land.
+This tracker covers Household-level CRUD only (`/api/household` and `/api/household/{id}`). Member, list, inventory, and active-household concerns have separate trackers (or aren't tracked yet). When picking up work: read this file, find the next `⬜` slice, execute its scope, mark it `✅`, commit. The "Cross-slice cleanup" section runs after the remaining PUT slice lands.
 
 ## Conventions
 
@@ -69,35 +69,13 @@ Reintroduce only when a real consumer appears (e.g. an invite-preview screen or 
 
 ---
 
-### ⬜ DELETE /api/household/{id} — DeleteHousehold
+### ✅ DELETE /api/household/{id} — DeleteHousehold
 
-**Permission rule** (preserve from legacy): only `Owner` can delete. Soft-deletes the household AND all its `UserHousehold` memberships in one save.
-
-**Domain**: keep deactivation inline in the handler (two field flips + a loop). Promoting it to a `Household.Deactivate()` method earns nothing today — revisit if delete semantics get richer.
-
-**Backend**
-
-- Create `Application/Frigorino.Features/Households/DeleteHousehold.cs`.
-  - `MapDelete("/api/household/{id:int}", Handle).RequireAuthorization().WithName("DeleteHousehold").WithTags("Households")`.
-  - Return type: `Results<NoContent, NotFound, ForbidHttpResult>`.
-  - Handler steps:
-    1. Load `UserHousehold` with `Include(uh => uh.Household).ThenInclude(h => h.UserHouseholds)` for the calling user. `NotFound` if null.
-    2. If `userHousehold.Role != Owner`, `TypedResults.Forbid()`.
-    3. `userHousehold.Household.IsActive = false; userHousehold.Household.UpdatedAt = DateTime.UtcNow;`. Loop the included memberships, set `IsActive = false` on each.
-    4. `db.SaveChangesAsync(ct)` once.
-    5. `TypedResults.NoContent()`.
-- Wire in `Program.cs`.
-- Remove from legacy: `HouseholdController.DeleteHousehold` action — at this point the controller is **empty**; delete `HouseholdController.cs` entirely. Also remove `IHouseholdService.DeleteHouseholdAsync` + `HouseholdService.DeleteHouseholdAsync`.
-
-**Frontend**
-
-- After regen: `ClientApi.household.deleteApiHousehold(id)` → `ClientApi.households.deleteHousehold(id)`. Update `useDeleteHousehold` (`src/hooks/useHouseholdQueries.ts:120-135`) — only consumer is `src/routes/household/manage.tsx:67`.
-
-**Tests** — optional: owner can delete; admin+member receive 403; deletion soft-removes all memberships (assert via DB inspection in the integration test fixture).
+File: `Application/Frigorino.Features/Households/DeleteHousehold.cs`. Owner-only soft-delete; flips `Household.IsActive` and loops included memberships in one save. `Results<NoContent, NotFound, ForbidHttpResult>`. Frontend `useDeleteHousehold` hook now calls `ClientApi.households.deleteHousehold(id)`.
 
 ---
 
-## Cross-slice cleanup (run after PUT and DELETE land)
+## Cross-slice cleanup (run after PUT lands)
 
 1. **`HouseholdController.cs`** — empty by then; delete the file.
 2. **`IHouseholdService` / `HouseholdService`** — keep. Member-management methods still live there until the Members tracker runs.
@@ -113,12 +91,11 @@ Reintroduce only when a real consumer appears (e.g. an invite-preview screen or 
 
 ## Recommended execution order
 
-**DELETE → PUT.** (GET/{id} dropped — see slice entry.)
+Only **PUT** remains. (DELETE done; GET/{id} dropped — see slice entries.)
 
-- **DELETE** is the smallest scope: one frontend consumer, no domain method, simplest handler.
-- **PUT** is last because it introduces the new `Household.Update` domain method (biggest design touch) and removes the most legacy code (`UpdateFromRequest`, the legacy `UpdateHouseholdRequest` DTO, plus the GET-decision carry-overs).
+PUT introduces the new `Household.Update` domain method (biggest design touch) and removes the most legacy code (`UpdateFromRequest`, the legacy `UpdateHouseholdRequest` DTO, plus the GET-decision carry-overs).
 
-Each slice should land as its own PR. Run `dotnet build` + `dotnet test` + `npm run api` + `npm run tsc` before each.
+Run `dotnet build` + `dotnet test` + `npm run api` + `npm run tsc` before landing.
 
 ## Deferred / out of scope
 

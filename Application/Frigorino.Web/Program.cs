@@ -89,6 +89,7 @@ app.UseMiddleware<InitialConnectionMiddleware>();
 app.MapControllers();
 app.MapCreateHousehold();
 app.MapGetUserHouseholds();
+app.MapDeleteHousehold();
 app.MapGetActiveHousehold();
 app.MapSetActiveHousehold();
 

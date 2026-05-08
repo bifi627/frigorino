@@ -28,20 +28,4 @@ export class HouseholdService {
             mediaType: 'application/json',
         });
     }
-    /**
-     * @param id
-     * @returns any OK
-     * @throws ApiError
-     */
-    public deleteApiHousehold(
-        id: number,
-    ): CancelablePromise<any> {
-        return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/Household/{id}',
-            path: {
-                'id': id,
-            },
-        });
-    }
 }
