@@ -51,7 +51,7 @@ export const useUserHouseholds = (enabled = true) => {
 export const useHouseholdMembers = (householdId: number, enabled = true) => {
     return useQuery({
         queryKey: householdKeys.members(householdId),
-        queryFn: () => ClientApi.members.getApiHouseholdMembers(householdId),
+        queryFn: () => ClientApi.members.getMembers(householdId),
         enabled: enabled && !!householdId,
     });
 };

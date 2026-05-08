@@ -25,6 +25,7 @@ export type { InventoryDto } from './models/InventoryDto';
 export type { InventoryItemDto } from './models/InventoryItemDto';
 export type { ListDto } from './models/ListDto';
 export type { ListItemDto } from './models/ListItemDto';
+export type { MemberResponse } from './models/MemberResponse';
 export type { ReorderItemRequest } from './models/ReorderItemRequest';
 export type { SetActiveHouseholdRequest } from './models/SetActiveHouseholdRequest';
 export type { UpdateInventoryItemRequest } from './models/UpdateInventoryItemRequest';

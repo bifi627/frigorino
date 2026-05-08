@@ -162,4 +162,45 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.HouseholdId = household.Id;
         await api.SetCurrentHouseholdAsync(household.Id);
     }
+
+    [Given("the household also has {string} as a {string}")]
+    public async Task GivenTheHouseholdAlsoHas(string alias, string roleName)
+    {
+        var scenarioSuffix = ctx.DatabaseName[^8..];
+        var externalId = $"user-{alias}-{scenarioSuffix}";
+
+        var role = roleName.ToLowerInvariant() switch
+        {
+            "member" => HouseholdRole.Member,
+            "admin" => HouseholdRole.Admin,
+            "owner" => HouseholdRole.Owner,
+            _ => throw new ArgumentException($"Unknown role: {roleName}"),
+        };
+
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var now = DateTime.UtcNow;
+
+        db.Users.Add(new User
+        {
+            ExternalId = externalId,
+            Name = alias,
+            Email = $"{alias}@test.frigorino.local",
+            CreatedAt = now,
+            LastLoginAt = now,
+            IsActive = true,
+        });
+
+        db.UserHouseholds.Add(new UserHousehold
+        {
+            UserId = externalId,
+            HouseholdId = ctx.HouseholdId,
+            Role = role,
+            JoinedAt = now,
+            IsActive = true,
+        });
+
+        await db.SaveChangesAsync();
+    }
 }
