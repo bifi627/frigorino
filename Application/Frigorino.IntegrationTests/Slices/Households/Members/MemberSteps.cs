@@ -58,6 +58,40 @@ public class MemberSteps(ScenarioContextHolder ctx)
             .ToContainTextAsync(substring);
     }
 
+    [When("I open the member menu for {string}")]
+    public async Task WhenIOpenTheMemberMenuFor(string alias)
+    {
+        var externalId = ExternalIdFor(alias);
+        await ctx.Page.GetByTestId($"household-member-{externalId}-menu-toggle").ClickAsync();
+    }
+
+    [When("I click remove from the member menu")]
+    public async Task WhenIClickRemoveFromTheMemberMenu()
+    {
+        await ctx.Page.GetByTestId("household-member-action-remove").ClickAsync();
+    }
+
+    [When("I confirm the member removal")]
+    public async Task WhenIConfirmTheMemberRemoval()
+    {
+        await ctx.Page.GetByTestId("household-member-remove-confirm").ClickAsync();
+    }
+
+    [Then("the add member button is not visible")]
+    public async Task ThenTheAddMemberButtonIsNotVisible()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("household-add-member-button"))
+            .Not.ToBeVisibleAsync();
+    }
+
+    [Then("the member menu for {string} is not visible")]
+    public async Task ThenTheMemberMenuForIsNotVisible(string alias)
+    {
+        var externalId = ExternalIdFor(alias);
+        await Assertions.Expect(ctx.Page.GetByTestId($"household-member-{externalId}-menu-toggle"))
+            .Not.ToBeVisibleAsync();
+    }
+
     private string ExternalIdFor(string alias)
     {
         var scenarioSuffix = ctx.DatabaseName[^8..];

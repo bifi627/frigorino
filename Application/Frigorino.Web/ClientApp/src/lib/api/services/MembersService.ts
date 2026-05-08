@@ -56,6 +56,30 @@ export class MembersService {
     }
     /**
      * @param householdId
+     * @param userId
+     * @returns void
+     * @throws ApiError
+     */
+    public removeMember(
+        householdId: number,
+        userId: string,
+    ): CancelablePromise<void> {
+        return this.httpRequest.request({
+            method: 'DELETE',
+            url: '/api/household/{householdId}/members/{userId}',
+            path: {
+                'householdId': householdId,
+                'userId': userId,
+            },
+            errors: {
+                400: `Bad Request`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
+        });
+    }
+    /**
+     * @param householdId
      * @param targetUserId
      * @param requestBody
      * @returns HouseholdMemberDto OK
@@ -75,41 +99,6 @@ export class MembersService {
             },
             body: requestBody,
             mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param householdId
-     * @param targetUserId
-     * @returns any OK
-     * @throws ApiError
-     */
-    public deleteApiHouseholdMembers(
-        householdId: number,
-        targetUserId: string,
-    ): CancelablePromise<any> {
-        return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/household/{householdId}/Members/{targetUserId}',
-            path: {
-                'householdId': householdId,
-                'targetUserId': targetUserId,
-            },
-        });
-    }
-    /**
-     * @param householdId
-     * @returns any OK
-     * @throws ApiError
-     */
-    public postApiHouseholdMembersLeave(
-        householdId: number,
-    ): CancelablePromise<any> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/household/{householdId}/Members/leave',
-            path: {
-                'householdId': householdId,
-            },
         });
     }
 }

@@ -39,3 +39,24 @@ Feature: Household Members
     And I submit the add member form
     Then the add member error contains "already a member"
     And the household members list shows 2 members
+
+  Scenario: Owner removes a Member
+    Given I am logged in with an active household
+    And the household also has "alice" as a "member"
+    When I navigate to "/household/manage"
+    And I open the member menu for "alice"
+    And I click remove from the member menu
+    And I confirm the member removal
+    Then the household members list shows 1 members
+
+  Scenario: Member-role caller cannot manage members
+    Given I am logged in as "member"
+    And an existing household "Family" owned by "owner" with me as a "member"
+    When I navigate to "/household/manage"
+    Then the add member button is not visible
+    And the member menu for "owner" is not visible
+
+  Scenario: Last Owner cannot be removed via the UI
+    Given I am logged in with an active household
+    When I navigate to "/household/manage"
+    Then the member menu for "owner" is not visible

@@ -70,53 +70,6 @@ namespace Frigorino.Application.Services
             return targetMembership.ToMemberDto();
         }
 
-        public async Task<bool> RemoveMemberAsync(int householdId, string targetUserId, string userId)
-        {
-            // Check if current user has admin/owner permissions
-            var currentUserRole = await GetUserRoleInHouseholdAsync(householdId, userId);
-            if (currentUserRole == null)
-            {
-                throw new UnauthorizedAccessException("You don't have access to this household.");
-            }
-
-            if (currentUserRole == HouseholdRole.Member && targetUserId != userId)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to remove members from this household.");
-            }
-
-            // Find target membership
-            var targetMembership = await _dbContext.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == targetUserId && uh.HouseholdId == householdId && uh.IsActive);
-
-            if (targetMembership == null)
-            {
-                return false;
-            }
-
-            // Prevent removing the last owner
-            if (targetMembership.Role == HouseholdRole.Owner)
-            {
-                var ownerCount = await _dbContext.UserHouseholds
-                    .CountAsync(uh => uh.HouseholdId == householdId && uh.Role == HouseholdRole.Owner && uh.IsActive);
-
-                if (ownerCount <= 1)
-                {
-                    throw new InvalidOperationException("Cannot remove the last owner from a household.");
-                }
-            }
-
-            // Remove member (soft delete)
-            targetMembership.IsActive = false;
-            await _dbContext.SaveChangesAsync();
-
-            return true;
-        }
-
-        public async Task<bool> LeaveHouseholdAsync(int householdId, string userId)
-        {
-            return await RemoveMemberAsync(householdId, userId, userId);
-        }
-
         #endregion
 
         #region Private Helper Methods
