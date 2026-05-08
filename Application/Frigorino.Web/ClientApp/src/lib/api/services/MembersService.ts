@@ -32,21 +32,26 @@ export class MembersService {
     /**
      * @param householdId
      * @param requestBody
-     * @returns HouseholdMemberDto OK
+     * @returns MemberResponse Created
      * @throws ApiError
      */
-    public postApiHouseholdMembers(
+    public addMember(
         householdId: number,
         requestBody: AddMemberRequest,
-    ): CancelablePromise<HouseholdMemberDto> {
+    ): CancelablePromise<MemberResponse> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/household/{householdId}/Members',
+            url: '/api/household/{householdId}/members',
             path: {
                 'householdId': householdId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
         });
     }
     /**

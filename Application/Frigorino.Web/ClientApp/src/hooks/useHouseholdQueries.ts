@@ -109,7 +109,7 @@ export const useAddMember = (householdId: number) => {
 
     return useMutation({
         mutationFn: (data: AddMemberRequest) =>
-            ClientApi.members.postApiHouseholdMembers(householdId, data),
+            ClientApi.members.addMember(householdId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.members(householdId),

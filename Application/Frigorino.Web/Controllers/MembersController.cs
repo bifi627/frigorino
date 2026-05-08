@@ -20,32 +20,6 @@ public class MembersController : ControllerBase
     }
 
     /// <summary>
-    /// Add a user to household by email (Admin/Owner only)
-    /// </summary>
-    [HttpPost]
-    public async Task<ActionResult<HouseholdMemberDto>> AddMember(int householdId, AddMemberRequest request)
-    {
-        try
-        {
-            var userId = _currentUserService.UserId;
-            var member = await _householdService.AddMemberAsync(householdId, request, userId);
-            return Ok(member);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
-
-    /// <summary>
     /// Update a member's role (Admin/Owner only)
     /// </summary>
     [HttpPut("{targetUserId}/role")]

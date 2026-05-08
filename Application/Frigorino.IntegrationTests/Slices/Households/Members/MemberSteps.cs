@@ -33,6 +33,31 @@ public class MemberSteps(ScenarioContextHolder ctx)
         }
     }
 
+    [When("I open the add member dialog")]
+    public async Task WhenIOpenTheAddMemberDialog()
+    {
+        await ctx.Page.GetByTestId("household-add-member-button").ClickAsync();
+    }
+
+    [When("I fill in the new member email {string}")]
+    public async Task WhenIFillInTheNewMemberEmail(string email)
+    {
+        await ctx.Page.GetByTestId("household-add-member-email-input").FillAsync(email);
+    }
+
+    [When("I submit the add member form")]
+    public async Task WhenISubmitTheAddMemberForm()
+    {
+        await ctx.Page.GetByTestId("household-add-member-submit").ClickAsync();
+    }
+
+    [Then("the add member error contains {string}")]
+    public async Task ThenTheAddMemberErrorContains(string substring)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("household-add-member-error"))
+            .ToContainTextAsync(substring);
+    }
+
     private string ExternalIdFor(string alias)
     {
         var scenarioSuffix = ctx.DatabaseName[^8..];
