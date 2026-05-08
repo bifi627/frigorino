@@ -30,7 +30,7 @@ import {
     useRemoveMember,
     useUpdateMemberRole,
 } from "../../hooks/useHouseholdQueries";
-import { type HouseholdMemberDto, type HouseholdRole } from "../../lib/api";
+import { type HouseholdRole, type MemberResponse } from "../../lib/api";
 import { AddMemberDialog } from "./AddMemberDialog";
 
 interface HouseholdMembersProps {
@@ -66,10 +66,10 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
     const [memberToRemove, setMemberToRemove] =
-        useState<HouseholdMemberDto | null>(null);
+        useState<MemberResponse | null>(null);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [selectedMember, setSelectedMember] =
-        useState<HouseholdMemberDto | null>(null);
+        useState<MemberResponse | null>(null);
 
     const {
         data: members,
@@ -83,7 +83,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
 
     const handleMenuClick = (
         event: React.MouseEvent<HTMLElement>,
-        member: HouseholdMemberDto,
+        member: MemberResponse,
     ) => {
         setMenuAnchor(event.currentTarget);
         setSelectedMember(member);
@@ -94,17 +94,17 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
         setSelectedMember(null);
     };
 
-    const handleRemoveClick = (member: HouseholdMemberDto) => {
+    const handleRemoveClick = (member: MemberResponse) => {
         setMemberToRemove(member);
         setConfirmRemoveOpen(true);
         handleMenuClose();
     };
 
     const handleRoleChange = (role: HouseholdRole) => {
-        if (selectedMember?.user?.externalId) {
+        if (selectedMember?.externalId) {
             updateRole(
                 {
-                    userId: selectedMember.user.externalId,
+                    userId: selectedMember.externalId,
                     role,
                 },
                 {
@@ -117,14 +117,14 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
     };
 
     const canManageMembers = currentUserRole >= 1; // Admin or Owner
-    const canRemoveMember = (member: HouseholdMemberDto): boolean => {
+    const canRemoveMember = (member: MemberResponse): boolean => {
         if (!canManageMembers) return false;
         if (member.role === 2) return false; // Cannot remove owner
         if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot remove another admin
         return true;
     };
 
-    const canChangeRole = (member: HouseholdMemberDto): boolean => {
+    const canChangeRole = (member: MemberResponse): boolean => {
         if (!canManageMembers) return false;
         if (member.role === 2) return false; // Cannot change owner role
         if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot change another admin's role
@@ -198,11 +198,15 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                     </Box>
 
                     {members && members.length > 0 ? (
-                        <List sx={{ px: 0 }}>
+                        <List
+                            data-testid="household-members-list"
+                            sx={{ px: 0 }}
+                        >
                             {members.map(
-                                (member: HouseholdMemberDto, index: number) => (
+                                (member: MemberResponse, index: number) => (
                                     <ListItem
-                                        key={member.user?.externalId || index}
+                                        key={member.externalId || index}
+                                        data-testid={`household-member-${member.externalId}`}
                                         divider
                                         sx={{
                                             px: { xs: 1, sm: 2 },
@@ -225,7 +229,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                                                         mb: 0.5,
                                                     }}
                                                 >
-                                                    {member.user?.name ||
+                                                    {member.name ||
                                                         "Unknown User"}
                                                 </Typography>
                                             }
@@ -244,7 +248,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                                                         whiteSpace: "nowrap",
                                                     }}
                                                 >
-                                                    {member.user?.email ||
+                                                    {member.email ||
                                                         "No email"}
                                                 </Typography>
                                             }
@@ -259,6 +263,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                                             }}
                                         >
                                             <Chip
+                                                data-testid={`household-member-${member.externalId}-role`}
                                                 label={roleLabels[member.role!]}
                                                 color={roleColors[member.role!]}
                                                 size="small"
@@ -363,7 +368,7 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                 <DialogContent>
                     <DialogContentText>
                         Are you sure you want to remove{" "}
-                        {memberToRemove?.user?.name || "this user"} from this
+                        {memberToRemove?.name || "this user"} from this
                         household? This action cannot be undone.
                     </DialogContentText>
                 </DialogContent>
@@ -373,8 +378,8 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                     </Button>
                     <Button
                         onClick={() =>
-                            memberToRemove?.user?.externalId &&
-                            removeMember(memberToRemove.user.externalId, {
+                            memberToRemove?.externalId &&
+                            removeMember(memberToRemove.externalId, {
                                 onSuccess: () => {
                                     setConfirmRemoveOpen(false);
                                     setMemberToRemove(null);

@@ -2,6 +2,7 @@ using System.Reflection;
 using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Households.Members;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -90,6 +91,7 @@ app.MapControllers();
 app.MapCreateHousehold();
 app.MapGetUserHouseholds();
 app.MapDeleteHousehold();
+app.MapGetMembers();
 app.MapGetActiveHousehold();
 app.MapSetActiveHousehold();
 

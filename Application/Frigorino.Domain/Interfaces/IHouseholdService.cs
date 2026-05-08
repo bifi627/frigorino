@@ -5,7 +5,6 @@ namespace Frigorino.Domain.Interfaces
     public interface IHouseholdService
     {
         // Member management
-        Task<IEnumerable<HouseholdMemberDto>> GetHouseholdMembersAsync(int householdId, string userId);
         Task<HouseholdMemberDto?> AddMemberAsync(int householdId, AddMemberRequest request, string userId);
         Task<HouseholdMemberDto?> UpdateMemberRoleAsync(int householdId, string targetUserId, UpdateMemberRoleRequest request, string userId);
         Task<bool> RemoveMemberAsync(int householdId, string targetUserId, string userId);

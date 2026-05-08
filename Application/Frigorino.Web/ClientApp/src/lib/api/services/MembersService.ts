@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { AddMemberRequest } from '../models/AddMemberRequest';
 import type { HouseholdMemberDto } from '../models/HouseholdMemberDto';
+import type { MemberResponse } from '../models/MemberResponse';
 import type { UpdateMemberRoleRequest } from '../models/UpdateMemberRoleRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -11,17 +12,20 @@ export class MembersService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * @param householdId
-     * @returns HouseholdMemberDto OK
+     * @returns MemberResponse OK
      * @throws ApiError
      */
-    public getApiHouseholdMembers(
+    public getMembers(
         householdId: number,
-    ): CancelablePromise<Array<HouseholdMemberDto>> {
+    ): CancelablePromise<Array<MemberResponse>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/household/{householdId}/Members',
+            url: '/api/household/{householdId}/members',
             path: {
                 'householdId': householdId,
+            },
+            errors: {
+                404: `Not Found`,
             },
         });
     }

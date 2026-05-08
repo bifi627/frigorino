@@ -96,6 +96,43 @@
         }
       }
     },
+    "/api/household/{householdId}/members": {
+      "get": {
+        "tags": [
+          "Members"
+        ],
+        "operationId": "GetMembers",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/me/active-household": {
       "get": {
         "tags": [
@@ -1776,53 +1813,6 @@
       }
     },
     "/api/household/{householdId}/Members": {
-      "get": {
-        "tags": [
-          "Members"
-        ],
-        "parameters": [
-          {
-            "name": "householdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdMemberDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdMemberDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdMemberDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "tags": [
           "Members"
@@ -2458,6 +2448,34 @@
           }
         }
       },
+      "MemberResponse": {
+        "required": [
+          "externalId",
+          "name",
+          "email",
+          "role",
+          "joinedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/HouseholdRole"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ReorderItemRequest": {
         "required": [
           "afterId"
@@ -2639,6 +2657,9 @@
       "name": "Households"
     },
     {
+      "name": "Members"
+    },
+    {
       "name": "Me"
     },
     {
@@ -2664,9 +2685,6 @@
     },
     {
       "name": "Lists"
-    },
-    {
-      "name": "Members"
     }
   ]
 }

@@ -20,24 +20,6 @@ public class MembersController : ControllerBase
     }
 
     /// <summary>
-    /// Get all members of a household
-    /// </summary>
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<HouseholdMemberDto>>> GetHouseholdMembers(int householdId)
-    {
-        try
-        {
-            var userId = _currentUserService.UserId;
-            var members = await _householdService.GetHouseholdMembersAsync(householdId, userId);
-            return Ok(members);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return NotFound(ex.Message);
-        }
-    }
-
-    /// <summary>
     /// Add a user to household by email (Admin/Owner only)
     /// </summary>
     [HttpPost]

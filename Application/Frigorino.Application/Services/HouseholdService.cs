@@ -18,27 +18,6 @@ namespace Frigorino.Application.Services
 
         #region Member Management
 
-        public async Task<IEnumerable<HouseholdMemberDto>> GetHouseholdMembersAsync(int householdId, string userId)
-        {
-            // Check if user has access to this household
-            var userAccess = await _dbContext.UserHouseholds
-                .AnyAsync(uh => uh.UserId == userId && uh.HouseholdId == householdId && uh.IsActive);
-
-            if (!userAccess)
-            {
-                throw new UnauthorizedAccessException("You don't have access to this household.");
-            }
-
-            var members = await _dbContext.UserHouseholds
-                .Where(uh => uh.HouseholdId == householdId && uh.IsActive)
-                .Include(uh => uh.User)
-                .OrderByDescending(m => m.Role) // Owners first, then Admins, then Members
-                .ThenBy(m => m.JoinedAt)
-                .ToListAsync();
-
-            return members.Select(uh => uh.ToMemberDto());
-        }
-
         public async Task<HouseholdMemberDto?> AddMemberAsync(int householdId, AddMemberRequest request, string userId)
         {
             // Check if current user has admin/owner permissions
