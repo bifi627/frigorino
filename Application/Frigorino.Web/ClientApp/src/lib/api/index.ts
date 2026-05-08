@@ -17,7 +17,6 @@ export type { CreateInventoryItemRequest } from './models/CreateInventoryItemReq
 export type { CreateInventoryRequest } from './models/CreateInventoryRequest';
 export type { CreateListItemRequest } from './models/CreateListItemRequest';
 export type { CreateListRequest } from './models/CreateListRequest';
-export type { HouseholdDto } from './models/HouseholdDto';
 export type { HouseholdMemberDto } from './models/HouseholdMemberDto';
 export type { HouseholdResponse } from './models/HouseholdResponse';
 export type { HouseholdRole } from './models/HouseholdRole';
@@ -28,7 +27,6 @@ export type { ListDto } from './models/ListDto';
 export type { ListItemDto } from './models/ListItemDto';
 export type { ReorderItemRequest } from './models/ReorderItemRequest';
 export type { SetActiveHouseholdRequest } from './models/SetActiveHouseholdRequest';
-export type { UpdateHouseholdRequest } from './models/UpdateHouseholdRequest';
 export type { UpdateInventoryItemRequest } from './models/UpdateInventoryItemRequest';
 export type { UpdateInventoryRequest } from './models/UpdateInventoryRequest';
 export type { UpdateListItemRequest } from './models/UpdateListItemRequest';
@@ -40,7 +38,6 @@ export type { WeatherForecast } from './models/WeatherForecast';
 
 export { AuthService } from './services/AuthService';
 export { DemoService } from './services/DemoService';
-export { HouseholdService } from './services/HouseholdService';
 export { HouseholdsService } from './services/HouseholdsService';
 export { InventoriesService } from './services/InventoriesService';
 export { InventoryItemsService } from './services/InventoryItemsService';

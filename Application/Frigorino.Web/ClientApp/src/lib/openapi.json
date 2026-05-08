@@ -262,66 +262,6 @@
         }
       }
     },
-    "/api/Household/{id}": {
-      "put": {
-        "tags": [
-          "Household"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateHouseholdRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateHouseholdRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateHouseholdRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HouseholdDto"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/household/{householdId}/Inventories": {
       "get": {
         "tags": [
@@ -2208,58 +2148,6 @@
           }
         }
       },
-      "HouseholdDto": {
-        "required": [
-          "id",
-          "name",
-          "createdAt",
-          "updatedAt",
-          "createdByUser",
-          "currentUserRole",
-          "memberCount",
-          "members"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdByUser": {
-            "$ref": "#/components/schemas/UserDto"
-          },
-          "currentUserRole": {
-            "$ref": "#/components/schemas/HouseholdRole"
-          },
-          "memberCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "members": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/HouseholdMemberDto"
-            }
-          }
-        }
-      },
       "HouseholdMemberDto": {
         "required": [
           "user",
@@ -2594,23 +2482,6 @@
           }
         }
       },
-      "UpdateHouseholdRequest": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
       "UpdateInventoryItemRequest": {
         "required": [
           "text"
@@ -2778,9 +2649,6 @@
     },
     {
       "name": "Demo"
-    },
-    {
-      "name": "Household"
     },
     {
       "name": "Inventories"

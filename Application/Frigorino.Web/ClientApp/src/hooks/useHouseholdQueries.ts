@@ -5,10 +5,8 @@ import type {
     ActiveHouseholdResponse,
     AddMemberRequest,
     CreateHouseholdRequest,
-    HouseholdDto,
     HouseholdResponse,
     HouseholdRole,
-    UpdateHouseholdRequest,
     UpdateMemberRoleRequest,
 } from "../lib/api";
 
@@ -16,7 +14,6 @@ import type {
 export type {
     ActiveHouseholdResponse,
     CreateHouseholdRequest,
-    HouseholdDto,
     HouseholdResponse,
     HouseholdRole,
 };
@@ -25,10 +22,6 @@ export type {
 export const householdKeys = {
     all: ["households"] as const,
     lists: () => [...householdKeys.all, "list"] as const,
-    list: (filters?: string) =>
-        [...householdKeys.lists(), { filters }] as const,
-    details: () => [...householdKeys.all, "detail"] as const,
-    detail: (id: number) => [...householdKeys.details(), id] as const,
     current: () => ["currentHousehold"] as const,
     members: (householdId: number) =>
         [...householdKeys.all, "members", householdId] as const,
@@ -88,30 +81,6 @@ export const useSetCurrentHousehold = () => {
                 queryKey: householdKeys.current(),
             });
             queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
-        },
-    });
-};
-
-// Update Household Hook
-export const useUpdateHousehold = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({
-            id,
-            data,
-        }: {
-            id: number;
-            data: UpdateHouseholdRequest;
-        }) => ClientApi.household.putApiHousehold(id, data),
-        onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({
-                queryKey: householdKeys.detail(id),
-            });
-            queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
-            queryClient.invalidateQueries({
-                queryKey: householdKeys.current(),
-            });
         },
     });
 };
