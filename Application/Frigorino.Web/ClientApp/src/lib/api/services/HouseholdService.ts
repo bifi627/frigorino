@@ -9,21 +9,11 @@ import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class HouseholdService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * @returns HouseholdDto OK
-     * @throws ApiError
-     */
-    public getApiHousehold(): CancelablePromise<Array<HouseholdDto>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/Household',
-        });
-    }
-    /**
      * @param id
      * @returns HouseholdDto OK
      * @throws ApiError
      */
-    public getApiHousehold1(
+    public getApiHousehold(
         id: number,
     ): CancelablePromise<HouseholdDto> {
         return this.httpRequest.request({

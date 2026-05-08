@@ -43,6 +43,27 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Households"
+        ],
+        "operationId": "GetUserHouseholds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HouseholdResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/me/active-household": {
@@ -204,44 +225,6 @@
               "text/json": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Household": {
-      "get": {
-        "tags": [
-          "Household"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HouseholdDto"
-                  }
                 }
               }
             }

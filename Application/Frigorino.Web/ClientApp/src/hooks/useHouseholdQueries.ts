@@ -6,6 +6,7 @@ import type {
     AddMemberRequest,
     CreateHouseholdRequest,
     HouseholdDto,
+    HouseholdResponse,
     HouseholdRole,
     UpdateHouseholdRequest,
     UpdateMemberRoleRequest,
@@ -16,6 +17,7 @@ export type {
     ActiveHouseholdResponse,
     CreateHouseholdRequest,
     HouseholdDto,
+    HouseholdResponse,
     HouseholdRole,
 };
 
@@ -46,7 +48,7 @@ export const useCurrentHousehold = () => {
 export const useUserHouseholds = (enabled = true) => {
     return useQuery({
         queryKey: householdKeys.lists(),
-        queryFn: () => ClientApi.household.getApiHousehold(),
+        queryFn: () => ClientApi.households.getUserHouseholds(),
         enabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
     });

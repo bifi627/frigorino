@@ -88,6 +88,7 @@ app.UseMiddleware<InitialConnectionMiddleware>();
 // API endpoints
 app.MapControllers();
 app.MapCreateHousehold();
+app.MapGetUserHouseholds();
 app.MapGetActiveHousehold();
 app.MapSetActiveHousehold();
 

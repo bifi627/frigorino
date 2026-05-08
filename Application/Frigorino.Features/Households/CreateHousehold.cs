@@ -1,7 +1,14 @@
 // Reference vertical slice — every future slice in Frigorino.Features mirrors these rules:
-//  1. One slice = one file (request DTO + response DTO + endpoint registration + handler).
+//  1. One slice = one file: request DTO + endpoint registration + handler. The response DTO lives in the
+//     same file by default, but may be promoted to a folder-level file (e.g. `HouseholdResponse.cs`) when
+//     it is shared across multiple read slices in the same folder. See `knowledge/Vertical_Slices.md`.
 //  2. DTOs are sealed records.
-//  3. Response DTOs expose `public static XxxResponse From(EntityType e, ...)` factory methods. No mapping libraries.
+//  3. No mapping libraries (no AutoMapper). Two patterns are blessed:
+//     - Write slices: after the domain factory returns an entity, build the response with a static
+//       `XxxResponse.From(entity, ...)` factory method.
+//     - Read slices: project directly into the response DTO inside the LINQ query — the projection IS
+//       the mapping, and EF translates it to SQL so only the needed columns are fetched and no entity
+//       is tracked.
 //  4. The handler is a `private static` method on the endpoint class. No separate Handler class, no MediatR.
 //  5. Validation lives in the domain factory and returns `Result<T>`. Failures carry `Error`s with `WithMetadata("Property", ...)`.
 //     The endpoint never re-validates; on failure it calls `ToValidationProblem()`.
@@ -23,22 +30,6 @@ using Microsoft.AspNetCore.Routing;
 namespace Frigorino.Features.Households
 {
     public sealed record CreateHouseholdRequest(string Name, string? Description);
-
-    public sealed record HouseholdResponse(
-        int Id,
-        string Name,
-        string? Description,
-        DateTime CreatedAt,
-        DateTime UpdatedAt,
-        string CreatedByUserId,
-        HouseholdRole CurrentUserRole)
-    {
-        public static HouseholdResponse From(Household h, HouseholdRole role)
-        {
-            return new HouseholdResponse(
-                h.Id, h.Name, h.Description, h.CreatedAt, h.UpdatedAt, h.CreatedByUserId, role);
-        }
-    }
 
     public static class CreateHouseholdEndpoint
     {

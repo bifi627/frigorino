@@ -16,20 +16,6 @@ namespace Frigorino.Application.Services
             _dbContext = dbContext;
         }
 
-        public async Task<IEnumerable<HouseholdDto>> GetUserHouseholdsAsync(string userId)
-        {
-            var userHouseholds = await _dbContext.UserHouseholds
-                .Where(uh => uh.UserId == userId && uh.IsActive)
-                .Include(uh => uh.Household)
-                .ThenInclude(h => h.CreatedByUser)
-                .Include(uh => uh.Household)
-                .ThenInclude(h => h.UserHouseholds.Where(x => x.IsActive))
-                .ThenInclude(uh => uh.User)
-                .ToListAsync();
-
-            return userHouseholds.Select(uh => uh.ToDto());
-        }
-
         public async Task<HouseholdDto?> GetHouseholdAsync(int id, string userId)
         {
             var userHousehold = await _dbContext.UserHouseholds

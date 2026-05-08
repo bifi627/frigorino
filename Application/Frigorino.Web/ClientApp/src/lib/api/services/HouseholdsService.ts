@@ -26,4 +26,14 @@ export class HouseholdsService {
             },
         });
     }
+    /**
+     * @returns HouseholdResponse OK
+     * @throws ApiError
+     */
+    public getUserHouseholds(): CancelablePromise<Array<HouseholdResponse>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/household',
+        });
+    }
 }

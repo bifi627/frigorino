@@ -7,6 +7,7 @@
         "dev": "vite",
         "start": "vite --host",
         "build": "tsc -b && vite build",
+        "tsc": "tsc -b",
         "preview": "vite preview",
         "api:fetch": "dotnet build .. -c Debug",
         "api:gen": "npx openapi-typescript-codegen -i ./src/lib/openapi.json -o ./src/lib/api --client fetch --useUnionTypes --name FrigorinoApiClient",
