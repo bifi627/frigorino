@@ -130,10 +130,7 @@ export const useUpdateMemberRole = (householdId: number) => {
         }: {
             userId: string;
             role: UpdateMemberRoleRequest["role"];
-        }) =>
-            ClientApi.members.putApiHouseholdMembersRole(householdId, userId, {
-                role,
-            }),
+        }) => ClientApi.members.updateMemberRole(householdId, userId, { role }),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: householdKeys.members(householdId),

@@ -339,10 +339,16 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
             >
                 {selectedMember && canChangeRole(selectedMember) && (
                     <>
-                        <MenuItem onClick={() => handleRoleChange(0)}>
+                        <MenuItem
+                            data-testid="household-member-action-make-member"
+                            onClick={() => handleRoleChange(0)}
+                        >
                             Make Member
                         </MenuItem>
-                        <MenuItem onClick={() => handleRoleChange(1)}>
+                        <MenuItem
+                            data-testid="household-member-action-make-admin"
+                            onClick={() => handleRoleChange(1)}
+                        >
                             Make Admin
                         </MenuItem>
                     </>
