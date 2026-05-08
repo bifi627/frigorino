@@ -30,7 +30,8 @@
       "Bash(dotnet restore *)",
       "Bash(xargs cat *)",
       "WebFetch(domain:github.com)",
-      "Bash(dotnet --list-sdks)"
+      "Bash(dotnet --list-sdks)",
+      "Bash(docker info *)"
     ],
     "deny": [],
     "ask": []
