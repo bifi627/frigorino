@@ -16,7 +16,8 @@ namespace Frigorino.Application.Services
             _dbContext = dbContext;
         }
 
-        public async Task<HouseholdDto?> GetHouseholdAsync(int id, string userId)
+        // Internal materialiser kept alive by UpdateHouseholdAsync. Removed when the PUT slice migrates.
+        private async Task<HouseholdDto?> GetHouseholdAsync(int id, string userId)
         {
             var userHousehold = await _dbContext.UserHouseholds
                 .Include(uh => uh.Household)
@@ -27,36 +28,6 @@ namespace Frigorino.Application.Services
                 .FirstOrDefaultAsync(uh => uh.UserId == userId && uh.HouseholdId == id && uh.IsActive);
 
             return userHousehold?.ToDto();
-        }
-
-        [Obsolete("Replaced by CreateHousehold vertical slice in Frigorino.Features. Will be removed once all household actions are migrated.")]
-        public async Task<HouseholdDto> CreateHouseholdAsync(CreateHouseholdRequest request, string userId)
-        {
-            if (string.IsNullOrWhiteSpace(request.Name))
-            {
-                throw new ArgumentException("Household name is required.");
-            }
-
-            var household = request.ToEntity(userId);
-            _dbContext.Households.Add(household);
-            await _dbContext.SaveChangesAsync();
-
-            // Add creator as owner
-            var userHousehold = new UserHousehold
-            {
-                UserId = userId,
-                HouseholdId = household.Id,
-                Role = HouseholdRole.Owner,
-                JoinedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            _dbContext.UserHouseholds.Add(userHousehold);
-            await _dbContext.SaveChangesAsync();
-
-            // Return the created household
-            var createdHousehold = await GetHouseholdAsync(household.Id, userId);
-            return createdHousehold!;
         }
 
         public async Task<HouseholdDto?> UpdateHouseholdAsync(int id, UpdateHouseholdRequest request, string userId)

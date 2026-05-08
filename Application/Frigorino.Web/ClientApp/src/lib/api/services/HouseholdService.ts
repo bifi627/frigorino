@@ -10,22 +10,6 @@ export class HouseholdService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * @param id
-     * @returns HouseholdDto OK
-     * @throws ApiError
-     */
-    public getApiHousehold(
-        id: number,
-    ): CancelablePromise<HouseholdDto> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/Household/{id}',
-            path: {
-                'id': id,
-            },
-        });
-    }
-    /**
-     * @param id
      * @param requestBody
      * @returns HouseholdDto OK
      * @throws ApiError

@@ -5,25 +5,6 @@ namespace Frigorino.Application.Extensions
 {
     public static class HouseholdMappingExtensions
     {
-        public static HouseholdDto ToDto(this Household household, HouseholdRole currentUserRole)
-        {
-            return new HouseholdDto
-            {
-                Id = household.Id,
-                Name = household.Name,
-                Description = household.Description,
-                CreatedAt = household.CreatedAt,
-                UpdatedAt = household.UpdatedAt,
-                CreatedByUser = household.CreatedByUser.ToDto(),
-                CurrentUserRole = currentUserRole,
-                MemberCount = household.UserHouseholds.Count(x => x.IsActive),
-                Members = household.UserHouseholds
-                    .Where(x => x.IsActive)
-                    .Select(x => x.ToMemberDto())
-                    .ToList()
-            };
-        }
-
         public static HouseholdDto ToDto(this UserHousehold userHousehold)
         {
             return new HouseholdDto
@@ -62,21 +43,6 @@ namespace Frigorino.Application.Extensions
                 JoinedAt = userHousehold.JoinedAt
             };
         }
-
-#pragma warning disable CS0618 // Bridge method for the obsolete legacy CreateHouseholdRequest; removed when the legacy service is deleted.
-        public static Household ToEntity(this CreateHouseholdRequest request, string userId)
-        {
-            return new Household
-            {
-                Name = request.Name.Trim(),
-                Description = request.Description?.Trim(),
-                CreatedByUserId = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
-        }
-#pragma warning restore CS0618
 
         public static void UpdateFromRequest(this Household household, UpdateHouseholdRequest request)
         {

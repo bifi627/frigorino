@@ -20,23 +20,6 @@ public class HouseholdController : ControllerBase
     }
 
     /// <summary>
-    /// Get a specific household by ID (if user has access)
-    /// </summary>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<HouseholdDto>> GetHousehold(int id)
-    {
-        var userId = _currentUserService.UserId;
-        var household = await _householdService.GetHouseholdAsync(id, userId);
-
-        if (household == null)
-        {
-            return NotFound("Household not found or you don't have access to it.");
-        }
-
-        return Ok(household);
-    }
-
-    /// <summary>
     /// Update a household (Admin/Owner only)
     /// </summary>
     [HttpPut("{id}")]
