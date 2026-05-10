@@ -1,4 +1,4 @@
-using Frigorino.Domain.Entities;
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -29,31 +29,29 @@ namespace Frigorino.Features.Households
             ApplicationDbContext db,
             CancellationToken ct)
         {
-            var userHousehold = await db.UserHouseholds
-                .Include(uh => uh.Household)
-                    .ThenInclude(h => h.UserHouseholds)
-                .FirstOrDefaultAsync(uh => uh.UserId == currentUser.UserId
-                                        && uh.HouseholdId == id
-                                        && uh.IsActive
-                                        && uh.Household.IsActive, ct);
+            var household = await db.Households
+                .Include(h => h.UserHouseholds)
+                .FirstOrDefaultAsync(h => h.Id == id && h.IsActive, ct);
 
-            if (userHousehold is null)
+            if (household is null)
             {
                 return TypedResults.NotFound();
             }
 
-            if (userHousehold.Role != HouseholdRole.Owner)
+            var result = household.SoftDelete(currentUser.UserId);
+            if (result.IsFailed)
             {
-                return TypedResults.Forbid();
-            }
-
-            var now = DateTime.UtcNow;
-            userHousehold.Household.IsActive = false;
-            userHousehold.Household.UpdatedAt = now;
-
-            foreach (var membership in userHousehold.Household.UserHouseholds)
-            {
-                membership.IsActive = false;
+                var first = result.Errors[0];
+                if (first is EntityNotFoundError)
+                {
+                    return TypedResults.NotFound();
+                }
+                if (first is AccessDeniedError)
+                {
+                    return TypedResults.Forbid();
+                }
+                throw new InvalidOperationException(
+                    $"DeleteHousehold cannot map error of type {first.GetType().Name}.");
             }
 
             await db.SaveChangesAsync(ct);

@@ -32,3 +32,23 @@ Format per item:
   - **Read model vs response DTO:** open question — collapse them (read model IS the response DTO, lives in the slice file or a shared `XxxResponse.cs`) or separate them (read model in Domain, response in Features). Collapsing is simpler; separating gives stricter Domain isolation. Lean toward collapsing initially, split only if a real reason emerges.
   - **Migration path:** introduce the pattern with one read slice as the first adopter (e.g. the next read slice after `GetUserHouseholds` — `GetHousehold` is a natural candidate since it has the rich shape that needs a real read model). Don't retroactively rewrite already-migrated slices unless touching them for unrelated reasons.
 - **Impact / cost:** small per-slice (one new interface + one new query class), large in aggregate when applied across all reads. New project structure decisions (`Frigorino.Domain.ReadModels`?). Doc updates to `Vertical_Slices.md` and the `CreateHousehold.cs` header. Existing `CreateHousehold.cs` stays as-is — the write side already uses the entity factory + DbContext pattern that this idea endorses.
+
+---
+
+## Architecture tests to enforce dependency direction & slice isolation
+
+- **Why:** Clean Architecture boundaries (`Web → Application → Domain`, `Web → Infrastructure → Domain`, `Application` does **not** reference `Infrastructure`) are currently enforced only by project references and reviewer vigilance. Vertical slice rules (slice handler shouldn't leak EF types into `Domain`, slices shouldn't reference each other, `Domain` stays free of `Microsoft.EntityFrameworkCore` / `Npgsql`, etc.) have no automated guard at all. As the slice count grows, accidental leaks (a slice newing up an `ApplicationDbContext` from `Infrastructure` directly, a `Domain` entity gaining an `[ForeignKey]` attribute, an `Application` service taking a Hangfire dependency) become easy to slip past review. Architecture tests catch these in CI before they land.
+- **Sketch:**
+  - Pick a library. Two real options today:
+    - **ArchUnitNET** (TNG) — fluent, readable, actively maintained, port of the Java ArchUnit. Richer rule vocabulary (slices, cycle detection, layered architecture DSL). Heavier API surface, slightly steeper learning curve.
+    - **NetArchTest.eNhancedEdition** — community-maintained fork of the original `NetArchTest` (which is dormant since 2023). Smaller, simpler fluent API. Good enough for "project X must not reference Y" + naming conventions.
+    - Lean **ArchUnitNET** because the slice-isolation rules ("no slice may depend on types in another slice's folder") map naturally to its slicing DSL, which `NetArchTest` does not have a first-class concept for.
+  - Add a new test project `Frigorino.ArchitectureTest` (or a single `ArchitectureTests.cs` class inside `Frigorino.Test` — decide based on whether we want it to run on every `dotnet test` or be opt-in).
+  - First rule set to encode:
+    - `Frigorino.Domain` may not depend on `Microsoft.EntityFrameworkCore`, `Npgsql`, `Hangfire`, `FirebaseAdmin`, `OpenAI`, ASP.NET Core types.
+    - `Frigorino.Application` may not depend on `Frigorino.Infrastructure` or any of the above infra packages.
+    - `Frigorino.Infrastructure` may not depend on `Frigorino.Web`.
+    - Slice folders under `Frigorino.Web/Features/<Aggregate>/<SliceName>/` may not reference types in sibling slice folders.
+    - Entities in `Frigorino.Domain/Entities` may not have public setters on `Id` / `CreatedAt` / `UpdatedAt` (enforce factory pattern).
+  - Wire into CI by virtue of `dotnet test` already running in the existing pipeline — no extra step needed.
+- **Impact / cost:** one new package reference, ~1 test class with ~5–10 rules to start. Cheap to add, pays off every time someone (or an LLM) is tempted to take a shortcut. Slight up-front cost in deciding rule wording — over-strict rules become noise, under-strict rules buy nothing. Start with the dependency-direction rules (highest signal, zero false positives) and add slice-isolation rules once we have more slices to validate against.

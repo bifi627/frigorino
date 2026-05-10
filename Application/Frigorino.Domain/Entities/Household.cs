@@ -1,4 +1,5 @@
 using FluentResults;
+using Frigorino.Domain.Errors;
 
 namespace Frigorino.Domain.Entities
 {
@@ -61,6 +62,166 @@ namespace Frigorino.Domain.Entities
                 IsActive = true,
             });
             return Result.Ok(household);
+        }
+
+        // Aggregate-internal mutation. Caller membership, role policy, last-Owner/already-member
+        // invariants, and reactivation-vs-append branching all live here so the slice handler
+        // shrinks to load → call → persist. The handler resolves the cross-aggregate target user
+        // by email separately and passes the resolved external id in.
+        public Result<UserHousehold> AddMember(string callerUserId, string targetUserId, HouseholdRole role)
+        {
+            var caller = UserHouseholds.FirstOrDefault(uh => uh.UserId == callerUserId && uh.IsActive);
+            if (caller is null)
+            {
+                return Result.Fail<UserHousehold>(
+                    new EntityNotFoundError("Caller is not a member of this household."));
+            }
+
+            if (caller.Role == HouseholdRole.Member)
+            {
+                return Result.Fail<UserHousehold>(
+                    new AccessDeniedError("Members cannot add other members."));
+            }
+
+            var existing = UserHouseholds.FirstOrDefault(uh => uh.UserId == targetUserId);
+            if (existing is not null)
+            {
+                if (existing.IsActive)
+                {
+                    return Result.Fail<UserHousehold>(
+                        new Error("User is already a member.")
+                            .WithMetadata("Property", "email"));
+                }
+
+                existing.IsActive = true;
+                existing.Role = role;
+                existing.JoinedAt = DateTime.UtcNow;
+                return Result.Ok(existing);
+            }
+
+            var creation = UserHousehold.CreateMembership(targetUserId, Id, role);
+            if (creation.IsFailed)
+            {
+                return creation;
+            }
+
+            UserHouseholds.Add(creation.Value);
+            return creation;
+        }
+
+        // Aggregate-internal mutation. Self-removal short-circuits the role guard (any role can
+        // remove themselves). Cross-user removal requires Admin/Owner. Last active Owner is
+        // protected — soft-deleting them would orphan the household.
+        public Result RemoveMember(string callerUserId, string targetUserId)
+        {
+            var caller = UserHouseholds.FirstOrDefault(uh => uh.UserId == callerUserId && uh.IsActive);
+            if (caller is null)
+            {
+                return Result.Fail(
+                    new EntityNotFoundError("Caller is not a member of this household."));
+            }
+
+            var target = UserHouseholds.FirstOrDefault(uh => uh.UserId == targetUserId && uh.IsActive);
+            if (target is null)
+            {
+                return Result.Fail(
+                    new EntityNotFoundError("Target is not a member of this household."));
+            }
+
+            var isSelfRemoval = caller.UserId == target.UserId;
+            if (!isSelfRemoval && caller.Role == HouseholdRole.Member)
+            {
+                return Result.Fail(
+                    new AccessDeniedError("Members cannot remove other members."));
+            }
+
+            if (target.Role == HouseholdRole.Owner && IsLastActiveOwner())
+            {
+                return Result.Fail(
+                    new Error("Cannot remove the last owner.")
+                        .WithMetadata("Property", "userId"));
+            }
+
+            target.IsActive = false;
+            return Result.Ok();
+        }
+
+        // Aggregate-internal mutation. Owner-protection (only an Owner may change another Owner)
+        // and last-Owner-self-demote protection both live here next to the role-policy rules
+        // they share with AddMember/RemoveMember.
+        public Result<UserHousehold> ChangeMemberRole(string callerUserId, string targetUserId, HouseholdRole newRole)
+        {
+            var caller = UserHouseholds.FirstOrDefault(uh => uh.UserId == callerUserId && uh.IsActive);
+            if (caller is null)
+            {
+                return Result.Fail<UserHousehold>(
+                    new EntityNotFoundError("Caller is not a member of this household."));
+            }
+
+            if (caller.Role == HouseholdRole.Member)
+            {
+                return Result.Fail<UserHousehold>(
+                    new AccessDeniedError("Members cannot change member roles."));
+            }
+
+            var target = UserHouseholds.FirstOrDefault(uh => uh.UserId == targetUserId && uh.IsActive);
+            if (target is null)
+            {
+                return Result.Fail<UserHousehold>(
+                    new EntityNotFoundError("Target is not a member of this household."));
+            }
+
+            if (target.Role == HouseholdRole.Owner && caller.Role != HouseholdRole.Owner)
+            {
+                return Result.Fail<UserHousehold>(
+                    new AccessDeniedError("Only an Owner can change another Owner's role."));
+            }
+
+            var demotingSelfFromOwner = caller.UserId == target.UserId
+                && target.Role == HouseholdRole.Owner
+                && newRole != HouseholdRole.Owner;
+
+            if (demotingSelfFromOwner && IsLastActiveOwner())
+            {
+                return Result.Fail<UserHousehold>(
+                    new Error("Cannot remove the last owner.")
+                        .WithMetadata("Property", "role"));
+            }
+
+            target.Role = newRole;
+            return Result.Ok(target);
+        }
+
+        // Aggregate-internal mutation. Owner-only soft-delete cascades to all memberships in
+        // one pass, so a single SaveChanges persists the household + all rows in one transaction.
+        public Result SoftDelete(string callerUserId)
+        {
+            var caller = UserHouseholds.FirstOrDefault(uh => uh.UserId == callerUserId && uh.IsActive);
+            if (caller is null)
+            {
+                return Result.Fail(
+                    new EntityNotFoundError("Caller is not a member of this household."));
+            }
+
+            if (caller.Role != HouseholdRole.Owner)
+            {
+                return Result.Fail(
+                    new AccessDeniedError("Only an Owner can delete this household."));
+            }
+
+            IsActive = false;
+            UpdatedAt = DateTime.UtcNow;
+            foreach (var membership in UserHouseholds)
+            {
+                membership.IsActive = false;
+            }
+
+            return Result.Ok();
+        }
+
+        private bool IsLastActiveOwner()
+        {
+            return UserHouseholds.Count(uh => uh.Role == HouseholdRole.Owner && uh.IsActive) <= 1;
         }
     }
 }
