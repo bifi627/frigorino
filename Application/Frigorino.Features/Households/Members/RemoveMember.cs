@@ -14,10 +14,8 @@ namespace Frigorino.Features.Households.Members
     {
         public static IEndpointRouteBuilder MapRemoveMember(this IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/household/{householdId:int}/members/{userId}", Handle)
-               .RequireAuthorization()
+            app.MapDelete("/{userId}", Handle)
                .WithName("RemoveMember")
-               .WithTags("Members")
                .Produces(StatusCodes.Status204NoContent)
                .Produces(StatusCodes.Status404NotFound)
                .Produces(StatusCodes.Status403Forbidden)

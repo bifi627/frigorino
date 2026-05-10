@@ -1,6 +1,8 @@
+using FluentResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Frigorino.Domain.Entities;
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 
@@ -58,12 +60,11 @@ public class CurrentHouseholdService : ICurrentHouseholdService
         return null;
     }
 
-    public async Task SetCurrentHouseholdAsync(int householdId)
+    public async Task<Result> SetCurrentHouseholdAsync(int householdId)
     {
-        // Verify user has access to this household
         if (!await HasHouseholdAccessAsync(householdId))
         {
-            throw new UnauthorizedAccessException("You don't have access to this household.");
+            return Result.Fail(new AccessDeniedError("You don't have access to this household."));
         }
 
         var session = _httpContextAccessor.HttpContext?.Session;
@@ -71,6 +72,7 @@ public class CurrentHouseholdService : ICurrentHouseholdService
         {
             session.Set(CurrentHouseholdSessionKey, BitConverter.GetBytes(householdId));
         }
+        return Result.Ok();
     }
 
     public async Task<HouseholdRole?> GetCurrentHouseholdRoleAsync()

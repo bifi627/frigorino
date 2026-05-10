@@ -12,10 +12,8 @@ namespace Frigorino.Features.Households.Members
     {
         public static IEndpointRouteBuilder MapGetMembers(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/household/{householdId:int}/members", Handle)
-               .RequireAuthorization()
+            app.MapGet("", Handle)
                .WithName("GetMembers")
-               .WithTags("Members")
                .Produces<MemberResponse[]>(StatusCodes.Status200OK)
                .Produces(StatusCodes.Status404NotFound);
             return app;

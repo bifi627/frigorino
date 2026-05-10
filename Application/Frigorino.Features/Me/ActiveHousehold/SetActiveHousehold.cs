@@ -1,3 +1,4 @@
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -12,10 +13,8 @@ namespace Frigorino.Features.Me.ActiveHousehold
     {
         public static IEndpointRouteBuilder MapSetActiveHousehold(this IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/me/active-household", Handle)
-               .RequireAuthorization()
+            app.MapPut("/active-household", Handle)
                .WithName("SetActiveHousehold")
-               .WithTags("Me")
                .Produces<ActiveHouseholdResponse>()
                .Produces(StatusCodes.Status403Forbidden);
             return app;
@@ -25,13 +24,15 @@ namespace Frigorino.Features.Me.ActiveHousehold
             SetActiveHouseholdRequest request,
             ICurrentHouseholdService currentHousehold)
         {
-            try
+            var result = await currentHousehold.SetCurrentHouseholdAsync(request.HouseholdId);
+            if (result.IsFailed)
             {
-                await currentHousehold.SetCurrentHouseholdAsync(request.HouseholdId);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return TypedResults.Forbid();
+                if (result.Errors[0] is AccessDeniedError)
+                {
+                    return TypedResults.Forbid();
+                }
+                throw new InvalidOperationException(
+                    $"SetActiveHousehold cannot map error of type {result.Errors[0].GetType().Name}.");
             }
 
             var role = await currentHousehold.GetCurrentHouseholdRoleAsync();

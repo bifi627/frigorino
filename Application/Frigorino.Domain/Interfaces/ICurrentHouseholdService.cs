@@ -1,3 +1,4 @@
+using FluentResults;
 using Frigorino.Domain.Entities;
 
 namespace Frigorino.Domain.Interfaces;
@@ -10,9 +11,10 @@ public interface ICurrentHouseholdService
     Task<int?> GetCurrentHouseholdIdAsync();
 
     /// <summary>
-    /// Set the current user's active household
+    /// Set the current user's active household. Returns a failure carrying
+    /// <c>AccessDeniedError</c> when the user has no membership in the requested household.
     /// </summary>
-    Task SetCurrentHouseholdAsync(int householdId);
+    Task<Result> SetCurrentHouseholdAsync(int householdId);
 
     /// <summary>
     /// Get the current user's role in the active household

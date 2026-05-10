@@ -12,10 +12,8 @@ namespace Frigorino.Features.Households
     {
         public static IEndpointRouteBuilder MapGetUserHouseholds(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/household", Handle)
-               .RequireAuthorization()
+            app.MapGet("", Handle)
                .WithName("GetUserHouseholds")
-               .WithTags("Households")
                .Produces<HouseholdResponse[]>(StatusCodes.Status200OK);
             return app;
         }

@@ -17,10 +17,8 @@ namespace Frigorino.Features.Households.Members
     {
         public static IEndpointRouteBuilder MapAddMember(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/household/{householdId:int}/members", Handle)
-               .RequireAuthorization()
+            app.MapPost("", Handle)
                .WithName("AddMember")
-               .WithTags("Members")
                .Produces<MemberResponse>(StatusCodes.Status201Created)
                .Produces(StatusCodes.Status404NotFound)
                .Produces(StatusCodes.Status403Forbidden)

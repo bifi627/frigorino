@@ -35,20 +35,38 @@ Format per item:
 
 ---
 
-## Architecture tests to enforce dependency direction & slice isolation
+## Strongly-typed IDs (Vogen)
 
-- **Why:** Clean Architecture boundaries (`Web → Application → Domain`, `Web → Infrastructure → Domain`, `Application` does **not** reference `Infrastructure`) are currently enforced only by project references and reviewer vigilance. Vertical slice rules (slice handler shouldn't leak EF types into `Domain`, slices shouldn't reference each other, `Domain` stays free of `Microsoft.EntityFrameworkCore` / `Npgsql`, etc.) have no automated guard at all. As the slice count grows, accidental leaks (a slice newing up an `ApplicationDbContext` from `Infrastructure` directly, a `Domain` entity gaining an `[ForeignKey]` attribute, an `Application` service taking a Hangfire dependency) become easy to slip past review. Architecture tests catch these in CI before they land.
+- **Why:** Today `Household.Id` is `int` and `User.ExternalId` is `string`, which means slice handlers can swap `householdId` and `userId` parameters and the compiler won't notice. As the surface grows (Lists/Inventories will add `ListId`, `ListItemId`, `InventoryId`, `InventoryItemId` — all currently `int`), the parameter-swap bug surface multiplies. Modern .NET community has converged on source-generated value objects to eliminate this primitive obsession, with **Vogen** as the de facto choice (more capable than the ID-only `StronglyTypedId` library: validation, code analyzer, broader value-object generation). Source-gen means zero runtime overhead.
 - **Sketch:**
-  - Pick a library. Two real options today:
-    - **ArchUnitNET** (TNG) — fluent, readable, actively maintained, port of the Java ArchUnit. Richer rule vocabulary (slices, cycle detection, layered architecture DSL). Heavier API surface, slightly steeper learning curve.
-    - **NetArchTest.eNhancedEdition** — community-maintained fork of the original `NetArchTest` (which is dormant since 2023). Smaller, simpler fluent API. Good enough for "project X must not reference Y" + naming conventions.
-    - Lean **ArchUnitNET** because the slice-isolation rules ("no slice may depend on types in another slice's folder") map naturally to its slicing DSL, which `NetArchTest` does not have a first-class concept for.
-  - Add a new test project `Frigorino.ArchitectureTest` (or a single `ArchitectureTests.cs` class inside `Frigorino.Test` — decide based on whether we want it to run on every `dotnet test` or be opt-in).
-  - First rule set to encode:
-    - `Frigorino.Domain` may not depend on `Microsoft.EntityFrameworkCore`, `Npgsql`, `Hangfire`, `FirebaseAdmin`, `OpenAI`, ASP.NET Core types.
-    - `Frigorino.Application` may not depend on `Frigorino.Infrastructure` or any of the above infra packages.
-    - `Frigorino.Infrastructure` may not depend on `Frigorino.Web`.
-    - Slice folders under `Frigorino.Web/Features/<Aggregate>/<SliceName>/` may not reference types in sibling slice folders.
-    - Entities in `Frigorino.Domain/Entities` may not have public setters on `Id` / `CreatedAt` / `UpdatedAt` (enforce factory pattern).
-  - Wire into CI by virtue of `dotnet test` already running in the existing pipeline — no extra step needed.
-- **Impact / cost:** one new package reference, ~1 test class with ~5–10 rules to start. Cheap to add, pays off every time someone (or an LLM) is tempted to take a shortcut. Slight up-front cost in deciding rule wording — over-strict rules become noise, under-strict rules buy nothing. Start with the dependency-direction rules (highest signal, zero false positives) and add slice-isolation rules once we have more slices to validate against.
+  - Add `Vogen` package reference to `Frigorino.Domain` (pin exact version per the dependency rule).
+  - Define ID structs in `Frigorino.Domain/Identifiers/` (or co-located with their entities — TBD):
+    ```csharp
+    [ValueObject<int>]
+    public readonly partial struct HouseholdId;
+
+    [ValueObject<string>]
+    public readonly partial struct ExternalUserId;
+    ```
+  - Update entity properties to typed IDs (`Household.Id` becomes `HouseholdId`, `User.ExternalId` becomes `ExternalUserId`, `UserHousehold.UserId`/`HouseholdId` follow).
+  - Configure EF Core value converters (one line per ID type) in `ApplicationDbContext.OnModelCreating`. Vogen has docs for this pattern; can also use `Vogen.EntityFrameworkCoreConverters` package if it exists at the time.
+  - Update slice route bindings — minimal-API parameter binding via `ITryParse` should work for typed IDs out of the box.
+  - Apply during the Lists/Inventories migration as a unifying step (introduces `ListId`, `InventoryId`, etc. alongside the existing IDs) rather than a standalone retrofit. This keeps the diff focused and gives a real reason to touch every entity.
+  - **Open question:** what about user-facing IDs in URLs? Today `int` IDs leak DB sequence numbers (enumeration attacks, mild info disclosure). If we move to `Guid` IDs as part of this work, we get sequence-hiding for free. Counterargument: shorter URLs, simpler debugging. Decide before applying.
+- **Impact / cost:** one new package, plus ~1 EF converter + ~1 entity update per ID type. Source generator means no runtime cost. Builds catch parameter-swap bugs that today only manifest at runtime as 404s. Higher confidence at cost of one-time conversion effort.
+
+---
+
+## Domain event infrastructure (EF Core SaveChangesInterceptor)
+
+- **Why:** Today aggregate methods (`Household.AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`) succeed silently — there's no signal emitted. When audit log, in-app notifications, analytics events, or cross-aggregate side effects (e.g., "when a household is deleted, archive its Lists and Inventories") land, they will need to retrofit each aggregate method to do the publishing inline. Worse, that publishing usually wants to fire **after** the database transaction commits (otherwise an event for a never-saved row is a bug). The canonical .NET pattern for this is `SaveChangesInterceptor` capturing aggregate-emitted `IDomainEvent` lists and dispatching post-save. Wiring the infrastructure now (before there are subscribers) means future features just emit events from the aggregate without touching the slice handler or the persistence path.
+- **Sketch:**
+  - Add `IDomainEvent` marker interface in `Frigorino.Domain/Events/`.
+  - Add abstract `AggregateRoot` in `Frigorino.Domain/Entities/` with `private List<IDomainEvent> _events`, `IReadOnlyCollection<IDomainEvent> DomainEvents`, `protected void Raise(IDomainEvent)`, and `void ClearDomainEvents()`. Make `Household` inherit it.
+  - Define concrete events as sealed records: `MemberAdded(HouseholdId, ExternalUserId, HouseholdRole)`, `MemberRemoved(...)`, `MemberRoleChanged(...)`, `HouseholdSoftDeleted(...)`. Live in `Frigorino.Domain/Events/Households/`.
+  - Aggregate methods append to the event list at the end of each successful branch (1 line each).
+  - `PublishDomainEventsInterceptor : SaveChangesInterceptor` in `Frigorino.Infrastructure/EntityFramework/Interceptors/`. Override `SavedChangesAsync` (note: post-save, not pre-save — events fire only if the transaction succeeded). Drains `ChangeTracker.Entries<AggregateRoot>().SelectMany(e => e.Entity.DomainEvents)`, dispatches via a thin `IDomainEventDispatcher` (start with an in-process implementation: scan registered `IDomainEventHandler<TEvent>` services, invoke each).
+  - Register the interceptor in `AddEntityFramework`: `options.AddInterceptors(sp.GetRequiredService<PublishDomainEventsInterceptor>())`.
+  - **No subscribers initially** — the infra is "armed but unused". When the first feature wants to subscribe (e.g., audit log), it writes one `IDomainEventHandler<MemberAdded>` implementation; everything else stays untouched.
+  - **Outbox upgrade path:** for cross-process / at-least-once delivery, swap the in-process dispatcher for one that writes events to an `Outbox` table inside the same transaction (move from `SavedChangesAsync` to `SavingChangesAsync` + a separate poller/worker). Out of scope for the initial introduction; document the upgrade as a follow-up if cross-process integration emerges.
+- **Impact / cost:** ~3 new files (`IDomainEvent`, `AggregateRoot`, `PublishDomainEventsInterceptor`), one DI registration, ~5 lines per aggregate method to raise events, ~half-day total. Zero subscribers = zero behavior change today. Future features avoid retrofitting.
