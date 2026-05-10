@@ -17,10 +17,8 @@ namespace Frigorino.Features.Households.Members
     {
         public static IEndpointRouteBuilder MapUpdateMemberRole(this IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/household/{householdId:int}/members/{userId}/role", Handle)
-               .RequireAuthorization()
+            app.MapPut("/{userId}/role", Handle)
                .WithName("UpdateMemberRole")
-               .WithTags("Members")
                .Produces<MemberResponse>(StatusCodes.Status200OK)
                .Produces(StatusCodes.Status404NotFound)
                .Produces(StatusCodes.Status403Forbidden)

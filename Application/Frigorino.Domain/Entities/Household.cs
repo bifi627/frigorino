@@ -5,6 +5,11 @@ namespace Frigorino.Domain.Entities
 {
     public class Household
     {
+        // Source of truth for length constraints. Both the factory (Household.Create) and the
+        // EF configuration (HouseholdConfiguration) read from these so DB and aggregate agree.
+        public const int NameMaxLength = 255;
+        public const int DescriptionMaxLength = 1000;
+
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -28,6 +33,16 @@ namespace Frigorino.Domain.Entities
             {
                 errors.Add(new Error("Household name is required.")
                     .WithMetadata("Property", nameof(Name)));
+            }
+            else if (name.Trim().Length > NameMaxLength)
+            {
+                errors.Add(new Error($"Household name must be {NameMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(Name)));
+            }
+            if (description is not null && description.Length > DescriptionMaxLength)
+            {
+                errors.Add(new Error($"Household description must be {DescriptionMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(Description)));
             }
             if (string.IsNullOrWhiteSpace(ownerUserId))
             {
@@ -77,10 +92,16 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError("Caller is not a member of this household."));
             }
 
-            if (caller.Role == HouseholdRole.Member)
+            if (!caller.Role.CanManageMembers())
             {
                 return Result.Fail<UserHousehold>(
                     new AccessDeniedError("Members cannot add other members."));
+            }
+
+            if (!caller.Role.CanGrantRole(role))
+            {
+                return Result.Fail<UserHousehold>(
+                    new AccessDeniedError("Only an Owner can grant the Owner role."));
             }
 
             var existing = UserHouseholds.FirstOrDefault(uh => uh.UserId == targetUserId);
@@ -129,7 +150,7 @@ namespace Frigorino.Domain.Entities
             }
 
             var isSelfRemoval = caller.UserId == target.UserId;
-            if (!isSelfRemoval && caller.Role == HouseholdRole.Member)
+            if (!isSelfRemoval && !caller.Role.CanManageMembers())
             {
                 return Result.Fail(
                     new AccessDeniedError("Members cannot remove other members."));
@@ -158,10 +179,16 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError("Caller is not a member of this household."));
             }
 
-            if (caller.Role == HouseholdRole.Member)
+            if (!caller.Role.CanManageMembers())
             {
                 return Result.Fail<UserHousehold>(
                     new AccessDeniedError("Members cannot change member roles."));
+            }
+
+            if (!caller.Role.CanGrantRole(newRole))
+            {
+                return Result.Fail<UserHousehold>(
+                    new AccessDeniedError("Only an Owner can grant the Owner role."));
             }
 
             var target = UserHouseholds.FirstOrDefault(uh => uh.UserId == targetUserId && uh.IsActive);

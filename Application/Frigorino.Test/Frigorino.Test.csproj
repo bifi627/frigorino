@@ -14,6 +14,7 @@
     <PackageReference Include="FakeItEasy" Version="8.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="TngTech.ArchUnitNET.xUnit" Version="0.13.3" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
   </ItemGroup>
@@ -22,6 +23,7 @@
     <ProjectReference Include="..\Frigorino.Application\Frigorino.Application.csproj" />
     <ProjectReference Include="..\Frigorino.Domain\Frigorino.Domain.csproj" />
     <ProjectReference Include="..\Frigorino.Infrastructure\Frigorino.Infrastructure.csproj" />
+    <ProjectReference Include="..\Frigorino.Features\Frigorino.Features.csproj" />
   </ItemGroup>
 
   <ItemGroup>

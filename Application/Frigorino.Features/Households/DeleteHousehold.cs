@@ -13,10 +13,8 @@ namespace Frigorino.Features.Households
     {
         public static IEndpointRouteBuilder MapDeleteHousehold(this IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/household/{id:int}", Handle)
-               .RequireAuthorization()
+            app.MapDelete("/{id:int}", Handle)
                .WithName("DeleteHousehold")
-               .WithTags("Households")
                .Produces(StatusCodes.Status204NoContent)
                .Produces(StatusCodes.Status404NotFound)
                .Produces(StatusCodes.Status403Forbidden);

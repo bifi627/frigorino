@@ -35,10 +35,8 @@ namespace Frigorino.Features.Households
     {
         public static IEndpointRouteBuilder MapCreateHousehold(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/household", Handle)
-               .RequireAuthorization()
+            app.MapPost("", Handle)
                .WithName("CreateHousehold")
-               .WithTags("Households")
                .Produces<HouseholdResponse>(StatusCodes.Status201Created)
                .ProducesValidationProblem();
             return app;

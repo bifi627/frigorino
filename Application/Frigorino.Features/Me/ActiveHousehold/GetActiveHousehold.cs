@@ -10,10 +10,8 @@ namespace Frigorino.Features.Me.ActiveHousehold
     {
         public static IEndpointRouteBuilder MapGetActiveHousehold(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/me/active-household", Handle)
-               .RequireAuthorization()
+            app.MapGet("/active-household", Handle)
                .WithName("GetActiveHousehold")
-               .WithTags("Me")
                .Produces<ActiveHouseholdResponse>()
                .Produces(StatusCodes.Status404NotFound);
             return app;

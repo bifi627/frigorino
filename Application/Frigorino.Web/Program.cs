@@ -88,15 +88,27 @@ app.UseMiddleware<InitialConnectionMiddleware>();
 
 // API endpoints
 app.MapControllers();
-app.MapCreateHousehold();
-app.MapGetUserHouseholds();
-app.MapDeleteHousehold();
-app.MapGetMembers();
-app.MapAddMember();
-app.MapRemoveMember();
-app.MapUpdateMemberRole();
-app.MapGetActiveHousehold();
-app.MapSetActiveHousehold();
+
+var households = app.MapGroup("/api/household")
+    .RequireAuthorization()
+    .WithTags("Households");
+households.MapCreateHousehold();
+households.MapGetUserHouseholds();
+households.MapDeleteHousehold();
+
+var members = app.MapGroup("/api/household/{householdId:int}/members")
+    .RequireAuthorization()
+    .WithTags("Members");
+members.MapGetMembers();
+members.MapAddMember();
+members.MapRemoveMember();
+members.MapUpdateMemberRole();
+
+var me = app.MapGroup("/api/me")
+    .RequireAuthorization()
+    .WithTags("Me");
+me.MapGetActiveHousehold();
+me.MapSetActiveHousehold();
 
 // SPA configuration
 app.UseSpa(spa =>

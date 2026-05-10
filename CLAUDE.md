@@ -11,17 +11,19 @@ Frigorino is a multi-tenant household management app (lists + inventories) built
 ```
 Application/
   Frigorino.sln
-  Frigorino.Domain/          # Entities, DTOs, service interfaces (no dependencies)
-  Frigorino.Application/     # Service implementations, DTO mapping extensions
+  Frigorino.Domain/          # Entities (with factories + aggregate methods), service interfaces, errors (FluentResults-based)
+  Frigorino.Application/     # Pre-migration service implementations (Lists/Inventories only — being phased out)
+  Frigorino.Features/        # Vertical slices: one file per endpoint, request/response DTOs colocated
   Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, Hangfire jobs, OpenAI client
-  Frigorino.Web/             # ASP.NET Core host, controllers, middleware, Hangfire wiring
+  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, Hangfire wiring, MapGroup wiring for slices
     ClientApp/               # React 19 + Vite + TanStack Router SPA
-  Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory
+  Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory; aggregate-method unit tests; ArchUnitNET layer rules
+  Frigorino.IntegrationTests/# Reqnroll (BDD) + Playwright + Postgres Testcontainers — drives the SPA end-to-end
   Dockerfile                 # Multi-stage: builds backend + ClientApp, copies build → wwwroot
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-The Clean Architecture dependency direction is enforced by project references: `Web → Application → Domain` and `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddHangfireServices`) called from `Frigorino.Web/Program.cs`.
+The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Web → Application → Domain`, `Web → Features → Domain`, `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure`; `Features` does not reference `Web` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddHangfireServices`) called from `Frigorino.Web/Program.cs`.
 
 ## Common commands
 
@@ -63,6 +65,20 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 
 ## Architecture notes
 
+### Vertical slice architecture (in progress)
+
+Authoritative shape: `knowledge/Vertical_Slices.md`. Trust it over older architecture notes.
+
+The codebase is migrating from a controller + service + DTO layered shape to vertical slices. Each slice = one file = one endpoint, with request DTO + response DTO + endpoint registration + handler colocated. Domain rules (validation, role policy, aggregate invariants) live in `Frigorino.Domain` — either in entity factories (`Entity.Create`) for construction or in aggregate methods (`aggregate.DoXxx`) for mutations. Domain methods return `FluentResults.Result<T>`; the slice handler dispatches by error type (`EntityNotFoundError` → 404, `AccessDeniedError` → 403, generic `Error` with `Property` metadata → `ValidationProblem`). Reads stay handler-only — inline EF projection into the response DTO (no mapping libraries).
+
+Canonical references:
+- Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-13` (rules-as-comments header overrides `Vertical_Slices.md` when they drift).
+- Write-via-aggregate-method template: `Application/Frigorino.Features/Households/Members/AddMember.cs` (most complex — cross-aggregate user resolution + 3 internal branches).
+- Domain marker errors: `Application/Frigorino.Domain/Errors/DomainErrors.cs`.
+- Result→ValidationProblem helper: `Application/Frigorino.Features/Results/ResultExtensions.cs`.
+
+Migration trackers (per-feature progress, decisions, drops): `knowledge/Migrations/Household.md`, `knowledge/Migrations/Members.md`. Current state: Households + Members are fully migrated to slices (5 writes through aggregate methods on `Household`, 2 reads via direct projection). Lists / ListItems / Inventories / InventoryItems still use the older controller (`Frigorino.Web/Controllers/`) + service (`Frigorino.Application/Services/`) pattern — queued for migration. **When adding a new endpoint, write a slice; do not extend the controllers.**
+
 ### Request pipeline (`Frigorino.Web/Program.cs`)
 Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`, then `InitialConnectionMiddleware` runs after auth (it reads the authenticated user). `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
@@ -83,7 +99,7 @@ Wiring lives in `Frigorino.Web/Services/HangfireDependencyInjection.cs`:
 - The dashboard at `/hangfire` is gated by `HangfireAuthorizationFilter` (basic auth from `HangfireAuth:*` config).
 
 ### API surface
-- Controllers in `Frigorino.Web/Controllers/` expose REST endpoints. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
+- Endpoints come from two sources during the slice migration: vertical slices in `Frigorino.Features` are wired via `MapGroup(...).Map<SliceName>()` declarations in `Program.cs` (each group owns the route prefix + `RequireAuthorization()` + `WithTags(...)`); legacy endpoints are still in controllers under `Frigorino.Web/Controllers/`. New endpoints should be slices, not controllers — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
 - `JsonStringEnumConverter` is registered globally — enums serialize as strings on the wire, and the frontend's generated client expects string enums.
 - OpenAPI is generated via `Microsoft.AspNetCore.OpenApi` + `Microsoft.Extensions.ApiDescription.Server`. `dotnet build Frigorino.Web` writes `ClientApp/src/lib/openapi.json` (configured via `OpenApiDocumentsDirectory` + `OpenApiGenerateDocumentsOptions` in the csproj — `--openapi-version OpenApi3_0` keeps the spec on 3.0 to match `openapi-typescript-codegen` expectations).
 - The build-time generator runs the app entry point with a mock server. Code paths that require real config (Firebase auth, EF migrations) are gated behind `var isBuildTimeOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"` in `Program.cs`.
