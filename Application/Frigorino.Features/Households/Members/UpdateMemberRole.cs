@@ -1,5 +1,7 @@
 using Frigorino.Domain.Entities;
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -34,68 +36,40 @@ namespace Frigorino.Features.Households.Members
             ApplicationDbContext db,
             CancellationToken ct)
         {
-            var callerMembership = await db.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == currentUser.UserId
-                                        && uh.HouseholdId == householdId
-                                        && uh.IsActive
-                                        && uh.Household.IsActive, ct);
+            var household = await db.Households
+                .Include(h => h.UserHouseholds)
+                    .ThenInclude(uh => uh.User)
+                .FirstOrDefaultAsync(h => h.Id == householdId && h.IsActive, ct);
 
-            if (callerMembership is null)
+            if (household is null)
             {
                 return TypedResults.NotFound();
             }
 
-            if (callerMembership.Role == HouseholdRole.Member)
+            var result = household.ChangeMemberRole(currentUser.UserId, userId, request.Role);
+            if (result.IsFailed)
             {
-                return TypedResults.Forbid();
-            }
-
-            var targetMembership = await db.UserHouseholds
-                .Include(uh => uh.User)
-                .FirstOrDefaultAsync(uh => uh.UserId == userId
-                                        && uh.HouseholdId == householdId
-                                        && uh.IsActive, ct);
-
-            if (targetMembership is null)
-            {
-                return TypedResults.NotFound();
-            }
-
-            if (targetMembership.Role == HouseholdRole.Owner
-                && callerMembership.Role != HouseholdRole.Owner)
-            {
-                return TypedResults.Forbid();
-            }
-
-            var demotingSelfFromOwner = callerMembership.UserId == targetMembership.UserId
-                && targetMembership.Role == HouseholdRole.Owner
-                && request.Role != HouseholdRole.Owner;
-
-            if (demotingSelfFromOwner)
-            {
-                var ownerCount = await db.UserHouseholds
-                    .CountAsync(uh => uh.HouseholdId == householdId
-                                   && uh.Role == HouseholdRole.Owner
-                                   && uh.IsActive, ct);
-
-                if (ownerCount <= 1)
+                var first = result.Errors[0];
+                if (first is EntityNotFoundError)
                 {
-                    return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-                    {
-                        ["role"] = ["Cannot remove the last owner."],
-                    });
+                    return TypedResults.NotFound();
                 }
+                if (first is AccessDeniedError)
+                {
+                    return TypedResults.Forbid();
+                }
+                return result.ToValidationProblem();
             }
 
-            targetMembership.Role = request.Role;
             await db.SaveChangesAsync(ct);
 
+            var membership = result.Value;
             var response = new MemberResponse(
-                targetMembership.User.ExternalId,
-                targetMembership.User.Name,
-                targetMembership.User.Email ?? string.Empty,
-                targetMembership.Role,
-                targetMembership.JoinedAt);
+                membership.User.ExternalId,
+                membership.User.Name,
+                membership.User.Email ?? string.Empty,
+                membership.Role,
+                membership.JoinedAt);
 
             return TypedResults.Ok(response);
         }

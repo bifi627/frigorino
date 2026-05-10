@@ -1,4 +1,5 @@
 using Frigorino.Domain.Entities;
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -43,22 +44,6 @@ namespace Frigorino.Features.Households.Members
                 });
             }
 
-            var callerMembership = await db.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == currentUser.UserId
-                                        && uh.HouseholdId == householdId
-                                        && uh.IsActive
-                                        && uh.Household.IsActive, ct);
-
-            if (callerMembership is null)
-            {
-                return TypedResults.NotFound();
-            }
-
-            if (callerMembership.Role == HouseholdRole.Member)
-            {
-                return TypedResults.Forbid();
-            }
-
             var lowerEmail = email.ToLowerInvariant();
             var targetUser = await db.Users
                 .FirstOrDefaultAsync(u => u.Email != null
@@ -73,41 +58,34 @@ namespace Frigorino.Features.Households.Members
                 });
             }
 
-            var role = request.Role ?? HouseholdRole.Member;
-            var existing = await db.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == targetUser.ExternalId
-                                        && uh.HouseholdId == householdId, ct);
+            var household = await db.Households
+                .Include(h => h.UserHouseholds)
+                .FirstOrDefaultAsync(h => h.Id == householdId && h.IsActive, ct);
 
-            UserHousehold membership;
-            if (existing is not null)
+            if (household is null)
             {
-                if (existing.IsActive)
-                {
-                    return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-                    {
-                        ["email"] = ["User is already a member."],
-                    });
-                }
-
-                existing.IsActive = true;
-                existing.Role = role;
-                existing.JoinedAt = DateTime.UtcNow;
-                membership = existing;
+                return TypedResults.NotFound();
             }
-            else
-            {
-                var creation = UserHousehold.CreateMembership(targetUser.ExternalId, householdId, role);
-                if (creation.IsFailed)
-                {
-                    return creation.ToValidationProblem();
-                }
 
-                membership = creation.Value;
-                db.UserHouseholds.Add(membership);
+            var role = request.Role ?? HouseholdRole.Member;
+            var result = household.AddMember(currentUser.UserId, targetUser.ExternalId, role);
+            if (result.IsFailed)
+            {
+                var first = result.Errors[0];
+                if (first is EntityNotFoundError)
+                {
+                    return TypedResults.NotFound();
+                }
+                if (first is AccessDeniedError)
+                {
+                    return TypedResults.Forbid();
+                }
+                return result.ToValidationProblem();
             }
 
             await db.SaveChangesAsync(ct);
 
+            var membership = result.Value;
             var response = new MemberResponse(
                 targetUser.ExternalId,
                 targetUser.Name,

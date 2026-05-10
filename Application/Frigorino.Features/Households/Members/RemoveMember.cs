@@ -1,5 +1,6 @@
-using Frigorino.Domain.Entities;
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -31,52 +32,31 @@ namespace Frigorino.Features.Households.Members
             ApplicationDbContext db,
             CancellationToken ct)
         {
-            var callerMembership = await db.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == currentUser.UserId
-                                        && uh.HouseholdId == householdId
-                                        && uh.IsActive
-                                        && uh.Household.IsActive, ct);
+            var household = await db.Households
+                .Include(h => h.UserHouseholds)
+                .FirstOrDefaultAsync(h => h.Id == householdId && h.IsActive, ct);
 
-            if (callerMembership is null)
+            if (household is null)
             {
                 return TypedResults.NotFound();
             }
 
-            var targetMembership = await db.UserHouseholds
-                .FirstOrDefaultAsync(uh => uh.UserId == userId
-                                        && uh.HouseholdId == householdId
-                                        && uh.IsActive, ct);
-
-            if (targetMembership is null)
+            var result = household.RemoveMember(currentUser.UserId, userId);
+            if (result.IsFailed)
             {
-                return TypedResults.NotFound();
-            }
-
-            var isSelfRemoval = callerMembership.UserId == targetMembership.UserId;
-            if (!isSelfRemoval && callerMembership.Role == HouseholdRole.Member)
-            {
-                return TypedResults.Forbid();
-            }
-
-            if (targetMembership.Role == HouseholdRole.Owner)
-            {
-                var ownerCount = await db.UserHouseholds
-                    .CountAsync(uh => uh.HouseholdId == householdId
-                                   && uh.Role == HouseholdRole.Owner
-                                   && uh.IsActive, ct);
-
-                if (ownerCount <= 1)
+                var first = result.Errors[0];
+                if (first is EntityNotFoundError)
                 {
-                    return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-                    {
-                        ["userId"] = ["Cannot remove the last owner."],
-                    });
+                    return TypedResults.NotFound();
                 }
+                if (first is AccessDeniedError)
+                {
+                    return TypedResults.Forbid();
+                }
+                return result.ToValidationProblem();
             }
 
-            targetMembership.IsActive = false;
             await db.SaveChangesAsync(ct);
-
             return TypedResults.NoContent();
         }
     }
