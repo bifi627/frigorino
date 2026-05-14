@@ -25,22 +25,6 @@ Format per item:
 - **Plan:** Register `AddFirebaseAuth` unconditionally in `Program.cs`, then have `TestWebApplicationFactory.ConfigureWebHost` *replace* the registered authentication scheme via `services.AddAuthentication(TestAuthHandler.SchemeName).AddScheme<...>(...)` after removing/overriding the Firebase entries. Pair with a `Debug.Assert(env.IsEnvironment("IntegrationTest"))` inside `TestAuthHandler.HandleAuthenticateAsync` so the handler refuses to run outside test.
 - **Risk if left:** Test concerns leak into production startup. Each new test-only branch in `Program.cs` adds another env-string literal that has to stay in sync. Higher chance of an accidental misconfig where Firebase init silently no-ops in a real environment.
 
-## Add negative tests + domain unit tests for `Household.Create`
-
-- **Where:** `Application/Frigorino.Domain/Entities/Household.cs:21` (factory), `Application/Frigorino.Features/Households/CreateHousehold.cs` (endpoint), `Application/Frigorino.Test/` (no coverage), `Application/Frigorino.IntegrationTests/Slices/Households/HouseholdSetup.feature` (only happy path).
-- **Why deferred:** The vertical-slice migration prioritized parity with the old controller plus one happy-path scenario.
-- **Plan:**
-  - **Unit tests in `Frigorino.Test`:** cover `Household.Create` for empty/whitespace name, missing owner id, description trimming (whitespace-only → null), owner-membership seeding (one `UserHousehold` row with `Role = Owner`, `IsActive = true`).
-  - **Reqnroll scenario:** add a "User submits an empty household name" flow that POSTs an empty `name` (via `TestApiClient` rather than the form, to bypass HTML5 validation) and asserts a 400 with a `name` validation error. This exercises `Result<T>.ToValidationProblem()` end-to-end.
-- **Risk if left:** The whole point of moving to `Result<T>` is validation without exceptions, and that branch is currently unexercised. Regressions in `ResultExtensions.ToValidationProblem` (e.g. wrong metadata key, missing grouping) would ship undetected.
-
-## Add an integration test for non-member `SetCurrentHousehold` returning 403
-
-- **Where:** `Application/Frigorino.Features/CurrentHousehold/SetCurrentHousehold.cs` (slice handler), `Application/Frigorino.IntegrationTests/Slices/CurrentHousehold/` (no scenarios yet).
-- **Why deferred:** The CurrentHousehold slice migration was behavior-equivalent to the legacy controller — adding the test alongside the migration would have validated the underlying `ICurrentHouseholdService` (which already throws `UnauthorizedAccessException`), not the migration itself. Worth its own focused PR.
-- **Plan:** Add a Reqnroll scenario under `Slices/CurrentHousehold/`: seed a household owned by user B, log in as user A (not a member), `POST /api/currenthousehold/{id}` via `TestApiClient`, assert 403. Bypass the UI — the household selector wouldn't expose another user's household to begin with, so this needs a direct API call to test the security branch.
-- **Risk if left:** A future refactor of `CurrentHouseholdService.SetCurrentHouseholdAsync` (e.g. moving from exception-based auth to `Result`-based) could silently drop the membership check. No test would catch a regression that lets users switch into other people's households — a multi-tenancy boundary failure.
-
 ## Make local DB spin-up trivial
 
 - **Where:** `Application/Frigorino.Web/ClientApp/package.json:15` (the misleadingly-named `sql` script), repo root (no docker-compose).

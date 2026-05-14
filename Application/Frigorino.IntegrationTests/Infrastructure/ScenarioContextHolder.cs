@@ -10,4 +10,5 @@ public class ScenarioContextHolder
     public int HouseholdId { get; set; }
     public Dictionary<string, int> ListIds { get; } = new();
     public Dictionary<string, int> InventoryIds { get; } = new();
+    public IAPIResponse? LastApiResponse { get; set; }
 }

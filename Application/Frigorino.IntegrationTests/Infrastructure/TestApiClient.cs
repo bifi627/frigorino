@@ -59,6 +59,24 @@ public class TestApiClient(ScenarioContextHolder ctx)
         await PutVoidAsync("/api/me/active-household", new { householdId });
     }
 
+    public Task<IAPIResponse> TryCreateHouseholdAsync(string? name)
+    {
+        return ctx.BrowserContext.APIRequest.PostAsync("/api/household", new APIRequestContextOptions
+        {
+            DataObject = new { name },
+            Headers = AuthHeaders,
+        });
+    }
+
+    public Task<IAPIResponse> TrySetCurrentHouseholdAsync(int householdId)
+    {
+        return ctx.BrowserContext.APIRequest.PutAsync("/api/me/active-household", new APIRequestContextOptions
+        {
+            DataObject = new { householdId },
+            Headers = AuthHeaders,
+        });
+    }
+
     public async Task<int> CreateListAsync(string name)
     {
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists", new { name });
