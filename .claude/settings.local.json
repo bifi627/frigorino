@@ -32,7 +32,9 @@
       "WebFetch(domain:github.com)",
       "Bash(dotnet --list-sdks)",
       "Bash(docker info *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "WebFetch(domain:docs.railway.com)",
+      "WebFetch(domain:station.railway.com)"
     ],
     "deny": [],
     "ask": []
