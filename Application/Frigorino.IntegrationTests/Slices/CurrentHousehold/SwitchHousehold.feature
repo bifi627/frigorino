@@ -16,3 +16,9 @@ Feature: Switch active household
     Then the active household should be "Bravo"
     When I reload the page
     Then the active household should be "Bravo"
+
+  Scenario: Non-member cannot switch into someone else's household
+    Given I am logged in as "outsider"
+    And an existing household "Smiths" owned by "owner" that I am not a member of
+    When I attempt to switch the active household to the seeded one via the API
+    Then the API response status is 403

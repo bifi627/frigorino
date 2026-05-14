@@ -61,3 +61,9 @@ Feature: Household Setup
     And an existing household "Family" owned by "owner" with me as a "member"
     When I navigate to "/household/manage"
     Then the household management menu trigger is not visible
+
+  Scenario: Empty household name returns a 400 validation error
+    Given I am logged in as "owner"
+    When I POST a household with an empty name via the API
+    Then the API response status is 400
+    And the API response has a validation error for "Name"

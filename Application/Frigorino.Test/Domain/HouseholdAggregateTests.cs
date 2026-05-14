@@ -26,6 +26,24 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
+        public void Create_WhitespaceName_Fails()
+        {
+            var result = Household.Create("   ", "desc", OwnerId);
+
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string?)p == nameof(Household.Name));
+        }
+
+        [Fact]
+        public void Create_WhitespaceDescription_TrimsToNull()
+        {
+            var result = Household.Create("Family", "   ", OwnerId);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Description);
+        }
+
+        [Fact]
         public void Create_EmptyOwnerId_Fails()
         {
             var result = Household.Create("Family", null, "");

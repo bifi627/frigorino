@@ -13,6 +13,14 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GetByRole(AriaRole.Textbox).First.FillAsync(name);
     }
 
+    [When("I POST a household with an empty name via the API")]
+    public async Task WhenIPostAHouseholdWithAnEmptyNameViaTheApi()
+    {
+        // Goes through TestApiClient (not the form) to bypass HTML5 required-validation
+        // and exercise the slice's Result<T>.ToValidationProblem() branch directly.
+        ctx.LastApiResponse = await api.TryCreateHouseholdAsync("");
+    }
+
     [When("I submit the household form")]
     public async Task WhenISubmitTheHouseholdForm()
     {
@@ -161,6 +169,65 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
 
         ctx.HouseholdId = household.Id;
         await api.SetCurrentHouseholdAsync(household.Id);
+    }
+
+    [Given("an existing household {string} owned by {string} that I am not a member of")]
+    public async Task GivenAnExistingHouseholdOwnedByThatIAmNotAMemberOf(
+        string householdName, string ownerAlias)
+    {
+        // Requires `Given I am logged in as "<alias>"` to have run first so ctx.UserContext is populated.
+        var scenarioSuffix = ctx.DatabaseName[^8..];
+        var ownerUserId = $"user-{ownerAlias}-{scenarioSuffix}";
+
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var now = DateTime.UtcNow;
+
+        db.Users.AddRange(
+            new User
+            {
+                ExternalId = ownerUserId,
+                Name = ownerAlias,
+                Email = $"{ownerAlias}@test.frigorino.local",
+                CreatedAt = now,
+                LastLoginAt = now,
+                IsActive = true,
+            },
+            new User
+            {
+                ExternalId = ctx.UserContext.UserId,
+                Name = ctx.UserContext.Name,
+                Email = ctx.UserContext.Email,
+                CreatedAt = now,
+                LastLoginAt = now,
+                IsActive = true,
+            });
+
+        var household = new Household
+        {
+            Name = householdName,
+            CreatedByUserId = ownerUserId,
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsActive = true,
+        };
+        db.Households.Add(household);
+        await db.SaveChangesAsync();
+
+        db.UserHouseholds.Add(new UserHousehold
+        {
+            UserId = ownerUserId,
+            HouseholdId = household.Id,
+            Role = HouseholdRole.Owner,
+            JoinedAt = now,
+            IsActive = true,
+        });
+        await db.SaveChangesAsync();
+
+        // Stash the household id so the When step can reference it without re-querying;
+        // ctx.HouseholdId stays the multi-tenant target even though the user has no membership.
+        ctx.HouseholdId = household.Id;
     }
 
     [Given("a user {string} exists")]
