@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main, stage]
+  pull_request:
+    branches: [main, stage]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/stage' }}
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  frontend:
+    name: Frontend (lint + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Application/Frigorino.Web/ClientApp/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: Application/Frigorino.Web/ClientApp
+        run: npm ci
+
+      - name: Lint
+        working-directory: Application/Frigorino.Web/ClientApp
+        run: npm run lint
+
+      - name: Type-check
+        working-directory: Application/Frigorino.Web/ClientApp
+        run: npm run tsc
+
+      - name: Build
+        working-directory: Application/Frigorino.Web/ClientApp
+        run: npm run build
+
+      - name: Upload SPA build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-app-build
+          path: Application/Frigorino.Web/ClientApp/build
+          if-no-files-found: error
+          retention-days: 1
+
+  unit-tests:
+    name: Unit & architecture tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/*.csproj', 'Application/Frigorino.sln') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Run Frigorino.Test
+        run: >
+          dotnet test Application/Frigorino.Test/Frigorino.Test.csproj
+          --configuration Release
+          --logger "trx;LogFileName=unit-tests.trx"
+          --logger "console;verbosity=normal"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+  integration-tests:
+    name: Integration tests (Reqnroll + Playwright + Postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/*.csproj', 'Application/Frigorino.sln') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Download SPA build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-app-build
+          path: Application/Frigorino.Web/ClientApp/build
+
+      - name: Run Frigorino.IntegrationTests
+        env:
+          FRIGORINO_SKIP_SPA_BUILD: '1'
+        run: >
+          dotnet test Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=integration-tests.trx"
+          --logger "console;verbosity=normal"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-integration
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+  docker-build:
+    name: Docker build (catch Dockerfile drift)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Application/Dockerfile
+          push: false
+          tags: frigorino:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

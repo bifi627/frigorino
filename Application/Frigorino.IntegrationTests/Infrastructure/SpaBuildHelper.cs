@@ -6,6 +6,12 @@ public static class SpaBuildHelper
 {
     public static void EnsureSpaIsBuilt()
     {
+        if (Environment.GetEnvironmentVariable("FRIGORINO_SKIP_SPA_BUILD") == "1")
+        {
+            Console.WriteLine("[SpaBuildHelper] FRIGORINO_SKIP_SPA_BUILD=1 — skipping SPA build, assuming ClientApp/build is already populated.");
+            return;
+        }
+
         var webRoot = FindWebProjectRoot();
         var clientAppDir = Path.Combine(webRoot, "ClientApp");
         var indexHtml = Path.Combine(clientAppDir, "build", "index.html");
