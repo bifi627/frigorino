@@ -32,12 +32,11 @@ Format per item:
 - **Plan:** Add a `docker-compose.yml` at the repo root (or `Application/`) that spins up Postgres 16 + pgAdmin together, with default credentials matching what `appsettings.Development.json` could point at out of the box. Replace `npm run sql` with `npm run db` (or move it to a root-level script) that runs `docker compose up -d`. Update `appsettings.Development.json` (committed) to default to the local container's connection string, so user-secrets is only needed for cloud overrides.
 - **Risk if left:** New contributors / agents can't start the backend without manual setup. Day-to-day this means swagger regen, migration testing, and integration smoke runs all require the original developer's machine.
 
-## Make `SpaBuildHelper` CI-friendly
+## Harden `SpaBuildHelper` against concurrency and opaque failures
 
 - **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/SpaBuildHelper.cs`.
-- **Why deferred:** The current implementation was good enough for local runs and CI lanes that don't pre-build the SPA.
+- **Why deferred:** The env-var skip gate (`FRIGORINO_SKIP_SPA_BUILD=1`) is in place and used by `.github/workflows/ci.yml`, which is enough for the current CI lane. The remaining two hardenings only matter once we have parallel runs or hit a real build failure.
 - **Plan:**
-  - Gate the build by an env var: skip when `FRIGORINO_SKIP_SPA_BUILD=1` is set, so CI lanes that already produce `ClientApp/build` in a dedicated step can short-circuit.
   - Add a coarse cross-process lock around the `npm run build` invocation (e.g. a file lock in `ClientApp/.spa-build.lock`) so parallel test runs in the same workspace don't race.
   - Surface stdout when the build fails (currently only stderr is captured) so root cause is visible without re-running.
-- **Risk if left:** Slow cold-start for any new CI lane; concurrent local runs in the same workspace can corrupt `ClientApp/build`; opaque failures when `npm run build` errors mid-run.
+- **Risk if left:** Concurrent local runs in the same workspace can corrupt `ClientApp/build`; opaque failures when `npm run build` errors mid-run.
