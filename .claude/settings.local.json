@@ -35,7 +35,9 @@
       "Bash(npm run *)",
       "WebFetch(domain:docs.railway.com)",
       "WebFetch(domain:station.railway.com)",
-      "Bash(npm ci *)"
+      "WebFetch(domain:posthog.com)",
+      "WebFetch(domain:sentry.io)",
+      "WebFetch(domain:grafana.com)"
     ],
     "deny": [],
     "ask": []
