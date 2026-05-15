@@ -19,11 +19,9 @@ import {
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-    useCurrentHousehold,
-    useSetCurrentHousehold,
-    useUserHouseholds,
-} from "../../hooks/useHouseholdQueries";
+import { useUserHouseholds } from "../../../households/useUserHouseholds";
+import { useCurrentHousehold } from "../useCurrentHousehold";
+import { useSetCurrentHousehold } from "../useSetCurrentHousehold";
 
 interface HouseholdSwitcherProps {
     onCreateHousehold: () => void;
@@ -65,7 +63,6 @@ export const HouseholdSwitcher = ({
         navigate({ to: "/household/manage" });
     };
 
-    // Find current household details
     const currentHouseholdDetails = households?.find(
         (h) => h.id === currentHousehold?.householdId,
     );
@@ -113,7 +110,7 @@ export const HouseholdSwitcher = ({
                         display: "flex",
                         alignItems: "center",
                         gap: { xs: 0.5, sm: 0.75 },
-                        minWidth: 0, // Allow shrinking
+                        minWidth: 0,
                     }}
                 >
                     <Business sx={{ fontSize: { xs: 14, sm: 16 } }} />
@@ -126,7 +123,7 @@ export const HouseholdSwitcher = ({
                             whiteSpace: "nowrap",
                             fontSize: { xs: "0.75rem", sm: "0.875rem" },
                             fontWeight: 500,
-                            minWidth: 0, // Allow shrinking
+                            minWidth: 0,
                         }}
                     >
                         {currentHouseholdName}

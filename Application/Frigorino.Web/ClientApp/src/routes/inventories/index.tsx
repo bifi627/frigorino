@@ -21,7 +21,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
-import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import {
     useDeleteInventory,
     useHouseholdInventories,

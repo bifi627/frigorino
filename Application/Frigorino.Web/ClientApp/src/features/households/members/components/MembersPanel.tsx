@@ -25,15 +25,13 @@ import {
     Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-import {
-    useHouseholdMembers,
-    useRemoveMember,
-    useUpdateMemberRole,
-} from "../../hooks/useHouseholdQueries";
-import { type HouseholdRole, type MemberResponse } from "../../lib/api";
+import { type HouseholdRole, type MemberResponse } from "../../../../lib/api";
+import { useHouseholdMembers } from "../useHouseholdMembers";
+import { useRemoveMember } from "../useRemoveMember";
+import { useUpdateMemberRole } from "../useUpdateMemberRole";
 import { AddMemberDialog } from "./AddMemberDialog";
 
-interface HouseholdMembersProps {
+interface MembersPanelProps {
     householdId: number;
     currentUserRole?: HouseholdRole;
 }
@@ -59,7 +57,7 @@ const roleColors: Record<
     2: "warning",
 };
 
-export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
+export const MembersPanel: React.FC<MembersPanelProps> = ({
     householdId,
     currentUserRole = 0,
 }) => {
@@ -116,18 +114,18 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
         }
     };
 
-    const canManageMembers = currentUserRole >= 1; // Admin or Owner
+    const canManageMembers = currentUserRole >= 1;
     const canRemoveMember = (member: MemberResponse): boolean => {
         if (!canManageMembers) return false;
-        if (member.role === 2) return false; // Cannot remove owner
-        if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot remove another admin
+        if (member.role === 2) return false;
+        if (currentUserRole === 1 && member.role === 1) return false;
         return true;
     };
 
     const canChangeRole = (member: MemberResponse): boolean => {
         if (!canManageMembers) return false;
-        if (member.role === 2) return false; // Cannot change owner role
-        if (currentUserRole === 1 && member.role === 1) return false; // Admin cannot change another admin's role
+        if (member.role === 2) return false;
+        if (currentUserRole === 1 && member.role === 1) return false;
         return true;
     };
 
@@ -331,7 +329,6 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                 </CardContent>
             </Card>
 
-            {/* Action Menu */}
             <Menu
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
@@ -363,14 +360,12 @@ export const HouseholdMembers: React.FC<HouseholdMembersProps> = ({
                 )}
             </Menu>
 
-            {/* Add Member Dialog */}
             <AddMemberDialog
                 open={addDialogOpen}
                 onClose={() => setAddDialogOpen(false)}
                 householdId={householdId}
             />
 
-            {/* Remove Confirmation Dialog */}
             <Dialog
                 open={confirmRemoveOpen}
                 onClose={() => setConfirmRemoveOpen(false)}

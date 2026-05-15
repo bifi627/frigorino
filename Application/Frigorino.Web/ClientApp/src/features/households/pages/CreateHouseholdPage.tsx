@@ -1,4 +1,4 @@
-import { Add, ArrowBack, Inventory2 } from "@mui/icons-material";
+import { Add, ArrowBack } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -12,44 +12,35 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import {
-    createFileRoute,
-    useNavigate,
-    useRouter,
-} from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { requireAuth } from "../../common/authGuard";
-import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
-import { useCreateInventory } from "../../hooks/useInventoryQueries";
+import { useSetCurrentHousehold } from "../../me/activeHousehold/useSetCurrentHousehold";
+import { useCreateHousehold } from "../useCreateHousehold";
 
-export const Route = createFileRoute("/inventories/create")({
-    beforeLoad: requireAuth,
-    component: CreateInventoryPage,
-});
-
-interface CreateInventoryFormData {
+interface CreateHouseholdFormData {
     name: string;
     description: string;
 }
 
-function CreateInventoryPage() {
+export function CreateHouseholdPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const router = useRouter();
-    const createInventoryMutation = useCreateInventory();
-    const { data: currentHousehold } = useCurrentHousehold();
-
-    const [formData, setFormData] = useState<CreateInventoryFormData>({
+    const createHouseholdMutation = useCreateHousehold();
+    const setCurrentHouseholdMutation = useSetCurrentHousehold();
+    const [formData, setFormData] = useState<CreateHouseholdFormData>({
         name: "",
         description: "",
     });
 
-    const isLoading = createInventoryMutation.isPending;
-    const error = createInventoryMutation.error;
+    const isLoading =
+        createHouseholdMutation.isPending ||
+        setCurrentHouseholdMutation.isPending;
+    const error =
+        createHouseholdMutation.error || setCurrentHouseholdMutation.error;
 
     const handleInputChange =
-        (field: keyof CreateInventoryFormData) =>
+        (field: keyof CreateHouseholdFormData) =>
         (event: React.ChangeEvent<HTMLInputElement>) => {
             setFormData((prev) => ({
                 ...prev,
@@ -60,48 +51,32 @@ function CreateInventoryPage() {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        if (!formData.name.trim() || !currentHousehold?.householdId) {
+        if (!formData.name.trim()) {
             return;
         }
 
         try {
-            const response = await createInventoryMutation.mutateAsync({
-                householdId: currentHousehold.householdId,
-                data: {
-                    name: formData.name.trim(),
-                    description: formData.description.trim() || undefined,
-                },
+            const household = await createHouseholdMutation.mutateAsync({
+                name: formData.name.trim(),
+                description: formData.description.trim() || null,
             });
 
-            navigate({ to: `/inventories/${response.id}/view` });
+            if (household.id) {
+                await setCurrentHouseholdMutation.mutateAsync(household.id);
+            }
+
+            navigate({ to: "/" });
         } catch (err) {
-            console.error("Failed to create inventory:", err);
+            console.error("Failed to create household:", err);
         }
     };
 
     const handleBack = () => {
-        router.history.back();
+        navigate({ to: "/" });
     };
-
-    if (!currentHousehold?.householdId) {
-        return (
-            <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
-                <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    {t("common.selectHouseholdFirst")}
-                    <Button
-                        onClick={handleBack}
-                        sx={{ mt: 1, display: "block" }}
-                    >
-                        {t("common.goBackToDashboard")}
-                    </Button>
-                </Alert>
-            </Container>
-        );
-    }
 
     return (
         <Container maxWidth="sm" sx={{ py: 3, px: 2 }}>
-            {/* Header */}
             <Box
                 sx={{
                     display: "flex",
@@ -121,45 +96,10 @@ function CreateInventoryPage() {
                         fontSize: { xs: "1.4rem", sm: "1.8rem" },
                     }}
                 >
-                    {t("inventory.createNewInventory")}
+                    {t("household.createNewHousehold")}
                 </Typography>
             </Box>
 
-            {/* Info Card */}
-            <Card
-                sx={{
-                    mb: 3,
-                    borderRadius: 3,
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                }}
-            >
-                <CardContent sx={{ p: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Box
-                            sx={{
-                                p: 1.5,
-                                borderRadius: 2,
-                                bgcolor: "rgba(255,255,255,0.2)",
-                                display: "flex",
-                                alignItems: "center",
-                            }}
-                        >
-                            <Inventory2 />
-                        </Box>
-                        <Box>
-                            <Typography
-                                variant="h6"
-                                sx={{ fontWeight: 600, mb: 0.5 }}
-                            >
-                                {t("inventory.title")}
-                            </Typography>
-                        </Box>
-                    </Box>
-                </CardContent>
-            </Card>
-
-            {/* Form */}
             <Card
                 sx={{
                     borderRadius: 3,
@@ -185,7 +125,7 @@ function CreateInventoryPage() {
                                     variant="subtitle1"
                                     sx={{ fontWeight: 600, mb: 1 }}
                                 >
-                                    {t("common.name")} *
+                                    {t("household.householdName")} *
                                 </Typography>
                                 <TextField
                                     fullWidth
@@ -199,8 +139,12 @@ function CreateInventoryPage() {
                                     helperText={
                                         !formData.name.trim() &&
                                         formData.name.length > 0
-                                            ? t("common.nameRequired")
-                                            : ""
+                                            ? t(
+                                                  "household.householdNameRequired",
+                                              )
+                                            : t(
+                                                  "household.chooseRecognizableName",
+                                              )
                                     }
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
@@ -210,24 +154,8 @@ function CreateInventoryPage() {
                                 />
                             </Box>
 
-                            {/* Optional Description */}
-                            {/* <Box>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                                    Description (Optional)
-                                </Typography>
-                                <TextField
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    value={formData.description}
-                                    onChange={handleInputChange("description")}
-                                    disabled={isLoading}
-                                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                                />
-                            </Box> */}
-
                             <Button
-                                data-testid="inventory-create-submit-button"
+                                data-testid="household-create-submit-button"
                                 type="submit"
                                 variant="contained"
                                 size="large"
@@ -252,7 +180,7 @@ function CreateInventoryPage() {
                             >
                                 {isLoading
                                     ? t("common.creating")
-                                    : t("inventory.createInventory")}
+                                    : t("household.createHousehold")}
                             </Button>
                         </Stack>
                     </form>
@@ -263,5 +191,3 @@ function CreateInventoryPage() {
         </Container>
     );
 }
-
-export default CreateInventoryPage;

@@ -14,8 +14,8 @@ import {
     TextField,
 } from "@mui/material";
 import React, { useState } from "react";
-import { useAddMember } from "../../hooks/useHouseholdQueries";
-import { ApiError, type HouseholdRole } from "../../lib/api";
+import { ApiError, type HouseholdRole } from "../../../../lib/api";
+import { useAddMember } from "../useAddMember";
 
 interface AddMemberDialogProps {
     open: boolean;

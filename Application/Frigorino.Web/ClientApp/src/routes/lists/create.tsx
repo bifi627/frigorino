@@ -20,7 +20,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
-import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import { useCreateList } from "../../hooks/useListQueries";
 
 export const Route = createFileRoute("/lists/create")({
