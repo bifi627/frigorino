@@ -1,9 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../common/apiClient";
-import type { CreateListRequest, ListDto, UpdateListRequest } from "../lib/api";
+import type {
+    CreateListRequest,
+    ListResponse,
+    UpdateListRequest,
+} from "../lib/api";
 
 // Re-export types for convenience
-export type { CreateListRequest, ListDto, UpdateListRequest };
+export type { CreateListRequest, ListResponse, UpdateListRequest };
 
 // Query Keys - centralized for consistency
 export const listKeys = {
@@ -20,7 +24,7 @@ export const listKeys = {
 export const useHouseholdLists = (householdId: number, enabled = true) => {
     return useQuery({
         queryKey: listKeys.byHousehold(householdId),
-        queryFn: () => ClientApi.lists.getApiHouseholdLists(householdId),
+        queryFn: () => ClientApi.lists.getLists(householdId),
         enabled: enabled && householdId > 0,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
@@ -34,8 +38,7 @@ export const useList = (
 ) => {
     return useQuery({
         queryKey: listKeys.detail(listId),
-        queryFn: () =>
-            ClientApi.lists.getApiHouseholdLists1(householdId, listId),
+        queryFn: () => ClientApi.lists.getList(householdId, listId),
         enabled: enabled && listId > 0 && householdId > 0,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
@@ -53,7 +56,7 @@ export const useCreateList = () => {
             householdId: number;
             data: CreateListRequest;
         }) => {
-            return ClientApi.lists.postApiHouseholdLists(householdId, data);
+            return ClientApi.lists.createList(householdId, data);
         },
         onSuccess: (data, variables) => {
             // Invalidate and refetch household lists
@@ -83,11 +86,7 @@ export const useUpdateList = () => {
             listId: number;
             data: UpdateListRequest;
         }) => {
-            return ClientApi.lists.putApiHouseholdLists(
-                householdId,
-                listId,
-                data,
-            );
+            return ClientApi.lists.updateList(householdId, listId, data);
         },
         onSuccess: (data, variables) => {
             // Update the specific list in cache
@@ -115,7 +114,7 @@ export const useDeleteList = () => {
             householdId: number;
             listId: number;
         }) => {
-            return ClientApi.lists.deleteApiHouseholdLists(householdId, listId);
+            return ClientApi.lists.deleteList(householdId, listId);
         },
         onSuccess: (_, variables) => {
             // Remove the specific list from cache

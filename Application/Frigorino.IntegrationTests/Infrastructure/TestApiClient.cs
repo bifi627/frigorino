@@ -83,6 +83,34 @@ public class TestApiClient(ScenarioContextHolder ctx)
         return json.GetProperty("id").GetInt32();
     }
 
+    public Task<IAPIResponse> TryCreateListAsync(string? name, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryGetListsAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/lists",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryDeleteListAsync(int listId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     public async Task<int> CreateListItemAsync(int listId, string text)
     {
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/ListItems", new { text });

@@ -110,6 +110,7 @@ function ListEditPage() {
 
         const updateData: UpdateListRequest = {
             name: editedName.trim(),
+            description: list.description ?? null,
         };
 
         updateListMutation.mutate(
@@ -376,6 +377,7 @@ function ListEditPage() {
                                 updateListMutation.isPending || !isFormValid
                             }
                             startIcon={<Save />}
+                            data-testid="list-edit-save-button"
                             sx={{ borderRadius: 2, minWidth: 100 }}
                         >
                             {updateListMutation.isPending
