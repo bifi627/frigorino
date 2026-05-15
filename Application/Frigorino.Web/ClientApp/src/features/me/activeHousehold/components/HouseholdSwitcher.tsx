@@ -1,16 +1,9 @@
-import {
-    Add,
-    Business,
-    Edit,
-    House,
-    KeyboardArrowDown,
-} from "@mui/icons-material";
+import { Add, Business, KeyboardArrowDown } from "@mui/icons-material";
 import {
     Box,
     Button,
     CircularProgress,
     Divider,
-    IconButton,
     ListItemIcon,
     ListItemText,
     Menu,
@@ -22,6 +15,7 @@ import { useState } from "react";
 import { useUserHouseholds } from "../../../households/useUserHouseholds";
 import { useCurrentHousehold } from "../useCurrentHousehold";
 import { useSetCurrentHousehold } from "../useSetCurrentHousehold";
+import { HouseholdSwitcherMenuItem } from "./HouseholdSwitcherMenuItem";
 
 interface HouseholdSwitcherProps {
     onCreateHousehold: () => void;
@@ -31,7 +25,7 @@ export const HouseholdSwitcher = ({
     onCreateHousehold,
 }: HouseholdSwitcherProps) => {
     const navigate = useNavigate();
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const open = Boolean(anchorEl);
 
     const { data: households, isLoading } = useUserHouseholds();
@@ -39,66 +33,39 @@ export const HouseholdSwitcher = ({
     const { mutate: switchHousehold, isPending: isSwitching } =
         useSetCurrentHousehold();
 
-    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
+    const handleClose = () => setAnchorEl(null);
 
     const handleHouseholdSelect = (householdId: number) => {
-        if (householdId !== currentHousehold?.householdId) {
-            switchHousehold(householdId, {
-                onSuccess: () => {
-                    handleClose();
-                },
-            });
-        } else {
+        if (householdId === currentHousehold?.householdId) {
             handleClose();
+            return;
         }
+        switchHousehold(householdId, { onSuccess: handleClose });
     };
 
-    const handleHouseHoldEdit = () => {
-        navigate({ to: "/household/manage" });
-    };
-
-    const currentHouseholdDetails = households?.find(
-        (h) => h.id === currentHousehold?.householdId,
-    );
     const currentHouseholdName =
-        currentHouseholdDetails?.name || "No Household";
+        households?.find((h) => h.id === currentHousehold?.householdId)?.name ||
+        "No Household";
 
     if (isLoading) {
-        return (
-            <CircularProgress
-                size={20}
-                sx={{
-                    color: "text.secondary",
-                }}
-            />
-        );
+        return <CircularProgress size={20} sx={{ color: "text.secondary" }} />;
     }
 
     return (
         <>
             <Button
-                onClick={handleClick}
+                onClick={(e) => setAnchorEl(e.currentTarget)}
                 variant="outlined"
                 size="small"
-                endIcon={<KeyboardArrowDown sx={{ fontSize: 16 }} />}
+                endIcon={<KeyboardArrowDown fontSize="small" />}
                 disabled={isSwitching}
                 data-testid="household-switcher-toggle"
                 sx={{
-                    borderRadius: 2,
-                    textTransform: "none",
                     minWidth: { xs: 120, sm: 140 },
                     maxWidth: { xs: 160, sm: 200 },
-                    height: 32,
                     justifyContent: "space-between",
                     bgcolor: "background.paper",
                     borderColor: "divider",
-                    px: { xs: 1, sm: 1.5 },
                     "&:hover": {
                         bgcolor: "action.hover",
                         borderColor: "primary.main",
@@ -109,11 +76,11 @@ export const HouseholdSwitcher = ({
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: { xs: 0.5, sm: 0.75 },
+                        gap: 0.75,
                         minWidth: 0,
                     }}
                 >
-                    <Business sx={{ fontSize: { xs: 14, sm: 16 } }} />
+                    <Business fontSize="small" />
                     <Typography
                         variant="body2"
                         data-testid="household-switcher-current-name"
@@ -121,7 +88,6 @@ export const HouseholdSwitcher = ({
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
-                            fontSize: { xs: "0.75rem", sm: "0.875rem" },
                             fontWeight: 500,
                             minWidth: 0,
                         }}
@@ -135,81 +101,33 @@ export const HouseholdSwitcher = ({
                 anchorEl={anchorEl}
                 open={open}
                 onClose={handleClose}
-                anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
-                }}
-                transformOrigin={{
-                    vertical: "top",
-                    horizontal: "right",
-                }}
+                elevation={4}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
                 slotProps={{
                     paper: {
                         sx: {
                             minWidth: { xs: 280, sm: 320 },
                             maxWidth: { xs: "90vw", sm: 400 },
                             mt: 1,
-                            borderRadius: 2,
-                            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                         },
                     },
                 }}
             >
                 {households && households.length > 0 ? (
                     households.map((household) => (
-                        <MenuItem
+                        <HouseholdSwitcherMenuItem
                             key={household.id}
-                            data-testid={`household-switcher-option-${household.name}`}
-                            onClick={() => handleHouseholdSelect(household.id!)}
-                            selected={
+                            household={household}
+                            isCurrent={
                                 household.id === currentHousehold?.householdId
                             }
                             disabled={isSwitching}
-                            sx={{
-                                py: { xs: 1.5, sm: 2 },
-                                px: 2,
-                                minHeight: { xs: 56, sm: 64 },
-                            }}
-                        >
-                            <ListItemIcon sx={{ minWidth: { xs: 32, sm: 40 } }}>
-                                <House sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={
-                                    <Box
-                                        flexDirection={"row"}
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent={"space-between"}
-                                    >
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                fontWeight: 500,
-                                                fontSize: {
-                                                    xs: "0.875rem",
-                                                    sm: "1rem",
-                                                },
-                                            }}
-                                        >
-                                            {household.name}
-                                        </Typography>
-                                        <IconButton
-                                            onClick={handleHouseHoldEdit}
-                                            sx={{
-                                                visibility:
-                                                    household.id ===
-                                                    currentHousehold?.householdId
-                                                        ? "visible"
-                                                        : "hidden",
-                                            }}
-                                        >
-                                            <Edit />
-                                        </IconButton>
-                                    </Box>
-                                }
-                            />
-                        </MenuItem>
+                            onSelect={() => handleHouseholdSelect(household.id!)}
+                            onEdit={() =>
+                                navigate({ to: "/household/manage" })
+                            }
+                        />
                     ))
                 ) : (
                     <MenuItem disabled sx={{ py: 2 }}>
@@ -239,27 +157,17 @@ export const HouseholdSwitcher = ({
                         handleClose();
                         onCreateHousehold();
                     }}
-                    sx={{
-                        py: { xs: 1.5, sm: 2 },
-                        color: "primary.main",
-                        minHeight: { xs: 48, sm: 56 },
-                    }}
+                    sx={{ py: { xs: 1.5, sm: 2 }, color: "primary.main" }}
                 >
-                    <ListItemIcon sx={{ minWidth: { xs: 32, sm: 40 } }}>
-                        <Add
-                            sx={{ fontSize: { xs: 18, sm: 20 } }}
-                            color="primary"
-                        />
+                    <ListItemIcon>
+                        <Add fontSize="small" color="primary" />
                     </ListItemIcon>
                     <ListItemText
                         primary={
                             <Typography
                                 variant="body2"
                                 color="primary.main"
-                                sx={{
-                                    fontWeight: 500,
-                                    fontSize: { xs: "0.875rem", sm: "1rem" },
-                                }}
+                                sx={{ fontWeight: 500 }}
                             >
                                 Create New Household
                             </Typography>

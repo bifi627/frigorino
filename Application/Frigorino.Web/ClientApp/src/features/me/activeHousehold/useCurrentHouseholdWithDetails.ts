@@ -3,9 +3,7 @@ import { useCurrentHousehold } from "./useCurrentHousehold";
 
 export const useCurrentHouseholdWithDetails = () => {
     const currentHouseholdQuery = useCurrentHousehold();
-    const householdsQuery = useUserHouseholds(
-        !!currentHouseholdQuery.data?.householdId,
-    );
+    const householdsQuery = useUserHouseholds();
 
     const currentHouseholdDetails = householdsQuery.data?.find(
         (h) => h.id === currentHouseholdQuery.data?.householdId,

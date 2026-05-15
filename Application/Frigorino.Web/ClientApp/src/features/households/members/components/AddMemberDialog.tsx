@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { ApiError, type HouseholdRole } from "../../../../lib/api";
+import { HouseholdRoleValue, useRoleLabels } from "../../householdRole";
 import { useAddMember } from "../useAddMember";
 
 interface AddMemberDialogProps {
@@ -22,12 +23,6 @@ interface AddMemberDialogProps {
     onClose: () => void;
     householdId: number;
 }
-
-const roleLabels: Record<number, string> = {
-    0: "Member",
-    1: "Admin",
-    2: "Owner",
-};
 
 function readEmailError(error: unknown): string {
     if (error instanceof ApiError) {
@@ -44,15 +39,16 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     onClose,
     householdId,
 }) => {
+    const roleLabels = useRoleLabels();
     const [email, setEmail] = useState("");
-    const [role, setRole] = useState<HouseholdRole>(0);
+    const [role, setRole] = useState<HouseholdRole>(HouseholdRoleValue.Member);
     const [error, setError] = useState<string | null>(null);
 
     const addMemberMutation = useAddMember(householdId);
 
     const handleClose = () => {
         setEmail("");
-        setRole(0);
+        setRole(HouseholdRoleValue.Member);
         setError(null);
         onClose();
     };
@@ -131,9 +127,15 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
                                 label="Role"
                                 disabled={addMemberMutation.isPending}
                             >
-                                <MenuItem value={0}>{roleLabels[0]}</MenuItem>
-                                <MenuItem value={1}>{roleLabels[1]}</MenuItem>
-                                <MenuItem value={2}>{roleLabels[2]}</MenuItem>
+                                <MenuItem value={HouseholdRoleValue.Member}>
+                                    {roleLabels[HouseholdRoleValue.Member]}
+                                </MenuItem>
+                                <MenuItem value={HouseholdRoleValue.Admin}>
+                                    {roleLabels[HouseholdRoleValue.Admin]}
+                                </MenuItem>
+                                <MenuItem value={HouseholdRoleValue.Owner}>
+                                    {roleLabels[HouseholdRoleValue.Owner]}
+                                </MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
