@@ -14,30 +14,57 @@
 
 ## Project Structure
 
+The SPA is mid-migration from a top-level `components/`+`hooks/` shape to a vertical-slice `features/<area>/` shape that mirrors the backend slice folders. **New work belongs in `features/`**; the legacy locations are being phased out alongside the corresponding backend slice migration.
+
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── auth/           # Authentication components
-│   ├── common/         # Shared components (HeroImage, sortable)
-│   ├── dashboard/      # Dashboard-specific components
-│   ├── household/      # Household management components
-│   ├── layout/         # Navigation and layout components
-│   ├── list/           # List and list item components
-│   └── inventory/      # Inventory management components
-├── hooks/              # Custom React hooks (useAuth, useHouseholdQueries)
-├── lib/api/            # Auto-generated API client (OpenAPI codegen)
-│   ├── models/         # TypeScript type definitions
-│   ├── services/       # API service classes
-│   └── core/           # Base HTTP client and error handling
-├── routes/             # File-based routing (TanStack Router)
-│   ├── __root.tsx     # Root layout with auth and navigation
-│   ├── index.tsx      # Dashboard route
-│   ├── auth/          # Authentication routes
-│   ├── household/     # Household management routes
-│   ├── lists/         # List management routes
-│   └── inventories/   # Inventory management routes
-└── common/             # Auth setup and API configuration
+├── features/                       # Vertical slices (canonical going forward)
+│   ├── households/                 # one-hook-per-file + pages/ + components/
+│   │   ├── householdKeys.ts        # query-key factory
+│   │   ├── householdRole.ts        # role tokens, color/label maps
+│   │   ├── useUserHouseholds.ts    # one file per backend slice
+│   │   ├── useCreateHousehold.ts
+│   │   ├── useDeleteHousehold.ts
+│   │   ├── pages/                  # CreateHouseholdPage, ManageHouseholdPage
+│   │   ├── components/             # HouseholdSummaryCard, DeleteHouseholdDialog, …
+│   │   └── members/                # nested sub-slice mirrors backend Members/
+│   ├── lists/                      # same shape — see knowledge/Migrations/Lists.md
+│   │   ├── listKeys.ts
+│   │   ├── useHouseholdLists.ts / useList.ts / useCreate|Update|DeleteList.ts
+│   │   ├── pages/                  # ListsPage, CreateListPage, ListViewPage, ListEditPage
+│   │   └── components/             # ListSummaryCard, ListActionsMenu, *Form, *Dialog
+│   └── me/activeHousehold/         # cross-aggregate session state
+├── routes/                         # File-based routing (TanStack Router)
+│   ├── __root.tsx                  # Root layout with auth + navigation
+│   ├── _protected.tsx              # Auth gate for authenticated routes
+│   ├── index.tsx                   # Dashboard
+│   ├── auth/                       # Authentication routes
+│   ├── household/                  # 7-line shells importing features/households/pages
+│   ├── lists/                      # same — shells importing features/lists/pages
+│   └── inventories/                # legacy fat routes (pending migration)
+├── components/                     # Legacy + cross-cutting
+│   ├── auth/                       # Authentication wrappers
+│   ├── common/                     # HeroImage, etc.
+│   ├── dashboard/                  # WelcomePage
+│   ├── dialogs/                    # Shared ConfirmDialog primitive
+│   ├── layout/                     # Navigation, headers
+│   ├── shared/                     # PageHeadActionBar, etc.
+│   ├── list/                       # ListItems UI (AddInput, ListContainer, ListFooter) — moves with backend ListItems migration
+│   └── inventory/                  # Inventory UI — moves with backend Inventories migration
+├── hooks/                          # Legacy bundled hooks (being phased out)
+│   ├── useAuth.ts                  # stays — cross-cutting
+│   ├── useLongPress.ts             # stays — cross-cutting
+│   ├── useListItemQueries.ts       # moves with ListItems migration
+│   └── useInventoryQueries.ts      # moves with Inventories migration
+├── lib/api/                        # Auto-generated client (`npm run api`)
+│   ├── models/                     # TypeScript types from OpenAPI
+│   ├── services/                   # ClientApi.households, ClientApi.lists, …
+│   └── core/                       # Base HTTP client + error handling
+├── theme.ts                        # MUI theme + pageContainerSx export
+└── common/                         # apiClient.ts (ClientApi singleton), authGuard
 ```
+
+Canonical references for the vertical-slice shape: `features/households/CreateHouseholdPage.tsx`, `features/lists/useCreateList.ts`, `routes/household/create.tsx` (the 3-line route shell).
 
 ## Key Features
 
@@ -62,9 +89,30 @@ const queryClient = new QueryClient({
 - **Real-time Updates**: 30-second stale time for collaborative list items
 
 #### Query Key Patterns
-- **Hierarchical Keys**: `['households']`, `['lists', householdId]`, `['list-items', listId]`
-- **Invalidation Strategy**: Hierarchical invalidation for related data updates
-- **Background Refetch**: Automatic background updates when data becomes stale
+
+Each migrated feature owns a key factory colocated with its hooks. Examples:
+
+```typescript
+// features/households/householdKeys.ts
+export const householdKeys = {
+    all: ["households"] as const,
+    lists: () => [...householdKeys.all, "list"] as const,
+    current: () => ["currentHousehold"] as const,
+    members: (householdId: number) =>
+        [...householdKeys.all, "members", householdId] as const,
+};
+
+// features/lists/listKeys.ts
+export const listKeys = {
+    all: ["lists"] as const,
+    byHousehold: (householdId: number) =>
+        [...listKeys.all, "household", householdId] as const,
+    detail: (listId: number) => [...listKeys.all, "detail", listId] as const,
+};
+```
+
+- **Hierarchical invalidation**: mutations call `queryClient.invalidateQueries({ queryKey: listKeys.byHousehold(id) })` to cascade refetches.
+- **Background refetch**: TanStack Query handles staleness + revalidation automatically.
 
 ### Performance Optimizations
 
@@ -89,17 +137,30 @@ const queryClient = new QueryClient({
 ### UI/UX Design System
 
 #### Material-UI Theme Configuration
+
+The theme lives at `src/theme.ts` and is the source of truth — see `knowledge/Frontend_Styling.md` for the rules that apply when authoring components (no inline `borderRadius`, `boxShadow`, or `fontSize` overrides; use `elevation`, `variant`, `size` props instead).
+
 ```typescript
-const darkTheme = createTheme({
-    palette: {
-        mode: "dark",
-    },
-});
+export const appTheme = responsiveFontSizes(
+    createTheme({
+        palette: { mode: "dark" },
+        shape: { borderRadius: 8 },
+        components: {
+            MuiButton: { styleOverrides: { root: { textTransform: "none" } } },
+        },
+    }),
+);
+
+export const pageContainerSx = {
+    py: { xs: 2, sm: 3 },
+    px: { xs: 1, sm: 2 },
+};
 ```
-- **Dark Theme**: Consistent dark mode throughout application
-- **Material Design**: Material-UI component library for consistent UX
-- **Typography**: Consistent font scales and weights
-- **Color Palette**: Semantic color system for status and actions
+
+- **Dark Theme**: single-mode dark UI.
+- **Responsive Typography**: `responsiveFontSizes` scales variants across breakpoints — don't override `fontSize` inline.
+- **Global radius**: `shape.borderRadius: 8` applies to Buttons, Cards, Papers, Alerts, OutlinedInputs, Menus, Chips. Inline `borderRadius: 2` is an anti-pattern.
+- **Button overrides**: `textTransform: "none"` is global — don't re-declare per Button.
 
 #### Responsive Design
 - **Mobile-First**: Progressive enhancement from mobile to desktop
@@ -116,20 +177,42 @@ const darkTheme = createTheme({
 ### State Management Architecture
 
 #### Server State (TanStack Query)
+
+One hook file per backend slice, colocated under `features/<area>/`. Canonical shape:
+
 ```typescript
-// Query hook pattern
-export const useListItems = (listId: string) => {
+// features/lists/useHouseholdLists.ts
+export const useHouseholdLists = (householdId: number, enabled = true) => {
     return useQuery({
-        queryKey: ['list-items', listId],
-        queryFn: () => ClientApi.listItemsService.getListItems(listId),
-        staleTime: 1000 * 30, // 30 seconds for collaborative updates
+        queryKey: listKeys.byHousehold(householdId),
+        queryFn: () => ClientApi.lists.getLists(householdId),
+        enabled: enabled && householdId > 0,
+        staleTime: 1000 * 60 * 2,
+    });
+};
+
+// features/lists/useDeleteList.ts
+export const useDeleteList = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ householdId, listId }) =>
+            ClientApi.lists.deleteList(householdId, listId),
+        onSuccess: (_, variables) => {
+            queryClient.removeQueries({
+                queryKey: listKeys.detail(variables.listId),
+            });
+            queryClient.invalidateQueries({
+                queryKey: listKeys.byHousehold(variables.householdId),
+            });
+        },
     });
 };
 ```
-- **Cache Management**: Automatic background refetch and cache invalidation
-- **Optimistic Updates**: Immediate UI updates with server sync
-- **Error Handling**: Built-in retry and error boundary patterns
-- **Loading States**: Automatic loading and error state management
+
+- **Cache Management**: automatic background refetch and cache invalidation via key factories.
+- **Optimistic Updates**: a few hot paths (e.g. list item toggle) update cache pre-mutation; most rely on invalidation.
+- **Error Handling**: built-in retry; component-level error rendering.
+- **Loading States**: `isLoading` / `isPending` flags drive UI gating.
 
 #### Client State (Zustand)
 - **Local UI State**: Modal open/close, form states, temporary selections
@@ -177,26 +260,28 @@ export const useListItems = (listId: string) => {
 
 ### Testing Architecture
 
-#### Testing Strategy
-- **Unit Tests**: Component testing with React Testing Library
-- **Integration Tests**: Multi-component interaction testing
-- **API Testing**: Mock API responses for frontend testing
-- **E2E Testing**: Full user workflow testing
+The SPA has **no frontend-only test runner** today — no Jest, no React Testing Library, no MSW. Component-level unit tests were considered but never wired in. Earlier versions of this doc described an aspirational stack; that's been removed to avoid confusion.
 
-#### Testing Tools
-- **Jest**: Test runner and assertion library
-- **React Testing Library**: Component testing utilities
-- **MSW**: API mocking for testing
-- **Cypress/Playwright**: End-to-end testing framework
+UI behavior is covered end-to-end from the backend side: Reqnroll/Playwright scenarios under `Application/Frigorino.IntegrationTests/Slices/<Area>/<Feature>.feature` drive a real Chromium against the Vite dev server + a Postgres testcontainer.
+
+- **Assertions on `data-testid` and `data-*` attributes only** — never translated UI text (i18n keys move). See `Frontend_Styling.md` and `feedback_test_assertions_no_translated_text` in user memory.
+- **Adding a feature** → add a `*.feature` scenario + steps in the matching `Slices/` folder. There's no expectation of unit-testing React components separately.
+- TypeScript + ESLint + a successful `vite build` are the static guardrails; the Playwright suite is the runtime guardrail.
 
 ### Route Structure
 ```
-/ - Dashboard (WelcomePage)
-/auth/login - Authentication
-/household/create - Create household
-/household/manage - Household management
-/lists/ - List management
-/lists/$listId/view - Individual list view
-/inventories/ - Inventory management
-/inventories/create - Create inventory
+/                              Dashboard (WelcomePage)
+/auth/login                    Firebase authentication
+/household/create              Create household
+/household/manage              Household management (members, delete)
+/lists/                        Lists overview
+/lists/create                  Create list
+/lists/$listId/view            View list items
+/lists/$listId/edit            Edit list metadata
+/inventories/                  Inventory management
+/inventories/create            Create inventory
+/inventories/$inventoryId/view Inventory items
+/inventories/$inventoryId/edit Edit inventory metadata
 ```
+
+Route files under `src/routes/` are thin shells (`createFileRoute` + `requireAuth` + page import from `features/<area>/pages/`). `routeTree.gen.ts` is autogenerated by `@tanstack/router-plugin/vite` — do not edit by hand.
