@@ -10,12 +10,12 @@ import { createRoot } from "react-dom/client";
 import {
     Box,
     CircularProgress,
-    createTheme,
     CssBaseline,
     ThemeProvider,
 } from "@mui/material";
 import { Toaster } from "sonner";
 import { routeTree } from "./routeTree.gen";
+import { appTheme } from "./theme";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -37,16 +37,10 @@ declare module "@tanstack/react-router" {
     }
 }
 
-const darkTheme = createTheme({
-    palette: {
-        mode: "dark",
-    },
-});
-
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <ThemeProvider theme={darkTheme}>
+            <ThemeProvider theme={appTheme}>
                 <CssBaseline />
                 <Suspense
                     fallback={

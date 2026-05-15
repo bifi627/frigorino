@@ -15,7 +15,7 @@ public class MemberSteps(ScenarioContextHolder ctx)
     {
         var externalId = ExternalIdFor(alias);
         var roleChip = ctx.Page.GetByTestId($"household-member-{externalId}-role");
-        await Assertions.Expect(roleChip).ToHaveTextAsync(expectedRole);
+        await Assertions.Expect(roleChip).ToHaveAttributeAsync("data-role", expectedRole);
     }
 
     [Then("the household members appear in this order: {string}, {string}, {string}")]

@@ -113,7 +113,16 @@
         "allMemberAssociations": "• All member associations",
         "allSharedContentFuture": "• All shared content (future: lists, inventory, etc.)",
         "confirmTypeHouseholdName": "To confirm, please type the household name:",
-        "typeHouseholdNameToConfirm": "Type \"{householdName}\" to confirm"
+        "typeHouseholdNameToConfirm": "Type \"{householdName}\" to confirm",
+        "failedToLoadMembers": "Failed to load household members",
+        "noMembersFound": "No members found",
+        "confirmRemoveMember": "Are you sure you want to remove {{memberName}} from this household? This action cannot be undone.",
+        "thisUser": "this user",
+        "removing": "Removing...",
+        "remove": "Remove",
+        "makeMember": "Make Member",
+        "makeAdmin": "Make Admin",
+        "removeFromHousehold": "Remove from Household"
     },
     "inventory": {
         "title": "Inventory",

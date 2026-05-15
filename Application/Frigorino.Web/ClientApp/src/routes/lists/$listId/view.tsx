@@ -17,7 +17,7 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
-import { useCurrentHousehold } from "../../../hooks/useHouseholdQueries";
+import { useCurrentHousehold } from "../../../features/me/activeHousehold/useCurrentHousehold";
 import {
     useCreateListItem,
     useListItems,

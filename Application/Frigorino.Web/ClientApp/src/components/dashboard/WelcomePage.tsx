@@ -26,12 +26,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useAuth } from "../../hooks/useAuth";
-import { useCurrentHousehold } from "../../hooks/useHouseholdQueries";
+import { HouseholdSwitcher } from "../../features/me/activeHousehold/components/HouseholdSwitcher";
+import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import { useHouseholdInventories } from "../../hooks/useInventoryQueries";
 import { useHouseholdLists } from "../../hooks/useListQueries";
 import { useLongPress } from "../../hooks/useLongPress";
 import { HeroImage } from "../common/HeroImage";
-import { HouseholdSwitcher } from "../household/HouseholdSwitcher";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
