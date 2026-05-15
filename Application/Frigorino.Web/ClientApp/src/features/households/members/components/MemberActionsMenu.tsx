@@ -1,4 +1,5 @@
 import { Menu, MenuItem } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { HouseholdRole, MemberResponse } from "../../../../lib/api";
 import { HouseholdRoleValue } from "../../householdRole";
 import { canManageMember } from "../memberPermissions";
@@ -21,6 +22,7 @@ export const MemberActionsMenu = ({
     onClose,
     onRemoveClick,
 }: MemberActionsMenuProps) => {
+    const { t } = useTranslation();
     const { mutate: updateRole } = useUpdateMemberRole(householdId);
 
     const handleRoleChange = (role: HouseholdRole) => {
@@ -35,29 +37,30 @@ export const MemberActionsMenu = ({
 
     return (
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onClose}>
-            {canManage && member && [
+            {canManage && member && (
                 <MenuItem
-                    key="make-member"
                     data-testid="household-member-action-make-member"
                     onClick={() => handleRoleChange(HouseholdRoleValue.Member)}
                 >
-                    Make Member
-                </MenuItem>,
+                    {t("household.makeMember")}
+                </MenuItem>
+            )}
+            {canManage && member && (
                 <MenuItem
-                    key="make-admin"
                     data-testid="household-member-action-make-admin"
                     onClick={() => handleRoleChange(HouseholdRoleValue.Admin)}
                 >
-                    Make Admin
-                </MenuItem>,
+                    {t("household.makeAdmin")}
+                </MenuItem>
+            )}
+            {canManage && member && (
                 <MenuItem
-                    key="remove"
                     data-testid="household-member-action-remove"
                     onClick={() => onRemoveClick(member)}
                 >
-                    Remove from Household
-                </MenuItem>,
-            ]}
+                    {t("household.removeFromHousehold")}
+                </MenuItem>
+            )}
         </Menu>
     );
 };

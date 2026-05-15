@@ -10,6 +10,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { HouseholdRole, MemberResponse } from "../../../../lib/api";
 import { HouseholdRoleValue } from "../../householdRole";
 import { canManageMember, canManageMembers } from "../memberPermissions";
@@ -33,6 +34,7 @@ export const MembersPanel = ({
     householdId,
     currentUserRole = HouseholdRoleValue.Member,
 }: MembersPanelProps) => {
+    const { t } = useTranslation();
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState<MemberResponse | null>(
         null,
@@ -57,7 +59,11 @@ export const MembersPanel = ({
     }
 
     if (error) {
-        return <Alert severity="error">Failed to load household members</Alert>;
+        return (
+            <Alert severity="error">
+                {t("household.failedToLoadMembers")}
+            </Alert>
+        );
     }
 
     return (
@@ -80,7 +86,7 @@ export const MembersPanel = ({
                             component="h2"
                             sx={{ fontWeight: 600 }}
                         >
-                            Members
+                            {t("household.members")}
                         </Typography>
                         {canManageMembers(currentUserRole) && (
                             <Button
@@ -94,7 +100,7 @@ export const MembersPanel = ({
                                     py: { xs: 1, sm: 1.25 },
                                 }}
                             >
-                                Add Member
+                                {t("household.addMember")}
                             </Button>
                         )}
                     </Box>
@@ -127,7 +133,7 @@ export const MembersPanel = ({
                             textAlign="center"
                             py={3}
                         >
-                            No members found
+                            {t("household.noMembersFound")}
                         </Typography>
                     )}
                 </CardContent>

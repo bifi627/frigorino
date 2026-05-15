@@ -46,7 +46,10 @@ export const HouseholdSwitcherMenuItem = ({
                             {household.name}
                         </Typography>
                         <IconButton
-                            onClick={onEdit}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onEdit();
+                            }}
                             sx={{
                                 visibility: isCurrent ? "visible" : "hidden",
                             }}

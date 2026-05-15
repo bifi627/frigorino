@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../../components/dialogs/ConfirmDialog";
 import type { MemberResponse } from "../../../../lib/api";
 import { useRemoveMember } from "../useRemoveMember";
@@ -15,6 +16,7 @@ export const RemoveMemberConfirmDialog = ({
     member,
     householdId,
 }: RemoveMemberConfirmDialogProps) => {
+    const { t } = useTranslation();
     const { mutate: removeMember, isPending } = useRemoveMember(householdId);
 
     const handleConfirm = () => {
@@ -29,17 +31,13 @@ export const RemoveMemberConfirmDialog = ({
             open={open}
             onClose={onClose}
             onConfirm={handleConfirm}
-            title="Remove Member"
-            description={
-                <>
-                    Are you sure you want to remove{" "}
-                    {member?.name || "this user"} from this household? This
-                    action cannot be undone.
-                </>
-            }
-            confirmLabel="Remove"
-            confirmLabelPending="Removing..."
-            cancelLabel="Cancel"
+            title={t("household.removeMember")}
+            description={t("household.confirmRemoveMember", {
+                memberName: member?.name || t("household.thisUser"),
+            })}
+            confirmLabel={t("household.remove")}
+            confirmLabelPending={t("household.removing")}
+            cancelLabel={t("common.cancel")}
             isPending={isPending}
             confirmTestId="household-member-remove-confirm"
             cancelTestId="household-member-remove-cancel"

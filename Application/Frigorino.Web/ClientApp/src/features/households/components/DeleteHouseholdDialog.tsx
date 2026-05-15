@@ -29,7 +29,7 @@ export const DeleteHouseholdDialog = ({
 
     const handleConfirm = () => {
         if (confirmationText === householdName) {
-            deleteHouseholdMutation.mutate(householdId);
+            deleteHouseholdMutation.mutate(householdId, { onSuccess: onClose });
         }
     };
 
