@@ -35,16 +35,7 @@ namespace Frigorino.Features.Lists
             var response = await db.Lists
                 .Where(l => l.HouseholdId == householdId && l.IsActive)
                 .OrderByDescending(l => l.CreatedAt)
-                .Select(l => new ListResponse(
-                    l.Id,
-                    l.Name,
-                    l.Description,
-                    l.HouseholdId,
-                    l.CreatedAt,
-                    l.UpdatedAt,
-                    new ListCreatorResponse(l.CreatedByUser.ExternalId, l.CreatedByUser.Name, l.CreatedByUser.Email),
-                    l.ListItems.Count(i => i.IsActive && !i.Status),
-                    l.ListItems.Count(i => i.IsActive && i.Status)))
+                .Select(ListResponse.ToProjection)
                 .ToArrayAsync(ct);
 
             return TypedResults.Ok(response);

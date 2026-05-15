@@ -38,6 +38,8 @@ namespace Frigorino.Features.Lists
                 return TypedResults.NotFound();
             }
 
+            var creator = await db.Users.FirstAsync(u => u.ExternalId == currentUser.UserId, ct);
+
             var creation = List.Create(request.Name, request.Description, householdId, currentUser.UserId);
             if (creation.IsFailed)
             {
@@ -45,9 +47,8 @@ namespace Frigorino.Features.Lists
             }
 
             var list = creation.Value;
+            list.CreatedByUser = creator;
             db.Lists.Add(list);
-
-            var creator = await db.Users.FirstAsync(u => u.ExternalId == currentUser.UserId, ct);
             await db.SaveChangesAsync(ct);
 
             var response = ListResponse.From(list, creator, uncheckedCount: 0, checkedCount: 0);
