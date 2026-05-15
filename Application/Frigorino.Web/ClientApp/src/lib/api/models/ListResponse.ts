@@ -2,15 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { UserDto } from './UserDto';
-export type ListDto = {
+import type { ListCreatorResponse } from './ListCreatorResponse';
+export type ListResponse = {
     id: number;
     name: string;
-    description?: string | null;
+    description: string | null;
     householdId: number;
     createdAt: string;
     updatedAt: string;
-    createdByUser: UserDto;
+    createdByUser: ListCreatorResponse;
     uncheckedCount: number;
     checkedCount: number;
 };

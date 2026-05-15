@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../common/authGuard";
 import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import { useDeleteList, useHouseholdLists } from "../../hooks/useListQueries";
-import type { ListDto } from "../../lib/api";
+import type { ListResponse } from "../../lib/api";
 
 export const Route = createFileRoute("/lists/")({
     beforeLoad: requireAuth,
@@ -45,7 +45,7 @@ function ListsPage() {
     const deleteListMutation = useDeleteList();
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedList, setSelectedList] = useState<ListDto | null>(null);
+    const [selectedList, setSelectedList] = useState<ListResponse | null>(null);
 
     const handleBack = () => {
         navigate({ to: "/" });
@@ -64,7 +64,7 @@ function ListsPage() {
 
     const handleMenuOpen = (
         event: React.MouseEvent<HTMLElement>,
-        list: ListDto,
+        list: ListResponse,
     ) => {
         setAnchorEl(event.currentTarget);
         setSelectedList(list);

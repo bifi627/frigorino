@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { CreateListRequest } from '../models/CreateListRequest';
-import type { ListDto } from '../models/ListDto';
+import type { ListResponse } from '../models/ListResponse';
 import type { UpdateListRequest } from '../models/UpdateListRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -11,56 +11,66 @@ export class ListsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * @param householdId
-     * @returns ListDto OK
-     * @throws ApiError
-     */
-    public getApiHouseholdLists(
-        householdId: number,
-    ): CancelablePromise<Array<ListDto>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/household/{householdId}/Lists',
-            path: {
-                'householdId': householdId,
-            },
-        });
-    }
-    /**
-     * @param householdId
      * @param requestBody
-     * @returns ListDto OK
+     * @returns ListResponse Created
      * @throws ApiError
      */
-    public postApiHouseholdLists(
+    public createList(
         householdId: number,
         requestBody: CreateListRequest,
-    ): CancelablePromise<ListDto> {
+    ): CancelablePromise<ListResponse> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/household/{householdId}/Lists',
+            url: '/api/household/{householdId}/lists',
             path: {
                 'householdId': householdId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                404: `Not Found`,
+            },
+        });
+    }
+    /**
+     * @param householdId
+     * @returns ListResponse OK
+     * @throws ApiError
+     */
+    public getLists(
+        householdId: number,
+    ): CancelablePromise<Array<ListResponse>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/household/{householdId}/lists',
+            path: {
+                'householdId': householdId,
+            },
+            errors: {
+                404: `Not Found`,
+            },
         });
     }
     /**
      * @param householdId
      * @param listId
-     * @returns ListDto OK
+     * @returns ListResponse OK
      * @throws ApiError
      */
-    public getApiHouseholdLists1(
+    public getList(
         householdId: number,
         listId: number,
-    ): CancelablePromise<ListDto> {
+    ): CancelablePromise<ListResponse> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/household/{householdId}/Lists/{listId}',
+            url: '/api/household/{householdId}/lists/{listId}',
             path: {
                 'householdId': householdId,
                 'listId': listId,
+            },
+            errors: {
+                404: `Not Found`,
             },
         });
     }
@@ -68,41 +78,50 @@ export class ListsService {
      * @param householdId
      * @param listId
      * @param requestBody
-     * @returns ListDto OK
+     * @returns ListResponse OK
      * @throws ApiError
      */
-    public putApiHouseholdLists(
+    public updateList(
         householdId: number,
         listId: number,
         requestBody: UpdateListRequest,
-    ): CancelablePromise<ListDto> {
+    ): CancelablePromise<ListResponse> {
         return this.httpRequest.request({
             method: 'PUT',
-            url: '/api/household/{householdId}/Lists/{listId}',
+            url: '/api/household/{householdId}/lists/{listId}',
             path: {
                 'householdId': householdId,
                 'listId': listId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
         });
     }
     /**
      * @param householdId
      * @param listId
-     * @returns any OK
+     * @returns void
      * @throws ApiError
      */
-    public deleteApiHouseholdLists(
+    public deleteList(
         householdId: number,
         listId: number,
-    ): CancelablePromise<any> {
+    ): CancelablePromise<void> {
         return this.httpRequest.request({
             method: 'DELETE',
-            url: '/api/household/{householdId}/Lists/{listId}',
+            url: '/api/household/{householdId}/lists/{listId}',
             path: {
                 'householdId': householdId,
                 'listId': listId,
+            },
+            errors: {
+                403: `Forbidden`,
+                404: `Not Found`,
             },
         });
     }
