@@ -113,7 +113,16 @@
         "allMemberAssociations": "• Alle Mitgliedszuordnungen",
         "allSharedContentFuture": "• Alle geteilten Inhalte (zukünftig: Listen, Inventar, etc.)",
         "confirmTypeHouseholdName": "Zur Bestätigung geben Sie bitte den Haushaltsnamen ein:",
-        "typeHouseholdNameToConfirm": "Geben Sie \"{householdName}\" zur Bestätigung ein"
+        "typeHouseholdNameToConfirm": "Geben Sie \"{householdName}\" zur Bestätigung ein",
+        "failedToLoadMembers": "Fehler beim Laden der Haushaltsmitglieder",
+        "noMembersFound": "Keine Mitglieder gefunden",
+        "confirmRemoveMember": "Sind Sie sicher, dass Sie {{memberName}} aus diesem Haushalt entfernen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "thisUser": "diesen Benutzer",
+        "removing": "Entfernen...",
+        "remove": "Entfernen",
+        "makeMember": "Zum Mitglied machen",
+        "makeAdmin": "Zum Administrator machen",
+        "removeFromHousehold": "Aus dem Haushalt entfernen"
     },
     "inventory": {
         "title": "Lager",

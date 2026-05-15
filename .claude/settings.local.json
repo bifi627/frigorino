@@ -34,7 +34,8 @@
       "Bash(docker info *)",
       "Bash(npm run *)",
       "WebFetch(domain:docs.railway.com)",
-      "WebFetch(domain:station.railway.com)"
+      "WebFetch(domain:station.railway.com)",
+      "Bash(npm ci *)"
     ],
     "deny": [],
     "ask": []

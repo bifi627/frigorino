@@ -32,7 +32,7 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { requireAuth } from "../../../common/authGuard";
-import { useCurrentHouseholdWithDetails } from "../../../hooks/useHouseholdQueries";
+import { useCurrentHouseholdWithDetails } from "../../../features/me/activeHousehold/useCurrentHouseholdWithDetails";
 import {
     useDeleteInventory,
     useInventory,
