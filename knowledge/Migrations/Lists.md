@@ -76,10 +76,49 @@ File: `Application/Frigorino.Features/Lists/DeleteList.cs`. Write-via-aggregate-
 
 ## Frontend changes
 
+### Initial slice-rename pass (shipped with backend migration)
+
 - Regenerated client (`npm run api`) renamed types: `ListDto` → `ListResponse`. Method names changed too: `ClientApi.lists.getApiHouseholdLists` → `ClientApi.lists.getLists`, etc. (slice-derived names via `.WithName(...)`).
-- Updated `src/hooks/useListQueries.ts` — straight rename: types + method calls.
-- Updated `src/routes/lists/index.tsx` (`ListDto` → `ListResponse` for the menu-state type).
-- Generated TS type for `description` is now `string | null` (codegen treats nullable C# strings this way). Updated `src/routes/lists/create.tsx` and `src/routes/lists/$listId/edit.tsx` to pass `null` instead of `undefined`.
+- Updated the (then bundled) `src/hooks/useListQueries.ts` — straight rename: types + method calls.
+- Generated TS type for `description` is now `string | null` (codegen treats nullable C# strings this way). Updated create/edit routes to pass `null` instead of `undefined`.
+
+### Feature-folder restructure (follow-up pass)
+
+Mirror of the `features/households/` shape. Routes shrink to ~7-line shells; pages, components, and per-slice hooks live under `src/features/lists/`.
+
+```
+src/features/lists/
+├── listKeys.ts                      ← {all, byHousehold(id), detail(id)}
+├── useHouseholdLists.ts             ← one hook per backend slice
+├── useList.ts
+├── useCreateList.ts
+├── useUpdateList.ts
+├── useDeleteList.ts
+├── pages/{ListsPage, CreateListPage, ListViewPage, ListEditPage}.tsx
+└── components/
+    ├── ListSummaryCard.tsx          ← per-list Card on the overview
+    ├── ListActionsMenu.tsx          ← three-dot Menu on the overview
+    ├── CreateListForm.tsx           ← Card+TextField+submit
+    ├── EditListForm.tsx             ← name field + Save/Cancel
+    └── DeleteListConfirmDialog.tsx  ← uses shared ConfirmDialog primitive
+```
+
+Routes at `src/routes/lists/{index,create,$listId/view,$listId/edit}.tsx` are now three-line shells that import the page component.
+
+Styling cleanup applied per `knowledge/Frontend_Styling.md` during extraction:
+- Dropped all inline `borderRadius: 2`/`3` (theme `shape.borderRadius: 8`).
+- Dropped hand-rolled `boxShadow: "0 N px ..."` — replaced with `<Card elevation={N}>` / `<Paper variant="outlined">` / `<Menu elevation={4}>`.
+- Dropped `fontSize: { xs, sm }` on Typography — `responsiveFontSizes` already responsive.
+- Dropped `textTransform: "none"` on Button (global override).
+- Dropped Chip `fontSize: "0.7rem"` — `size="small"` only.
+- Containers now use `pageContainerSx` from `theme.ts`.
+- Replaced the hand-rolled "delete warning" Box in the delete dialog with `<Alert severity="warning">`.
+
+`DeleteListConfirmDialog` uses the shared `src/components/dialogs/ConfirmDialog.tsx` primitive (same pattern as `DeleteHouseholdDialog`).
+
+The old bundled `src/hooks/useListQueries.ts` is deleted. The remaining importer outside the `lists` routes was `src/components/dashboard/WelcomePage.tsx`, updated to import `useHouseholdLists` from `features/lists/`.
+
+Test ID coverage preserved verbatim (`list-item-{name}`, `list-item-menu-button-{name}`, `delete-list-button`, `list-create-submit-button`, `list-edit-save-button`); the 10 ShoppingLists Reqnroll scenarios stay green.
 
 ## Deleted
 
@@ -97,7 +136,7 @@ File: `Application/Frigorino.Features/Lists/DeleteList.cs`. Write-via-aggregate-
 - **ListItems migration** (8 endpoints: Get/Create/Update/Delete/Toggle/Reorder/Compact). Natural next slice batch. Will likely promote sort-order coordination onto `List` as an aggregate method.
 - **Inventories migration** + **InventoryItems migration**. Same pattern when scheduled.
 - **Renaming `HouseholdMappingExtensions.cs` / `HouseholdDto.cs`** — still consumed by Inventory layer. Defer until Inventories migrates.
-- **Frontend feature-folder restructure for Lists** (mirror of `features/households/` work). Current `src/hooks/useListQueries.ts` stays as-is; reshape when the SPA gets time for the next features-folder round.
+- **Frontend feature-folder restructure for ListItems** — `src/components/list/**` (AddInput, ListContainer, ListFooter, ListItemContent, ListItemDialog) plus `src/hooks/useListItemQueries.ts` will move under `features/lists/items/` together with the backend ListItems slice migration. `ListItemDialog`'s hardcoded English strings are bundled into that round.
 
 ## Cross-references
 

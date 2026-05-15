@@ -29,7 +29,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { HouseholdSwitcher } from "../../features/me/activeHousehold/components/HouseholdSwitcher";
 import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import { useHouseholdInventories } from "../../hooks/useInventoryQueries";
-import { useHouseholdLists } from "../../hooks/useListQueries";
+import { useHouseholdLists } from "../../features/lists/useHouseholdLists";
 import { useLongPress } from "../../hooks/useLongPress";
 import { HeroImage } from "../common/HeroImage";
 
