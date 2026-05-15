@@ -4,7 +4,7 @@
 /* eslint-disable */
 export type ListCreatorResponse = {
     externalId: string;
-    name: string | null;
+    name: string;
     email: string | null;
 };
 

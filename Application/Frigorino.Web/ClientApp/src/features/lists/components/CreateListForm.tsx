@@ -22,7 +22,7 @@ interface CreateListFormProps {
 export const CreateListForm = ({ householdId }: CreateListFormProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const createListMutation = useCreateList();
+    const createListMutation = useCreateList(householdId);
     const [name, setName] = useState("");
 
     const isLoading = createListMutation.isPending;
@@ -35,8 +35,8 @@ export const CreateListForm = ({ householdId }: CreateListFormProps) => {
 
         try {
             const response = await createListMutation.mutateAsync({
-                householdId,
-                data: { name: name.trim(), description: null },
+                name: name.trim(),
+                description: null,
             });
             if (response.id) {
                 navigate({ to: `/lists/${response.id}/view` });
