@@ -224,11 +224,11 @@ What's done:
 - `Me/ActiveHousehold/` — Get + Set
 - `Households/` CRUD — Create, GetUserHouseholds, DeleteHousehold (GET/{id} and PUT/{id} dropped as orphan API)
 - `Households/Members/` — GetMembers, AddMember, RemoveMember, UpdateMemberRole (POST `/leave` dropped as orphan API)
+- `Lists/` CRUD — CreateList, GetLists, GetList, UpdateList, DeleteList. `List` is its own aggregate root with `Create` factory + `Update` / `SoftDelete` mutations; the handler resolves the caller's role from `UserHouseholds` and passes it in (creator-OR-Admin+ policy lives on the aggregate). See `knowledge/Migrations/Lists.md`.
 
 The four write slices in `Households/` (`AddMember`, `RemoveMember`, `UpdateMemberRole`, `DeleteHousehold`) all route through aggregate methods on `Household` (`AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`). See `knowledge/Migrations/Household.md` and `knowledge/Migrations/Members.md` for slice-by-slice notes.
 
 What's still in the legacy controller/service layer (in priority-ish order):
-- `Lists*` endpoints
 - `ListItems*` endpoints
 - `Inventories*` endpoints
 - `InventoryItems*` endpoints

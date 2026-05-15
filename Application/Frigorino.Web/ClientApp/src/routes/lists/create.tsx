@@ -69,7 +69,7 @@ function CreateListPage() {
                 householdId: currentHousehold.householdId,
                 data: {
                     name: formData.name.trim(),
-                    description: formData.description.trim() || undefined,
+                    description: formData.description.trim() || null,
                 },
             });
 
