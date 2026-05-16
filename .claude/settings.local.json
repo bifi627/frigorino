@@ -38,7 +38,8 @@
       "WebFetch(domain:posthog.com)",
       "WebFetch(domain:sentry.io)",
       "WebFetch(domain:grafana.com)",
-      "Bash(docker build *)"
+      "Bash(docker build *)",
+      "Bash(docker version *)"
     ],
     "deny": [],
     "ask": []

@@ -28,7 +28,7 @@ namespace Frigorino.Infrastructure.EntityFramework
             return services;
         }
 
-        static string ConvertPostgresUrlToConnectionString(string url)
+        public static string ConvertPostgresUrlToConnectionString(string url)
         {
             if (string.IsNullOrWhiteSpace(url))
             {
