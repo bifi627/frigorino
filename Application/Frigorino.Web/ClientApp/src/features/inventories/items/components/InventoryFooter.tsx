@@ -1,11 +1,14 @@
 import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import type { InventoryItemResponse } from "../../lib/api";
-import { AddInput } from "../list/AddInput";
-import { DateInputPanel } from "../list/DateInputPanel";
-import { QuantityPanel, QuantityToggle } from "../list/QuantityPanel";
+import { AddInput } from "../../../../components/inputs/AddInput";
+import { DateInputPanel } from "../../../../components/inputs/DateInputPanel";
+import {
+    QuantityPanel,
+    QuantityToggle,
+} from "../../../../components/inputs/QuantityPanel";
+import type { InventoryItemResponse } from "../../../../lib/api";
 
-interface ListFooterProps {
+interface InventoryFooterProps {
     editingItem: InventoryItemResponse | null;
     existingItems: InventoryItemResponse[];
     onAddItem: (data: string, quantity?: string, expiryDate?: Date) => void;
@@ -26,7 +29,7 @@ export const InventoryFooter = memo(
         onUncheckExisting,
         isLoading,
         onScrollToLastUnchecked,
-    }: ListFooterProps) => {
+    }: InventoryFooterProps) => {
         const [quantity, setQuantity] = useState("");
         const [date, setDate] = useState<Date | null>(null);
         const [showPanels, setShowQuantityPanel] = useState(false);
