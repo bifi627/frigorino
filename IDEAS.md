@@ -73,46 +73,13 @@ Format per item:
 
 ---
 
-## Post-deploy smoke tests (health endpoints + CI smoke)
-
-- **Why:** Nothing on Railway currently verifies a deploy is healthy before traffic switches. A misconfigured Firebase audience, rotated OpenAI key, missing Hangfire credentials, or a partial EF migration only surfaces when a real user hits the app. CI tests run against Testcontainers and a fake auth handler, so they miss every secret/config/binding issue that's unique to the deployed environment — and they can't see stale build artifacts (`openapi.json`, `routeTree.gen.ts`, the SPA bundle in `wwwroot`) baked into the actual deployed image. Smoke tests at deploy time fill that gap with a thin-and-broad "the building isn't on fire" check. Especially valuable given stage→main FF promotion: an early smoke failure on stage prevents promoting broken bits to the real client environment.
-- **Sketch:**
-  - **Layer 1 — ASP.NET HealthChecks (backend, deploy-gating):**
-    - Add `AspNetCore.HealthChecks.NpgSql` (pin exact version per dependency rule). Built-in `Microsoft.Extensions.Diagnostics.HealthChecks` covers the rest.
-    - Register two endpoints in `Frigorino.Web/Program.cs`:
-      - `/healthz` — liveness only, **no dependencies**. Returns 200 if the process answers. Used as the liveness probe. Critically: do NOT put the DB check here, or a transient DB blip restarts the container needlessly.
-      - `/readyz` — readiness. Runs:
-        1. Postgres connectivity via `AddNpgSql` (trivial `SELECT 1`). Same DB also covers Hangfire storage since it uses the `hangfire` schema on the same Postgres — no separate Hangfire check needed.
-        2. Custom `ConfigHealthCheck` that asserts `FirebaseSettings.AccessJson` / `ValidIssuer` / `ValidAudience` and `OpenAiSettings.APIKey` are non-empty. **Config-loaded check, not an external ping** — cheap, offline-safe, catches the most common rotation/typo failure mode without burning OpenAI quota or hammering Firebase on every Railway poll.
-    - Both endpoints anonymous (gate around `UseAuthentication`/`UseAuthorization` in pipeline order). Excluded from `InitialConnectionMiddleware` so they don't trigger the user-lazy-create path.
-    - Add `/api/version` slice returning the build SHA (injected via Docker build arg or `<SourceRevisionId>` MSBuild property surfaced to runtime via assembly metadata). Anonymous. Two purposes: enables Layer 2's "is the right image actually deployed" assertion, and helps human debugging.
-    - Point Railway's `healthcheckPath` at `/readyz` (in `railway.toml` or service settings). **Verify before implementing** that Railway's healthcheck actually gates the traffic switch (vs. just marking unhealthy after the fact) — doesn't change the design but determines whether Layer 1 alone is deploy-gating.
-  - **Layer 2 — Post-deploy GitHub Actions smoke (CI, catches what readiness can't):**
-    - New workflow `.github/workflows/smoke.yml` (or step appended to existing deploy workflow). Triggered after Railway reports deploy success — either via Railway webhook, polling `/api/version` until it matches the expected SHA, or running after a delay matched to typical Railway deploy time.
-    - Steps:
-      1. `GET /healthz` → expect 200.
-      2. `GET /readyz` → expect 200; on failure, print response body so the failing subcheck is visible in CI logs.
-      3. `GET /openapi/v1.json` → parse with `jq`, assert `.paths | length > N` where N is the current path count minus slack. Catches a Docker build that skipped or cached out the OpenAPI generation MSBuild target, leaving a stale spec served to clients.
-      4. `GET /` → expect `Content-Type: text/html`, assert body contains the SPA root marker (`id="root"` or app title). Catches `MapFallbackToFile` misordering that would return `index.html` for `/api/*` requests or vice versa.
-      5. `GET /api/version` → assert returned SHA matches the commit SHA from the GitHub Actions context. Catches stale-image deploys — a real risk with FF promotion where the image could come from anywhere.
-    - Run on both stage and main deploys. Failure on stage = block promotion to main; failure on main = page / rollback signal.
-  - **Out of scope for initial introduction:**
-    - Continuous synthetic monitoring (Healthchecks.io / BetterUptime polling `/healthz` every minute) — catches slow-burn issues (cert expiry, quota exhaustion, DB pool drift) unrelated to deploy. Add later if/when it's actually needed.
-    - Playwright-driven "real user" smoke against a synthetic Firebase test account. This is the only layer that would catch SPA bundling/routing regressions inside the auth-gated routes, but maintenance cost is non-trivial (managing a synthetic Firebase user) and it can't deploy-gate (too slow). Defer until deploy frequency or a real bundling incident justifies it.
-- **Impact / cost:**
-  - Layer 1: ~3 files (`ConfigHealthCheck.cs`, version slice, `Program.cs` registration), one NuGet package, one Railway config tweak. Deploy-gating once Railway `healthcheckPath` points at `/readyz`. Highest leverage per LOC of any smoke option.
-  - Layer 2: ~1 GitHub Actions workflow file, zero production code (assuming `/api/version` already shipped from Layer 1). Catches build-artifact regressions and stale-image deploys that readiness can't see.
-  - The two layers compose: Layer 1 prevents broken traffic-switches; Layer 2 catches the things that survive a healthy readiness check (stale `openapi.json`, wrong image SHA, broken SPA fallback).
-
----
-
 ## Cold-start UX: wake-ping + static-file optimizations
 
 - **Why:** Railway runs with sleep mode enabled for cost-saving, so a cold visitor today blocks 5-15s on a blank page while the container wakes, runs `MigrateAsync` (`Program.cs:56-62`), initializes Firebase auth, and starts Kestrel. For a stage environment that hosts a real client UAT, this is the worst possible first impression. The cold-start is *sequential*: nothing renders until origin responds. A handful of cheap changes can parallelize the wakeup with user interaction and make the cold path materially faster in absolute terms — without changing deployment shape. Highest leverage per hour of work; ships in pieces; no migration risk. Investigated as an alternative to splitting the SPA off to a CDN — both lower-cost and lower-risk than the full split for the current scale.
 - **Sketch:**
   - **Wake-ping on SPA load (biggest perceived win):**
     - SPA fires a fire-and-forget `GET /healthz` the moment `main.tsx` mounts, before Firebase auth completes. This wakes the Railway container in parallel with the user reading the login UI / entering credentials.
-    - Requires `/healthz` to be anonymous, dependency-free, and excluded from `InitialConnectionMiddleware` (otherwise it triggers the lazy-create-user path on an unauthenticated request). This endpoint overlaps exactly with what the "Post-deploy smoke tests" idea plans as Layer 1 — these two ideas should ship together, or smoke-tests first.
+    - `/healthz` already exists (anonymous, dependency-free, naturally bypasses `InitialConnectionMiddleware` since the middleware short-circuits on the anonymous-user case). The SPA only needs to call it.
     - Frontend implementation: one `fetch` call near app entry, no error handling, no UI binding. ~5 LOC.
     - **Open question:** also fire from the TanStack Router prefetch hook so route transitions warm subsequent dependencies? Probably overkill — once the singleton is up for the session, the rest is free.
   - **Pre-compressed static assets at build time (not runtime):**

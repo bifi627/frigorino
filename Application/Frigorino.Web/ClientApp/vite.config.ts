@@ -70,6 +70,14 @@ export default defineConfig(({ command }) => ({
                 target,
                 secure: false,
             },
+            "^/healthz$": {
+                target,
+                secure: false,
+            },
+            "^/readyz$": {
+                target,
+                secure: false,
+            },
         },
         port: 44375,
         https: command === "serve" ? loadDevCertHttps() : undefined,

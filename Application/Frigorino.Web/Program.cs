@@ -7,12 +7,17 @@ using Frigorino.Features.Inventories.Items;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
+using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
 using Frigorino.Infrastructure.Services;
+using Frigorino.Infrastructure.HealthChecks;
 using Frigorino.Web.Middlewares;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using static Frigorino.Infrastructure.EntityFramework.DependencyInjection;
 
 var isBuildTimeOpenApi =
     Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
@@ -34,6 +39,19 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
     builder.Services.AddFirebaseAuth(builder.Configuration);
 }
 builder.Services.AddMaintenanceServices();
+
+if (!isBuildTimeOpenApi)
+{
+    builder.Services.Configure<FirebaseSettings>(
+        builder.Configuration.GetSection(FirebaseSettings.SECTION_NAME));
+
+    var healthCheckConnectionString = ConvertPostgresUrlToConnectionString(
+        builder.Configuration.GetConnectionString("Database") ?? "");
+    builder.Services
+        .AddHealthChecks()
+        .AddNpgSql(healthCheckConnectionString, name: "postgres", tags: new[] { "ready" })
+        .AddCheck<ConfigHealthCheck>("config", tags: new[] { "ready" });
+}
 builder.Services.AddProblemDetails();
 
 builder.Services.AddHttpContextAccessor();
@@ -87,6 +105,26 @@ app.UseAuthorization();
 
 // Custom middleware
 app.UseMiddleware<InitialConnectionMiddleware>();
+
+// Anonymous health + version endpoints (skipped at build-time OpenAPI generation
+// because AddHealthChecks isn't registered there).
+if (!isBuildTimeOpenApi)
+{
+    app.MapHealthChecks("/healthz", new HealthCheckOptions
+    {
+        Predicate = _ => false,
+    }).AllowAnonymous();
+
+    app.MapHealthChecks("/readyz", new HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("ready"),
+        ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+    }).AllowAnonymous();
+
+    app.MapGroup("/api/version")
+        .WithTags("Health")
+        .MapGetVersion();
+}
 
 // API endpoints
 app.MapControllers();
