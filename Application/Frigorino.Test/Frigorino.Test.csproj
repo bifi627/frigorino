@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Frigorino.Application\Frigorino.Application.csproj" />
     <ProjectReference Include="..\Frigorino.Domain\Frigorino.Domain.csproj" />
     <ProjectReference Include="..\Frigorino.Infrastructure\Frigorino.Infrastructure.csproj" />
     <ProjectReference Include="..\Frigorino.Features\Frigorino.Features.csproj" />

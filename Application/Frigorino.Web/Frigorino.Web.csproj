@@ -35,7 +35,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Frigorino.Application\Frigorino.Application.csproj" />
     <ProjectReference Include="..\Frigorino.Features\Frigorino.Features.csproj" />
     <ProjectReference Include="..\Frigorino.Infrastructure\Frigorino.Infrastructure.csproj" />
   </ItemGroup>

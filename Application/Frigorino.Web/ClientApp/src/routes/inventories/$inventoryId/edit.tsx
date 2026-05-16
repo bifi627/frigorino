@@ -106,6 +106,7 @@ function InventoryEditPage() {
 
         const updateData: UpdateInventoryRequest = {
             name: editedName.trim(),
+            description: inventory.description ?? null,
         };
 
         updateInventoryMutation.mutate(
@@ -351,11 +352,12 @@ function InventoryEditPage() {
                             variant="outlined"
                             onClick={handleCancelEdit}
                             disabled={updateInventoryMutation.isPending}
-                            sx={{ borderRadius: 2, minWidth: 100 }}
+                            sx={{ minWidth: 100 }}
                         >
                             {t("common.cancel")}
                         </Button>
                         <Button
+                            data-testid="inventory-edit-save-button"
                             variant="contained"
                             onClick={handleSave}
                             disabled={
@@ -363,7 +365,7 @@ function InventoryEditPage() {
                                 !isFormValid
                             }
                             startIcon={<Save />}
-                            sx={{ borderRadius: 2, minWidth: 100 }}
+                            sx={{ minWidth: 100 }}
                         >
                             {updateInventoryMutation.isPending
                                 ? t("common.saving")

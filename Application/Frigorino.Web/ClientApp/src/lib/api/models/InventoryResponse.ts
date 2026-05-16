@@ -2,15 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { UserDto } from './UserDto';
-export type InventoryDto = {
+import type { InventoryCreatorResponse } from './InventoryCreatorResponse';
+export type InventoryResponse = {
     id: number;
     name: string;
-    description?: string | null;
+    description: string | null;
     householdId: number;
     createdAt: string;
     updatedAt: string;
-    createdByUser: UserDto;
+    createdByUser: InventoryCreatorResponse;
     totalItems: number;
     expiringItems: number;
 };

@@ -2,12 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type InventoryItemDto = {
+export type InventoryItemResponse = {
     id: number;
     inventoryId: number;
     text: string;
-    quantity?: string | null;
-    expiryDate?: string | null;
+    quantity: string | null;
+    expiryDate: string | null;
     sortOrder: number;
     createdAt: string;
     updatedAt: string;

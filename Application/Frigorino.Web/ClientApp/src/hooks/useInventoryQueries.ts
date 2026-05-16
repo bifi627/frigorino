@@ -2,13 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../common/apiClient";
 import type {
     CreateInventoryRequest,
-    InventoryDto,
+    InventoryResponse,
     UpdateInventoryRequest,
 } from "../lib/api";
 import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
 
 // Re-export types for convenience
-export type { CreateInventoryRequest, InventoryDto, UpdateInventoryRequest };
+export type { CreateInventoryRequest, InventoryResponse, UpdateInventoryRequest };
 
 // Query Keys - centralized for consistency
 export const inventoryKeys = {
@@ -29,8 +29,7 @@ export const useHouseholdInventories = (
 ) => {
     return useQuery({
         queryKey: inventoryKeys.byHousehold(householdId),
-        queryFn: () =>
-            ClientApi.inventories.getApiHouseholdInventories(householdId),
+        queryFn: () => ClientApi.inventories.getInventories(householdId),
         enabled: enabled && householdId > 0,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
@@ -45,10 +44,7 @@ export const useInventory = (
     return useQuery({
         queryKey: inventoryKeys.detail(inventoryId),
         queryFn: () =>
-            ClientApi.inventories.getApiHouseholdInventories1(
-                householdId,
-                inventoryId,
-            ),
+            ClientApi.inventories.getInventory(householdId, inventoryId),
         enabled: enabled && inventoryId > 0 && householdId > 0,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
@@ -67,10 +63,7 @@ export const useCreateInventory = () => {
             householdId: number;
             data: CreateInventoryRequest;
         }) => {
-            return ClientApi.inventories.postApiHouseholdInventories(
-                householdId,
-                data,
-            );
+            return ClientApi.inventories.createInventory(householdId, data);
         },
         onMutate: async (variables) => {
             // Cancel any outgoing refetches
@@ -80,11 +73,11 @@ export const useCreateInventory = () => {
 
             // Snapshot the previous value for rollback
             const previousInventories = queryClient.getQueryData<
-                InventoryDto[]
+                InventoryResponse[]
             >(inventoryKeys.byHousehold(variables.householdId));
 
             // Create optimistic inventory with temporary ID
-            const optimisticInventory: InventoryDto = {
+            const optimisticInventory: InventoryResponse = {
                 id: Date.now(), // Temporary ID until server responds
                 name: variables.data.name,
                 description: variables.data.description,
@@ -97,7 +90,7 @@ export const useCreateInventory = () => {
             };
 
             // Optimistically add the inventory to the cache
-            queryClient.setQueryData<InventoryDto[]>(
+            queryClient.setQueryData<InventoryResponse[]>(
                 inventoryKeys.byHousehold(variables.householdId),
                 (old) => {
                     if (!old) return [optimisticInventory];
@@ -145,7 +138,7 @@ export const useUpdateInventory = () => {
             inventoryId: number;
             data: UpdateInventoryRequest;
         }) => {
-            return ClientApi.inventories.putApiHouseholdInventories(
+            return ClientApi.inventories.updateInventory(
                 householdId,
                 inventoryId,
                 data,
@@ -162,14 +155,15 @@ export const useUpdateInventory = () => {
 
             // Snapshot the previous values for rollback
             const previousInventories = queryClient.getQueryData<
-                InventoryDto[]
+                InventoryResponse[]
             >(inventoryKeys.byHousehold(variables.householdId));
-            const previousInventory = queryClient.getQueryData<InventoryDto>(
-                inventoryKeys.detail(variables.inventoryId),
-            );
+            const previousInventory =
+                queryClient.getQueryData<InventoryResponse>(
+                    inventoryKeys.detail(variables.inventoryId),
+                );
 
             // Optimistically update the inventory in the household list cache
-            queryClient.setQueryData<InventoryDto[]>(
+            queryClient.setQueryData<InventoryResponse[]>(
                 inventoryKeys.byHousehold(variables.householdId),
                 (old) => {
                     if (!old) return old;
@@ -190,7 +184,7 @@ export const useUpdateInventory = () => {
 
             // Also update the individual inventory cache if it exists
             if (previousInventory) {
-                queryClient.setQueryData<InventoryDto>(
+                queryClient.setQueryData<InventoryResponse>(
                     inventoryKeys.detail(variables.inventoryId),
                     {
                         ...previousInventory,
@@ -248,7 +242,7 @@ export const useDeleteInventory = () => {
             householdId: number;
             inventoryId: number;
         }) => {
-            return ClientApi.inventories.deleteApiHouseholdInventories(
+            return ClientApi.inventories.deleteInventory(
                 householdId,
                 inventoryId,
             );
@@ -261,11 +255,11 @@ export const useDeleteInventory = () => {
 
             // Snapshot the previous value for rollback
             const previousInventories = queryClient.getQueryData<
-                InventoryDto[]
+                InventoryResponse[]
             >(inventoryKeys.byHousehold(variables.householdId));
 
             // Optimistically remove the inventory from the cache
-            queryClient.setQueryData<InventoryDto[]>(
+            queryClient.setQueryData<InventoryResponse[]>(
                 inventoryKeys.byHousehold(variables.householdId),
                 (old) => {
                     if (!old) return old;

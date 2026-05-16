@@ -10,7 +10,6 @@ WORKDIR /src
 # Restore layer: only invalidated when sln/csproj change
 COPY Application/Frigorino.sln ./Application/Frigorino.sln
 COPY Application/Frigorino.Domain/Frigorino.Domain.csproj ./Application/Frigorino.Domain/
-COPY Application/Frigorino.Application/Frigorino.Application.csproj ./Application/Frigorino.Application/
 COPY Application/Frigorino.Infrastructure/Frigorino.Infrastructure.csproj ./Application/Frigorino.Infrastructure/
 COPY Application/Frigorino.Web/Frigorino.Web.csproj ./Application/Frigorino.Web/
 COPY Application/Frigorino.Test/Frigorino.Test.csproj ./Application/Frigorino.Test/

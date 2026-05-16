@@ -10,11 +10,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../hooks/useLongPress";
-import type { InventoryItemDto } from "../../lib/api";
+import type { InventoryItemResponse } from "../../lib/api";
 import { getExpiryColor, getExpiryInfo } from "../../utils/dateUtils";
 
 interface Props {
-    item: InventoryItemDto;
+    item: InventoryItemResponse;
 }
 export function InventoryItemContent({ item }: Props) {
     const { t } = useTranslation();

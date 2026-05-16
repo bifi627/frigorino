@@ -1,13 +1,13 @@
 import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import type { InventoryItemDto } from "../../lib/api";
+import type { InventoryItemResponse } from "../../lib/api";
 import { AddInput } from "../list/AddInput";
 import { DateInputPanel } from "../list/DateInputPanel";
 import { QuantityPanel, QuantityToggle } from "../list/QuantityPanel";
 
 interface ListFooterProps {
-    editingItem: InventoryItemDto | null;
-    existingItems: InventoryItemDto[];
+    editingItem: InventoryItemResponse | null;
+    existingItems: InventoryItemResponse[];
     onAddItem: (data: string, quantity?: string, expiryDate?: Date) => void;
     onUpdateItem: (data: string, quantity?: string, expiryDate?: Date) => void;
     onCancelEdit: () => void;

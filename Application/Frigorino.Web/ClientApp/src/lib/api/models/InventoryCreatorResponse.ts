@@ -2,9 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type UserDto = {
+export type InventoryCreatorResponse = {
     externalId: string;
     name: string;
-    email: string;
+    email: string | null;
 };
 
