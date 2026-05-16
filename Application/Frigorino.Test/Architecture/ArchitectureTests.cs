@@ -7,7 +7,7 @@ using Frigorino.Features.Households;
 using Frigorino.Infrastructure.EntityFramework;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
-// Pin Frigorino.Application's assembly via any remaining service (ListItemService) — picked
+// Pin Frigorino.Application's assembly via any remaining service (InventoryService) — picked
 // arbitrarily; swap when the last legacy service migrates.
 
 namespace Frigorino.Test.Architecture
@@ -20,7 +20,7 @@ namespace Frigorino.Test.Architecture
         private static readonly ArchUnitNET.Domain.Architecture Architecture = new ArchLoader()
             .LoadAssemblies(
                 typeof(Household).Assembly,
-                typeof(ListItemService).Assembly,
+                typeof(InventoryService).Assembly,
                 typeof(ApplicationDbContext).Assembly,
                 typeof(CreateHouseholdEndpoint).Assembly)
             .Build();

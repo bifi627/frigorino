@@ -1,19 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../common/apiClient";
 import type {
-    CreateListItemRequest,
-    ListItemDto,
+    CreateItemRequest,
+    ListItemResponse,
     ReorderItemRequest,
-    UpdateListItemRequest,
+    UpdateItemRequest,
 } from "../lib/api";
 import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
 
 // Re-export types for convenience
 export type {
-    CreateListItemRequest,
-    ListItemDto,
+    CreateItemRequest,
+    ListItemResponse,
     ReorderItemRequest,
-    UpdateListItemRequest,
+    UpdateItemRequest,
 };
 
 // Query Keys - centralized for consistency
@@ -41,11 +41,7 @@ export const useListItems = (
 ) => {
     return useQuery({
         queryKey: listItemKeys.byList(householdId, listId),
-        queryFn: () =>
-            ClientApi.listItems.getApiHouseholdListsListItems(
-                householdId,
-                listId,
-            ),
+        queryFn: () => ClientApi.listItems.getItems(householdId, listId),
         enabled: enabled && listId > 0 && householdId > 0,
         staleTime: 1000 * 30, // 30 seconds (more frequent updates for collaborative lists)
     });
@@ -61,11 +57,7 @@ export const useListItem = (
     return useQuery({
         queryKey: listItemKeys.detail(itemId),
         queryFn: () =>
-            ClientApi.listItems.getApiHouseholdListsListItems1(
-                householdId,
-                listId,
-                itemId,
-            ),
+            ClientApi.listItems.getItem(householdId, listId, itemId),
         enabled: enabled && itemId > 0 && listId > 0 && householdId > 0,
         staleTime: 1000 * 60 * 2, // 2 minutes
     });
@@ -84,13 +76,9 @@ export const useCreateListItem = () => {
         }: {
             householdId: number;
             listId: number;
-            data: CreateListItemRequest;
+            data: CreateItemRequest;
         }) => {
-            return ClientApi.listItems.postApiHouseholdListsListItems(
-                householdId,
-                listId,
-                data,
-            );
+            return ClientApi.listItems.createItem(householdId, listId, data);
         },
         onMutate: async (variables) => {
             // Cancel any outgoing refetches
@@ -101,39 +89,31 @@ export const useCreateListItem = () => {
                 ),
             });
 
-            // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
-            // Create optimistic item with temporary ID
-            const optimisticItem: ListItemDto = {
-                id: Date.now(), // Temporary ID until server responds
+            // Append below the last unchecked item to match the server's AddItem semantics
+            // (List.ComputeAppendSortOrder: last + DefaultGap). Falls back to a sentinel so the
+            // item appears at the bottom of unchecked when the cache is empty.
+            const lastUncheckedSortOrder = previousItems
+                ?.filter((i) => !i.status)
+                .reduce((max, i) => Math.max(max, i.sortOrder), 0) ?? 0;
+
+            const optimisticItem: ListItemResponse = {
+                id: Date.now(),
                 text: variables.data.text,
                 quantity: variables.data.quantity,
-                status: false, // New items are always unchecked
-                sortOrder: 999999999, // Will be at the bottom of unchecked items
+                status: false,
+                sortOrder: lastUncheckedSortOrder + 1,
                 listId: variables.listId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
 
-            // Optimistically add the item to the cache
-            queryClient.setQueryData<ListItemDto[]>(
+            queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
-                (old) => {
-                    if (!old) return [optimisticItem];
-
-                    // Add new item at the beginning of unchecked items
-                    // Update sortOrder for existing unchecked items
-                    const updatedItems = old.map((item) =>
-                        !item.status
-                            ? { ...item, sortOrder: (item.sortOrder || 0) + 1 }
-                            : item,
-                    );
-
-                    return [optimisticItem, ...updatedItems];
-                },
+                (old) => (old ? [...old, optimisticItem] : [optimisticItem]),
             );
 
             return { previousItems };
@@ -174,9 +154,9 @@ export const useUpdateListItem = () => {
             householdId: number;
             listId: number;
             itemId: number;
-            data: UpdateListItemRequest;
+            data: UpdateItemRequest;
         }) => {
-            return ClientApi.listItems.putApiHouseholdListsListItems(
+            return ClientApi.listItems.updateItem(
                 householdId,
                 listId,
                 itemId,
@@ -193,12 +173,12 @@ export const useUpdateListItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
             // Optimistically update the item in the cache
-            queryClient.setQueryData<ListItemDto[]>(
+            queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
                     if (!old) return old;
@@ -206,9 +186,9 @@ export const useUpdateListItem = () => {
                         item.id === variables.itemId
                             ? {
                                   ...item,
-                                  text: variables.data.text || item.text,
+                                  text: variables.data.text ?? item.text,
                                   quantity:
-                                      variables.data.quantity || item.quantity,
+                                      variables.data.quantity ?? item.quantity,
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -217,17 +197,17 @@ export const useUpdateListItem = () => {
             );
 
             // Also update the individual item cache if it exists
-            const currentItem = queryClient.getQueryData<ListItemDto>(
+            const currentItem = queryClient.getQueryData<ListItemResponse>(
                 listItemKeys.detail(variables.itemId),
             );
             if (currentItem) {
-                queryClient.setQueryData<ListItemDto>(
+                queryClient.setQueryData<ListItemResponse>(
                     listItemKeys.detail(variables.itemId),
                     {
                         ...currentItem,
-                        text: variables.data.text || currentItem.text,
+                        text: variables.data.text ?? currentItem.text,
                         quantity:
-                            variables.data.quantity || currentItem.quantity,
+                            variables.data.quantity ?? currentItem.quantity,
                         updatedAt: new Date().toISOString(),
                     },
                 );
@@ -272,11 +252,7 @@ export const useDeleteListItem = () => {
             listId: number;
             itemId: number;
         }) => {
-            return ClientApi.listItems.deleteApiHouseholdListsListItems(
-                householdId,
-                listId,
-                itemId,
-            );
+            return ClientApi.listItems.deleteItem(householdId, listId, itemId);
         },
         onMutate: async (variables) => {
             // Cancel any outgoing refetches
@@ -288,12 +264,12 @@ export const useDeleteListItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
             // Optimistically remove the item from the cache
-            queryClient.setQueryData<ListItemDto[]>(
+            queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
                     if (!old) return old;
@@ -350,7 +326,7 @@ export const useToggleListItemStatus = () => {
             listId: number;
             itemId: number;
         }) => {
-            return ClientApi.listItems.patchApiHouseholdListsListItemsToggleStatus(
+            return ClientApi.listItems.toggleItemStatus(
                 householdId,
                 listId,
                 itemId,
@@ -366,12 +342,12 @@ export const useToggleListItemStatus = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
             // Optimistically update the cache
-            queryClient.setQueryData<ListItemDto[]>(
+            queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
                     if (!old) return old;
@@ -427,7 +403,7 @@ export const useReorderListItem = () => {
             itemId: number;
             data: ReorderItemRequest;
         }) => {
-            return ClientApi.listItems.patchApiHouseholdListsListItemsReorder(
+            return ClientApi.listItems.reorderItem(
                 householdId,
                 listId,
                 itemId,
@@ -444,58 +420,65 @@ export const useReorderListItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<ListItemDto[]>(
+            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
-            // Optimistically update the cache with new sortOrder
-            queryClient.setQueryData<ListItemDto[]>(
+            // Mirror the server's midpoint math (List.ReorderItem):
+            //   afterId == 0  → first.sortOrder - DefaultGap (top of section)
+            //   no `before`   → after.sortOrder + DefaultGap (last of section)
+            //   otherwise     → midpoint between after and before
+            // We don't shift sibling sortOrders — the server doesn't either.
+            queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
                     if (!old) return old;
-
-                    const movedItem = old.find(
-                        (item) => item.id === variables.itemId,
-                    );
+                    const movedItem = old.find((i) => i.id === variables.itemId);
                     if (!movedItem) return old;
 
-                    // Separate items by status
-                    const targetSection = old.filter(
-                        (item) => item.status === movedItem.status,
-                    );
+                    const section = old
+                        .filter(
+                            (i) =>
+                                i.status === movedItem.status &&
+                                i.id !== movedItem.id,
+                        )
+                        .sort((a, b) => a.sortOrder - b.sortOrder);
 
-                    // Find the new sortOrder based on afterId
-                    let newSortOrder = 1;
-                    if (
-                        variables.data.afterId !== undefined &&
-                        variables.data.afterId !== 0
-                    ) {
-                        const afterItem = targetSection.find(
-                            (item) => item.id === variables.data.afterId,
+                    const DEFAULT_GAP = 10_000;
+                    const UNCHECKED_MIN = 1_000_000;
+                    const CHECKED_MIN = 10_000_000;
+
+                    const afterItem =
+                        variables.data.afterId && variables.data.afterId !== 0
+                            ? section.find(
+                                  (i) => i.id === variables.data.afterId,
+                              )
+                            : undefined;
+                    const beforeItem = afterItem
+                        ? section.find((i) => i.sortOrder > afterItem.sortOrder)
+                        : undefined;
+
+                    let newSortOrder: number;
+                    if (!afterItem) {
+                        newSortOrder = section.length
+                            ? section[0].sortOrder - DEFAULT_GAP
+                            : (movedItem.status ? CHECKED_MIN : UNCHECKED_MIN) +
+                              DEFAULT_GAP;
+                    } else if (!beforeItem) {
+                        newSortOrder = afterItem.sortOrder + DEFAULT_GAP;
+                    } else {
+                        newSortOrder = Math.floor(
+                            afterItem.sortOrder +
+                                (beforeItem.sortOrder - afterItem.sortOrder) /
+                                    2,
                         );
-                        if (afterItem) {
-                            newSortOrder = (afterItem.sortOrder || 0) + 1;
-                        }
                     }
 
-                    // Update sortOrder for affected items
-                    return old.map((item) => {
-                        if (item.id === variables.itemId) {
-                            // Update the moved item's sortOrder
-                            return { ...item, sortOrder: newSortOrder };
-                        } else if (
-                            item.status === movedItem.status &&
-                            (item.sortOrder || 0) >= newSortOrder &&
-                            item.id !== variables.itemId
-                        ) {
-                            // Increment sortOrder for items that need to shift down
-                            return {
-                                ...item,
-                                sortOrder: (item.sortOrder || 0) + 1,
-                            };
-                        }
-                        return item;
-                    });
+                    return old.map((i) =>
+                        i.id === movedItem.id
+                            ? { ...i, sortOrder: newSortOrder }
+                            : i,
+                    );
                 },
             );
 
@@ -534,10 +517,7 @@ export const useCompactListItems = () => {
             householdId: number;
             listId: number;
         }) => {
-            return ClientApi.listItems.postApiHouseholdListsListItemsCompact(
-                householdId,
-                listId,
-            );
+            return ClientApi.listItems.compactItems(householdId, listId);
         },
         onSuccess: (_, variables) => {
             // Debounced invalidate the list items query to refetch with compacted order
