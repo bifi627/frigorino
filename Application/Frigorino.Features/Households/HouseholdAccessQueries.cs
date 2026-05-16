@@ -32,5 +32,25 @@ namespace Frigorino.Features.Households
                    && uh.Household.IsActive,
                 ct);
         }
+
+        // Sibling of FindActiveMembershipAsync for the rare slices that also need the User
+        // entity (Create slices that wire it onto a new aggregate's CreatedByUser navigation).
+        // One round-trip via JOIN instead of an extra Users query — the FK relationship is
+        // already configured (UserHousehold.UserId → User.ExternalId).
+        public static Task<UserHousehold?> FindActiveMembershipWithUserAsync(
+            this ApplicationDbContext db,
+            int householdId,
+            string userId,
+            CancellationToken ct)
+        {
+            return db.UserHouseholds
+                .Include(uh => uh.User)
+                .FirstOrDefaultAsync(
+                    uh => uh.UserId == userId
+                       && uh.HouseholdId == householdId
+                       && uh.IsActive
+                       && uh.Household.IsActive,
+                    ct);
+        }
     }
 }

@@ -10,7 +10,6 @@ namespace Frigorino.Infrastructure.Services
         {
             services.AddScoped<IMaintenanceTask, DemoMaintenanceTask>();
             services.AddScoped<IMaintenanceTask, DeleteInactiveItems>();
-            services.AddScoped<IMaintenanceTask, RecalculateSortOrderTask>();
 
             services.AddHostedService<MaintenanceHostedService>();
 

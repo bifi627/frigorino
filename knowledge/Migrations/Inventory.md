@@ -111,13 +111,13 @@ Shared input primitives (`AddInput`, `QuantityPanel`, `DateInputPanel`, plus the
 
 The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely. Removed: project from `Frigorino.sln`, `<ProjectReference>` from `Frigorino.Web.csproj` + `Frigorino.Test.csproj`, `using Frigorino.Application;` + `builder.Services.AddApplicationServices();` from `Program.cs`, `Application_Should_Not_Depend_On_Infrastructure` arch test, `COPY Application/Frigorino.Application/...` line from the Dockerfile.
 
-`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` shed its `IInventoryService` dependency. The inventory branch now loads `Inventories.Include(InventoryItems)` and calls `inventory.CompactItems()` directly — same shape as the existing list branch.
+`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` was **deleted** in the post-review cleanup pass — it ran at every startup via `MaintenanceHostedService` and unconditionally stamped `UpdatedAt` + sort orders on every list/inventory item even when no gap had shrunk. Compaction now happens only via the explicit `POST .../items/compact` endpoints. (Mid-migration it had shed its `IInventoryService` dependency and called `inventory.CompactItems()` directly; the file is now gone.)
 
 `Application/Frigorino.Test/Architecture/ArchitectureTests.cs` lost its `Application_Should_Not_Depend_On_Infrastructure` rule together with the project. Remaining rules pin `Domain → no infrastructure frameworks`, `Infrastructure → no Web`, `Features → no Web`.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` / `RecalculateSortOrderTask` cleanup** — per CLAUDE.md the system was replaced by Hangfire; this is dead orchestration kept registered. Reviewer agents flagged it for deletion in this round; deferred per user preference to keep the migration scoped.
+- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` removed in the post-review cleanup pass; `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired. Per CLAUDE.md the whole system is intended for Hangfire migration. Delete the rest in a focused cleanup pass.
 
 ## Cross-references
 
