@@ -100,14 +100,51 @@ File: `Application/Frigorino.Features/Lists/Items/CompactItems.cs`. Calls `list.
 
 ## Frontend changes
 
-Minimal scope this round (per migration decision — feature-folder restructure is the follow-up):
+### Initial slice-rename pass (shipped with backend migration)
 
 - `npm run api` regenerated the client. New TS types: `ListItemResponse`, `CreateItemRequest`, `UpdateItemRequest`. Old: `ListItemDto`, `CreateListItemRequest`, `UpdateListItemRequest` retired. `ReorderItemRequest` survives (deduplicated with Inventory). Method names switched from path-based (`getApiHouseholdListsListItems`) to slice `WithName(...)` (`getItems`, `createItem`, etc.). `ItemsService.ts` (singular, from the orphan controller) gone.
 - `src/hooks/useListItemQueries.ts` updated in place — type renames + method-name renames. Optimistic-update bodies unchanged in shape. Re-exports updated to the new type names.
 - `string | null` codegen quirk handled in `ListViewPage.tsx` (`quantity ?? null`, explicit `status: null` on update) and `ListItemDialog.tsx` (`isEditing` branch now constructs `UpdateItemRequest` with `status` set).
 - Consumer components renamed straight-through: `ListContainer.tsx`, `ListFooter.tsx`, `ListItemContent.tsx`, `ListItemDialog.tsx`, `ListViewPage.tsx`.
 
-**Deferred:** moving `src/hooks/useListItemQueries.ts` and `src/components/list/**` (AddInput, ListContainer, ListFooter, ListItemContent, ListItemDialog) under `src/features/lists/items/`. Already queued in `knowledge/Migrations/Lists.md` deferred section.
+### Feature-folder restructure (follow-up pass)
+
+Mirror of the `features/lists/` + `features/households/members/` shape. The bundled hooks file split into one-per-slice, list-item-locked components moved under `features/lists/items/components/`, dead code dropped. Shared input primitives (`AddInput`, `QuantityPanel`, `DateInputPanel` and their internal context/hooks) left at `src/components/list/` because `src/components/inventory/InventoryFooter.tsx` still imports them — that folder rename is bundled with the Inventory migration.
+
+```
+src/features/lists/items/
+├── listItemKeys.ts                ← {all, byList(householdId, listId), detail(itemId)}
+├── useListItems.ts                ← one hook per backend slice
+├── useListItem.ts
+├── useCreateListItem.ts
+├── useUpdateListItem.ts
+├── useDeleteListItem.ts
+├── useToggleListItemStatus.ts
+├── useReorderListItem.ts
+├── useCompactListItems.ts
+└── components/
+    ├── ListContainer.tsx          ← moved from src/components/list/
+    ├── ListFooter.tsx             ← moved from src/components/list/
+    └── ListItemContent.tsx        ← moved from src/components/list/
+```
+
+Style cleanup applied per `knowledge/Frontend_Styling.md` during extraction (only on the 3 moved files — shared inputs untouched to avoid surprising InventoryFooter):
+
+- `ListItemContent.tsx` — `InlineImage` now uses `<Paper component="img" elevation={2}>` instead of `<Box>` with hand-rolled `borderRadius: 1` + `boxShadow: "0 2px 8px rgba(0,0,0,0.1)"`; hover boxShadow flattened to MUI's `elevation: 4` token.
+- The two outer `<Box>` wrappers around `ListItemText` in the original `ListItemContent` were redundant — `<ListItemText>` returned directly now.
+
+`useListItemQueries.ts` was the single hook-bundle file; the new per-hook files preserve the optimistic-update logic verbatim — including the toggle-status hook's missing-sort-order-recompute behaviour, which is tracked separately in `TECH_DEBT.md` and links to a code comment in `useToggleListItemStatus.ts`.
+
+Single consumer updated: `src/features/lists/pages/ListViewPage.tsx` swaps imports to the new paths and pulls `ListItemResponse` from `lib/api` directly (matching the precedent in `features/lists/useList.ts`).
+
+### Deleted in the restructure pass
+
+- `src/hooks/useListItemQueries.ts` — replaced by 9 files under `features/lists/items/`.
+- `src/components/list/ListContainer.tsx` — moved.
+- `src/components/list/ListFooter.tsx` — moved.
+- `src/components/list/ListItemContent.tsx` — moved.
+- `src/components/list/ListItemDialog.tsx` — dead code (only self-references; no UI consumer). Removing it dropped 8 hardcoded English strings without needing translation work.
+- `src/components/list/PERFORMANCE_OPTIMIZATIONS.md` — aspirational notes, not gated to a real change.
 
 ## Integration tests
 
@@ -132,7 +169,8 @@ Minimal scope this round (per migration decision — feature-folder restructure 
 
 ## Deferred / out of scope
 
-- **Frontend feature-folder restructure** — moving `src/hooks/useListItemQueries.ts` and `src/components/list/**` under `src/features/lists/items/`. Bundled into a follow-up so this PR stays focused on backend.
+- **`src/components/list/` rename to `components/inputs/`** — `AddInput.tsx`, `QuantityPanel.tsx`, `DateInputPanel.tsx`, and everything under `components/list/components/`, `components/list/context/`, `components/list/hooks/`, `components/list/types/` are shared with `src/components/inventory/InventoryFooter.tsx`. Bundle the rename + import sweep into the Inventory migration round so Inventory's consumer changes in lockstep.
+- **i18n cleanup of hardcoded strings in shared inputs** — `EditingHeader.tsx` ("Bearbeiten", "Completed") and `DateInputPanel.tsx` ("Datum", "Heute", "Löschen") live in *shared* files. Translate during the Inventory migration round to keep this PR's blast radius tight.
 - **Inventories migration + InventoryItems migration** — same pattern when scheduled. Will free the second-to-last legacy service (`InventoryService`); after that `ArchitectureTests` assembly marker will need another swap.
 - **MaintenanceHostedService / RecalculateSortOrderTask cleanup** — leave as-is for now. Per CLAUDE.md the system was replaced by Hangfire; this is dead orchestration kept registered. Delete in a focused cleanup pass.
 - **Renaming `HouseholdMappingExtensions.cs` / `HouseholdDto.cs` / `InventoryDto.cs`** — still consumed by Inventory layer. Defer until Inventory migrates.

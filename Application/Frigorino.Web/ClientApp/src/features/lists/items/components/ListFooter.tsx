@@ -1,8 +1,11 @@
 import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import type { ListItemResponse } from "../../hooks/useListItemQueries";
-import { AddInput } from "./AddInput";
-import { QuantityPanel, QuantityToggle } from "./QuantityPanel";
+import { AddInput } from "../../../../components/list/AddInput";
+import {
+    QuantityPanel,
+    QuantityToggle,
+} from "../../../../components/list/QuantityPanel";
+import type { ListItemResponse } from "../../../../lib/api";
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
@@ -29,7 +32,6 @@ export const ListFooter = memo(
         const [quantity, setQuantity] = useState("");
         const [showQuantityPanel, setShowQuantityPanel] = useState(false);
 
-        // Update quantity state when editing item changes
         useEffect(() => {
             if (editingItem) {
                 setQuantity(editingItem.quantity || "");
@@ -65,7 +67,6 @@ export const ListFooter = memo(
             (event: React.KeyboardEvent) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
-                    // The AddInput component will handle the submit
                 }
             },
             [],
@@ -76,7 +77,6 @@ export const ListFooter = memo(
             setShowQuantityPanel(false);
         };
 
-        // Memoize the existing items mapping to prevent unnecessary re-renders
         const mappedExistingItems = useMemo(
             () =>
                 existingItems.map((item) => ({
@@ -86,7 +86,6 @@ export const ListFooter = memo(
             [existingItems],
         );
 
-        // Memoize the editing item mapping
         const mappedEditingItem = useMemo(
             () =>
                 editingItem
@@ -98,7 +97,6 @@ export const ListFooter = memo(
             [editingItem],
         );
 
-        // Memoize right controls
         const rightControls = useMemo(
             () => [
                 <QuantityToggle
@@ -111,7 +109,6 @@ export const ListFooter = memo(
             [quantity, handleToggleQuantityPanel, showQuantityPanel],
         );
 
-        // Memoize bottom panels
         const topPanels = useMemo(
             () => [
                 <Collapse key="quantity-panel" in={showQuantityPanel}>
