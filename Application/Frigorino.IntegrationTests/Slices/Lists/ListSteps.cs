@@ -26,7 +26,16 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I submit the list form")]
     public async Task WhenISubmitTheListForm()
     {
+        // Wait for the POST 201 BEFORE the URL wait so a server-side failure surfaces as a
+        // precise response-match miss instead of an opaque "URL didn't change in 30s". Form's
+        // catch swallows mutation errors to console only, so without this the test has no
+        // visibility into the actual cause when CI contention slows the POST past 30s.
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.Contains("/lists")
+            && r.Request.Method == "POST"
+            && r.Status == 201);
         await ctx.Page.GetByTestId("list-create-submit-button").ClickAsync();
+        await responseTask;
         await ctx.Page.WaitForURLAsync("**/lists/*/view");
     }
 
