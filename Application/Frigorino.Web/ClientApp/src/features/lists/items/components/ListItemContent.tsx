@@ -1,8 +1,8 @@
 import { Box, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { useLongPress } from "../../hooks/useLongPress";
-import type { ListItemResponse } from "../../lib/api";
+import { useLongPress } from "../../../../hooks/useLongPress";
+import type { ListItemResponse } from "../../../../lib/api";
 
 interface Props {
     item: ListItemResponse;
@@ -21,39 +21,37 @@ export function ListItemContent({ item }: Props) {
     });
 
     return (
-        <>
-            <ListItemText
-                {...events}
-                primary={
+        <ListItemText
+            {...events}
+            primary={
+                <Typography
+                    variant="body2"
+                    sx={{
+                        fontWeight: 500,
+                        wordBreak: "break-word",
+                    }}
+                >
+                    {item.text ? renderTextWithLinks(item.text) : ""}
+                </Typography>
+            }
+            secondary={
+                item.quantity && (
                     <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
-                            fontWeight: 500,
-                            wordBreak: "break-word",
+                            color: item.status
+                                ? "text.disabled"
+                                : "text.secondary",
+                            textDecoration: item.status
+                                ? "line-through"
+                                : "none",
                         }}
                     >
-                        {item.text ? renderTextWithLinks(item.text) : ""}
+                        {item.quantity}
                     </Typography>
-                }
-                secondary={
-                    item.quantity && (
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                color: item.status
-                                    ? "text.disabled"
-                                    : "text.secondary",
-                                textDecoration: item.status
-                                    ? "line-through"
-                                    : "none",
-                            }}
-                        >
-                            {item.quantity}
-                        </Typography>
-                    )
-                }
-            />
-        </>
+                )
+            }
+        />
     );
 }
 
@@ -120,14 +118,13 @@ function InlineImage({ src, alt }: InlineImageProps) {
                 width: "auto",
                 height: "auto",
                 objectFit: "contain",
-                borderRadius: 1,
                 cursor: "pointer",
                 display: "block",
                 margin: "8px 0",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: 2,
                 transition: "all 0.2s ease",
                 "&:hover": {
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                    boxShadow: 4,
                     transform: "scale(1.02)",
                 },
             }}
