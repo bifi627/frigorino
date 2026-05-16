@@ -9,9 +9,9 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { useLongPress } from "../../hooks/useLongPress";
-import type { InventoryItemResponse } from "../../lib/api";
-import { getExpiryColor, getExpiryInfo } from "../../utils/dateUtils";
+import { useLongPress } from "../../../../hooks/useLongPress";
+import type { InventoryItemResponse } from "../../../../lib/api";
+import { getExpiryColor, getExpiryInfo } from "../../../../utils/dateUtils";
 
 interface Props {
     item: InventoryItemResponse;

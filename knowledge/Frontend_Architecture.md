@@ -39,6 +39,15 @@ src/
 │   │       ├── listItemKeys.ts
 │   │       ├── useListItems.ts / useCreateListItem.ts / useReorderListItem.ts / …
 │   │       └── components/         # ListContainer, ListFooter, ListItemContent
+│   ├── inventories/                # same shape — see knowledge/Migrations/Inventory.md
+│   │   ├── inventoryKeys.ts
+│   │   ├── useHouseholdInventories.ts / useInventory.ts / useCreate|Update|DeleteInventory.ts
+│   │   ├── pages/                  # InventoriesPage, CreateInventoryPage, InventoryViewPage, InventoryEditPage
+│   │   ├── components/             # InventorySummaryCard, InventoryActionsMenu, *Form, *Dialog
+│   │   └── items/                  # nested sub-slice mirrors backend Inventories/Items/
+│   │       ├── inventoryItemKeys.ts
+│   │       ├── useInventoryItems.ts / useCreateInventoryItem.ts / useReorderInventoryItem.ts / …
+│   │       └── components/         # InventoryContainer, InventoryFooter, InventoryItemContent
 │   └── me/activeHousehold/         # cross-aggregate session state
 ├── routes/                         # File-based routing (TanStack Router)
 │   ├── __root.tsx                  # Root layout with auth + navigation
@@ -47,8 +56,8 @@ src/
 │   ├── auth/                       # Authentication routes
 │   ├── household/                  # 7-line shells importing features/households/pages
 │   ├── lists/                      # same — shells importing features/lists/pages
-│   └── inventories/                # legacy fat routes (pending migration)
-├── components/                     # Legacy + cross-cutting
+│   └── inventories/                # same — shells importing features/inventories/pages
+├── components/                     # Cross-cutting primitives
 │   ├── auth/                       # Authentication wrappers
 │   ├── common/                     # HeroImage, etc.
 │   ├── dashboard/                  # WelcomePage
@@ -56,13 +65,11 @@ src/
 │   ├── layout/                     # Navigation, headers
 │   ├── shared/                     # PageHeadActionBar, etc.
 │   ├── sortables/                  # Generic dnd-kit wrappers (SortableList, SortableListItem)
-│   ├── list/                       # Shared input primitives (AddInput, QuantityPanel, DateInputPanel) — consumed by lists/items AND inventory; rename to components/inputs/ with Inventories migration
-│   └── inventory/                  # Inventory UI — moves with backend Inventories migration
-├── hooks/                          # Legacy bundled hooks (being phased out)
-│   ├── useAuth.ts                  # stays — cross-cutting
-│   ├── useLongPress.ts             # stays — cross-cutting
-│   ├── useDebouncedInvalidation.ts # stays — cross-cutting TanStack Query helper
-│   └── useInventoryQueries.ts      # moves with Inventories migration
+│   └── inputs/                     # Shared item-input primitives (AddInput, QuantityPanel, DateInputPanel) — consumed by lists/items AND inventories/items
+├── hooks/                          # Cross-cutting hooks
+│   ├── useAuth.ts                  # cross-cutting auth state
+│   ├── useLongPress.ts             # cross-cutting input gesture
+│   └── useDebouncedInvalidation.ts # cross-cutting TanStack Query helper
 ├── lib/api/                        # Auto-generated client (`npm run api`)
 │   ├── models/                     # TypeScript types from OpenAPI
 │   ├── services/                   # ClientApi.households, ClientApi.lists, …
@@ -84,7 +91,7 @@ Rules for new work:
 3. **Pages live in `pages/`, components in `components/`.** Routes (`src/routes/`) are 7-line shells that import the page component and apply `requireAuth`. Don't put page-level state, fetching, or layout logic in route files.
 4. **Type imports go through `lib/api` directly.** `import type { ListItemResponse } from "../../../lib/api"` — not via a hook re-export. The codegen owns the type names; re-exporting creates a second source-of-truth.
 5. **Nest sub-slices when the backend nests.** `features/lists/items/` exists because the backend has `Lists/Items/` slices and the URL nests as `/lists/{id}/items`. Reach for a sub-folder when (a) the URL is parent-scoped, (b) the lifecycle is parent-bound, AND (c) the sub-area has its own hook surface. Don't nest just to group files.
-6. **Shared primitives stay in `src/components/` until they have one owner.** When a component (e.g. `AddInput`) is consumed by two unrelated features (lists/items AND inventory), it belongs in a shared location — and the rename/move is bundled with the migration that frees the second consumer. Don't move a shared file into one feature's folder.
+6. **Shared primitives stay in `src/components/` until they have one owner.** When a component is consumed by two unrelated features (e.g. `AddInput` is used by both `features/lists/items/` and `features/inventories/items/`), it belongs in a shared location like `src/components/inputs/`. Don't move a shared file into one feature's folder.
 7. **Style cleanup is bundled with the move.** When pulling a component into `features/`, apply the anti-pattern checklist from `knowledge/Frontend_Styling.md` in the same change (drop inline `borderRadius`, hand-rolled `boxShadow`, redundant `<Box>` surfaces). Don't move first, clean up later.
 
 ### Nested sub-slice precedents

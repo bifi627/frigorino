@@ -82,9 +82,21 @@ Plus six InventoryItem-coordination methods (see `knowledge/Migrations/Inventory
 - Generated TS type for `description` is now `string | null`. Updated `create.tsx` to pass `null` instead of `undefined`. Updated `edit.tsx` to pass `description: inventory.description ?? null` on update (the form only edits name; description is round-tripped).
 - `routes/inventories/index.tsx`: `InventoryDto` → `InventoryResponse` type imports.
 
-### Feature-folder restructure (deferred)
+### Feature-folder restructure (shipped in follow-up round)
 
-Same sequencing as Lists migration: feature-folder restructure to `src/features/inventories/` deferred to a follow-up round. The hand-written hooks file (`useInventoryQueries.ts`) was updated in place rather than split into per-slice files.
+`src/features/inventories/` mirrors `features/lists/` one-to-one:
+
+- `inventoryKeys.ts` query-key factory at the feature root.
+- Per-slice hooks: `useHouseholdInventories.ts`, `useInventory.ts`, `useCreateInventory.ts`, `useUpdateInventory.ts`, `useDeleteInventory.ts`. The CRUD hooks dropped optimistic updates and switched to the simpler `invalidateQueries`-on-success shape used by Lists — matches the canonical reference in `features/lists/useCreateList.ts`.
+- `pages/`: `InventoriesPage`, `CreateInventoryPage`, `InventoryEditPage`, `InventoryViewPage`. Route files (`routes/inventories/*.tsx`) collapsed to 7-line shells.
+- `components/`: `InventorySummaryCard`, `InventoryActionsMenu`, `CreateInventoryForm`, `EditInventoryForm`, `DeleteInventoryConfirmDialog` — extracted from the fat route files and styled per `knowledge/Frontend_Styling.md` (dropped `borderRadius: 2`, manual `boxShadow`, responsive `fontSize` overrides, the Inventory2 banner card, hand-rolled `<Box>` surfaces; switched to `Card elevation={1|4}`, `pageContainerSx`, `<ConfirmDialog>`).
+- `delete-inventory-button` testid moved to `InventoryActionsMenu`; `inventory-edit-save-button` testid lives on `EditInventoryForm`; `inventory-create-submit-button` on `CreateInventoryForm`.
+
+Shared input primitives (`AddInput`, `QuantityPanel`, `DateInputPanel`, plus the colocated context/hooks/types/components subfolders) renamed `src/components/list/` → `src/components/inputs/`. Both `features/lists/items/components/ListFooter.tsx` and the new `features/inventories/items/components/InventoryFooter.tsx` now import from the shared location.
+
+`src/components/inventory/*` deleted (`InventoryContainer`, `InventoryFooter`, `InventoryItemContent` → `features/inventories/items/components/`). `InventoryContainer` dropped the load-bearing-less `memo()` wrapper and the redundant `useCallback`s, matching the canonical `ListContainer` shape. `InventoryFooter` keeps `memo()` + the inner `useMemo`s because they feed `memo(AddInput)`'s shallow-prop compare.
+
+`src/hooks/useInventoryQueries.ts` + `useInventoryItemQueries.ts` deleted.
 
 ## Deleted
 
@@ -105,7 +117,6 @@ The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely.
 
 ## Deferred / out of scope
 
-- **Frontend feature-folder restructure for Inventories** — `src/features/inventories/` mirror of `features/lists/`. Bundled hooks file split into per-slice files, `src/components/inventory/*` relocation, shared inputs (`src/components/list/AddInput.tsx` + `QuantityPanel.tsx` + `DateInputPanel.tsx`) rename to `src/components/inputs/`. Deferred to next round, same sequencing as the Lists migration.
 - **`MaintenanceHostedService` / `RecalculateSortOrderTask` cleanup** — per CLAUDE.md the system was replaced by Hangfire; this is dead orchestration kept registered. Reviewer agents flagged it for deletion in this round; deferred per user preference to keep the migration scoped.
 
 ## Cross-references

@@ -1,10 +1,10 @@
 import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { AddInput } from "../../../../components/list/AddInput";
+import { AddInput } from "../../../../components/inputs/AddInput";
 import {
     QuantityPanel,
     QuantityToggle,
-} from "../../../../components/list/QuantityPanel";
+} from "../../../../components/inputs/QuantityPanel";
 import type { ListItemResponse } from "../../../../lib/api";
 
 interface ListFooterProps {

@@ -120,9 +120,18 @@ Zero hand-written consumers. See "Orphan endpoint dropped" decision above.
 - Consumer updates: `src/routes/inventories/$inventoryId/view.tsx` (passes `householdId` into hook calls + `InventoryContainer`), `src/components/inventory/InventoryContainer.tsx` (new `householdId` prop), `src/components/inventory/InventoryFooter.tsx` + `InventoryItemContent.tsx` (type rename only).
 - `string | null` codegen quirk handled in `view.tsx` (`quantity ?? null`, `expiryDate?.toISOString() ?? null`) and `create.tsx` / `edit.tsx` (description: null).
 
-### Feature-folder restructure (deferred)
+### Feature-folder restructure (shipped in follow-up round)
 
-Mirror of `features/lists/items/` shape will land in a follow-up round, same sequencing as the Lists migration. Per-slice hook files under `src/features/inventories/items/`, `src/components/inventory/*` relocation, shared inputs (`AddInput`/`QuantityPanel`/`DateInputPanel`) rename to `src/components/inputs/`.
+`src/features/inventories/items/` mirrors `features/lists/items/`:
+
+- `inventoryItemKeys.ts` sub-folder query-key factory. Same shape as `listItemKeys`: `byInventory(householdId, inventoryId)` for the collection cache, `detail(itemId)` for the item cache.
+- Per-slice hooks: `useInventoryItems.ts`, `useCreateInventoryItem.ts`, `useUpdateInventoryItem.ts`, `useDeleteInventoryItem.ts`, `useReorderInventoryItem.ts`, `useCompactInventoryItems.ts`. Each follows the optimistic-update template from `features/lists/items/useCreateListItem.ts` and uses `useDebouncedInvalidation`. The optimistic patches mirror the server's sort-order math (single-section variant — no `status` filter; reorder formula uses `UNCHECKED_MIN = 1_000_000` directly).
+- `useUpdateInventoryItem`'s optimistic patch encodes the server's write-through asymmetry: `text ?? item.text`, `quantity ?? item.quantity`, but `expiryDate: variables.data.expiryDate` (no `??` — null clears).
+- `components/`: `InventoryContainer`, `InventoryFooter`, `InventoryItemContent` moved from `src/components/inventory/`. `InventoryContainer` dropped `memo()` + the redundant `useCallback`s to match `ListContainer`. `InventoryFooter` keeps `memo()` + inner `useMemo`s (load-bearing — feeds `memo(AddInput)`'s shallow-prop compare).
+
+Shared input primitives renamed `src/components/list/` → `src/components/inputs/`. The whole subtree moved (`AddInput.tsx`, `DateInputPanel.tsx`, `QuantityPanel.tsx`, plus `components/`, `context/`, `hooks/`, `types/`). `ListFooter.tsx` + `InventoryFooter.tsx` both updated to the new path.
+
+`src/hooks/useInventoryItemQueries.ts` deleted.
 
 ## Integration tests
 
@@ -145,9 +154,6 @@ Existing `Application/Frigorino.IntegrationTests/Slices/Inventories/Inventories.
 
 ## Deferred / out of scope
 
-- **Frontend feature-folder restructure** — bundled with the Inventories restructure round. See `knowledge/Migrations/Inventory.md`.
-- **`src/components/list/` rename to `src/components/inputs/`** — `AddInput.tsx`, `QuantityPanel.tsx`, `DateInputPanel.tsx` and their internal context/hooks are shared with `InventoryFooter.tsx`. Rename + import sweep belongs in the feature-folder restructure round so both Lists and Inventory consumers move in lockstep.
-- **`Frigorino.Application` project deletion** — see `knowledge/Migrations/Inventory.md`.
 - **`MaintenanceHostedService` / `RecalculateSortOrderTask` cleanup** — see `knowledge/Migrations/Inventory.md`. The inventory branch now uses `inventory.CompactItems()` rather than the deleted `IInventoryService`.
 
 ## Cross-references
