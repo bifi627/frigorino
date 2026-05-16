@@ -14,11 +14,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .ValueGeneratedOnAdd();
 
             builder.Property(i => i.Name)
-                .HasMaxLength(255)
+                .HasMaxLength(Inventory.NameMaxLength)
                 .IsRequired();
 
             builder.Property(i => i.Description)
-                .HasMaxLength(1000);
+                .HasMaxLength(Inventory.DescriptionMaxLength);
 
             builder.Property(i => i.HouseholdId)
                 .IsRequired();

@@ -225,23 +225,19 @@ What's done:
 - `Households/` CRUD — Create, GetUserHouseholds, DeleteHousehold (GET/{id} and PUT/{id} dropped as orphan API)
 - `Households/Members/` — GetMembers, AddMember, RemoveMember, UpdateMemberRole (POST `/leave` dropped as orphan API)
 - `Lists/` CRUD — CreateList, GetLists, GetList, UpdateList, DeleteList. `List` is its own aggregate root with `Create` factory + `Update` / `SoftDelete` mutations; the handler resolves the caller's role from `UserHouseholds` and passes it in (creator-OR-Admin+ policy lives on the aggregate). See `knowledge/Migrations/Lists.md`.
+- `Lists/Items/` — GetItems, GetItem, CreateItem, UpdateItem, DeleteItem, ToggleItemStatus, ReorderItem, CompactItems. Sort-order coordination promoted onto the `List` aggregate. See `knowledge/Migrations/ListItems.md`.
+- `Inventories/` CRUD — CreateInventory, GetInventories, GetInventory, UpdateInventory, DeleteInventory. `Inventory` is its own aggregate root with the same creator-OR-Admin+ shape as `List`. See `knowledge/Migrations/Inventory.md`.
+- `Inventories/Items/` — CreateInventoryItem, GetInventoryItems, UpdateInventoryItem, DeleteInventoryItem, ReorderInventoryItem, CompactInventoryItems (no toggle — inventory items have no Status; GetInventoryItem singular dropped as orphan API). URL nests under household. See `knowledge/Migrations/InventoryItems.md`.
 
 The four write slices in `Households/` (`AddMember`, `RemoveMember`, `UpdateMemberRole`, `DeleteHousehold`) all route through aggregate methods on `Household` (`AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`). See `knowledge/Migrations/Household.md` and `knowledge/Migrations/Members.md` for slice-by-slice notes.
 
-What's still in the legacy controller/service layer (in priority-ish order):
-- `ListItems*` endpoints
-- `Inventories*` endpoints
-- `InventoryItems*` endpoints
+What's still in the legacy controller/service layer: **nothing** — slice rollout complete for all four feature areas.
 
-Two cosmetic carry-overs from the Households migration that survive because Lists/Inventories still consume them:
-- `Frigorino.Application/Extensions/HouseholdMappingExtensions.cs` — shrunk to one method (`User.ToDto()`).
-- `Frigorino.Domain/DTOs/HouseholdDto.cs` — shrunk to one type (`UserDto`).
-
-Both can be renamed when Lists/Inventories migrate, since the surviving symbols belong to those features now.
+`Frigorino.Application` was deleted with the Inventory migration round — the project went vestigial once the last legacy service was retired, so reviewer feedback drove the full removal (csproj + sln entry + `Frigorino.Web`/`Frigorino.Test` references + `Application_Should_Not_Depend_On_Infrastructure` arch test + Dockerfile COPY).
 
 ### Step zero: drop, don't migrate
 
-Before migrating any legacy endpoint, grep `ClientApp/src` for the generated method name. If there's no hand-written consumer, drop the endpoint entirely. The Households + Members migration killed 3 orphan endpoints this way (`GET /api/household/{id}`, `PUT /api/household/{id}`, `POST /leave`). Migrating dead surface is wasted work.
+Before migrating any legacy endpoint, grep `ClientApp/src` for the generated method name. If there's no hand-written consumer, drop the endpoint entirely. The Households + Members migration killed 3 orphan endpoints this way (`GET /api/household/{id}`, `PUT /api/household/{id}`, `POST /leave`), the ListItems migration killed one (`GET /api/items/{id}`), and the InventoryItems migration killed one (`GET /items/{id}`). Migrating dead surface is wasted work.
 
 ### Each migration is a self-contained change that:
 

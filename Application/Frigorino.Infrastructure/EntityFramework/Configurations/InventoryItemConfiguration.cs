@@ -14,7 +14,7 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .ValueGeneratedOnAdd();
 
             builder.Property(ii => ii.Text)
-                .HasMaxLength(255)
+                .HasMaxLength(InventoryItem.TextMaxLength)
                 .IsRequired();
 
             builder.Property(ii => ii.Quantity);

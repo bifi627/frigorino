@@ -3,8 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export type UpdateInventoryItemRequest = {
-    text: string;
-    quantity?: string | null;
-    expiryDate?: string | null;
+    text: string | null;
+    quantity: string | null;
+    expiryDate: string | null;
 };
 

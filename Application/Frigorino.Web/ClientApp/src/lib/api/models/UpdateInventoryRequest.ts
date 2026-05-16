@@ -4,6 +4,6 @@
 /* eslint-disable */
 export type UpdateInventoryRequest = {
     name: string;
-    description?: string | null;
+    description: string | null;
 };
 

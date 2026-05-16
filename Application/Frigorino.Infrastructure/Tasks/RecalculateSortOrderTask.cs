@@ -11,12 +11,10 @@ namespace Frigorino.Infrastructure.Tasks
     public class RecalculateSortOrderTask : IMaintenanceTask
     {
         private readonly ApplicationDbContext _dbContext;
-        private readonly IInventoryService _inventoryService;
 
-        public RecalculateSortOrderTask(ApplicationDbContext dbContext, IInventoryService inventoryService)
+        public RecalculateSortOrderTask(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
-            _inventoryService = inventoryService;
         }
 
         public async Task Run(CancellationToken cancellationToken = default)
@@ -36,13 +34,17 @@ namespace Frigorino.Infrastructure.Tasks
             }
 
             var inventories = await _dbContext.Inventories
-                .Where(ii => ii.IsActive)
-                .Select(ii => ii.Id)
+                .Where(i => i.IsActive)
+                .Include(i => i.InventoryItems)
                 .ToListAsync(cancellationToken);
 
-            foreach (var inventoryId in inventories)
+            foreach (var inventory in inventories)
             {
-                await _inventoryService.RecalculateFullSortOrder(inventoryId, "0", true);
+                inventory.CompactItems();
+            }
+            if (inventories.Count > 0)
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
             }
         }
     }

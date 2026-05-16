@@ -45,6 +45,26 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GetByTestId("delete-inventory-button").ClickAsync();
     }
 
+    [When("I open the inventory edit page for {string}")]
+    public async Task WhenIOpenTheInventoryEditPageFor(string inventoryName)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        await ctx.Page.GotoAsync($"/inventories/{inventoryId}/edit", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+    }
+
+    [When("I save the inventory")]
+    public async Task WhenISaveTheInventory()
+    {
+        // Wait for the PUT before the next step inspects the post-save DOM/route — same pattern
+        // as ListSteps.WhenISaveTheList.
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.Contains("/inventories/")
+            && r.Request.Method == "PUT"
+            && r.Status == 200);
+        await ctx.Page.GetByTestId("inventory-edit-save-button").ClickAsync();
+        await responseTask;
+    }
+
     [Then("I am on the inventory view page")]
     public async Task ThenIAmOnTheInventoryViewPage()
     {

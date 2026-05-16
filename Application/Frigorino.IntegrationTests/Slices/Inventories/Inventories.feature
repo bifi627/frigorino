@@ -9,14 +9,16 @@ Feature: Inventories
     And I submit the inventory form
     Then I am on the inventory view page
 
-  Scenario: User adds an item to an inventory
-    Given there is an inventory named "Pantry"
-    When I open the inventory "Pantry"
-    And I add item "Flour" to the inventory
-    Then "Flour" appears in the inventory
-
   Scenario: User deletes an inventory
     Given there is an inventory named "Old Inventory"
     When I navigate to "/inventories"
     And I delete the inventory "Old Inventory"
     Then "Old Inventory" no longer appears in the inventory overview
+
+  Scenario: User renames an inventory
+    Given there is an inventory named "Old Name"
+    When I open the inventory edit page for "Old Name"
+    And I fill in the inventory name "New Name"
+    And I save the inventory
+    And I navigate to "/inventories"
+    Then "New Name" appears in the inventory overview
