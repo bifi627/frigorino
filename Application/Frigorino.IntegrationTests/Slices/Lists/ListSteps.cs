@@ -62,16 +62,19 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I save the list")]
     public async Task WhenISaveTheList()
     {
-        // Explicitly wait for the PUT to complete before the next step navigates away —
-        // otherwise the mutation can race against navigation and TanStack Query serves a
-        // stale list overview (the onSuccess invalidation fires AFTER the new mount has
-        // already consumed the cache).
+        // Wait for both the PUT 200 AND the form's post-save router.history.back() to land.
+        // Without the URL wait, the back-navigation microtask fires between steps and races
+        // the next GotoAsync with "interrupted by another navigation to about:blank" — the
+        // "about:blank" is the prior history entry, since WhenIOpenTheListEditPageFor jumps
+        // direct to /edit. Awaiting the URL change ensures the SPA route transition is
+        // complete before the next step touches navigation.
         var responseTask = ctx.Page.WaitForResponseAsync(r =>
             r.Url.Contains("/lists/")
             && r.Request.Method == "PUT"
             && r.Status == 200);
         await ctx.Page.GetByTestId("list-edit-save-button").ClickAsync();
         await responseTask;
+        await ctx.Page.WaitForURLAsync(url => !url.Contains("/edit"));
     }
 
     [Then("I am on the list view page")]
