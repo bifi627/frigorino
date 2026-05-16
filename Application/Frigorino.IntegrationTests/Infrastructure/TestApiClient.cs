@@ -165,6 +165,14 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    public Task<IAPIResponse> TryToggleListItemStatusAsync(int listId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PatchAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}/toggle-status",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     public async Task<int> CreateInventoryAsync(string name)
     {
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/Inventories", new { name });

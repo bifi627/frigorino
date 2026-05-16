@@ -39,6 +39,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
 }: SortableListItemProps<T>) {
     const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+    const itemLabel = String(item.text ?? item.id ?? "");
 
     const handleMenuOpen = useCallback(
         (event: React.MouseEvent<HTMLElement>) => {
@@ -83,6 +84,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
             item={item}
             isDragging={isDragging}
             dragHandle={showDragHandles ? "left" : "none"}
+            dragHandleTestId={`drag-handle-item-${itemLabel}`}
             containerSx={{
                 borderRadius: 1,
                 mb: 0.5, // Reduced margin bottom for denser layout
@@ -122,7 +124,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                         <ListItemIcon
                             sx={{ minWidth: 32 }}
                             onClick={handleToggle}
-                            data-testid={`toggle-item-${String(item.text ?? item.id)}`}
+                            data-testid={`toggle-item-${itemLabel}`}
                         >
                             <Checkbox
                                 edge="start"
@@ -149,6 +151,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                     <IconButton
                         size="small"
                         onClick={handleMenuOpen}
+                        data-testid={`item-menu-button-${itemLabel}`}
                         sx={{
                             color: "text.secondary",
                             "&:hover": { color: "text.primary" },
@@ -171,12 +174,16 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                             horizontal: "right",
                         }}
                     >
-                        <MenuItem onClick={handleEdit}>
+                        <MenuItem
+                            onClick={handleEdit}
+                            data-testid="edit-item-button"
+                        >
                             <Edit fontSize="small" sx={{ mr: 1 }} />
                             {t("common.edit")}
                         </MenuItem>
                         <MenuItem
                             onClick={handleDelete}
+                            data-testid="delete-item-button"
                             sx={{ color: "error.main" }}
                         >
                             <Delete fontSize="small" sx={{ mr: 1 }} />

@@ -32,6 +32,27 @@ Format per item:
 - **Plan:** Add a `docker-compose.yml` at the repo root (or `Application/`) that spins up Postgres 16 + pgAdmin together, with default credentials matching what `appsettings.Development.json` could point at out of the box. Replace `npm run sql` with `npm run db` (or move it to a root-level script) that runs `docker compose up -d`. Update `appsettings.Development.json` (committed) to default to the local container's connection string, so user-secrets is only needed for cloud overrides.
 - **Risk if left:** New contributors / agents can't start the backend without manual setup. Day-to-day this means swagger regen, migration testing, and integration smoke runs all require the original developer's machine.
 
+## `useToggleListItemStatus` optimistic update doesn't recompute `sortOrder`
+
+- **Where:** `Application/Frigorino.Web/ClientApp/src/hooks/useListItemQueries.ts:349-360` (the `onMutate` for the toggle hook).
+- **Why deferred:** Surfaced while writing `Scenario: Toggling an item back to unchecked moves it below other unchecked items`. The backend (`List.ToggleItemStatus` → `ComputeAppendSortOrder`) is correct — toggling unchecks back to the bottom of the unchecked section. The optimistic update only flips `status` and leaves `sortOrder` untouched, so the UI shows the item in its previous slot until the debounced `onSettled` refetch arrives. Cosmetic-only flicker, and reproducing it under real users (not back-to-back automated toggles) was inconsistent — so we moved the assertion to the API feature instead of fixing the UI in the same change.
+- **Plan:** Mirror the server's `ComputeAppendSortOrder` in `onMutate` the same way `useReorderListItem`'s optimistic update mirrors `List.ReorderItem`'s midpoint math. For unchecked→checked: `firstCheckedSortOrder - DEFAULT_GAP` (or `CHECKED_MIN + DEFAULT_GAP` if section empty). For checked→unchecked: `lastUncheckedSortOrder + DEFAULT_GAP` (or `UNCHECKED_MIN + DEFAULT_GAP` if section empty). Once fixed, the API-level `Toggling an item back to unchecked places it below other unchecked items` scenario can be duplicated as a UI scenario without flake.
+- **Risk if left:** Users see a briefly-stale order on toggle, especially when un-checking. Subtle; easy to mistake for a backend bug. Also blocks adding UI-level reorder-on-toggle scenarios.
+
+## Per-item action menu trapped inside dnd-kit's sortable container
+
+- **Where:** `Application/Frigorino.Web/ClientApp/src/components/sortables/SortableListItem.tsx` — the `IconButton` + `Menu` sit inside `<SortableItem>`, whose root `<Box>` carries dnd-kit's `useSortable` attributes/listeners.
+- **Why deferred:** Surfaced when writing the "User removes an item via the row menu" Playwright scenario — `ClickAsync` failed with `element is not enabled` because dnd-kit's ancestor aria attributes confuse Playwright's actionability check. Workaround in `ListItemSteps.cs:WhenIOpenTheItemMenuFor` / `WhenIClickDeleteFromTheItemMenu` uses `LocatorClickOptions { Force = true }`. Restructuring the SortableListItem DOM was out of scope for the test PR.
+- **Plan:** Either (a) lift the action `<IconButton>` + `<Menu>` out of the `<SortableItem>` wrapper into a sibling slot in the parent `<SortableList>` row, so the menu lives outside the draggable ancestor; or (b) scope the dnd-kit listeners to a drag-handle child via `dragHandle="custom"` + `renderDragHandle` instead of spreading them on the root `<Box>` in the `none` branch. Option (b) is the smaller change. Drop `Force = true` from both step bindings once the workaround is no longer needed.
+- **Risk if left:** Every new per-row interaction Playwright scenario inherits the `Force = true` workaround. Force-clicks skip Playwright's actionability checks, which is the protection against testing genuinely-broken UI (e.g. a button that really is disabled). The pattern is a smell that masks real regressions over time.
+
+## `ScenarioContextHolder.ListItemIds` keyed by item text alone
+
+- **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/ScenarioContextHolder.cs:12` — `Dictionary<string, int> ListItemIds`.
+- **Why deferred:** Today no scenario creates the same item text in two different lists within one scenario, so the collision is theoretical. Surfaced during the test-suite audit, not during a real failure.
+- **Plan:** Change to `Dictionary<(string list, string text), int>` and update the two writes (`ListItemSteps.GivenThereIsAListNamedWithItem`, `ListItemSteps.GivenTheListAlsoHasItem`) plus the readers in `ListItemApiSteps.cs` to thread the list name. `ListIds` already keys by name and has the same risk — if/when scenarios start using two households per scenario, key it by `(householdName, listName)` too.
+- **Risk if left:** First time a contributor writes a cross-list scenario that shares an item name, the id silently overwrites and the test fails on an unrelated `DELETE /items/{wrong-id}` 404 with no hint that the dictionary was the cause.
+
 ## Harden `SpaBuildHelper` against concurrency and opaque failures
 
 - **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/SpaBuildHelper.cs`.
