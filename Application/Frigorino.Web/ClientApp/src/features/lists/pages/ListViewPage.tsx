@@ -162,7 +162,11 @@ export const ListViewPage = () => {
 
     const directActions = [
         { icon: <Edit />, onClick: handleEdit },
-        { icon: <DragHandle />, onClick: handleToggleDragHandles },
+        {
+            icon: <DragHandle />,
+            onClick: handleToggleDragHandles,
+            testId: "list-toggle-drag-handles",
+        },
     ];
     const menuActions: HeadNavigationAction[] = [];
 

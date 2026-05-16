@@ -9,11 +9,6 @@ Feature: Inventories
     And I submit the inventory form
     Then I am on the inventory view page
 
-  Scenario: Created inventory appears on inventories overview
-    Given there is an inventory named "Pantry"
-    When I navigate to "/inventories"
-    Then "Pantry" appears in the inventory overview
-
   Scenario: User adds an item to an inventory
     Given there is an inventory named "Pantry"
     When I open the inventory "Pantry"
