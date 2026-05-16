@@ -1,8 +1,9 @@
 using System.Reflection;
-using Frigorino.Application;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Features.Households.Members;
+using Frigorino.Features.Inventories;
+using Frigorino.Features.Inventories.Items;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
@@ -28,7 +29,6 @@ builder.Services.AddOpenApi(options =>
 });
 
 builder.Services.AddEntityFramework(builder.Configuration);
-builder.Services.AddApplicationServices();
 if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi)
 {
     builder.Services.AddFirebaseAuth(builder.Configuration);
@@ -126,6 +126,25 @@ listItems.MapDeleteItem();
 listItems.MapToggleItemStatus();
 listItems.MapReorderItem();
 listItems.MapCompactItems();
+
+var inventories = app.MapGroup("/api/household/{householdId:int}/inventories")
+    .RequireAuthorization()
+    .WithTags("Inventories");
+inventories.MapCreateInventory();
+inventories.MapGetInventories();
+inventories.MapGetInventory();
+inventories.MapUpdateInventory();
+inventories.MapDeleteInventory();
+
+var inventoryItems = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/items")
+    .RequireAuthorization()
+    .WithTags("InventoryItems");
+inventoryItems.MapGetInventoryItems();
+inventoryItems.MapCreateInventoryItem();
+inventoryItems.MapUpdateInventoryItem();
+inventoryItems.MapDeleteInventoryItem();
+inventoryItems.MapReorderInventoryItem();
+inventoryItems.MapCompactInventoryItems();
 
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()

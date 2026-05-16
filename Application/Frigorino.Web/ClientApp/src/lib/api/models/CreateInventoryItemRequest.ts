@@ -4,7 +4,7 @@
 /* eslint-disable */
 export type CreateInventoryItemRequest = {
     text: string;
-    quantity?: string | null;
-    expiryDate?: string | null;
+    quantity: string | null;
+    expiryDate: string | null;
 };
 

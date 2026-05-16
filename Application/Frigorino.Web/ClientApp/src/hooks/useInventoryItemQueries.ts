@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../common/apiClient";
 import type {
     CreateInventoryItemRequest,
-    InventoryItemDto,
+    InventoryItemResponse,
     ReorderItemRequest,
     UpdateInventoryItemRequest,
 } from "../lib/api";
@@ -10,7 +10,7 @@ import { useDebouncedInvalidation } from "./useDebouncedInvalidation";
 
 export type {
     CreateInventoryItemRequest,
-    InventoryItemDto,
+    InventoryItemResponse,
     ReorderItemRequest,
     UpdateInventoryItemRequest,
 };
@@ -26,12 +26,19 @@ export const inventoryItemKeys = {
         [...inventoryItemKeys.all, "inventory", inventoryId] as const,
 } as const;
 
-export const useInventoryItems = (inventoryId: number, enabled = true) => {
+export const useInventoryItems = (
+    householdId: number,
+    inventoryId: number,
+    enabled = true,
+) => {
     return useQuery({
         queryKey: inventoryItemKeys.byInventory(inventoryId),
         queryFn: () =>
-            ClientApi.inventoryItems.getApiInventoryInventoryItems(inventoryId),
-        enabled: enabled && inventoryId > 0,
+            ClientApi.inventoryItems.getInventoryItems(
+                householdId,
+                inventoryId,
+            ),
+        enabled: enabled && householdId > 0 && inventoryId > 0,
         staleTime: 1000 * 30,
     });
 };
@@ -42,13 +49,16 @@ export const useCreateInventoryItem = () => {
 
     return useMutation({
         mutationFn: async ({
+            householdId,
             inventoryId,
             data,
         }: {
+            householdId: number;
             inventoryId: number;
             data: CreateInventoryItemRequest;
         }) => {
-            return ClientApi.inventoryItems.postApiInventoryInventoryItems(
+            return ClientApi.inventoryItems.createInventoryItem(
+                householdId,
                 inventoryId,
                 data,
             );
@@ -60,12 +70,12 @@ export const useCreateInventoryItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<InventoryItemDto[]>(
-                inventoryItemKeys.byInventory(variables.inventoryId),
-            );
+            const previousItems = queryClient.getQueryData<
+                InventoryItemResponse[]
+            >(inventoryItemKeys.byInventory(variables.inventoryId));
 
             // Create optimistic item with temporary ID
-            const optimisticItem: InventoryItemDto = {
+            const optimisticItem: InventoryItemResponse = {
                 id: Date.now(), // Temporary ID until server responds
                 text: variables.data.text,
                 quantity: variables.data.quantity,
@@ -78,7 +88,7 @@ export const useCreateInventoryItem = () => {
             };
 
             // Optimistically add the item to the cache
-            queryClient.setQueryData<InventoryItemDto[]>(
+            queryClient.setQueryData<InventoryItemResponse[]>(
                 inventoryItemKeys.byInventory(variables.inventoryId),
                 (old) => {
                     if (!old) return [optimisticItem];
@@ -119,15 +129,18 @@ export const useUpdateInventoryItem = () => {
 
     return useMutation({
         mutationFn: async ({
+            householdId,
             inventoryId,
             itemId,
             data,
         }: {
+            householdId: number;
             inventoryId: number;
             itemId: number;
             data: UpdateInventoryItemRequest;
         }) => {
-            return ClientApi.inventoryItems.putApiInventoryInventoryItems(
+            return ClientApi.inventoryItems.updateInventoryItem(
+                householdId,
                 inventoryId,
                 itemId,
                 data,
@@ -143,15 +156,16 @@ export const useUpdateInventoryItem = () => {
             });
 
             // Snapshot the previous values for rollback
-            const previousItems = queryClient.getQueryData<InventoryItemDto[]>(
-                inventoryItemKeys.byInventory(variables.inventoryId),
-            );
-            const previousItem = queryClient.getQueryData<InventoryItemDto>(
-                inventoryItemKeys.detail(variables.itemId),
-            );
+            const previousItems = queryClient.getQueryData<
+                InventoryItemResponse[]
+            >(inventoryItemKeys.byInventory(variables.inventoryId));
+            const previousItem =
+                queryClient.getQueryData<InventoryItemResponse>(
+                    inventoryItemKeys.detail(variables.itemId),
+                );
 
             // Optimistically update the item in the cache
-            queryClient.setQueryData<InventoryItemDto[]>(
+            queryClient.setQueryData<InventoryItemResponse[]>(
                 inventoryItemKeys.byInventory(variables.inventoryId),
                 (old) => {
                     if (!old) return old;
@@ -175,7 +189,7 @@ export const useUpdateInventoryItem = () => {
 
             // Also update the individual item cache if it exists
             if (previousItem) {
-                queryClient.setQueryData<InventoryItemDto>(
+                queryClient.setQueryData<InventoryItemResponse>(
                     inventoryItemKeys.detail(variables.itemId),
                     {
                         ...previousItem,
@@ -224,13 +238,16 @@ export const useDeleteInventoryItem = () => {
 
     return useMutation({
         mutationFn: async ({
+            householdId,
             inventoryId,
             itemId,
         }: {
+            householdId: number;
             inventoryId: number;
             itemId: number;
         }) => {
-            return ClientApi.inventoryItems.deleteApiInventoryInventoryItems(
+            return ClientApi.inventoryItems.deleteInventoryItem(
+                householdId,
                 inventoryId,
                 itemId,
             );
@@ -242,12 +259,12 @@ export const useDeleteInventoryItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<InventoryItemDto[]>(
-                inventoryItemKeys.byInventory(variables.inventoryId),
-            );
+            const previousItems = queryClient.getQueryData<
+                InventoryItemResponse[]
+            >(inventoryItemKeys.byInventory(variables.inventoryId));
 
             // Optimistically remove the item from the cache
-            queryClient.setQueryData<InventoryItemDto[]>(
+            queryClient.setQueryData<InventoryItemResponse[]>(
                 inventoryItemKeys.byInventory(variables.inventoryId),
                 (old) => {
                     if (!old) return old;
@@ -293,15 +310,18 @@ export const useReorderInventoryItem = () => {
 
     return useMutation({
         mutationFn: async ({
+            householdId,
             inventoryId,
             itemId,
             data,
         }: {
+            householdId: number;
             inventoryId: number;
             itemId: number;
             data: ReorderItemRequest;
         }) => {
-            return ClientApi.inventoryItems.patchApiInventoryInventoryItemsReorder(
+            return ClientApi.inventoryItems.reorderInventoryItem(
+                householdId,
                 inventoryId,
                 itemId,
                 data,
@@ -314,12 +334,12 @@ export const useReorderInventoryItem = () => {
             });
 
             // Snapshot the previous value for rollback
-            const previousItems = queryClient.getQueryData<InventoryItemDto[]>(
-                inventoryItemKeys.byInventory(variables.inventoryId),
-            );
+            const previousItems = queryClient.getQueryData<
+                InventoryItemResponse[]
+            >(inventoryItemKeys.byInventory(variables.inventoryId));
 
             // Optimistically update the cache with new sortOrder
-            queryClient.setQueryData<InventoryItemDto[]>(
+            queryClient.setQueryData<InventoryItemResponse[]>(
                 inventoryItemKeys.byInventory(variables.inventoryId),
                 (old) => {
                     if (!old) return old;

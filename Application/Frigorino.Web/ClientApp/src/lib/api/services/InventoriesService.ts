@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { CreateInventoryRequest } from '../models/CreateInventoryRequest';
-import type { InventoryDto } from '../models/InventoryDto';
+import type { InventoryResponse } from '../models/InventoryResponse';
 import type { UpdateInventoryRequest } from '../models/UpdateInventoryRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -11,56 +11,66 @@ export class InventoriesService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
      * @param householdId
-     * @returns InventoryDto OK
-     * @throws ApiError
-     */
-    public getApiHouseholdInventories(
-        householdId: number,
-    ): CancelablePromise<Array<InventoryDto>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/household/{householdId}/Inventories',
-            path: {
-                'householdId': householdId,
-            },
-        });
-    }
-    /**
-     * @param householdId
      * @param requestBody
-     * @returns InventoryDto OK
+     * @returns InventoryResponse Created
      * @throws ApiError
      */
-    public postApiHouseholdInventories(
+    public createInventory(
         householdId: number,
         requestBody: CreateInventoryRequest,
-    ): CancelablePromise<InventoryDto> {
+    ): CancelablePromise<InventoryResponse> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/household/{householdId}/Inventories',
+            url: '/api/household/{householdId}/inventories',
             path: {
                 'householdId': householdId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                404: `Not Found`,
+            },
+        });
+    }
+    /**
+     * @param householdId
+     * @returns InventoryResponse OK
+     * @throws ApiError
+     */
+    public getInventories(
+        householdId: number,
+    ): CancelablePromise<Array<InventoryResponse>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/api/household/{householdId}/inventories',
+            path: {
+                'householdId': householdId,
+            },
+            errors: {
+                404: `Not Found`,
+            },
         });
     }
     /**
      * @param householdId
      * @param inventoryId
-     * @returns InventoryDto OK
+     * @returns InventoryResponse OK
      * @throws ApiError
      */
-    public getApiHouseholdInventories1(
+    public getInventory(
         householdId: number,
         inventoryId: number,
-    ): CancelablePromise<InventoryDto> {
+    ): CancelablePromise<InventoryResponse> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/api/household/{householdId}/Inventories/{inventoryId}',
+            url: '/api/household/{householdId}/inventories/{inventoryId}',
             path: {
                 'householdId': householdId,
                 'inventoryId': inventoryId,
+            },
+            errors: {
+                404: `Not Found`,
             },
         });
     }
@@ -68,41 +78,50 @@ export class InventoriesService {
      * @param householdId
      * @param inventoryId
      * @param requestBody
-     * @returns InventoryDto OK
+     * @returns InventoryResponse OK
      * @throws ApiError
      */
-    public putApiHouseholdInventories(
+    public updateInventory(
         householdId: number,
         inventoryId: number,
         requestBody: UpdateInventoryRequest,
-    ): CancelablePromise<InventoryDto> {
+    ): CancelablePromise<InventoryResponse> {
         return this.httpRequest.request({
             method: 'PUT',
-            url: '/api/household/{householdId}/Inventories/{inventoryId}',
+            url: '/api/household/{householdId}/inventories/{inventoryId}',
             path: {
                 'householdId': householdId,
                 'inventoryId': inventoryId,
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                400: `Bad Request`,
+                403: `Forbidden`,
+                404: `Not Found`,
+            },
         });
     }
     /**
      * @param householdId
      * @param inventoryId
-     * @returns any OK
+     * @returns void
      * @throws ApiError
      */
-    public deleteApiHouseholdInventories(
+    public deleteInventory(
         householdId: number,
         inventoryId: number,
-    ): CancelablePromise<any> {
+    ): CancelablePromise<void> {
         return this.httpRequest.request({
             method: 'DELETE',
-            url: '/api/household/{householdId}/Inventories/{inventoryId}',
+            url: '/api/household/{householdId}/inventories/{inventoryId}',
             path: {
                 'householdId': householdId,
                 'inventoryId': inventoryId,
+            },
+            errors: {
+                403: `Forbidden`,
+                404: `Not Found`,
             },
         });
     }

@@ -1,35 +1,27 @@
 using ArchUnitNET.Domain;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
-using Frigorino.Application.Services;
 using Frigorino.Domain.Entities;
 using Frigorino.Features.Households;
 using Frigorino.Infrastructure.EntityFramework;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 
-// Pin Frigorino.Application's assembly via any remaining service (InventoryService) — picked
-// arbitrarily; swap when the last legacy service migrates.
-
 namespace Frigorino.Test.Architecture
 {
     // Locks down dependency direction so the layering doesn't drift as the slice count grows.
-    // Rules picked for high signal + zero false positives. Add slice-isolation rules when
-    // sibling slice folders multiply (Lists/Inventories migration).
+    // Rules picked for high signal + zero false positives. The former `Frigorino.Application`
+    // layer was retired with the Inventory migration — its layer rule went with the project.
     public class ArchitectureTests
     {
         private static readonly ArchUnitNET.Domain.Architecture Architecture = new ArchLoader()
             .LoadAssemblies(
                 typeof(Household).Assembly,
-                typeof(InventoryService).Assembly,
                 typeof(ApplicationDbContext).Assembly,
                 typeof(CreateHouseholdEndpoint).Assembly)
             .Build();
 
         private static readonly IObjectProvider<IType> DomainLayer =
             Types().That().ResideInAssembly("Frigorino.Domain").As("Domain");
-
-        private static readonly IObjectProvider<IType> ApplicationLayer =
-            Types().That().ResideInAssembly("Frigorino.Application").As("Application");
 
         private static readonly IObjectProvider<IType> InfrastructureLayer =
             Types().That().ResideInAssembly("Frigorino.Infrastructure").As("Infrastructure");
@@ -47,16 +39,6 @@ namespace Frigorino.Test.Architecture
                 .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"FirebaseAdmin.*"))
                 .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"OpenAI.*"))
                 .Because("Domain stays free of infrastructure concerns; entities and value objects are persistence-ignorant.")
-                .WithoutRequiringPositiveResults()
-                .Check(Architecture);
-        }
-
-        [Fact]
-        public void Application_Should_Not_Depend_On_Infrastructure()
-        {
-            Types().That().Are(ApplicationLayer)
-                .Should().NotDependOnAny(InfrastructureLayer)
-                .Because("Application contains domain services and use-case orchestration; Infrastructure types are wired in via DI from the host.")
                 .WithoutRequiringPositiveResults()
                 .Check(Architecture);
         }

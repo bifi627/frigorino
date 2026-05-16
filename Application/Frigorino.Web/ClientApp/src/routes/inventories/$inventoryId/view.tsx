@@ -23,7 +23,7 @@ import {
     useInventoryItems,
     useUpdateInventoryItem,
     type CreateInventoryItemRequest,
-    type InventoryItemDto,
+    type InventoryItemResponse,
     type UpdateInventoryItemRequest,
 } from "../../../hooks/useInventoryItemQueries";
 import { useInventory } from "../../../hooks/useInventoryQueries";
@@ -64,7 +64,7 @@ function RouteComponent() {
         }
     };
 
-    const [editingItem, setEditingItem] = useState<InventoryItemDto | null>(
+    const [editingItem, setEditingItem] = useState<InventoryItemResponse | null>(
         null,
     );
     const [sortMode, setSortMode] = useState<SortMode>(loadSortMode());
@@ -90,7 +90,11 @@ function RouteComponent() {
     );
 
     // Inventory items queries and mutations
-    const { data: items = [] } = useInventoryItems(inventoryId, !!inventory);
+    const { data: items = [] } = useInventoryItems(
+        currentHousehold?.householdId || 0,
+        inventoryId,
+        !!inventory,
+    );
 
     const createMutation = useCreateInventoryItem();
     const updateMutation = useUpdateInventoryItem();
@@ -150,20 +154,24 @@ function RouteComponent() {
         }
     };
 
+    const householdId = currentHousehold?.householdId ?? 0;
+
     const handleAddItem = useCallback(
         (data: CreateInventoryItemRequest) => {
             createMutation.mutate({
+                householdId,
                 inventoryId,
                 data,
             });
         },
-        [createMutation, inventoryId],
+        [createMutation, householdId, inventoryId],
     );
 
     const handleUpdateItem = useCallback(
         (data: UpdateInventoryItemRequest) => {
             if (editingItem?.id) {
                 updateMutation.mutate({
+                    householdId,
                     inventoryId,
                     itemId: editingItem.id,
                     data,
@@ -171,7 +179,7 @@ function RouteComponent() {
                 setEditingItem(null);
             }
         },
-        [editingItem?.id, updateMutation, inventoryId],
+        [editingItem?.id, updateMutation, householdId, inventoryId],
     );
 
     if (!currentHousehold?.householdId) {
@@ -239,6 +247,7 @@ function RouteComponent() {
             {/* Scrollable Content Section */}
             <InventoryContainer
                 ref={scrollContainerRef}
+                householdId={householdId}
                 inventoryId={inventoryId}
                 editingItem={editingItem}
                 onEdit={setEditingItem}
@@ -252,15 +261,15 @@ function RouteComponent() {
                 onAddItem={(data, quantity, expiryDate) =>
                     handleAddItem({
                         text: data,
-                        quantity: quantity,
-                        expiryDate: expiryDate?.toISOString(),
+                        quantity: quantity ?? null,
+                        expiryDate: expiryDate?.toISOString() ?? null,
                     })
                 }
                 onUpdateItem={(data, quantity, expiryDate) =>
                     handleUpdateItem({
                         text: data,
-                        quantity: quantity,
-                        expiryDate: expiryDate?.toISOString(),
+                        quantity: quantity ?? null,
+                        expiryDate: expiryDate?.toISOString() ?? null,
                     })
                 }
                 onCancelEdit={() => setEditingItem(null)}

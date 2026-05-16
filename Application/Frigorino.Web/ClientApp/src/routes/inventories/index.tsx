@@ -26,7 +26,7 @@ import {
     useDeleteInventory,
     useHouseholdInventories,
 } from "../../hooks/useInventoryQueries";
-import type { InventoryDto } from "../../lib/api";
+import type { InventoryResponse } from "../../lib/api";
 
 export const Route = createFileRoute("/inventories/")({
     beforeLoad: requireAuth,
@@ -49,7 +49,7 @@ function InventoriesPage() {
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedInventory, setSelectedInventory] =
-        useState<InventoryDto | null>(null);
+        useState<InventoryResponse | null>(null);
 
     const handleBack = () => {
         navigate({ to: "/" });
@@ -68,7 +68,7 @@ function InventoriesPage() {
 
     const handleMenuOpen = (
         event: React.MouseEvent<HTMLElement>,
-        inventory: InventoryDto,
+        inventory: InventoryResponse,
     ) => {
         setAnchorEl(event.currentTarget);
         setSelectedInventory(inventory);

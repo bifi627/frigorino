@@ -175,13 +175,91 @@ public class TestApiClient(ScenarioContextHolder ctx)
 
     public async Task<int> CreateInventoryAsync(string name)
     {
-        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/Inventories", new { name });
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/inventories", new { name });
         return json.GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryCreateInventoryAsync(string? name, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/inventories",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryGetInventoriesAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryDeleteInventoryAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
     public async Task<int> CreateInventoryItemAsync(int inventoryId, string text)
     {
-        var json = await PostAsync($"/api/inventory/{inventoryId}/InventoryItems", new { text });
+        var json = await PostAsync(
+            $"/api/household/{ctx.HouseholdId}/inventories/{inventoryId}/items",
+            new { text });
         return json.GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryGetInventoryItemsAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateInventoryItemAsync(int inventoryId, string? text, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items",
+            new APIRequestContextOptions
+            {
+                DataObject = new { text },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryDeleteInventoryItemAsync(int inventoryId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/{itemId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCompactInventoryItemsAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/compact",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryReorderInventoryItemAsync(int inventoryId, int itemId, int afterId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PatchAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/{itemId}/reorder",
+            new APIRequestContextOptions
+            {
+                DataObject = new { afterId },
+                Headers = AuthHeaders,
+            });
     }
 }
