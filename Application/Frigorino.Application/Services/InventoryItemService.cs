@@ -1,5 +1,4 @@
 using Frigorino.Application.Extensions;
-using Frigorino.Application.Utilities;
 using Frigorino.Domain.DTOs;
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
@@ -228,7 +227,7 @@ namespace Frigorino.Application.Services
             var first = existingItems.FirstOrDefault()?.SortOrder ?? null;
             var last = existingItems.LastOrDefault()?.SortOrder ?? null;
 
-            var result = SortOrderCalculator.CalculateSortOrder(status, after, before, first, last, out bool needRecalculation);
+            var result = SortOrderCalculator.CalculateSortOrder(status, after, before, first, last);
 
             return result ?? -1;
         }

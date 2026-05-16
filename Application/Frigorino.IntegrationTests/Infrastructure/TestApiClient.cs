@@ -113,8 +113,56 @@ public class TestApiClient(ScenarioContextHolder ctx)
 
     public async Task<int> CreateListItemAsync(int listId, string text)
     {
-        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/ListItems", new { text });
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/items", new { text });
         return json.GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryGetListItemsAsync(int listId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateListItemAsync(int listId, string? text, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items",
+            new APIRequestContextOptions
+            {
+                DataObject = new { text },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryDeleteListItemAsync(int listId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCompactListItemsAsync(int listId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/compact",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryReorderListItemAsync(int listId, int itemId, int afterId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PatchAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}/reorder",
+            new APIRequestContextOptions
+            {
+                DataObject = new { afterId },
+                Headers = AuthHeaders,
+            });
     }
 
     public async Task<int> CreateInventoryAsync(string name)

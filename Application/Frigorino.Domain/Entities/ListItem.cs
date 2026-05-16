@@ -2,6 +2,11 @@ namespace Frigorino.Domain.Entities
 {
     public class ListItem
     {
+        // Source of truth for length constraints. Both the List aggregate methods and the
+        // EF configuration (ListItemConfiguration) read from these so DB and aggregate agree.
+        public const int TextMaxLength = 500;
+        public const int QuantityMaxLength = 100;
+
         public int Id { get; set; }
         public int ListId { get; set; }
         public string Text { get; set; } = string.Empty;

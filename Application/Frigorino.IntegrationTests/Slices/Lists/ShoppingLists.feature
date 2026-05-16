@@ -64,3 +64,34 @@ Feature: Shopping Lists
     And "bob" has created a list named "BobsList"
     When I DELETE the list "BobsList" via the API
     Then the API response status is 204
+
+  Scenario: User unchecks an item that was previously checked
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I open the list "Weekly Groceries"
+    And I toggle "Milk" as done
+    And I toggle "Milk" as done
+    Then "Milk" appears in the list
+
+  Scenario: Creating an item with empty text returns a validation error
+    Given there is a list named "Weekly Groceries"
+    When I POST an item with empty text to "Weekly Groceries" via the API
+    Then the API response status is 400
+    And the API response has a validation error for "Text"
+
+  Scenario: Non-member cannot read a list's items
+    Given I am logged in as "alice"
+    And an existing household "Other" owned by "bob" that I am not a member of
+    And "bob" has created a list named "BobsList"
+    When I GET the items of "BobsList" via the API
+    Then the API response status is 404
+
+  Scenario: Deleting an item removes it from the list
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I DELETE the item "Milk" in "Weekly Groceries" via the API
+    Then the API response status is 204
+    And the API response when getting items of "Weekly Groceries" omits "Milk"
+
+  Scenario: Compacting items succeeds
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I POST compact for "Weekly Groceries" via the API
+    Then the API response status is 204

@@ -51,4 +51,13 @@ namespace Frigorino.Domain.DTOs
         public string? Quantity { get; set; }
         public DateTime? ExpiryDate { get; set; }
     }
+
+    // Shared by the surviving legacy InventoryItems endpoints. The same shape lives on the new
+    // ListItems reorder slice (Frigorino.Features.Lists.Items.ReorderItemRequest); OpenAPI
+    // deduplicates same-name same-shape types so the generated TS client emits a single type.
+    // When Inventory migrates, fold this into the inventory slice and delete this declaration.
+    public class ReorderItemRequest
+    {
+        public int AfterId { get; set; } // 0 means move to top of section
+    }
 }

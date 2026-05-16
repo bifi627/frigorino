@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type ListItemDto = {
+export type ListItemResponse = {
     id: number;
     listId: number;
     text: string;
-    quantity?: string | null;
+    quantity: string | null;
     status: boolean;
     sortOrder: number;
     createdAt: string;
