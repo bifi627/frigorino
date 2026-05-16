@@ -167,6 +167,15 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError($"List item {itemId} not found."));
             }
 
+            // All three fields are "preserve on null", so an all-null payload is a guaranteed
+            // no-op — reject it as a malformed request rather than returning 200 OK on garbage.
+            if (text is null && quantity is null && status is null)
+            {
+                return Result.Fail<ListItem>(
+                    new Error("Update request must set at least one field.")
+                        .WithMetadata("Property", string.Empty));
+            }
+
             // Text is required only when the caller actually supplies a value — null means
             // "preserve existing". Empty/whitespace, on the other hand, is a real attempt at
             // a blank text and is rejected.

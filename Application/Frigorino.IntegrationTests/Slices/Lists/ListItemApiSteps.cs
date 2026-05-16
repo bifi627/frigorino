@@ -34,6 +34,17 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryCompactListItemsAsync(listId);
     }
 
+    [When("I PUT an all-null update to {string} in {string} via the API")]
+    public async Task WhenIPutAnAllNullUpdateToViaTheApi(string itemText, string listName)
+    {
+        // Exercises List.UpdateItem's all-null guard — text/quantity/status all null is a
+        // guaranteed no-op on the server, so the slice should reject it as a validation error
+        // instead of returning 200 OK on garbage input.
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.ListItemIds[itemText];
+        ctx.LastApiResponse = await api.TryUpdateListItemAsync(listId, itemId, text: null, quantity: null, status: null);
+    }
+
     [When("I PATCH {string} to the top of {string} via the API")]
     public async Task WhenIPatchToTheTopViaTheApi(string itemText, string listName)
     {

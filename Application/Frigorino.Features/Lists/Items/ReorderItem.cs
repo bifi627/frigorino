@@ -1,6 +1,7 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -10,11 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    // AfterId == 0 means "move to the top of the current section". An AfterId that doesn't
-    // resolve to an active sibling in the same section silently falls back to top-of-section —
-    // preserves the wire contract the frontend's optimistic UI depends on.
-    public sealed record ReorderItemRequest(int AfterId);
-
     public static class ReorderItemEndpoint
     {
         public static IEndpointRouteBuilder MapReorderItem(this IEndpointRouteBuilder app)

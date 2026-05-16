@@ -1,6 +1,7 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -10,13 +11,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Items
 {
-    // AfterId == 0 means "move to the top of the section". An AfterId that doesn't resolve to
-    // an active sibling silently falls back to top-of-section — preserves the wire contract the
-    // frontend's optimistic UI depends on. Same shape as the ListItems ReorderItemRequest;
-    // OpenAPI deduplicates same-name same-shape types so the generated TS client emits a single
-    // ReorderItemRequest type shared between listItems and inventoryItems services.
-    public sealed record ReorderItemRequest(int AfterId);
-
     public static class ReorderInventoryItemEndpoint
     {
         public static IEndpointRouteBuilder MapReorderInventoryItem(this IEndpointRouteBuilder app)

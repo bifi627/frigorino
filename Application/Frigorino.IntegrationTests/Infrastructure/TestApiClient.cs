@@ -153,6 +153,18 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    public Task<IAPIResponse> TryUpdateListItemAsync(int listId, int itemId, string? text, string? quantity, bool? status, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}",
+            new APIRequestContextOptions
+            {
+                DataObject = new { text, quantity, status },
+                Headers = AuthHeaders,
+            });
+    }
+
     public Task<IAPIResponse> TryReorderListItemAsync(int listId, int itemId, int afterId, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;

@@ -56,11 +56,11 @@ The legacy `ReorderItemAsync` silently moved items to the top of section when `a
 
 Grep across `ClientApp/src` (excluding `lib/api/`) for the generated `getApiInventoryInventoryItems1` method returned zero hand-written consumers. Dropped, not migrated. Reintroduce only when a real consumer appears.
 
-### `ReorderItemRequest` colocated in `ReorderInventoryItem.cs`
+### Shared `Frigorino.Features.Items.ReorderItemRequest`
 
-Same shape as `Frigorino.Features.Lists.Items.ReorderItemRequest` (`{ AfterId: int }`). OpenAPI deduplicates same-name same-shape types, so the generated TS client emits a single `ReorderItemRequest` type imported by both `useListItemQueries.ts` and `useInventoryItemQueries.ts`.
+Both `ReorderInventoryItem.cs` and `ReorderItem.cs` (ListItem reorder) consume a single shared DTO at `Frigorino.Features/Items/ReorderItemRequest.cs`. The duplicate per-slice records that relied on OpenAPI same-name-same-shape dedup are gone — source-side single source of truth, so a future divergence (e.g. inventory reorder gains a `Section` field) won't silently collide in the generated TS client.
 
-This replaces the legacy `Frigorino.Domain.DTOs.ReorderItemRequest` (in `InventoryDto.cs`) which served the same dedup role pre-migration.
+This replaces the legacy `Frigorino.Domain.DTOs.ReorderItemRequest` (in `InventoryDto.cs`) which served the dedup role pre-migration.
 
 ## Slice inventory
 
@@ -84,7 +84,7 @@ File: `Application/Frigorino.Features/Inventories/Items/DeleteInventoryItem.cs`.
 
 ### ✅ PATCH `"/{itemId}/reorder"` — ReorderInventoryItem
 
-File: `Application/Frigorino.Features/Inventories/Items/ReorderInventoryItem.cs`. Sealed record `ReorderItemRequest(AfterId)` colocated. Calls `inventory.ReorderItem(itemId, afterItemId)`. Defensive throw on unmapped errors. Union: `Results<Ok<InventoryItemResponse>, NotFound>`.
+File: `Application/Frigorino.Features/Inventories/Items/ReorderInventoryItem.cs`. Consumes the shared `Frigorino.Features.Items.ReorderItemRequest(AfterId)` (see decision above). Calls `inventory.ReorderItem(itemId, afterItemId)`. Defensive throw on unmapped errors. Union: `Results<Ok<InventoryItemResponse>, NotFound>`.
 
 ### ✅ POST `"/compact"` — CompactInventoryItems
 
@@ -154,7 +154,7 @@ Existing `Application/Frigorino.IntegrationTests/Slices/Inventories/Inventories.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` / `RecalculateSortOrderTask` cleanup** — see `knowledge/Migrations/Inventory.md`. The inventory branch now uses `inventory.CompactItems()` rather than the deleted `IInventoryService`.
+- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` was removed in the post-review cleanup pass (it stamped `UpdatedAt` on every list/inventory item at every startup with no gap-check). `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired and are queued for the full system removal.
 
 ## Cross-references
 
