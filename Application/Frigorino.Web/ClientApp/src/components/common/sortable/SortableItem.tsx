@@ -16,6 +16,7 @@ export interface SortableItemProps<T extends SortableItemData> {
     renderDragHandle?: () => ReactNode;
     containerSx?: SxProps;
     dragHandleSx?: SxProps;
+    dragHandleTestId?: string;
     isDragging?: boolean;
     disabled?: boolean;
 }
@@ -27,6 +28,7 @@ export function SortableItem<T extends SortableItemData>({
     renderDragHandle,
     containerSx,
     dragHandleSx,
+    dragHandleTestId,
     isDragging: externalIsDragging,
     disabled = false,
 }: SortableItemProps<T>) {
@@ -67,6 +69,7 @@ export function SortableItem<T extends SortableItemData>({
         renderDragHandle()
     ) : (
         <Box
+            data-testid={dragHandleTestId}
             sx={{
                 display: "flex",
                 alignItems: "center",

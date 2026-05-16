@@ -17,6 +17,7 @@ export type HeadNavigationAction = {
     secondaryText?: string;
     icon?: React.ReactNode;
     onClick: () => void;
+    testId?: string;
 };
 
 export interface HeadNavigationProps {
@@ -95,6 +96,7 @@ export const PageHeadActionBar = memo(
                                 <IconButton
                                     key={index}
                                     onClick={action.onClick}
+                                    data-testid={action.testId}
                                     sx={{
                                         bgcolor:
                                             index === 0
