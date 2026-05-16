@@ -4,6 +4,7 @@ using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Features.Households.Members;
 using Frigorino.Features.Lists;
+using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -113,6 +114,18 @@ lists.MapGetLists();
 lists.MapGetList();
 lists.MapUpdateList();
 lists.MapDeleteList();
+
+var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int}/items")
+    .RequireAuthorization()
+    .WithTags("ListItems");
+listItems.MapGetItems();
+listItems.MapGetItem();
+listItems.MapCreateItem();
+listItems.MapUpdateItem();
+listItems.MapDeleteItem();
+listItems.MapToggleItemStatus();
+listItems.MapReorderItem();
+listItems.MapCompactItems();
 
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()

@@ -8,7 +8,6 @@ namespace Frigorino.Application
     {
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddScoped<IListItemService, ListItemService>();
             services.AddScoped<IInventoryService, InventoryService>();
             services.AddScoped<IInventoryItemService, InventoryItemService>();
 

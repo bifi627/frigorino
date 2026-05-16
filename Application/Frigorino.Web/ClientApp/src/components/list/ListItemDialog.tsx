@@ -9,16 +9,15 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import type {
-    CreateListItemRequest,
-    ListItemDto,
-    UpdateListItemRequest,
+    CreateItemRequest,
+    ListItemResponse,
 } from "../../hooks/useListItemQueries";
 
 interface ListItemDialogProps {
     open: boolean;
     onClose: () => void;
-    onSave: (data: CreateListItemRequest | UpdateListItemRequest) => void;
-    item?: ListItemDto | null;
+    onSave: (data: CreateItemRequest) => void;
+    item?: ListItemResponse | null;
     isLoading?: boolean;
 }
 
@@ -50,13 +49,10 @@ export const ListItemDialog = ({
     const handleSave = () => {
         if (!text.trim()) return;
 
-        const data = {
+        onSave({
             text: text.trim(),
-            quantity: quantity.trim() || undefined,
-            ...(isEditing && { status: item?.status || false }),
-        };
-
-        onSave(data);
+            quantity: quantity.trim() || null,
+        });
         handleClose();
     };
 

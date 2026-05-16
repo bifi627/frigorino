@@ -17,11 +17,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .IsRequired();
 
             builder.Property(li => li.Text)
-                .HasMaxLength(500)
+                .HasMaxLength(ListItem.TextMaxLength)
                 .IsRequired();
 
             builder.Property(li => li.Quantity)
-                .HasMaxLength(100);
+                .HasMaxLength(ListItem.QuantityMaxLength);
 
             builder.Property(li => li.Status)
                 .IsRequired()

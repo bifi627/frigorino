@@ -1,5 +1,4 @@
 using Frigorino.Application.Extensions;
-using Frigorino.Application.Utilities;
 using Frigorino.Domain.DTOs;
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;

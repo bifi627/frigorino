@@ -1,6 +1,6 @@
 import { Container } from "@mui/material";
 import { forwardRef, memo, useCallback } from "react";
-import type { ListItemDto } from "../../hooks/useListItemQueries";
+import type { ListItemResponse } from "../../hooks/useListItemQueries";
 import {
     useDeleteListItem,
     useListItems,
@@ -13,8 +13,8 @@ import { ListItemContent } from "./ListItemContent";
 interface ListContainerProps {
     householdId: number;
     listId: number;
-    editingItem: ListItemDto | null;
-    onEdit: (item: ListItemDto) => void;
+    editingItem: ListItemResponse | null;
+    onEdit: (item: ListItemResponse) => void;
     showDragHandles: boolean;
 }
 

@@ -2,8 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type CreateListItemRequest = {
-    text: string;
-    quantity?: string | null;
+export type UpdateItemRequest = {
+    text: string | null;
+    quantity: string | null;
+    status: boolean | null;
 };
 

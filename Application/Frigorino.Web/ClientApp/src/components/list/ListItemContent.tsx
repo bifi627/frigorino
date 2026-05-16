@@ -2,10 +2,10 @@ import { Box, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../hooks/useLongPress";
-import type { ListItemDto } from "../../lib/api";
+import type { ListItemResponse } from "../../lib/api";
 
 interface Props {
-    item: ListItemDto;
+    item: ListItemResponse;
 }
 
 export function ListItemContent({ item }: Props) {

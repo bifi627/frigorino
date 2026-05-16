@@ -21,7 +21,7 @@ import {
     useListItems,
     useToggleListItemStatus,
     useUpdateListItem,
-    type ListItemDto,
+    type ListItemResponse,
 } from "../../../hooks/useListItemQueries";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { useList } from "../useList";
@@ -30,7 +30,7 @@ export const ListViewPage = () => {
     const router = useRouter();
     const { listId } = useParams({ from: "/lists/$listId/view" });
     const { t } = useTranslation();
-    const [editingItem, setEditingItem] = useState<ListItemDto | null>(null);
+    const [editingItem, setEditingItem] = useState<ListItemResponse | null>(null);
     const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +83,7 @@ export const ListViewPage = () => {
             createMutation.mutate({
                 householdId,
                 listId: listIdNum,
-                data: { text: data, quantity: quantity || undefined },
+                data: { text: data, quantity: quantity ?? null },
             });
         },
         [createMutation, householdId, listIdNum],
@@ -96,7 +96,11 @@ export const ListViewPage = () => {
                     householdId,
                     listId: listIdNum,
                     itemId: editingItem.id,
-                    data: { text: data, quantity: quantity || undefined },
+                    data: {
+                        text: data,
+                        quantity: quantity ?? null,
+                        status: null,
+                    },
                 });
                 setEditingItem(null);
             }

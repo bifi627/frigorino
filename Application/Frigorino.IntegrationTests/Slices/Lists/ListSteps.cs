@@ -44,7 +44,8 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var listId = await api.CreateListAsync(listName);
         ctx.ListIds[listName] = listId;
-        await api.CreateListItemAsync(listId, itemText);
+        var itemId = await api.CreateListItemAsync(listId, itemText);
+        ctx.ListItemIds[itemText] = itemId;
     }
 
     [When("I open the list {string}")]
@@ -78,10 +79,18 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I toggle {string} as done")]
     public async Task WhenIToggleAsDone(string itemText)
     {
+        // Wait for the server's toggle-status response before the step returns so a follow-up
+        // toggle (uncheck-after-check scenario) doesn't fire while the first request is still
+        // in flight — the two clicks would otherwise race and cancel out.
         var item = ctx.Page.GetByTestId($"toggle-item-{itemText}");
         var selector = $"[data-testid='toggle-item-{itemText}']";
         await item.WaitForAsync();
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.Contains("/items/")
+            && r.Url.Contains("/toggle-status")
+            && r.Request.Method == "PATCH");
         await ctx.Page.DispatchEventAsync(selector, "click");
+        await responseTask;
     }
 
     [When("I delete the list {string}")]
@@ -138,6 +147,53 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var listId = ctx.ListIds[listName];
         ctx.LastApiResponse = await api.TryDeleteListAsync(listId);
+    }
+
+    [When("I POST an item with empty text to {string} via the API")]
+    public async Task WhenIPostAnItemWithEmptyTextViaTheApi(string listName)
+    {
+        // Bypasses the autocomplete input's client-side empty guard to exercise the slice's
+        // Result<T>.ToValidationProblem() branch on List.AddItem.
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryCreateListItemAsync(listId, "");
+    }
+
+    [When("I GET the items of {string} via the API")]
+    public async Task WhenIGetTheItemsOfViaTheApi(string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryGetListItemsAsync(listId);
+    }
+
+    [When("I DELETE the item {string} in {string} via the API")]
+    public async Task WhenIDeleteTheItemViaTheApi(string itemText, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.ListItemIds[itemText];
+        ctx.LastApiResponse = await api.TryDeleteListItemAsync(listId, itemId);
+    }
+
+    [When("I POST compact for {string} via the API")]
+    public async Task WhenIPostCompactForViaTheApi(string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryCompactListItemsAsync(listId);
+    }
+
+    [Then("the API response when getting items of {string} omits {string}")]
+    public async Task ThenTheApiResponseWhenGettingItemsOmits(string listName, string itemText)
+    {
+        // Second GET issued after the DELETE step to confirm the soft-delete is hidden from
+        // the read projection (IsActive filter on the slice query).
+        var listId = ctx.ListIds[listName];
+        var response = await api.TryGetListItemsAsync(listId);
+        response.Status.Should().Be(200);
+
+        var json = await response.JsonAsync();
+        var items = json!.Value.EnumerateArray()
+            .Select(e => e.GetProperty("text").GetString())
+            .ToArray();
+        items.Should().NotContain(itemText);
     }
 
     [Then("I am on the list view page")]

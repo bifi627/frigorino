@@ -1,32 +1,44 @@
-﻿using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Infrastructure.Tasks
 {
+    // Legacy in-process task that the MaintenanceHostedService runs. The hosted service itself
+    // was logically replaced by Hangfire (see CLAUDE.md); this class is left wired so existing
+    // installations keep behaviour, but it has no Hangfire schedule. Drop it together with the
+    // rest of the MaintenanceHostedService when that cleanup pass is scheduled.
     public class RecalculateSortOrderTask : IMaintenanceTask
     {
         private readonly ApplicationDbContext _dbContext;
-        private readonly IListItemService _listItemService;
         private readonly IInventoryService _inventoryService;
 
-        public RecalculateSortOrderTask(IListItemService listItemService, ApplicationDbContext dbContext, IInventoryService inventoryService)
+        public RecalculateSortOrderTask(ApplicationDbContext dbContext, IInventoryService inventoryService)
         {
-            _listItemService = listItemService;
             _dbContext = dbContext;
             _inventoryService = inventoryService;
         }
 
         public async Task Run(CancellationToken cancellationToken = default)
         {
-            var lists = await _dbContext.Lists.Where(li => li.IsActive).Select(li => li.Id).ToListAsync();
+            var lists = await _dbContext.Lists
+                .Where(l => l.IsActive)
+                .Include(l => l.ListItems)
+                .ToListAsync(cancellationToken);
 
-            foreach (var listId in lists)
+            foreach (var list in lists)
             {
-                await _listItemService.RecalculateFullSortOrder(listId, "0", true);
+                list.CompactItems();
+            }
+            if (lists.Count > 0)
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken);
             }
 
-            var inventories = await _dbContext.Inventories.Where(ii => ii.IsActive).Select(ii => ii.Id).ToListAsync();
+            var inventories = await _dbContext.Inventories
+                .Where(ii => ii.IsActive)
+                .Select(ii => ii.Id)
+                .ToListAsync(cancellationToken);
 
             foreach (var inventoryId in inventories)
             {

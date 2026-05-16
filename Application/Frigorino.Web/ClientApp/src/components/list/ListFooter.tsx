@@ -1,12 +1,12 @@
 import { Collapse, Container } from "@mui/material";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import type { ListItemDto } from "../../hooks/useListItemQueries";
+import type { ListItemResponse } from "../../hooks/useListItemQueries";
 import { AddInput } from "./AddInput";
 import { QuantityPanel, QuantityToggle } from "./QuantityPanel";
 
 interface ListFooterProps {
-    editingItem: ListItemDto | null;
-    existingItems: ListItemDto[];
+    editingItem: ListItemResponse | null;
+    existingItems: ListItemResponse[];
     onAddItem: (data: string, quantity?: string) => void;
     onUpdateItem: (data: string, quantity?: string) => void;
     onCancelEdit: () => void;
