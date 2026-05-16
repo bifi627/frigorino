@@ -10,20 +10,18 @@ import {
 import { useParams, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ListContainer } from "../../../components/list/ListContainer";
-import { ListFooter } from "../../../components/list/ListFooter";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
-import {
-    useCreateListItem,
-    useListItems,
-    useToggleListItemStatus,
-    useUpdateListItem,
-    type ListItemResponse,
-} from "../../../hooks/useListItemQueries";
+import type { ListItemResponse } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
+import { ListContainer } from "../items/components/ListContainer";
+import { ListFooter } from "../items/components/ListFooter";
+import { useCreateListItem } from "../items/useCreateListItem";
+import { useListItems } from "../items/useListItems";
+import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
+import { useUpdateListItem } from "../items/useUpdateListItem";
 import { useList } from "../useList";
 
 export const ListViewPage = () => {

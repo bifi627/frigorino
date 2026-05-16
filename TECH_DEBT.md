@@ -34,7 +34,7 @@ Format per item:
 
 ## `useToggleListItemStatus` optimistic update doesn't recompute `sortOrder`
 
-- **Where:** `Application/Frigorino.Web/ClientApp/src/hooks/useListItemQueries.ts:349-360` (the `onMutate` for the toggle hook).
+- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/items/useToggleListItemStatus.ts` (the `onMutate` body).
 - **Why deferred:** Surfaced while writing `Scenario: Toggling an item back to unchecked moves it below other unchecked items`. The backend (`List.ToggleItemStatus` → `ComputeAppendSortOrder`) is correct — toggling unchecks back to the bottom of the unchecked section. The optimistic update only flips `status` and leaves `sortOrder` untouched, so the UI shows the item in its previous slot until the debounced `onSettled` refetch arrives. Cosmetic-only flicker, and reproducing it under real users (not back-to-back automated toggles) was inconsistent — so we moved the assertion to the API feature instead of fixing the UI in the same change.
 - **Plan:** Mirror the server's `ComputeAppendSortOrder` in `onMutate` the same way `useReorderListItem`'s optimistic update mirrors `List.ReorderItem`'s midpoint math. For unchecked→checked: `firstCheckedSortOrder - DEFAULT_GAP` (or `CHECKED_MIN + DEFAULT_GAP` if section empty). For checked→unchecked: `lastUncheckedSortOrder + DEFAULT_GAP` (or `UNCHECKED_MIN + DEFAULT_GAP` if section empty). Once fixed, the API-level `Toggling an item back to unchecked places it below other unchecked items` scenario can be duplicated as a UI scenario without flake.
 - **Risk if left:** Users see a briefly-stale order on toggle, especially when un-checking. Subtle; easy to mistake for a backend bug. Also blocks adding UI-level reorder-on-toggle scenarios.
