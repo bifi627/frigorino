@@ -64,14 +64,15 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I save the inventory")]
     public async Task WhenISaveTheInventory()
     {
-        // Wait for the PUT before the next step inspects the post-save DOM/route — same pattern
-        // as ListSteps.WhenISaveTheList.
+        // Wait for both the PUT 200 AND the form's post-save router.history.back() to land —
+        // same pattern as ListSteps.WhenISaveTheList. See that step for the full reasoning.
         var responseTask = ctx.Page.WaitForResponseAsync(r =>
             r.Url.Contains("/inventories/")
             && r.Request.Method == "PUT"
             && r.Status == 200);
         await ctx.Page.GetByTestId("inventory-edit-save-button").ClickAsync();
         await responseTask;
+        await ctx.Page.WaitForURLAsync(url => !url.Contains("/edit"));
     }
 
     [Then("I am on the inventory view page")]

@@ -27,7 +27,13 @@ public class NavigationSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I navigate to {string}")]
     public async Task WhenINavigateTo(string path)
     {
-        await ctx.Page.GotoAsync(path, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        // DOMContentLoaded over NetworkIdle: Playwright officially discourages NetworkIdle
+        // because a SPA with TanStack Query / background refetches may never settle (caused a
+        // 30s timeout flake on `When I navigate to "/"`) and concurrent programmatic
+        // navigations interrupt a still-waiting Goto with "navigation interrupted by
+        // another navigation to about:blank". Step-level assertions already use retrying
+        // expectations (ToBeVisibleAsync etc.), so they don't need NetworkIdle to settle.
+        await ctx.Page.GotoAsync(path, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
     [Then("the page title should contain {string}")]
