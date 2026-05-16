@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories
 {
@@ -32,13 +31,13 @@ namespace Frigorino.Features.Inventories
             ApplicationDbContext db,
             CancellationToken ct)
         {
-            var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
+            var membership = await db.FindActiveMembershipWithUserAsync(householdId, currentUser.UserId, ct);
             if (membership is null)
             {
                 return TypedResults.NotFound();
             }
 
-            var creator = await db.Users.FirstAsync(u => u.ExternalId == currentUser.UserId, ct);
+            var creator = membership.User;
 
             var creation = Inventory.Create(request.Name, request.Description, householdId, currentUser.UserId);
             if (creation.IsFailed)

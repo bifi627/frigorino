@@ -73,7 +73,7 @@ File: `Application/Frigorino.Features/Lists/Items/ToggleItemStatus.cs`. Calls `l
 
 ### ✅ PATCH /api/household/{householdId}/lists/{listId}/items/{itemId}/reorder — ReorderItem
 
-File: `Application/Frigorino.Features/Lists/Items/ReorderItem.cs`. Sealed record `ReorderItemRequest(AfterId)` colocated. Name retained to keep OpenAPI schema dedup against the surviving legacy `Frigorino.Domain.DTOs.ReorderItemRequest` (same shape `{ afterId: int }`) — same-name same-shape types deduplicate in the generated TS client, so the frontend sees a single `ReorderItemRequest` type. Calls `list.ReorderItem(itemId, afterItemId)`. Defensive throw on unmapped errors. Union: `Results<Ok<ListItemResponse>, NotFound>`.
+File: `Application/Frigorino.Features/Lists/Items/ReorderItem.cs`. Consumes the shared `Frigorino.Features.Items.ReorderItemRequest(AfterId)` — also used by the InventoryItem reorder slice; replaces the original per-slice duplicates that relied on OpenAPI same-name-same-shape dedup. Calls `list.ReorderItem(itemId, afterItemId)`. Defensive throw on unmapped errors. Union: `Results<Ok<ListItemResponse>, NotFound>`.
 
 ### ✅ POST /api/household/{householdId}/lists/{listId}/items/compact — CompactItems
 
@@ -94,7 +94,7 @@ File: `Application/Frigorino.Features/Lists/Items/CompactItems.cs`. Calls `list.
 - `TextMaxLength = 500`
 - `QuantityMaxLength = 100`
 
-`Application/Frigorino.Domain/Entities/SortOrderCalculator.cs` is the new home of the calculator (moved from `Frigorino.Application/Utilities/`). Public surface trimmed: dead `InsertType` enum and commented-out alternative methods deleted; `out bool needRecalculation` parameter removed from `CalculateSortOrder` (it was always discarded). Range constants and `GenerateCompactedSortOrders` / `NeedsCompaction` preserved as-is.
+`Application/Frigorino.Domain/Entities/SortOrderCalculator.cs` is the new home of the calculator (moved from `Frigorino.Application/Utilities/`). Public surface trimmed aggressively during the migration: dead `InsertType` enum, commented-out alternative methods, `out bool needRecalculation` parameter, the position-resolver `CalculateSortOrder`, the unused `NeedsCompaction` hint, and `*MaxRange` consts were all deleted — the aggregate methods inline their own section math directly. Only the section range bases (`UncheckedMinRange`, `CheckedMinRange`), `DefaultGap`, and `GenerateCompactedSortOrders` (the only function still consumed, by `List.CompactItems` / `Inventory.CompactItems`) survive.
 
 `Application/Frigorino.Test/Domain/ListAggregateItemTests.cs` (new file) — 30 pure unit tests covering the matrix: AddItem (length / whitespace / trim / append-below-last), UpdateItem (partial update / status-change recalc / not-found), RemoveItem (soft-delete / not-found / already-inactive), ToggleItemStatus, ReorderItem (top-of-section / midpoint / append / cross-section silent fallback / not-found), CompactItems (clean gaps / empty no-op / skip inactive / section separation). Replaces the deleted `ListItemServiceSortOrderTests.cs` (9 service-level tests, several incomplete) and `ListItemServiceWorkflowTests.cs`.
 
@@ -165,14 +165,14 @@ Single consumer updated: `src/features/lists/pages/ListViewPage.tsx` swaps impor
 
 `ArchitectureTests.cs` rebinding pinned `Frigorino.Application` assembly via `typeof(InventoryService).Assembly` (was `ListItemService.Assembly`). Swap again when Inventory migrates and only the orphan maintenance services remain.
 
-`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` had to lose its `IListItemService` dependency. The list branch now loads `Lists.Include(ListItems)` and calls the new `list.CompactItems()` aggregate method directly; the inventory branch is unchanged. The entire `MaintenanceHostedService` / `IMaintenanceTask` system remains scheduled for cleanup separately (per CLAUDE.md it was logically replaced by Hangfire but the registration survives).
+`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` was **deleted** during the post-review cleanup. The task ran via `MaintenanceHostedService` at every startup and unconditionally rewrote every list/inventory item's `SortOrder` + `UpdatedAt` — stamping rows that had no gap shrinkage. With `SortOrderCalculator.NeedsCompaction` also gone, there was no cheap guard to add and no caller actually invoking it. Compaction now happens only via the explicit `POST .../items/compact` endpoint. The rest of the `MaintenanceHostedService` / `IMaintenanceTask` system (`DemoMaintenanceTask`, `DeleteInactiveItems`) remains scheduled for separate cleanup.
 
 ## Deferred / out of scope
 
 - **`src/components/list/` rename to `components/inputs/`** — `AddInput.tsx`, `QuantityPanel.tsx`, `DateInputPanel.tsx`, and everything under `components/list/components/`, `components/list/context/`, `components/list/hooks/`, `components/list/types/` are shared with `src/components/inventory/InventoryFooter.tsx`. Bundle the rename + import sweep into the Inventory migration round so Inventory's consumer changes in lockstep.
 - **i18n cleanup of hardcoded strings in shared inputs** — `EditingHeader.tsx` ("Bearbeiten", "Completed") and `DateInputPanel.tsx` ("Datum", "Heute", "Löschen") live in *shared* files. Translate during the Inventory migration round to keep this PR's blast radius tight.
 - **Inventories migration + InventoryItems migration** — same pattern when scheduled. Will free the second-to-last legacy service (`InventoryService`); after that `ArchitectureTests` assembly marker will need another swap.
-- **MaintenanceHostedService / RecalculateSortOrderTask cleanup** — leave as-is for now. Per CLAUDE.md the system was replaced by Hangfire; this is dead orchestration kept registered. Delete in a focused cleanup pass.
+- **MaintenanceHostedService cleanup** — `RecalculateSortOrderTask` removed in the post-review cleanup; `DemoMaintenanceTask` + `DeleteInactiveItems` still wired. Per CLAUDE.md the whole system is intended for Hangfire migration. Delete the rest in a focused cleanup pass.
 - **Renaming `HouseholdMappingExtensions.cs` / `HouseholdDto.cs` / `InventoryDto.cs`** — still consumed by Inventory layer. Defer until Inventory migrates.
 
 ## Cross-references

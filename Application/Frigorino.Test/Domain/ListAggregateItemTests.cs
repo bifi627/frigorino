@@ -153,11 +153,25 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk", quantity: "1 L");
 
-            var result = list.UpdateItem(item.Id, text: null, quantity: null, status: null);
+            var result = list.UpdateItem(item.Id, text: "Soy milk", quantity: null, status: null);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal("Milk", item.Text);
+            Assert.Equal("Soy milk", item.Text);
             Assert.Equal("1 L", item.Quantity);
+        }
+
+        [Fact]
+        public void UpdateItem_AllNullFields_FailsAsValidationError()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk", quantity: "1 L");
+            var before = item.UpdatedAt;
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, status: null);
+
+            Assert.True(result.IsFailed);
+            Assert.IsNotType<EntityNotFoundError>(result.Errors[0]);
+            Assert.Equal(before, item.UpdatedAt);
         }
 
         [Fact]

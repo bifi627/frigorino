@@ -52,3 +52,8 @@ Feature: List Items API
     When I PATCH toggle on "Milk" in "Weekly Groceries" via the API
     And I PATCH toggle on "Milk" in "Weekly Groceries" via the API
     Then the API items of "Weekly Groceries" appear in order: "Bread, Milk"
+
+  Scenario: Updating an item with all-null fields returns a validation error
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I PUT an all-null update to "Milk" in "Weekly Groceries" via the API
+    Then the API response status is 400
