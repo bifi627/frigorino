@@ -42,7 +42,8 @@
       "Bash(docker version *)",
       "Bash(dotnet add *)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__query-docs"
+      "mcp__context7__query-docs",
+      "Skill(find-docs)"
     ],
     "deny": [],
     "ask": []
