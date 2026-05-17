@@ -14,6 +14,7 @@ using Frigorino.Infrastructure.Services;
 using Frigorino.Infrastructure.HealthChecks;
 using Frigorino.Web.Middlewares;
 using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -91,10 +92,41 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
-// Static files for SPA
+// Static files for SPA — shared options enable pre-compressed (.br/.gz) sibling
+// serving and long-cache headers on hashed assets. Order matters: the
+// pre-compressed middleware rewrites Request.Path BEFORE UseStaticFiles reads it.
+var staticFileOptions = new StaticFileOptions
+{
+    ContentTypeProvider = new CompressedAwareContentTypeProvider(),
+    OnPrepareResponse = ctx =>
+    {
+        var requestPath = ctx.Context.Request.Path.Value ?? "";
+        if (requestPath.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase))
+        {
+            // Vite hashes asset filenames; safe to cache forever.
+            ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            return;
+        }
+
+        // index.html (served directly, via UseDefaultFiles, or via MapFallbackToFile)
+        // must always revalidate so SPA deploys land for returning users.
+        var fileName = ctx.File.Name;
+        if (IsIndexHtml(fileName))
+        {
+            ctx.Context.Response.Headers.CacheControl = "no-cache, must-revalidate";
+        }
+
+        static bool IsIndexHtml(string name) =>
+            name.Equals("index.html", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("index.html.br", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("index.html.gz", StringComparison.OrdinalIgnoreCase);
+    },
+};
+
 app.UseDefaultFiles();
-app.UseStaticFiles();
-app.UseSpaStaticFiles();
+app.UseMiddleware<PreCompressedStaticFilesMiddleware>();
+app.UseStaticFiles(staticFileOptions);
+app.UseSpaStaticFiles(staticFileOptions);
 
 // Session middleware (before authentication)
 app.UseSession();
@@ -201,7 +233,7 @@ app.UseSpa(spa =>
     }
 });
 
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", staticFileOptions);
 
 app.Run();
 
