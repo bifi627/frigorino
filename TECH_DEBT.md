@@ -61,3 +61,15 @@ Format per item:
   - Add a coarse cross-process lock around the `npm run build` invocation (e.g. a file lock in `ClientApp/.spa-build.lock`) so parallel test runs in the same workspace don't race.
   - Surface stdout when the build fails (currently only stderr is captured) so root cause is visible without re-running.
 - **Risk if left:** Concurrent local runs in the same workspace can corrupt `ClientApp/build`; opaque failures when `npm run build` errors mid-run.
+
+## Audit + split the main JS chunk
+
+- **Where:** `Application/Frigorino.Web/ClientApp/vite.config.ts` (no `build.rollupOptions.output.manualChunks` configured today). Main output `build/assets/index-*.js` is ~951 kB / gzip ~302 kB after Faro landed; Vite emits the "chunk larger than 500 kB" warning on every build.
+- **Why deferred:** Surfaced after the Faro Web SDK + `TracingInstrumentation` added ~170 kB to the main chunk during the observability rollout. The warning has been there longer than Faro — Faro just made it louder. A proper split needs a deliberate look at what's actually in the bundle, not a one-off `manualChunks` guess while wrapping up an unrelated PR.
+- **Plan:**
+  - Run `npx vite-bundle-visualizer` (or `rollup-plugin-visualizer`) once and capture the treemap. Expected heavy hitters: `@mui/material` + `@mui/icons-material`, `firebase/*`, `@grafana/faro-*`, `@tanstack/react-*`, `@dnd-kit/*`.
+  - Pick a split axis:
+    - **Vendor split** via `manualChunks: { mui: [...], firebase: [...], faro: [...], tanstack: [...] }` — predictable; caches well across our own releases since vendor chunks rarely change.
+    - **Route-level split** — TanStack Router has `autoCodeSplitting: true` in `vite.config.ts`; verify per-route chunks actually exist for the `_protected` tree and aren't getting hoisted into the entry.
+  - Faro specifically is a strong dynamic-import candidate: nothing in the auth or render path depends on it, and `initObservability()` could become `void import("./common/observability").then(m => m.initObservability())` after first paint without losing data (Faro buffers internally before init).
+- **Risk if left:** First-paint cost for new visitors stays inflated, especially on mobile (~302 kB gzip ≈ multiple seconds on slow 3G before any JS runs). PWA service worker caches it after the first visit so returning users are fine — but the wake-from-Railway-sleep + cold-cache combination is the worst case, which is exactly when a UAT client first opens the app.
