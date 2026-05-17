@@ -9,6 +9,9 @@
     <SpaRoot>ClientApp\</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:44375</SpaProxyServerUrl>
+    <!-- Pre-JIT IL at publish so first-request latency doesn't pay tier-1 compilation. -->
+    <!-- Only takes effect when publish supplies a RID (see Dockerfile). -->
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <PropertyGroup>

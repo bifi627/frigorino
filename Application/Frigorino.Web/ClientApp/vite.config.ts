@@ -7,7 +7,10 @@ import fs from "fs";
 import path from "path";
 import { env } from "process";
 import { defineConfig } from "vite";
+import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
+
+const compressionExclude = [/\.(br|gz)$/, /\.(png|jpe?g|gif|webp|woff2?)$/i];
 
 const target = "https://localhost:5001";
 
@@ -41,6 +44,10 @@ export default defineConfig(({ command }) => ({
                     },
                 ],
             },
+        }),
+        compression({
+            algorithms: ["brotliCompress", "gzip"],
+            exclude: compressionExclude,
         }),
         plugin(),
     ],
