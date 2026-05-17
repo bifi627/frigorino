@@ -98,6 +98,8 @@ Subscribe **before** the click so the listener is in place when the request fire
 
 **Retrying Playwright assertions over snapshot `IsVisibleAsync()`.** `Assertions.Expect(locator).ToBeVisibleAsync()` retries until the timeout; `IsVisibleAsync()` returns the value at that instant. Snapshot reads race against React re-renders.
 
+**`WaitUntilState.DOMContentLoaded` for navigation, never `NetworkIdle`.** Playwright officially discourages `NetworkIdle` because a SPA with TanStack Query background refetches, sonner toasts, the VitePWA service worker, or the wake-ping fetch may never settle within the 30 s timeout. Every step-level assertion already uses retrying expectations (`Expect(...).ToBeVisibleAsync()`, `WaitForAsync`, `WaitForResponseAsync`, `WaitForURLAsync`), so `DOMContentLoaded` is sufficient to hand off to them. This bit us once: 10 scenarios across `ListSteps`, `InventorySteps`, and `CurrentHouseholdSteps` quietly broke when the SPA gained a background fetch — Playwright timed out waiting for idle while every actually-needed element was already on the page. See `NavigationSteps.cs:WhenINavigateTo` for the canonical shape.
+
 **`Locator.Count` + a `ToHaveCountAsync` guard before a for-loop over `Nth(i)`.** Reading N attributes in a loop is one-shot; if the DOM is mid-rerender, the count is wrong. Wait for the count to stabilize first.
 
 **Scope selectors to sections, not whole pages.** `GetByText("Flour").First` will match a placeholder, a tooltip, or an autocomplete suggestion. `page.Locator("[data-section='unchecked-items']").GetByText("Flour")` won't.

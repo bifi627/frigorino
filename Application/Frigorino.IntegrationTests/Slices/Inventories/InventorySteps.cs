@@ -14,7 +14,7 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIOpenTheInventory(string inventoryName)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        await ctx.Page.GotoAsync($"/inventories/{inventoryId}/view", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await ctx.Page.GotoAsync($"/inventories/{inventoryId}/view", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
     [When("I fill in the inventory name {string}")]
@@ -58,7 +58,7 @@ public class InventorySteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIOpenTheInventoryEditPageFor(string inventoryName)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        await ctx.Page.GotoAsync($"/inventories/{inventoryId}/edit", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await ctx.Page.GotoAsync($"/inventories/{inventoryId}/edit", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
     [When("I save the inventory")]
