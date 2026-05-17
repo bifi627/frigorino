@@ -30,6 +30,19 @@ WORKDIR /src/Frigorino.Web/ClientApp
 COPY Application/Frigorino.Web/ClientApp/package.json Application/Frigorino.Web/ClientApp/package-lock.json ./
 RUN npm ci
 COPY Application/Frigorino.Web/ClientApp/ ./
+# VITE_* values are inlined into the JS bundle at build time by `npm run build`.
+# Railway only injects service variables into the build context if they're declared
+# as ARG here (per Railway Dockerfile docs); promote to ENV so Vite picks them up
+# from process.env. Empty defaults keep the build green when a var is unset — the
+# Faro SDK gates off on empty VITE_FARO_URL.
+ARG VITE_FARO_URL=
+ARG VITE_FARO_APP_NAME=
+ARG VITE_FARO_ENV=
+ARG VITE_APP_VERSION=
+ENV VITE_FARO_URL=$VITE_FARO_URL \
+    VITE_FARO_APP_NAME=$VITE_FARO_APP_NAME \
+    VITE_FARO_ENV=$VITE_FARO_ENV \
+    VITE_APP_VERSION=$VITE_APP_VERSION
 RUN npm run build
 
 FROM runtime AS final

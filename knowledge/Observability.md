@@ -120,6 +120,8 @@ The "credential" baked into `VITE_FARO_URL` is public-by-design. Abuse defense i
 | `VITE_FARO_ENV` | optional | `prod` / `stage` / `local`. Defaults to `local`. Railway sets it per environment. |
 | `VITE_APP_VERSION` | optional | Defaults to `0.0.0`. Wire to git SHA at deploy time if useful. |
 
+**Build-time vs runtime — Railway gotcha.** Vite reads `VITE_*` from `process.env` and inlines values into the JS bundle **at build time**. Railway service variables are only visible to a Dockerfile build if the Dockerfile declares them with `ARG` (Railway forwards them as `--build-arg`). `Application/Dockerfile`'s `build_frontend` stage declares `ARG VITE_FARO_URL` / `VITE_FARO_APP_NAME` / `VITE_FARO_ENV` / `VITE_APP_VERSION` and promotes them to `ENV` before `npm run build`. Symptom of removing or forgetting an `ARG`: SPA logs `[Faro] Not initialized (VITE_FARO_URL is empty)` in prod even though the variable is set in Railway.
+
 ### Local opt-in
 
 Both layers default to **off** locally. Setting `OpenTelemetry:OtlpHeaders` (via `dotnet user-secrets`) activates backend OTel; setting `VITE_FARO_URL` (via `ClientApp/.env.local`, gitignored) activates Faro. Either layer can be on or off independently. Local data is tagged `environment=local` so dashboards filtering `=~"stage|prod"` won't pick it up.

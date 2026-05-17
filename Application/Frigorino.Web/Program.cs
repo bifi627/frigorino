@@ -107,6 +107,9 @@ if (!isBuildTimeOpenApi && !string.IsNullOrWhiteSpace(otlpHeaders))
 
     var serviceVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
 
+    // RAILWAY_SERVICE_NAME is injected by Railway at runtime; "local" otherwise.
+    var railwayServiceName = Environment.GetEnvironmentVariable("RAILWAY_SERVICE_NAME") ?? "frigorino-local";
+
     void ConfigureOtlpFor(string signalPath, OtlpExporterOptions opt)
     {
         opt.Endpoint = new Uri($"{otlpBaseEndpoint}/{signalPath}");
@@ -116,10 +119,11 @@ if (!isBuildTimeOpenApi && !string.IsNullOrWhiteSpace(otlpHeaders))
 
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource => resource
-            .AddService(serviceName: "frigorino-web", serviceVersion: serviceVersion)
+            .AddService(serviceName: railwayServiceName, serviceVersion: serviceVersion)
             .AddAttributes(new KeyValuePair<string, object>[]
             {
                 new("deployment.environment", deploymentEnvironment),
+                new("railway.service", railwayServiceName),
             }))
         .WithMetrics(metrics => metrics
             .AddAspNetCoreInstrumentation()
