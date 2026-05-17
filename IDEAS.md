@@ -111,54 +111,26 @@ Format per item:
 
 ---
 
-## Observability stack: PostHog + Grafana Cloud (two-tool consolidation)
+## Observability stack — shipped
 
-- **Why:** Today there is no production error visibility beyond Railway's log tail, no product analytics, no APM, no Hangfire silent-failure detection, and no alerting on anything other than service-down. For a stage environment hosting a real client UAT, this is the gap that turns "client emails about something broken" into "we have no idea what happened." Two distinct problem spaces are involved: **monitoring** (errors, backend metrics, traces, logs, uptime, cron heartbeats) and **product analytics** (which features the client actually uses). Investigated a three-tool split (Sentry + Grafana + PostHog) and ruled it out in favor of two tools after PostHog's 2024 error-tracking launch made Sentry redundant at this scale — PostHog free covers 100k exceptions/month vs Sentry's 5k, with unlimited team members vs Sentry's 1-user cap. Verified all free tiers comfortably fit current scale by 100-1000×, but the two-tool shape lowers cognitive overhead and consolidates everything user-facing (errors + replay + analytics + flags) into one place.
-- **Why not one tool:** neither product absorbs the other's job. PostHog has zero backend infrastructure observability — no metrics, no APM, no log aggregation, no synthetic monitoring. Grafana can do crude product analytics via LogQL queries on structured log events, but funnels, retention curves, and cohort analysis become DIY queries instead of click-through dashboards. Two tools is the floor; below that, something material is given up.
+Grafana Cloud (backend OTel → Tempo/Mimir/Loki, frontend Faro for RUM + errors + trace stitching). One stack, single vendor, three environments separated by a `deployment.environment` attribute. PostHog was scoped originally but collapsed to Grafana-only after the initial rollout; revisit triggers (product team needing self-serve funnels, pixel-perfect session replay, first-class feature flags, in-app surveys) are listed in `OBSERVABILITY.md` "Open questions / parked". For the current architecture see `knowledge/Observability.md`. The active tracker (open sub-items: source-map upload plugin, stage smoke, doc passes) is `OBSERVABILITY.md`.
+
+---
+
+## Frontend business events (Faro `pushEvent`)
+
+- **Why:** Faro is wired and capturing pageviews + errors + Web Vitals automatically. What it doesn't yet give us is **which features people actually use** — when someone creates a household, switches active household, invites a member, etc. Without these, dashboards show traffic but not behaviour, and "did anyone use the new feature?" is unanswerable. This is the natural follow-up to the Faro rollout and the missing piece for a usable product-side view in Grafana's Frontend Observability dashboards.
 - **Sketch:**
-  - **PostHog (user-facing observability):**
-    - Cloud free tier. Frontend SDK `posthog-js` in `main.tsx`. Server-side `PostHog.NET` (or current canonical package — verify name at adoption time) in `Program.cs` for events originating from Hangfire jobs and background work.
-    - **Identity link**: when Firebase auth state changes (`authProvider.ts:29-31`), call `posthog.identify(firebaseUser.uid, { email, name })`. Stitches anonymous pre-login events to the authenticated user.
-    - **Event taxonomy — explicit, not autocaptured.** Initialize with `posthog.init({ autocapture: false })`. Define ~10-15 events mapping to real features:
-      - Household lifecycle: `household_created`, `household_switched`, `household_deleted`
-      - Membership: `member_invited`, `member_role_changed`, `member_removed`
-      - Lists / inventories (once migrated to slices): `list_item_added`, `inventory_item_classified`, etc.
-    - **Error tracking:** `posthog.captureException` on the frontend, .NET SDK exception capture on the backend. Wire source maps via the PostHog Vite plugin during `vite build` — without source maps, frontend stack traces are minified gibberish and the feature is useless.
-    - **Session replay:** enable with **all input fields masked by default**, plus CSS-selector masking for household names, list-item names, and inventory-item names — household contents are user-private and shouldn't appear in replays even for the UAT client. Sample rate 100% initially (5k recordings/month is plenty at current scale); throttle later if needed.
-    - **Quota disciplines (the only PostHog free-tier footguns):**
-      - Autocapture off (as above) — otherwise 1M events/month vanishes in days.
-      - PII masking on replay (as above).
-      - Don't put `posthog.isFeatureEnabled()` inside tight loops — each call consumes flag-request quota.
-  - **Grafana Cloud (infra observability):**
-    - **OpenTelemetry in `Program.cs`:** add `OpenTelemetry.Extensions.Hosting`, `OpenTelemetry.Instrumentation.AspNetCore`, `OpenTelemetry.Instrumentation.EntityFrameworkCore`, `OpenTelemetry.Exporter.OpenTelemetryProtocol` (pinned exact versions per the dependency-pinning rule). Configure `AddOpenTelemetry().WithMetrics(...).WithTracing(...).WithLogging(...)` exporting via OTLP to Grafana Cloud's ingest endpoint. Credentials supplied via environment variables, matching the Firebase / Hangfire secret pattern (placeholders in `appsettings.json`).
-    - **Cardinality discipline (the 10k active series ceiling is easy to blow past):**
-      - **Do not** include `household_id` or `user_id` as metric labels — tenant cardinality kills the budget. Keep tenant identifiers on traces and logs (GB-budgeted, not series-budgeted), never on metrics.
-      - Drop `/openapi/*`, `/scalar/*`, `/hangfire/*`, `/healthz` from HTTP server metrics — they're noise. Implement via an OTel view/filter processor in `Program.cs`.
-    - **Synthetic monitoring** (replaces the Healthchecks.io recommendation that floated in earlier discussions):
-      - One API check pinging `/healthz` every few minutes — both wakes the Railway container on schedule (complementing the SPA's wake-ping) and detects downtime.
-      - One synthetic heartbeat per Hangfire `RecurringJob`: the job ends by hitting a Grafana Cloud Synthetics push URL. If the heartbeat is missed by N minutes, Grafana alerts. Catches the silent-stop failure mode the Hangfire dashboard cannot detect (see `HangfireDependencyInjection.ConfigureHangfireJobs`). Pairs with `/readyz` for deploy-time gating.
-    - **Logs**: drain Railway logs to Loki via OTLP. Use structured logging (`ILogger` with semantic properties, not interpolated strings). 50GB/month is ~1.5GB/day — comfortably above what this app generates.
-    - **Tracing**: ASP.NET + EF Core instrumentation auto-handles HTTP and DB spans. Hangfire jobs need explicit `ActivitySource` spans if you want them traced — worth doing for the slower jobs (`ClassifyListsJob`).
-    - **Alerting + on-call**: Grafana IRM free tier covers 3 active users. Initial alerts: error-rate spike, Hangfire heartbeat miss, `/healthz` downtime, p95 latency above N seconds (calibrate after baseline).
-    - **Faro (frontend RUM):** hold off. `posthog-js` already captures Web Vitals. Only add Faro if a need for deeper frontend tracing emerges — extra JS bundle + redundant collection otherwise.
-  - **Cold-start interaction with both SDKs:**
-    - Sleep mode means events buffered when the container terminates are lost unless explicitly flushed. PostHog .NET SDK and OpenTelemetry both expose flush APIs.
-    - Register `IHostApplicationLifetime.ApplicationStopping` callbacks that call `posthog.Flush()` and `tracerProvider.ForceFlush()` before shutdown. Belt-and-braces: flush from the global exception handler too.
-- **What's deliberately dropped vs the three-tool plan:**
-  - **Sentry**: dropped. PostHog error tracking is younger (2024) than Sentry's (12+ years), so grouping heuristics and stack-trace symbolication are less polished — but at current error volume (low double digits/month) the gap doesn't bite, you'll read each error anyway. Sentry's 1-user free-tier cap made team scaling expensive. **Revisit Sentry if** error volume crosses a few hundred per day and PostHog's grouping starts producing noisy duplicates, or if release-comparison/regression-detection features more refined than PostHog's become important. Migration is a config change, not a rewrite — both SDKs sit at the same call sites.
-  - **Healthchecks.io**: dropped. Grafana Synthetics covers cron heartbeats with the same shape and consolidates monitoring into one dashboard.
-  - **Firebase Analytics (`getAnalytics` import in `auth.ts:20-21`)**: dead code today; delete as part of this work. PostHog replaces what it would have done.
-- **Out of scope for the initial introduction (defer until concrete demand):**
-  - PostHog **feature flags** — initialize the SDK so the API is available, but don't add flags until there's a real toggle use case. Each evaluation consumes quota.
-  - PostHog **experiments / A/B testing**, **surveys**, **LLM analytics** — included in the free tier, no need to enable until a specific use case arises.
-  - Grafana **Pyroscope** (continuous profiling) — interesting but needs a real perf problem to justify. Defer.
-  - Grafana **Faro** (frontend RUM beyond Web Vitals) — covered by PostHog at this scale.
-  - **Multi-environment separation** in PostHog/Grafana — important once stage and prod actually diverge in usage patterns. Initial pass tags events with `environment: stage|prod` and splits projects later.
-- **Impact / cost:**
-  - **Frontend**: ~30 LOC across `main.tsx` (init), `authProvider.ts` (identify on sign-in), and a Vite plugin entry for PostHog source-map upload. Two new npm dependencies (`posthog-js`, PostHog Vite plugin), pinned exact versions.
-  - **Backend**: ~50 LOC in `Program.cs` for OTel registration + filtering processor, ~5 LOC per Hangfire job for heartbeat ping. Four to five new NuGet packages (OpenTelemetry suite + PostHog .NET), pinned exact versions.
-  - **Config**: 4-6 new environment variables (Grafana Cloud OTLP endpoint + credentials, PostHog project key + host). `appsettings.json` placeholder pattern matching Firebase.
-  - **Dead code removal**: drop `getAnalytics(app)` + the analytics import from `auth.ts:20-21` in the same change.
-  - **Docs**: small updates to `CLAUDE.md` (observability section) and `knowledge/Backend_Architecture.md`. Both knowledge files have stale sections elsewhere (`Backend_Architecture.md` still mentions `MaintenanceHostedService` post-Hangfire migration) — clean as part of touching them.
-  - **Time**: ~1 full day for initial wire-up of both tools, ~half-day for event-taxonomy + masking rules + alert-threshold calibration. Reversible — either tool can be swapped or disabled with config changes only.
-  - **Ongoing cost**: $0 unless usage crosses free-tier ceilings (currently 100-1000× below all of them).
+  - Add a `pushEvent(name, attrs)` helper next to the existing `identifyUser` / `pushPageView` exports in `ClientApp/src/common/observability.ts`. No-op when Faro is gated off (mirrors the existing helpers).
+  - Wire into the migrated vertical-slice hook layer. Inject the call from `onSuccess` of the mutation hook, not from the React component — so the event fires on real success, not on optimistic update.
+  - **Event taxonomy v1** (frozen list; cardinality bounded by feature count, attribute values bounded by IDs):
+    - Household lifecycle: `household_created`, `household_switched`, `household_deleted`
+    - Membership: `member_invited`, `member_role_changed`, `member_removed`
+  - **Attribute shape:** keep tenant IDs (`householdId`, `userId`) on events but NEVER on metric labels — the high-cardinality-on-metrics rule from the OTel side still applies (see `knowledge/Observability.md`). Faro events are not metrics so IDs as attributes are fine.
+  - **PII discipline:** household names, list-item names, and inventory-item names are user-private content. Never include them in event attributes. IDs only.
+  - **Lists / inventories events** (`list_item_added`, `inventory_item_classified`, etc.) — defer until those features are migrated to the vertical-slice pattern. Instrumenting the legacy controller layer would just have to be re-wired during slice migration.
+- **Out of scope:**
+  - Backend-emitted events. Hangfire jobs and other backend paths don't need to push Faro events; backend behaviour is already covered by OTel traces.
+  - Cross-tool bridging (Faro events → Loki). They live in the Faro app inside Grafana Cloud; no bridging needed at this scale.
+  - Custom funnels / retention curves. Grafana's Frontend Observability standard cuts cover event volume by user / env. DIY LogQL funnel queries are possible but only worth building when a product team starts consuming them — at which point PostHog becomes the better tool, see the revisit triggers in `OBSERVABILITY.md`.
+- **Impact / cost:** ~15 LOC (one helper export, ~6 hook call sites). No new dependencies. No backend changes. No env-var changes. Zero ongoing cost (well within Faro free-tier event volume). ~1 hour once the slices to instrument are agreed on. Reversible: deletes cleanly.

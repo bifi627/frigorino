@@ -40,7 +40,9 @@
       "WebFetch(domain:grafana.com)",
       "Bash(docker build *)",
       "Bash(docker version *)",
-      "Bash(dotnet add *)"
+      "Bash(dotnet add *)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ],
     "deny": [],
     "ask": []
