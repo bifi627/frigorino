@@ -67,5 +67,5 @@ export function pushPageView(path: string): void {
     if (!faro) {
         return;
     }
-    faro.api.pushEvent("pageview", { path });
+    faro.api.setView({ name: path });
 }
