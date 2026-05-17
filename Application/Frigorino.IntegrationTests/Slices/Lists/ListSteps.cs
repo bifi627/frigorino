@@ -14,7 +14,7 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIOpenTheList(string listName)
     {
         var listId = ctx.ListIds[listName];
-        await ctx.Page.GotoAsync($"/lists/{listId}/view", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await ctx.Page.GotoAsync($"/lists/{listId}/view", new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
     [When("I fill in the list name {string}")]
@@ -56,7 +56,7 @@ public class ListSteps(ScenarioContextHolder ctx, TestApiClient api)
         var listId = ctx.ListIds[listName];
         await ctx.Page.GotoAsync(
             $"/lists/{listId}/edit",
-            new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+            new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
     [When("I save the list")]

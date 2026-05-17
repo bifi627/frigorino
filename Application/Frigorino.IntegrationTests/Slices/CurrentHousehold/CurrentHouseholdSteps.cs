@@ -28,6 +28,6 @@ public class CurrentHouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I reload the page")]
     public async Task WhenIReloadThePage()
     {
-        await ctx.Page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.NetworkIdle });
+        await ctx.Page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 }
