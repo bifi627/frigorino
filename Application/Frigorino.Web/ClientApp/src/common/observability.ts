@@ -35,6 +35,13 @@ export function initObservability(): void {
             version: appVersion,
             environment: envTag,
         },
+        // Drop spans for third-party analytics beacons (e.g. a browser blocking GA
+        // would otherwise surface as a noisy failed span in Tempo).
+        ignoreUrls: [
+            /google-analytics\.com/,
+            /googletagmanager\.com/,
+            /analytics\.google\.com/,
+        ],
         instrumentations: [
             ...getWebInstrumentations(),
             new TracingInstrumentation(),
