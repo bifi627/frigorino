@@ -73,38 +73,9 @@ Format per item:
 
 ---
 
-## Cold-start UX: wake-ping + static-file optimizations
-
-- **Why:** Railway runs with sleep mode enabled for cost-saving, so a cold visitor today blocks 5-15s on a blank page while the container wakes, runs `MigrateAsync` (`Program.cs:56-62`), initializes Firebase auth, and starts Kestrel. For a stage environment that hosts a real client UAT, this is the worst possible first impression. The cold-start is *sequential*: nothing renders until origin responds. A handful of cheap changes can parallelize the wakeup with user interaction and make the cold path materially faster in absolute terms — without changing deployment shape. Highest leverage per hour of work; ships in pieces; no migration risk. Investigated as an alternative to splitting the SPA off to a CDN — both lower-cost and lower-risk than the full split for the current scale.
-- **Sketch:**
-  - **Wake-ping on SPA load (biggest perceived win):**
-    - SPA fires a fire-and-forget `GET /healthz` the moment `main.tsx` mounts, before Firebase auth completes. This wakes the Railway container in parallel with the user reading the login UI / entering credentials.
-    - `/healthz` already exists (anonymous, dependency-free, naturally bypasses `InitialConnectionMiddleware` since the middleware short-circuits on the anonymous-user case). The SPA only needs to call it.
-    - Frontend implementation: one `fetch` call near app entry, no error handling, no UI binding. ~5 LOC.
-    - **Open question:** also fire from the TanStack Router prefetch hook so route transitions warm subsequent dependencies? Probably overkill — once the singleton is up for the session, the rest is free.
-  - **Pre-compressed static assets at build time (not runtime):**
-    - `UseResponseCompression` middleware adds CPU cost during cold-start exactly when we can least afford it. Better: emit `.br` and `.gz` siblings at `vite build` time via `vite-plugin-compression` (or rollup-native equivalent), then have ASP.NET serve the pre-compressed file based on `Accept-Encoding`.
-    - ASP.NET static-files middleware doesn't pick up pre-compressed siblings automatically; needs either a custom `IFileProvider` wrapper or a small piece of middleware ahead of `UseStaticFiles` that rewrites the request path to `.br` / `.gz` when the client supports it. ~30 LOC, well-trodden pattern.
-    - Cost paid once at build, served from disk forever after. Compression CPU never touches the hot path.
-  - **Tighten static-file cache headers:**
-    - Vite-hashed assets (`/assets/*-[hash].js`, etc.) → `Cache-Control: public, max-age=31536000, immutable`. ASP.NET default doesn't set this — needs `UseStaticFiles(new StaticFileOptions { OnPrepareResponse = ... })` with a branch on the hashed-filename pattern.
-    - `index.html` → `Cache-Control: no-cache, must-revalidate`. Always revalidate the entry point; everything it references is immutable, so once `index.html` is fresh, the rest is free from any cache.
-    - These headers also become the contract that the Cloudflare reverse-proxy idea relies on — both ideas should be designed together even if shipped in sequence.
-  - **ReadyToRun (R2R) at publish:**
-    - Add `<PublishReadyToRun>true</PublishReadyToRun>` to `Frigorino.Web.csproj` (or pass as an MSBuild property in the Dockerfile `dotnet publish` step). Pre-compiles IL to native at publish time, so the JIT doesn't pay first-tier compilation on cold start.
-    - Typical cold-start improvement: ~20-40%. Trade-off: ~15-25% larger published output (more disk in the image).
-    - **Do not** use full AOT (`PublishAot=true`) — EF Core, MVC model binding, runtime OpenAPI generation, and reflection-based JSON serialization all break under AOT without significant restructuring. R2R is the conservative, safe win.
-  - **Considered and dropped:**
-    - Postgres connection-pool eager warmup: Railway colocates DB and app; first connection latency is small. Not worth the startup hook.
-    - Skipping `MigrateAsync()` when no migrations are pending: the pending-check itself opens a DB connection, so net win is near zero.
-    - Deferring Hangfire init: scheduler thread is already started lazily; not worth restructuring.
-- **Impact / cost:** ships in independent pieces. ~5 LOC frontend wake-ping (overlaps with smoke-tests idea — coordinate the endpoint). ~30 LOC backend for cache headers + pre-compressed serving. One Vite plugin dependency, one csproj property for R2R, one Dockerfile tweak if pre-compression runs in the frontend build stage. No breaking changes, no migration, no API surface change. Best case: cold-start UX goes from "blank page for 10s" to "app shell loads from device while backend warms in background." Total effort: ~half-day across all four items if done in sequence.
-
----
-
 ## Edge-cached reverse proxy in front of Railway
 
-- **Why:** With Railway sleep mode enabled, even after the wake-ping/R2R wins in "Cold-start UX: wake-ping + static-file optimizations", the *very first* request to a sleeping origin still pays cold-start in full because the wake-ping IS that first request. Putting an edge-caching reverse proxy in front of Railway lets `index.html` and Vite-hashed assets serve from edge cache while the origin is asleep — the user sees the SPA load instantly, Firebase auth runs entirely client-side (`apiClient.ts:13`), and the SPA's wake-ping kicks off the backend wakeup in parallel with their login interaction. Captures most of the UX benefit of a full frontend-on-CDN split (investigated and decided against for the current scale) without the costs: no CORS, no session-cookie migration, no two-deploy coordination, no integration-test rewiring. Bonus on most providers: free WAF / DDoS protection, edge HTTP/3, reduced egress from Railway.
+- **Why:** With Railway sleep mode enabled, even with wake-ping + R2R shipped, the *very first* request to a sleeping origin still pays cold-start in full because the wake-ping IS that first request. Putting an edge-caching reverse proxy in front of Railway lets `index.html` and Vite-hashed assets serve from edge cache while the origin is asleep — the user sees the SPA load instantly, Firebase auth runs entirely client-side (`apiClient.ts:13`), and the SPA's wake-ping kicks off the backend wakeup in parallel with their login interaction. Captures most of the UX benefit of a full frontend-on-CDN split (investigated and decided against for the current scale) without the costs: no CORS, no session-cookie migration, no two-deploy coordination, no integration-test rewiring. Bonus on most providers: free WAF / DDoS protection, edge HTTP/3, reduced egress from Railway.
 - **Provider choice (not pinned):** the capability that matters is *reverse proxy to an arbitrary HTTP origin + rule-based path caching + programmatic purge API*. Several providers do this:
   - **Cloudflare (free plan)** — recommended default. Free tier covers everything. Dashboard UX is the most beginner-friendly. Generous bandwidth.
   - **BunnyCDN** — cheap pay-as-you-go (~$0.005/GB), supports custom origins, simple purge API. Often faster than Cloudflare in EU/APAC.
@@ -120,11 +91,11 @@ Format per item:
   - **Caching rules:**
     - Two cacheable scopes:
       - `/` and `/index.html` → **Cache Everything**, edge TTL ~1 hour, **ignore cookies** in cache key (otherwise auth/session cookies fragment the cache per-user, killing hit rate and risking cross-user response bleed).
-      - `/assets/*` → respect origin `Cache-Control` headers (`immutable, max-age=31536000` after the cold-start-ux idea ships). The provider will cache effectively forever automatically.
+      - `/assets/*` → respect origin `Cache-Control` headers — the origin already serves `immutable, max-age=31536000` on hashed assets. The provider will cache effectively forever automatically.
     - Explicit **bypass** for: `/api/*`, `/openapi/*`, `/scalar/*`, `/hangfire/*`. Either via a higher-priority bypass rule or by naming the cacheable paths positively and leaving the rest at default.
     - For the `/` rule, **ignore query strings** in cache key — Vite-hashed assets have none, and `?utm_source=...` shouldn't fragment.
   - **Deploy-time cache purge:**
-    - After Railway reports deploy healthy (or after the smoke-test workflow passes, per "Post-deploy smoke tests"), call the provider's purge API for `/` and `/index.html`. Single `curl` step in the deploy workflow, ~10 lines of YAML.
+    - After Railway reports deploy healthy, call the provider's purge API for `/` and `/index.html`. Single `curl` step in the deploy workflow, ~10 lines of YAML.
     - Hashed assets don't need purging — their filenames change each build, so the new `index.html` references new asset names that miss the cache → fetched from origin → cached → served. Old asset names age out naturally and never become stale-yet-served, because nothing references them.
   - **Stale-window failure mode (the only real risk):**
     - Between Railway "deploy healthy" and purge completion, edge POPs may still serve old `index.html`. Old `index.html` references old hashed asset filenames, but the old image is gone from origin → those requests 404 → broken page. Three mitigations to evaluate:
@@ -136,7 +107,7 @@ Format per item:
     - Hangfire `/hangfire` dashboard: works through proxy as long as the bypass-cache rule covers it. Basic-auth header passes through fine on every provider listed.
     - HTTP request timeout (e.g. Cloudflare free is 100s, others vary): no current endpoint exceeds anything reasonable. Track if a long-poll/SSE endpoint is added.
   - **Stage + prod:** same proxy pattern with separate subdomains/origins. Cache rules scope per hostname on every provider.
-- **Impact / cost:** zero application code changes if the cold-start-ux idea has shipped first (this idea's contract is the cache headers it produces). Setup is mostly dashboard work plus one purge step in the deploy workflow. ~4-8 hours total including learning the provider's rule UI, testing the stale-window behavior, and wiring the deploy purge. Cloudflare free plan covers everything at zero cost; other providers cents/GB. Reversible — if it goes wrong, flip the proxy off and DNS reverts to direct-to-Railway within minutes.
+- **Impact / cost:** zero application code changes — the cache headers this idea relies on already ship from origin. Setup is mostly dashboard work plus one purge step in the deploy workflow. ~4-8 hours total including learning the provider's rule UI, testing the stale-window behavior, and wiring the deploy purge. Cloudflare free plan covers everything at zero cost; other providers cents/GB. Reversible — if it goes wrong, flip the proxy off and DNS reverts to direct-to-Railway within minutes.
 
 ---
 
@@ -164,8 +135,8 @@ Format per item:
       - **Do not** include `household_id` or `user_id` as metric labels — tenant cardinality kills the budget. Keep tenant identifiers on traces and logs (GB-budgeted, not series-budgeted), never on metrics.
       - Drop `/openapi/*`, `/scalar/*`, `/hangfire/*`, `/healthz` from HTTP server metrics — they're noise. Implement via an OTel view/filter processor in `Program.cs`.
     - **Synthetic monitoring** (replaces the Healthchecks.io recommendation that floated in earlier discussions):
-      - One API check pinging `/healthz` every few minutes — both wakes the Railway container on schedule (interacts with "Cold-start UX: wake-ping + static-file optimizations") and detects downtime.
-      - One synthetic heartbeat per Hangfire `RecurringJob`: the job ends by hitting a Grafana Cloud Synthetics push URL. If the heartbeat is missed by N minutes, Grafana alerts. Catches the silent-stop failure mode the Hangfire dashboard cannot detect (see `HangfireDependencyInjection.ConfigureHangfireJobs`). Pairs with "Post-deploy smoke tests"'s `/readyz` for deploy-time gating.
+      - One API check pinging `/healthz` every few minutes — both wakes the Railway container on schedule (complementing the SPA's wake-ping) and detects downtime.
+      - One synthetic heartbeat per Hangfire `RecurringJob`: the job ends by hitting a Grafana Cloud Synthetics push URL. If the heartbeat is missed by N minutes, Grafana alerts. Catches the silent-stop failure mode the Hangfire dashboard cannot detect (see `HangfireDependencyInjection.ConfigureHangfireJobs`). Pairs with `/readyz` for deploy-time gating.
     - **Logs**: drain Railway logs to Loki via OTLP. Use structured logging (`ILogger` with semantic properties, not interpolated strings). 50GB/month is ~1.5GB/day — comfortably above what this app generates.
     - **Tracing**: ASP.NET + EF Core instrumentation auto-handles HTTP and DB spans. Hangfire jobs need explicit `ActivitySource` spans if you want them traced — worth doing for the slower jobs (`ClassifyListsJob`).
     - **Alerting + on-call**: Grafana IRM free tier covers 3 active users. Initial alerts: error-rate spike, Hangfire heartbeat miss, `/healthz` downtime, p95 latency above N seconds (calibrate after baseline).

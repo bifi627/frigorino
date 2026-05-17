@@ -1,3 +1,8 @@
+// Fire-and-forget wake-ping: kick the backend awake in parallel with Firebase
+// init, i18n init, and the user reading the login UI. Errors are irrelevant —
+// real API calls will surface any actual outage.
+void fetch("/healthz", { credentials: "omit", cache: "no-store" }).catch(() => {});
+
 import "./common/auth"; // Ensure Firebase is initialized
 import "./i18n"; // Initialize i18n
 
