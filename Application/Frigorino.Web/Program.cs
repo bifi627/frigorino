@@ -17,6 +17,11 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using static Frigorino.Infrastructure.EntityFramework.DependencyInjection;
 
@@ -70,6 +75,87 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<InitialConnectionMiddleware>();
 
 builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
+
+// OpenTelemetry → Grafana Cloud OTLP gateway. Activates only when the auth header is set
+// (Railway env in stage/prod; dotnet user-secrets locally for opt-in). No header → no
+// registration → zero Grafana dependency. Endpoint + protocol are non-secret and live
+// in appsettings.json. Single endpoint serves traces (Tempo), metrics (Mimir), logs (Loki).
+var otlpHeaders = builder.Configuration["OpenTelemetry:OtlpHeaders"];
+if (!isBuildTimeOpenApi && !string.IsNullOrWhiteSpace(otlpHeaders))
+{
+    // Grafana Cloud's OTLP gateway is a base URL (e.g. /otlp); the OTel SDK appends
+    // /v1/{traces,metrics,logs} ONLY when the endpoint comes from OTEL_EXPORTER_OTLP_ENDPOINT.
+    // Setting OtlpExporterOptions.Endpoint programmatically silently sets the internal
+    // AppendSignalPathToEndpoint = false (see OBSERVABILITY.md decision 2026-05-17),
+    // so we append the signal path ourselves per exporter.
+    var otlpBaseEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"]!.TrimEnd('/');
+    var otlpProtocol =
+        string.Equals(builder.Configuration["OpenTelemetry:OtlpProtocol"], "grpc", StringComparison.OrdinalIgnoreCase)
+            ? OtlpExportProtocol.Grpc
+            : OtlpExportProtocol.HttpProtobuf;
+
+    // Filter every Grafana panel/alert on deployment.environment so local debug data
+    // never bleeds into stage/prod views (shared single stack — see OBSERVABILITY.md).
+    var deploymentEnvironment = builder.Environment.EnvironmentName switch
+    {
+        "Production" => "prod",
+        "Staging" => "stage",
+        _ => "local",
+    };
+
+    var serviceVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
+
+    void ConfigureOtlpFor(string signalPath, OtlpExporterOptions opt)
+    {
+        opt.Endpoint = new Uri($"{otlpBaseEndpoint}/{signalPath}");
+        opt.Headers = otlpHeaders;
+        opt.Protocol = otlpProtocol;
+    }
+
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource => resource
+            .AddService(serviceName: "frigorino-web", serviceVersion: serviceVersion)
+            .AddAttributes(new KeyValuePair<string, object>[]
+            {
+                new("deployment.environment", deploymentEnvironment),
+            }))
+        .WithMetrics(metrics => metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddOtlpExporter(opt => ConfigureOtlpFor("v1/metrics", opt)))
+        .WithTracing(tracing => tracing
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.Filter = ctx =>
+                {
+                    var path = ctx.Request.Path.Value ?? string.Empty;
+                    return !path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
+                        && !path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
+                        && !path.StartsWith("/hangfire", StringComparison.OrdinalIgnoreCase)
+                        && !path.Equals("/healthz", StringComparison.OrdinalIgnoreCase)
+                        && !path.Equals("/readyz", StringComparison.OrdinalIgnoreCase);
+                };
+            })
+            .AddHttpClientInstrumentation()
+            // SDK 1.15+ captures the parameterized SQL text but never parameter values,
+            // so user data (which lives in parameters) does not leak into spans.
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter(opt => ConfigureOtlpFor("v1/traces", opt)));
+
+    builder.Logging.AddOpenTelemetry(logging =>
+    {
+        logging.IncludeFormattedMessage = true;
+        logging.IncludeScopes = true;
+        logging.AddOtlpExporter(opt => ConfigureOtlpFor("v1/logs", opt));
+    });
+
+    Console.WriteLine($"[OpenTelemetry] Registered. base={otlpBaseEndpoint} protocol={otlpProtocol} environment={deploymentEnvironment} service.version={serviceVersion}");
+}
+else if (!isBuildTimeOpenApi)
+{
+    Console.WriteLine("[OpenTelemetry] Not registered (OpenTelemetry:OtlpHeaders is empty). No telemetry will be exported.");
+}
 
 var app = builder.Build();
 
