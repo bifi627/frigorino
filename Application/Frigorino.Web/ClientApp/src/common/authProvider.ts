@@ -1,5 +1,6 @@
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { create } from "zustand";
+import { identifyUser, resetUser } from "./observability";
 
 interface AuthState {
     user: User | null | undefined;
@@ -21,13 +22,20 @@ export const useAuthStore = create<AuthState>((set) => ({
         // Playwright integration test bypass: skip Firebase if a test user is injected
         const testUser = (window as unknown as Record<string, unknown>).__PLAYWRIGHT_TEST_USER__;
         if (testUser) {
-            set({ user: testUser as User, loading: false });
+            const u = testUser as User;
+            identifyUser({ id: u.uid, email: u.email });
+            set({ user: u, loading: false });
             return;
         }
 
         // Set up new subscription
         unsubscribe = onAuthStateChanged(getAuth(), (user) => {
             window.console.log("Auth state changed:", user);
+            if (user) {
+                identifyUser({ id: user.uid, email: user.email });
+            } else {
+                resetUser();
+            }
             set({ user, loading: false });
         });
     },

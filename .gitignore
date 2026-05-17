@@ -460,5 +460,9 @@ Peperino/appsettings.Development.json
 peperino.ui/public/sw.js.map
 Application/Frigorino.Web/ClientApp/build/
 
+# Local-only env overrides (Vite convention). Committed `.env` / `.env.development`
+# is fine; the `.local` suffix is the per-developer-machine variant.
+**/.env*.local
+
 # Reqnroll-generated test code (regenerated on build by Reqnroll.Tools.MsBuild.Generation)
 *.feature.cs

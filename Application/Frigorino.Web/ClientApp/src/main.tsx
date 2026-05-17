@@ -3,6 +3,12 @@
 // real API calls will surface any actual outage.
 void fetch("/healthz", { credentials: "omit", cache: "no-store" }).catch(() => {});
 
+import { initObservability, pushPageView } from "./common/observability";
+
+// Init Faro before the auth/router imports so its instrumentations are installed
+// before any fetch/XHR fires. Gated on VITE_FARO_URL — no-op when unset.
+initObservability();
+
 import "./common/auth"; // Ensure Firebase is initialized
 import "./i18n"; // Initialize i18n
 
@@ -24,6 +30,10 @@ import { appTheme } from "./theme";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
+
+router.subscribe("onResolved", ({ toLocation }) => {
+    pushPageView(toLocation.pathname);
+});
 
 // Create a client
 const queryClient = new QueryClient({
