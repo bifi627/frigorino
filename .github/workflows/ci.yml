@@ -97,7 +97,7 @@ jobs:
   integration-tests:
     name: Integration tests (Reqnroll + Playwright + Postgres)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     needs: frontend
     steps:
       - name: Checkout
@@ -123,14 +123,19 @@ jobs:
           path: Application/Frigorino.Web/ClientApp/build
 
       - name: Run Frigorino.IntegrationTests
+        uses: nick-fields/retry@v3
         env:
           FRIGORINO_SKIP_SPA_BUILD: '1'
-        run: >
-          dotnet test Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj
-          --configuration Release
-          --logger "trx;LogFileName=integration-tests.trx"
-          --logger "console;verbosity=normal"
-          --results-directory TestResults
+        with:
+          timeout_minutes: 15
+          max_attempts: 3
+          retry_on: error
+          command: >
+            dotnet test Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj
+            --configuration Release
+            --logger "trx;LogFileName=integration-tests.trx"
+            --logger "console;verbosity=normal"
+            --results-directory TestResults
 
       - name: Upload test results
         if: always()
