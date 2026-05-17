@@ -88,7 +88,7 @@ if (!isBuildTimeOpenApi && !string.IsNullOrWhiteSpace(otlpHeaders))
     // Setting OtlpExporterOptions.Endpoint programmatically silently sets the internal
     // AppendSignalPathToEndpoint = false (see OBSERVABILITY.md decision 2026-05-17),
     // so we append the signal path ourselves per exporter.
-    var otlpBaseEndpoint = builder.Configuration["OpenTelemetry:OtlpEndpoint"]!.TrimEnd('/');
+    var otlpBaseEndpoint = (builder.Configuration["OpenTelemetry:OtlpEndpoint"] ?? throw new InvalidOperationException("OpenTelemetry:OtlpEndpoint must be set when OpenTelemetry:OtlpHeaders is configured")).TrimEnd('/');
     var otlpProtocol =
         string.Equals(builder.Configuration["OpenTelemetry:OtlpProtocol"], "grpc", StringComparison.OrdinalIgnoreCase)
             ? OtlpExportProtocol.Grpc
