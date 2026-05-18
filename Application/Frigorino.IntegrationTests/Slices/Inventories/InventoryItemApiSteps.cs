@@ -21,7 +21,7 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIDeleteTheInventoryItemViaTheApi(string itemText, string inventoryName)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        var itemId = ctx.InventoryItemIds[itemText];
+        var itemId = ctx.GetInventoryItemId(inventoryName, itemText);
         ctx.LastApiResponse = await api.TryDeleteInventoryItemAsync(inventoryId, itemId);
     }
 
@@ -38,7 +38,7 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         // AfterId=0 is the "top of section" sentinel — covers the no-anchor branch of
         // Inventory.ReorderItem that the drag-based UI test cannot reach directly.
         var inventoryId = ctx.InventoryIds[inventoryName];
-        var itemId = ctx.InventoryItemIds[itemText];
+        var itemId = ctx.GetInventoryItemId(inventoryName, itemText);
         ctx.LastApiResponse = await api.TryReorderInventoryItemAsync(inventoryId, itemId, afterId: 0);
     }
 
@@ -46,8 +46,8 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIPatchAfterInInventoryViaTheApi(string itemText, string anchorText, string inventoryName)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        var itemId = ctx.InventoryItemIds[itemText];
-        var anchorId = ctx.InventoryItemIds[anchorText];
+        var itemId = ctx.GetInventoryItemId(inventoryName, itemText);
+        var anchorId = ctx.GetInventoryItemId(inventoryName, anchorText);
         ctx.LastApiResponse = await api.TryReorderInventoryItemAsync(inventoryId, itemId, afterId: anchorId);
     }
 
