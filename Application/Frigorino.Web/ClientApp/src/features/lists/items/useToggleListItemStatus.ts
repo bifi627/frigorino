@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../../../common/apiClient";
+import { computeAppendSortOrder } from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import type { ListItemResponse } from "../../../lib/api";
 import { listItemKeys } from "./listItemKeys";
@@ -31,16 +32,27 @@ export const useToggleListItemStatus = () => {
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
-            // Only flips `status` — does NOT recompute `sortOrder`. See TECH_DEBT.md:
-            // "useToggleListItemStatus optimistic update doesn't recompute sortOrder".
+            // Optimistic mirror of server math; see common/sortOrder.ts.
             queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
                     if (!old) return old;
-                    return old.map((item) =>
-                        item.id === variables.itemId
-                            ? { ...item, status: !item.status }
-                            : item,
+                    const movedItem = old.find((i) => i.id === variables.itemId);
+                    if (!movedItem) return old;
+
+                    const newStatus = !movedItem.status;
+                    const targetSection = old.filter(
+                        (i) => i.status === newStatus,
+                    );
+                    const newSortOrder = computeAppendSortOrder(
+                        targetSection,
+                        newStatus,
+                    );
+
+                    return old.map((i) =>
+                        i.id === movedItem.id
+                            ? { ...i, status: newStatus, sortOrder: newSortOrder }
+                            : i,
                     );
                 },
             );
@@ -59,10 +71,9 @@ export const useToggleListItemStatus = () => {
             }
         },
         onSettled: (_, __, variables) => {
-            // Deliberate: no `onSuccess` invalidate. The optimistic flip is the only UI signal
-            // we want — `onSettled` covers both success and rollback paths with a single
-            // debounced refetch to reconcile sortOrder (see TECH_DEBT.md note on missing
-            // sortOrder recompute). Don't add an `onSuccess` invalidate "for consistency".
+            // Deliberate: no `onSuccess` invalidate. The optimistic update is the only UI
+            // signal we want — `onSettled` covers both success and rollback paths with a
+            // single debounced refetch. Don't add an `onSuccess` invalidate "for consistency".
             debouncedInvalidate(
                 listItemKeys.byList(variables.householdId, variables.listId),
             );

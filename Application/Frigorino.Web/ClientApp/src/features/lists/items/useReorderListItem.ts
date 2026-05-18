@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ClientApi } from "../../../common/apiClient";
+import {
+    computeAppendSortOrder,
+    computeReorderSortOrder,
+} from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import type { ListItemResponse, ReorderItemRequest } from "../../../lib/api";
 import { listItemKeys } from "./listItemKeys";
@@ -33,11 +37,7 @@ export const useReorderListItem = () => {
                 listItemKeys.byList(variables.householdId, variables.listId),
             );
 
-            // Mirror the server's midpoint math (List.ReorderItem):
-            //   afterId == 0  → first.sortOrder - DefaultGap (top of section)
-            //   no `before`   → after.sortOrder + DefaultGap (last of section)
-            //   otherwise     → midpoint between after and before
-            // We don't shift sibling sortOrders — the server doesn't either.
+            // Optimistic mirror of server math; see common/sortOrder.ts.
             queryClient.setQueryData<ListItemResponse[]>(
                 listItemKeys.byList(variables.householdId, variables.listId),
                 (old) => {
@@ -45,43 +45,17 @@ export const useReorderListItem = () => {
                     const movedItem = old.find((i) => i.id === variables.itemId);
                     if (!movedItem) return old;
 
-                    const section = old
-                        .filter(
-                            (i) =>
-                                i.status === movedItem.status &&
-                                i.id !== movedItem.id,
-                        )
-                        .sort((a, b) => a.sortOrder - b.sortOrder);
+                    const section = old.filter(
+                        (i) =>
+                            i.status === movedItem.status &&
+                            i.id !== movedItem.id,
+                    );
 
-                    const DEFAULT_GAP = 10_000;
-                    const UNCHECKED_MIN = 1_000_000;
-                    const CHECKED_MIN = 10_000_000;
-
-                    const afterItem =
-                        variables.data.afterId && variables.data.afterId !== 0
-                            ? section.find(
-                                  (i) => i.id === variables.data.afterId,
-                              )
-                            : undefined;
-                    const beforeItem = afterItem
-                        ? section.find((i) => i.sortOrder > afterItem.sortOrder)
-                        : undefined;
-
-                    let newSortOrder: number;
-                    if (!afterItem) {
-                        newSortOrder = section.length
-                            ? section[0].sortOrder - DEFAULT_GAP
-                            : (movedItem.status ? CHECKED_MIN : UNCHECKED_MIN) +
-                              DEFAULT_GAP;
-                    } else if (!beforeItem) {
-                        newSortOrder = afterItem.sortOrder + DEFAULT_GAP;
-                    } else {
-                        newSortOrder = Math.floor(
-                            afterItem.sortOrder +
-                                (beforeItem.sortOrder - afterItem.sortOrder) /
-                                    2,
-                        );
-                    }
+                    const newSortOrder = computeReorderSortOrder({
+                        section,
+                        afterId: variables.data.afterId,
+                        emptyDefault: computeAppendSortOrder([], movedItem.status),
+                    });
 
                     return old.map((i) =>
                         i.id === movedItem.id
