@@ -9,7 +9,7 @@ public class InventoryItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         var inventoryId = await api.CreateInventoryAsync(inventoryName);
         ctx.InventoryIds[inventoryName] = inventoryId;
         var itemId = await api.CreateInventoryItemAsync(inventoryId, itemText);
-        ctx.InventoryItemIds[itemText] = itemId;
+        ctx.SetInventoryItemId(inventoryName, itemText, itemId);
     }
 
     [Given("the inventory {string} also has item {string}")]
@@ -17,7 +17,7 @@ public class InventoryItemSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
         var itemId = await api.CreateInventoryItemAsync(inventoryId, itemText);
-        ctx.InventoryItemIds[itemText] = itemId;
+        ctx.SetInventoryItemId(inventoryName, itemText, itemId);
     }
 
     [When("I open the inventory item menu for {string}")]

@@ -9,8 +9,29 @@ public class ScenarioContextHolder
     public string DatabaseName { get; set; } = null!;
     public int HouseholdId { get; set; }
     public Dictionary<string, int> ListIds { get; } = new();
-    public Dictionary<string, int> ListItemIds { get; } = new();
     public Dictionary<string, int> InventoryIds { get; } = new();
-    public Dictionary<string, int> InventoryItemIds { get; } = new();
     public IAPIResponse? LastApiResponse { get; set; }
+
+    private readonly Dictionary<(string list, string text), int> _listItemIds = new();
+    private readonly Dictionary<(string inventory, string text), int> _inventoryItemIds = new();
+
+    public void SetListItemId(string listName, string itemText, int id)
+    {
+        _listItemIds[(listName, itemText)] = id;
+    }
+
+    public int GetListItemId(string listName, string itemText)
+    {
+        return _listItemIds[(listName, itemText)];
+    }
+
+    public void SetInventoryItemId(string inventoryName, string itemText, int id)
+    {
+        _inventoryItemIds[(inventoryName, itemText)] = id;
+    }
+
+    public int GetInventoryItemId(string inventoryName, string itemText)
+    {
+        return _inventoryItemIds[(inventoryName, itemText)];
+    }
 }

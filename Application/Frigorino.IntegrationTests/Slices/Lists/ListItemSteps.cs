@@ -9,7 +9,7 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         var listId = await api.CreateListAsync(listName);
         ctx.ListIds[listName] = listId;
         var itemId = await api.CreateListItemAsync(listId, itemText);
-        ctx.ListItemIds[itemText] = itemId;
+        ctx.SetListItemId(listName, itemText, itemId);
     }
 
     [Given("the list {string} also has item {string}")]
@@ -17,7 +17,7 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var listId = ctx.ListIds[listName];
         var itemId = await api.CreateListItemAsync(listId, itemText);
-        ctx.ListItemIds[itemText] = itemId;
+        ctx.SetListItemId(listName, itemText, itemId);
     }
 
     [When("I add item {string} to the list")]

@@ -21,7 +21,7 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIDeleteTheItemViaTheApi(string itemText, string listName)
     {
         var listId = ctx.ListIds[listName];
-        var itemId = ctx.ListItemIds[itemText];
+        var itemId = ctx.GetListItemId(listName, itemText);
         ctx.LastApiResponse = await api.TryDeleteListItemAsync(listId, itemId);
     }
 
@@ -36,7 +36,7 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIPutAnAllNullUpdateToViaTheApi(string itemText, string listName)
     {
         var listId = ctx.ListIds[listName];
-        var itemId = ctx.ListItemIds[itemText];
+        var itemId = ctx.GetListItemId(listName, itemText);
         ctx.LastApiResponse = await api.TryUpdateListItemAsync(listId, itemId, text: null, quantity: null, status: null);
     }
 
@@ -46,7 +46,7 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         // AfterId=0 is the "top of section" sentinel — covers the no-anchor branch of
         // List.ReorderItem that the drag-based UI test cannot reach directly.
         var listId = ctx.ListIds[listName];
-        var itemId = ctx.ListItemIds[itemText];
+        var itemId = ctx.GetListItemId(listName, itemText);
         ctx.LastApiResponse = await api.TryReorderListItemAsync(listId, itemId, afterId: 0);
     }
 
@@ -54,8 +54,8 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIPatchAfterViaTheApi(string itemText, string anchorText, string listName)
     {
         var listId = ctx.ListIds[listName];
-        var itemId = ctx.ListItemIds[itemText];
-        var anchorId = ctx.ListItemIds[anchorText];
+        var itemId = ctx.GetListItemId(listName, itemText);
+        var anchorId = ctx.GetListItemId(listName, anchorText);
         ctx.LastApiResponse = await api.TryReorderListItemAsync(listId, itemId, afterId: anchorId);
     }
 
@@ -63,7 +63,7 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task WhenIPatchToggleViaTheApi(string itemText, string listName)
     {
         var listId = ctx.ListIds[listName];
-        var itemId = ctx.ListItemIds[itemText];
+        var itemId = ctx.GetListItemId(listName, itemText);
         ctx.LastApiResponse = await api.TryToggleListItemStatusAsync(listId, itemId);
     }
 

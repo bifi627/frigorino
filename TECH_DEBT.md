@@ -11,13 +11,6 @@ Format per item:
 
 ---
 
-## Move the `IntegrationTest` env branch out of `Program.cs`
-
-- **Where:** `Application/Frigorino.Web/Program.cs:21-23`.
-- **Why deferred:** The env-string check was the smallest change that let `TestWebApplicationFactory` register `TestAuthHandler` without Firebase trying to validate placeholder configuration. Refactoring DI ordering for clean replacement would have grown the slice PR.
-- **Plan:** Register `AddFirebaseAuth` unconditionally in `Program.cs`, then have `TestWebApplicationFactory.ConfigureWebHost` *replace* the registered authentication scheme via `services.AddAuthentication(TestAuthHandler.SchemeName).AddScheme<...>(...)` after removing/overriding the Firebase entries. Pair with a `Debug.Assert(env.IsEnvironment("IntegrationTest"))` inside `TestAuthHandler.HandleAuthenticateAsync` so the handler refuses to run outside test.
-- **Risk if left:** Test concerns leak into production startup. Each new test-only branch in `Program.cs` adds another env-string literal that has to stay in sync. Higher chance of an accidental misconfig where Firebase init silently no-ops in a real environment.
-
 ## Make local DB spin-up trivial
 
 - **Where:** `Application/Frigorino.Web/ClientApp/package.json:15` (the misleadingly-named `sql` script), repo root (no docker-compose).
@@ -38,13 +31,6 @@ Format per item:
 - **Why deferred:** Surfaced when writing the "User removes an item via the row menu" Playwright scenario — `ClickAsync` failed with `element is not enabled` because dnd-kit's ancestor aria attributes confuse Playwright's actionability check. Workaround in `ListItemSteps.cs:WhenIOpenTheItemMenuFor` / `WhenIClickDeleteFromTheItemMenu` uses `LocatorClickOptions { Force = true }`. Restructuring the SortableListItem DOM was out of scope for the test PR.
 - **Plan:** Either (a) lift the action `<IconButton>` + `<Menu>` out of the `<SortableItem>` wrapper into a sibling slot in the parent `<SortableList>` row, so the menu lives outside the draggable ancestor; or (b) scope the dnd-kit listeners to a drag-handle child via `dragHandle="custom"` + `renderDragHandle` instead of spreading them on the root `<Box>` in the `none` branch. Option (b) is the smaller change. Drop `Force = true` from both step bindings once the workaround is no longer needed.
 - **Risk if left:** Every new per-row interaction Playwright scenario inherits the `Force = true` workaround. Force-clicks skip Playwright's actionability checks, which is the protection against testing genuinely-broken UI (e.g. a button that really is disabled). The pattern is a smell that masks real regressions over time.
-
-## `ScenarioContextHolder.ListItemIds` keyed by item text alone
-
-- **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/ScenarioContextHolder.cs:12` — `Dictionary<string, int> ListItemIds`.
-- **Why deferred:** Today no scenario creates the same item text in two different lists within one scenario, so the collision is theoretical. Surfaced during the test-suite audit, not during a real failure.
-- **Plan:** Change to `Dictionary<(string list, string text), int>` and update the two writes (`ListItemSteps.GivenThereIsAListNamedWithItem`, `ListItemSteps.GivenTheListAlsoHasItem`) plus the readers in `ListItemApiSteps.cs` to thread the list name. `ListIds` already keys by name and has the same risk — if/when scenarios start using two households per scenario, key it by `(householdName, listName)` too.
-- **Risk if left:** First time a contributor writes a cross-list scenario that shares an item name, the id silently overwrites and the test fails on an unrelated `DELETE /items/{wrong-id}` 404 with no hint that the dictionary was the cause.
 
 ## Harden `SpaBuildHelper` against concurrency and opaque failures
 

@@ -111,12 +111,6 @@ Format per item:
 
 ---
 
-## Observability stack — shipped
-
-Grafana Cloud (backend OTel → Tempo/Mimir/Loki, frontend Faro for RUM + errors + trace stitching). One stack, single vendor, three environments separated by a `deployment.environment` attribute. PostHog was scoped originally but collapsed to Grafana-only after the initial rollout; revisit triggers (product team needing self-serve funnels, pixel-perfect session replay, first-class feature flags, in-app surveys) are listed in `OBSERVABILITY.md` "Open questions / parked". For the current architecture see `knowledge/Observability.md`. The active tracker (open sub-items: source-map upload plugin, stage smoke, doc passes) is `OBSERVABILITY.md`.
-
----
-
 ## Frontend business events (Faro `pushEvent`)
 
 - **Why:** Faro is wired and capturing pageviews + errors + Web Vitals automatically. What it doesn't yet give us is **which features people actually use** — when someone creates a household, switches active household, invites a member, etc. Without these, dashboards show traffic but not behaviour, and "did anyone use the new feature?" is unanswerable. This is the natural follow-up to the Faro rollout and the missing piece for a usable product-side view in Grafana's Frontend Observability dashboards.
