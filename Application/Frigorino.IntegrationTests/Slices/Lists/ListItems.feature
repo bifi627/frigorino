@@ -38,3 +38,11 @@ Feature: List Items
     And I enable drag handles
     And I drag "Eggs" above "Milk"
     Then the unchecked items appear in order: "Eggs, Milk, Bread"
+
+  Scenario: Toggling an item back to unchecked moves it below other unchecked items
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    And the list "Weekly Groceries" also has item "Bread"
+    When I open the list "Weekly Groceries"
+    And I toggle "Milk" as done
+    And I toggle "Milk" as done
+    Then the unchecked items appear in order: "Bread, Milk"
