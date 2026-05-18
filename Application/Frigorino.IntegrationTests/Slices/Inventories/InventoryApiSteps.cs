@@ -10,12 +10,7 @@ public class InventoryApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Given("{string} has created an inventory named {string}")]
     public async Task GivenHasCreatedAnInventoryNamed(string alias, string inventoryName)
     {
-        // Seed an inventory with a creator other than the currently-logged-in user, so
-        // role-policy negatives (non-creator Member tries to delete) can be exercised. Goes
-        // through the Inventory.Create factory rather than open-coding the row so the seed is
-        // semantically identical to one produced by the CreateInventory slice.
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        var creatorUserId = $"user-{alias}-{scenarioSuffix}";
+        var creatorUserId = alias;
 
         using var scope = ctx.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

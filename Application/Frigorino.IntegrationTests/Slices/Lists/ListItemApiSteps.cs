@@ -6,8 +6,6 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I POST an item with empty text to {string} via the API")]
     public async Task WhenIPostAnItemWithEmptyTextViaTheApi(string listName)
     {
-        // Bypasses the autocomplete input's client-side empty guard to exercise the slice's
-        // Result<T>.ToValidationProblem() branch on List.AddItem.
         var listId = ctx.ListIds[listName];
         ctx.LastApiResponse = await api.TryCreateListItemAsync(listId, "");
     }
@@ -37,9 +35,6 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I PUT an all-null update to {string} in {string} via the API")]
     public async Task WhenIPutAnAllNullUpdateToViaTheApi(string itemText, string listName)
     {
-        // Exercises List.UpdateItem's all-null guard — text/quantity/status all null is a
-        // guaranteed no-op on the server, so the slice should reject it as a validation error
-        // instead of returning 200 OK on garbage input.
         var listId = ctx.ListIds[listName];
         var itemId = ctx.ListItemIds[itemText];
         ctx.LastApiResponse = await api.TryUpdateListItemAsync(listId, itemId, text: null, quantity: null, status: null);
@@ -75,8 +70,6 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Then("the API response when getting items of {string} omits {string}")]
     public async Task ThenTheApiResponseWhenGettingItemsOmits(string listName, string itemText)
     {
-        // Second GET issued after the DELETE step to confirm the soft-delete is hidden from
-        // the read projection (IsActive filter on the slice query).
         var listId = ctx.ListIds[listName];
         var response = await api.TryGetListItemsAsync(listId);
         response.Status.Should().Be(200);

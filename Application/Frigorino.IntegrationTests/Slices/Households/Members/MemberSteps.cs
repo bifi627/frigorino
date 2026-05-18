@@ -104,9 +104,5 @@ public class MemberSteps(ScenarioContextHolder ctx)
             .Not.ToBeVisibleAsync();
     }
 
-    private string ExternalIdFor(string alias)
-    {
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        return $"user-{alias}-{scenarioSuffix}";
-    }
+    private static string ExternalIdFor(string alias) => alias;
 }

@@ -11,13 +11,6 @@ Format per item:
 
 ---
 
-## Drop the static `_checkedConnections` cache in `InitialConnectionMiddleware`
-
-- **Where:** `Application/Frigorino.Web/Middlewares/InitialConnectMiddleware.cs:13`, with the test-side workaround in `Application/Frigorino.IntegrationTests/Shared/NavigationSteps.cs:9-11`.
-- **Why deferred:** Replacing the unsafe `HashSet` with `ConcurrentDictionary` + a Postgres upsert was the surgical fix to stop integration-test flakes; removing the cache entirely is a behavior change and was out of scope for that PR.
-- **Plan:** Remove the dictionary and run the upsert on every authenticated request. The upsert is idempotent and sub-millisecond on a hot connection. Then drop the per-scenario user-id-suffix workaround in `NavigationSteps.GivenIAmLoggedInAs` so future scenarios don't have to remember it.
-- **Risk if left:** A new integration scenario that forgets to derive a unique user ID from the DB name will reuse a cached `userId`, skip the upsert against the fresh database, and fail with FK violations from a missing `Users` row. Easy to introduce, hard to debug.
-
 ## Move the `IntegrationTest` env branch out of `Program.cs`
 
 - **Where:** `Application/Frigorino.Web/Program.cs:21-23`.

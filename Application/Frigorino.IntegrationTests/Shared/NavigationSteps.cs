@@ -6,11 +6,7 @@ public class NavigationSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Given("I am logged in as {string}")]
     public void GivenIAmLoggedInAs(string userAlias)
     {
-        // Append a per-scenario suffix derived from the unique DB name to prevent
-        // InitialConnectionMiddleware's static _checkedConnections cache from skipping
-        // user creation in a fresh database.
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        ctx.UserContext.UserId = $"user-{userAlias}-{scenarioSuffix}";
+        ctx.UserContext.UserId = userAlias;
         ctx.UserContext.Email = $"{userAlias}@test.frigorino.local";
         ctx.UserContext.Name = userAlias;
     }

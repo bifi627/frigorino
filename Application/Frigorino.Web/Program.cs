@@ -72,7 +72,6 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<InitialConnectionMiddleware>();
 
 builder.Services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
@@ -223,12 +222,11 @@ app.UseSpaStaticFiles(staticFileOptions);
 // Session middleware (before authentication)
 app.UseSession();
 
-// Authentication & Authorization
+// Authentication & Authorization. JwtBearer's OnTokenValidated event handles lazy User-row
+// sync (see Frigorino.Infrastructure/Auth/FirebaseAuth.cs) — fires once per real Firebase
+// login via the auth_time claim, not per request.
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Custom middleware
-app.UseMiddleware<InitialConnectionMiddleware>();
 
 // Anonymous health + version endpoints (skipped at build-time OpenAPI generation
 // because AddHealthChecks isn't registered there).

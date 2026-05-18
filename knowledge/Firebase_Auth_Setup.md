@@ -17,7 +17,7 @@ Firebase Auth is used as the identity provider — sign-in and JWT issuance only
 
 - **JWT validation**: ASP.NET Core `JwtBearer` middleware wired in `Frigorino.Infrastructure/Auth/FirebaseAuth.cs`. Validates issuer, audience, lifetime, and signing key against Firebase's public keys (fetched via `Authority`).
 - **Claims consumed**: `CurrentUserService` reads `sub` (as `ClaimTypes.NameIdentifier`), `email`, and `name`. All three are standard OIDC claims, not Firebase-specific — keeps the integration thin and the provider replaceable.
-- **Lazy user creation**: `InitialConnectionMiddleware` (runs after the auth middlewares in `Program.cs`) checks the JWT's `sub` against the `Users` table and creates a row on first authenticated request. The Firebase Admin SDK singleton is registered but not used for user management.
+- **Lazy user creation**: `JwtBearerEvents.OnTokenValidated` (in `Frigorino.Infrastructure/Auth/FirebaseAuth.cs`) upserts the `Users` row using the JWT's `sub`. A process-static `ConcurrentDictionary<string, long>` caches the last-seen `auth_time` per user, so the upsert only runs when `auth_time` advances — i.e. on a real Firebase sign-in, not on silent token refresh. The Firebase Admin SDK singleton is registered but not used for user management.
 
 ## Setup Steps
 
@@ -46,7 +46,7 @@ Firebase Auth is used as the identity provider — sign-in and JWT issuance only
    - "Continue with Google" → Firebase pops the Google OAuth flow.
 3. On success, Firebase issues an ID token; the Zustand store updates; protected routes become accessible.
 4. First API call carries the ID token as a Bearer header.
-5. Backend validates the token, `InitialConnectionMiddleware` creates the `User` row if absent, the request proceeds.
+5. Backend validates the token. `JwtBearerEvents.OnTokenValidated` (see `Frigorino.Infrastructure/Auth/FirebaseAuth.cs`) calls `UserSync.EnsureAsync`, which upserts the `Users` row when the JWT's `auth_time` claim advances (real sign-in) and short-circuits on silent refresh. The request then proceeds.
 
 ## Playwright Test Bypass
 

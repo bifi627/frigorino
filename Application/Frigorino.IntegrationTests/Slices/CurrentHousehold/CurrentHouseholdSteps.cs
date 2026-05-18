@@ -13,8 +13,6 @@ public class CurrentHouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I attempt to switch the active household to the seeded one via the API")]
     public async Task WhenIAttemptToSwitchTheActiveHouseholdToTheSeededOneViaTheApi()
     {
-        // Bypasses the UI — the household selector wouldn't expose another user's household
-        // to begin with, so the security branch needs a direct API call to be exercised.
         ctx.LastApiResponse = await api.TrySetCurrentHouseholdAsync(ctx.HouseholdId);
     }
 

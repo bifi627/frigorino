@@ -6,8 +6,6 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I POST an inventory item with empty text to {string} via the API")]
     public async Task WhenIPostAnInventoryItemWithEmptyTextViaTheApi(string inventoryName)
     {
-        // Bypasses the autocomplete input's client-side empty guard to exercise the slice's
-        // Result<T>.ToValidationProblem() branch on Inventory.AddItem.
         var inventoryId = ctx.InventoryIds[inventoryName];
         ctx.LastApiResponse = await api.TryCreateInventoryItemAsync(inventoryId, "");
     }
@@ -56,8 +54,6 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Then("the API response when getting items of inventory {string} omits {string}")]
     public async Task ThenTheApiResponseWhenGettingItemsOfInventoryOmits(string inventoryName, string itemText)
     {
-        // Second GET issued after the DELETE step to confirm the soft-delete is hidden from
-        // the read projection (IsActive filter on the slice query).
         var inventoryId = ctx.InventoryIds[inventoryName];
         var response = await api.TryGetInventoryItemsAsync(inventoryId);
         response.Status.Should().Be(200);
