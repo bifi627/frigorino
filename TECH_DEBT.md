@@ -25,13 +25,6 @@ Format per item:
 - **Plan:** Mirror the server's `ComputeAppendSortOrder` in `onMutate` the same way `useReorderListItem`'s optimistic update mirrors `List.ReorderItem`'s midpoint math. For unchecked→checked: `firstCheckedSortOrder - DEFAULT_GAP` (or `CHECKED_MIN + DEFAULT_GAP` if section empty). For checked→unchecked: `lastUncheckedSortOrder + DEFAULT_GAP` (or `UNCHECKED_MIN + DEFAULT_GAP` if section empty). Once fixed, the API-level `Toggling an item back to unchecked places it below other unchecked items` scenario can be duplicated as a UI scenario without flake.
 - **Risk if left:** Users see a briefly-stale order on toggle, especially when un-checking. Subtle; easy to mistake for a backend bug. Also blocks adding UI-level reorder-on-toggle scenarios.
 
-## Per-item action menu trapped inside dnd-kit's sortable container
-
-- **Where:** `Application/Frigorino.Web/ClientApp/src/components/sortables/SortableListItem.tsx` — the `IconButton` + `Menu` sit inside `<SortableItem>`, whose root `<Box>` carries dnd-kit's `useSortable` attributes/listeners.
-- **Why deferred:** Surfaced when writing the "User removes an item via the row menu" Playwright scenario — `ClickAsync` failed with `element is not enabled` because dnd-kit's ancestor aria attributes confuse Playwright's actionability check. Workaround in `ListItemSteps.cs:WhenIOpenTheItemMenuFor` / `WhenIClickDeleteFromTheItemMenu` uses `LocatorClickOptions { Force = true }`. Restructuring the SortableListItem DOM was out of scope for the test PR.
-- **Plan:** Either (a) lift the action `<IconButton>` + `<Menu>` out of the `<SortableItem>` wrapper into a sibling slot in the parent `<SortableList>` row, so the menu lives outside the draggable ancestor; or (b) scope the dnd-kit listeners to a drag-handle child via `dragHandle="custom"` + `renderDragHandle` instead of spreading them on the root `<Box>` in the `none` branch. Option (b) is the smaller change. Drop `Force = true` from both step bindings once the workaround is no longer needed.
-- **Risk if left:** Every new per-row interaction Playwright scenario inherits the `Force = true` workaround. Force-clicks skip Playwright's actionability checks, which is the protection against testing genuinely-broken UI (e.g. a button that really is disabled). The pattern is a smell that masks real regressions over time.
-
 ## Harden `SpaBuildHelper` against concurrency and opaque failures
 
 - **Where:** `Application/Frigorino.IntegrationTests/Infrastructure/SpaBuildHelper.cs`.

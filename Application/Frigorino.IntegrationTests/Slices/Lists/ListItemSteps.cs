@@ -56,12 +56,7 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I open the item menu for {string}")]
     public async Task WhenIOpenTheItemMenuFor(string itemText)
     {
-        // The menu button sits inside dnd-kit's sortable container, which contributes
-        // ancestor aria attributes that Playwright's actionability check reads as
-        // "element is not enabled". Force=true skips the check — the button itself has no
-        // disabled prop, so the click is safe.
-        await ctx.Page.GetByTestId($"item-menu-button-{itemText}")
-            .ClickAsync(new LocatorClickOptions { Force = true });
+        await ctx.Page.GetByTestId($"item-menu-button-{itemText}").ClickAsync();
     }
 
     [When("I click delete from the item menu")]
@@ -73,8 +68,7 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
             r.Url.Contains("/items/")
             && r.Request.Method == "DELETE"
             && r.Status == 204);
-        await ctx.Page.GetByTestId("delete-item-button")
-            .ClickAsync(new LocatorClickOptions { Force = true });
+        await ctx.Page.GetByTestId("delete-item-button").ClickAsync();
         await responseTask;
     }
 

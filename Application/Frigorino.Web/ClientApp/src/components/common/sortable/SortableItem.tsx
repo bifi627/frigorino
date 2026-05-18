@@ -32,9 +32,41 @@ export function SortableItem<T extends SortableItemData>({
     isDragging: externalIsDragging,
     disabled = false,
 }: SortableItemProps<T>) {
-    // Disable sortable functionality when dragHandle is "none"
-    const shouldDisableSortable = disabled || dragHandle === "none";
+    if (dragHandle === "none") {
+        return (
+            <Box sx={{ ...containerSx, pl: 1.5 }}>
+                {children}
+            </Box>
+        );
+    }
 
+    return (
+        <SortableItemInner
+            item={item}
+            dragHandle={dragHandle}
+            renderDragHandle={renderDragHandle}
+            containerSx={containerSx}
+            dragHandleSx={dragHandleSx}
+            dragHandleTestId={dragHandleTestId}
+            isDragging={externalIsDragging}
+            disabled={disabled}
+        >
+            {children}
+        </SortableItemInner>
+    );
+}
+
+function SortableItemInner<T extends SortableItemData>({
+    item,
+    children,
+    dragHandle,
+    renderDragHandle,
+    containerSx,
+    dragHandleSx,
+    dragHandleTestId,
+    isDragging: externalIsDragging,
+    disabled,
+}: SortableItemProps<T> & { dragHandle: "left" | "right" | "custom"; disabled: boolean }) {
     const {
         attributes,
         listeners,
@@ -44,7 +76,7 @@ export function SortableItem<T extends SortableItemData>({
         isDragging: internalIsDragging,
     } = useSortable({
         id: (item.id ?? "0").toString(),
-        disabled: shouldDisableSortable,
+        disabled,
         data: {
             type: "sortable-item",
             item,
@@ -101,21 +133,6 @@ export function SortableItem<T extends SortableItemData>({
             <DragIndicator sx={{ fontSize: 20 }} />
         </Box>
     );
-
-    if (dragHandle === "none") {
-        return (
-            <Box
-                ref={setNodeRef}
-                sx={{
-                    ...containerSx,
-                    pl: 1.5,
-                }}
-                {...(!disabled ? defaultDragHandleProps : {})}
-            >
-                {children}
-            </Box>
-        );
-    }
 
     if (dragHandle === "custom") {
         return (
