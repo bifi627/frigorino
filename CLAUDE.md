@@ -80,7 +80,7 @@ Canonical references:
 Migration trackers (per-feature progress, decisions, drops): `knowledge/Migrations/Household.md`, `knowledge/Migrations/Members.md`. Current state: Households + Members are fully migrated to slices (5 writes through aggregate methods on `Household`, 2 reads via direct projection). Lists / ListItems / Inventories / InventoryItems still use the older controller (`Frigorino.Web/Controllers/`) + service (`Frigorino.Application/Services/`) pattern — queued for migration. **When adding a new endpoint, write a slice; do not extend the controllers.**
 
 ### Request pipeline (`Frigorino.Web/Program.cs`)
-Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`, then `InitialConnectionMiddleware` runs after auth (it reads the authenticated user). `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
+Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync is done inside `JwtBearerEvents.OnTokenValidated` (see `Frigorino.Infrastructure/Auth/FirebaseAuth.cs`) — fires once per real Firebase login via the JWT's `auth_time` claim, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
 ### Multi-tenant household context
 - `ICurrentUserService` resolves the user from the Firebase JWT and lazily creates a `User` row on first login.

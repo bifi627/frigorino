@@ -19,8 +19,8 @@
 - **Tasks**: Background maintenance tasks
 
 ### Web Layer (`Frigorino.Web`)
-- **Controllers**: REST API endpoints
-- **Middleware**: Custom middleware (InitialConnectionMiddleware)
+- **Controllers**: REST API endpoints (being phased out — new endpoints go in `Frigorino.Features` as vertical slices)
+- **Middleware**: Static-file and pre-compressed-asset middlewares. Lazy `Users` sync lives in `Frigorino.Infrastructure/Auth/UserSync.cs` and is called from `JwtBearerEvents.OnTokenValidated`, not from a Web-layer middleware.
 - **Program.cs**: Application startup and configuration
 
 ## Entity Relationships
@@ -86,7 +86,6 @@
 ```csharp
 // Core application services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<InitialConnectionMiddleware>();
 
 // Maintenance system
 builder.Services.AddMaintenanceServices(); // Extension method

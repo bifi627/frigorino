@@ -104,7 +104,7 @@ Subscribe **before** the click so the listener is in place when the request fire
 
 **Scope selectors to sections, not whole pages.** `GetByText("Flour").First` will match a placeholder, a tooltip, or an autocomplete suggestion. `page.Locator("[data-section='unchecked-items']").GetByText("Flour")` won't.
 
-**Convert relative-time/seed values to absolute.** Seeded user ids derived from `ctx.DatabaseName` suffix prevent cross-scenario `Users` row collisions when multiple scenarios reuse the same alias.
+**Seeded users use the alias directly as `ExternalId`.** `GivenIAmLoggedInAs "alice"` and `GivenAUserExists "bob"` produce `Users.ExternalId = "alice"` / `"bob"`. Cross-scenario isolation is provided by the fresh-per-scenario database, not by suffixing. Earlier code suffixed user ids with `ctx.DatabaseName[^8..]` to dodge a process-static cache in the old `InitialConnectionMiddleware`; that middleware was replaced by `UserSync` keyed on the JWT `auth_time` claim, which `TestAuthHandler` doesn't issue — so the cache is bypassed in tests and the suffix is no longer needed.
 
 ## When to add a testid
 

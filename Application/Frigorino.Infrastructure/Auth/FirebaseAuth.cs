@@ -1,4 +1,5 @@
-﻿using FirebaseAdmin;
+using FirebaseAdmin;
+using Frigorino.Infrastructure.EntityFramework;
 using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -51,13 +52,28 @@ namespace Frigorino.Infrastructure.Auth
                                 context.Token = accessToken;
                             }
                             return Task.CompletedTask;
-                        }
+                        },
+                        OnTokenValidated = SyncUserOnLoginAsync,
                     };
 
                     options.Validate();
                 });
 
             return services;
+        }
+
+        // Fires only on successful JWT validation (before UseAuthorization), so the DB
+        // hit inside UserSync is gated by a fully-validated principal. Failed validations
+        // never reach this handler.
+        private static Task SyncUserOnLoginAsync(TokenValidatedContext context)
+        {
+            if (context.Principal is null)
+            {
+                return Task.CompletedTask;
+            }
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+            return UserSync.EnsureAsync(context.Principal, db, context.HttpContext.RequestAborted);
         }
     }
 }

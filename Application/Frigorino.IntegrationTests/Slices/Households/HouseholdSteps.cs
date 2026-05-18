@@ -16,8 +16,6 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I POST a household with an empty name via the API")]
     public async Task WhenIPostAHouseholdWithAnEmptyNameViaTheApi()
     {
-        // Goes through TestApiClient (not the form) to bypass HTML5 required-validation
-        // and exercise the slice's Result<T>.ToValidationProblem() branch directly.
         ctx.LastApiResponse = await api.TryCreateHouseholdAsync("");
     }
 
@@ -100,9 +98,7 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task GivenAnExistingHouseholdOwnedByWithMeAs(
         string householdName, string ownerAlias, string myRole)
     {
-        // Requires `Given I am logged in as "<alias>"` to have run first so ctx.UserContext is populated.
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        var ownerUserId = $"user-{ownerAlias}-{scenarioSuffix}";
+        var ownerUserId = ownerAlias;
 
         using var scope = ctx.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -175,9 +171,7 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task GivenAnExistingHouseholdOwnedByThatIAmNotAMemberOf(
         string householdName, string ownerAlias)
     {
-        // Requires `Given I am logged in as "<alias>"` to have run first so ctx.UserContext is populated.
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        var ownerUserId = $"user-{ownerAlias}-{scenarioSuffix}";
+        var ownerUserId = ownerAlias;
 
         using var scope = ctx.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -225,16 +219,13 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
         });
         await db.SaveChangesAsync();
 
-        // Stash the household id so the When step can reference it without re-querying;
-        // ctx.HouseholdId stays the multi-tenant target even though the user has no membership.
         ctx.HouseholdId = household.Id;
     }
 
     [Given("a user {string} exists")]
     public async Task GivenAUserExists(string alias)
     {
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        var externalId = $"user-{alias}-{scenarioSuffix}";
+        var externalId = alias;
 
         using var scope = ctx.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -255,8 +246,7 @@ public class HouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Given("the household also has {string} as a {string}")]
     public async Task GivenTheHouseholdAlsoHas(string alias, string roleName)
     {
-        var scenarioSuffix = ctx.DatabaseName[^8..];
-        var externalId = $"user-{alias}-{scenarioSuffix}";
+        var externalId = alias;
 
         var role = roleName.ToLowerInvariant() switch
         {
