@@ -79,9 +79,8 @@ export const ListViewPage = () => {
         (data: string, quantity?: string) => {
             if (!householdId) return;
             createMutation.mutate({
-                householdId,
-                listId: listIdNum,
-                data: { text: data, quantity: quantity ?? null },
+                path: { householdId, listId: listIdNum },
+                body: { text: data, quantity: quantity ?? null },
             });
         },
         [createMutation, householdId, listIdNum],
@@ -91,10 +90,12 @@ export const ListViewPage = () => {
         (data: string, quantity?: string) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
-                    householdId,
-                    listId: listIdNum,
-                    itemId: editingItem.id,
-                    data: {
+                    path: {
+                        householdId,
+                        listId: listIdNum,
+                        itemId: editingItem.id,
+                    },
+                    body: {
                         text: data,
                         quantity: quantity ?? null,
                         status: null,
@@ -112,9 +113,7 @@ export const ListViewPage = () => {
         (itemId: number) => {
             if (!householdId) return;
             toggleMutation.mutate({
-                householdId,
-                listId: listIdNum,
-                itemId,
+                path: { householdId, listId: listIdNum, itemId },
             });
         },
         [toggleMutation, householdId, listIdNum],

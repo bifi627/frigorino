@@ -32,7 +32,7 @@ export const DeleteListConfirmDialog = ({
     const handleConfirm = () => {
         if (confirmationText !== listName) return;
         deleteListMutation.mutate(
-            { householdId, listId },
+            { path: { householdId, listId } },
             {
                 onSuccess: () => {
                     onClose();

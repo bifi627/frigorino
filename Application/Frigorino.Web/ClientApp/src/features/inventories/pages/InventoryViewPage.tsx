@@ -129,7 +129,10 @@ export const InventoryViewPage = () => {
     const handleAddItem = useCallback(
         (data: CreateInventoryItemRequest) => {
             if (!householdId) return;
-            createMutation.mutate({ householdId, inventoryId, data });
+            createMutation.mutate({
+                path: { householdId, inventoryId },
+                body: data,
+            });
         },
         [createMutation, householdId, inventoryId],
     );
@@ -138,10 +141,12 @@ export const InventoryViewPage = () => {
         (data: UpdateInventoryItemRequest) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
-                    householdId,
-                    inventoryId,
-                    itemId: editingItem.id,
-                    data,
+                    path: {
+                        householdId,
+                        inventoryId,
+                        itemId: editingItem.id,
+                    },
+                    body: data,
                 });
                 setEditingItem(null);
             }

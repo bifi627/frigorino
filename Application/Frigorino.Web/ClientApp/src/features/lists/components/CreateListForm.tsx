@@ -22,11 +22,11 @@ interface CreateListFormProps {
 export const CreateListForm = ({ householdId }: CreateListFormProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const createListMutation = useCreateList(householdId);
+    const createListMutation = useCreateList();
     const [name, setName] = useState("");
 
     const isLoading = createListMutation.isPending;
-    const error = createListMutation.error;
+    const error: unknown = createListMutation.error;
     const isInvalid = !name.trim() && name.length > 0;
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -35,10 +35,10 @@ export const CreateListForm = ({ householdId }: CreateListFormProps) => {
 
         try {
             const response = await createListMutation.mutateAsync({
-                name: name.trim(),
-                description: null,
+                path: { householdId },
+                body: { name: name.trim(), description: null },
             });
-            if (response.id) {
+            if (response?.id) {
                 navigate({ to: `/lists/${response.id}/view` });
             }
         } catch (err) {
@@ -51,13 +51,13 @@ export const CreateListForm = ({ householdId }: CreateListFormProps) => {
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <form onSubmit={handleSubmit}>
                     <Stack spacing={3}>
-                        {error && (
+                        {error ? (
                             <Alert severity="error">
                                 {error instanceof Error
                                     ? error.message
                                     : t("common.errorOccurred")}
                             </Alert>
-                        )}
+                        ) : null}
 
                         <Box>
                             <Typography

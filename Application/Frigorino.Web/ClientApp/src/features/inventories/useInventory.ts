@@ -1,17 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { ClientApi } from "../../common/apiClient";
-import { inventoryKeys } from "./inventoryKeys";
+import { getInventoryOptions } from "../../lib/api/@tanstack/react-query.gen";
 
 export const useInventory = (
     householdId: number,
     inventoryId: number,
     enabled = true,
-) => {
-    return useQuery({
-        queryKey: inventoryKeys.detail(inventoryId),
-        queryFn: () =>
-            ClientApi.inventories.getInventory(householdId, inventoryId),
+) =>
+    useQuery({
+        ...getInventoryOptions({ path: { householdId, inventoryId } }),
         enabled: enabled && inventoryId > 0 && householdId > 0,
         staleTime: 1000 * 60 * 2,
     });
-};

@@ -1,24 +1,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../common/apiClient";
-import { listKeys } from "./listKeys";
+import {
+    deleteListMutation,
+    getListQueryKey,
+    getListsQueryKey,
+} from "../../lib/api/@tanstack/react-query.gen";
 
 export const useDeleteList = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-        }: {
-            householdId: number;
-            listId: number;
-        }) => ClientApi.lists.deleteList(householdId, listId),
-        onSuccess: (_, variables) => {
+        ...deleteListMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.removeQueries({
-                queryKey: listKeys.detail(variables.listId),
+                queryKey: getListQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
             });
             queryClient.invalidateQueries({
-                queryKey: listKeys.byHousehold(variables.householdId),
+                queryKey: getListsQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });

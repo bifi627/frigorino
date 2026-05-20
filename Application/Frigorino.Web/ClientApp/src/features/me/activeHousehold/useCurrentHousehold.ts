@@ -1,12 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
-import { householdKeys } from "../../households/householdKeys";
+import { getActiveHouseholdOptions } from "../../../lib/api/@tanstack/react-query.gen";
 
-export const useCurrentHousehold = () => {
-    return useQuery({
-        queryKey: householdKeys.current(),
-        queryFn: () => ClientApi.me.getActiveHousehold(),
+export const useCurrentHousehold = () =>
+    useQuery({
+        ...getActiveHouseholdOptions(),
         staleTime: 1000 * 60 * 5,
         retry: false,
     });
-};

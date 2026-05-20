@@ -1,20 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ClientApi } from "../../common/apiClient";
-import { householdKeys } from "./householdKeys";
+import {
+    deleteHouseholdMutation,
+    getActiveHouseholdQueryKey,
+    getUserHouseholdsQueryKey,
+} from "../../lib/api/@tanstack/react-query.gen";
 
 export const useDeleteHousehold = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
     return useMutation({
-        mutationFn: (householdId: number) =>
-            ClientApi.households.deleteHousehold(householdId),
+        ...deleteHouseholdMutation(),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: householdKeys.current(),
+                queryKey: getActiveHouseholdQueryKey(),
             });
-            queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
+            queryClient.invalidateQueries({
+                queryKey: getUserHouseholdsQueryKey(),
+            });
             navigate({ to: "/" });
         },
     });

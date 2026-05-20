@@ -1,49 +1,42 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import type { ListItemResponse, UpdateItemRequest } from "../../../lib/api";
-import { listItemKeys } from "./listItemKeys";
+import {
+    getItemQueryKey,
+    getItemsQueryKey,
+    updateItemMutation,
+} from "../../../lib/api/@tanstack/react-query.gen";
+import type { ListItemResponse } from "../../../lib/api/types.gen";
 
 export const useUpdateListItem = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-            itemId,
-            data,
-        }: {
-            householdId: number;
-            listId: number;
-            itemId: number;
-            data: UpdateItemRequest;
-        }) =>
-            ClientApi.listItems.updateItem(householdId, listId, itemId, data),
+        ...updateItemMutation(),
         onMutate: async (variables) => {
-            await queryClient.cancelQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
+            const listQueryKey = getItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                },
             });
 
-            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
-            );
+            await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+            const previousItems =
+                queryClient.getQueryData<ListItemResponse[]>(listQueryKey);
 
             queryClient.setQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
+                listQueryKey,
                 (old) => {
                     if (!old) return old;
                     return old.map((item) =>
-                        item.id === variables.itemId
+                        item.id === variables.path.itemId
                             ? {
                                   ...item,
-                                  text: variables.data.text ?? item.text,
+                                  text: variables.body.text ?? item.text,
                                   quantity:
-                                      variables.data.quantity ?? item.quantity,
+                                      variables.body.quantity ?? item.quantity,
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -51,40 +44,57 @@ export const useUpdateListItem = () => {
                 },
             );
 
-            const currentItem = queryClient.getQueryData<ListItemResponse>(
-                listItemKeys.detail(variables.itemId),
-            );
+            const detailKey = getItemQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                    itemId: variables.path.itemId,
+                },
+            });
+            const currentItem =
+                queryClient.getQueryData<ListItemResponse>(detailKey);
             if (currentItem) {
-                queryClient.setQueryData<ListItemResponse>(
-                    listItemKeys.detail(variables.itemId),
-                    {
-                        ...currentItem,
-                        text: variables.data.text ?? currentItem.text,
-                        quantity:
-                            variables.data.quantity ?? currentItem.quantity,
-                        updatedAt: new Date().toISOString(),
-                    },
-                );
+                queryClient.setQueryData<ListItemResponse>(detailKey, {
+                    ...currentItem,
+                    text: variables.body.text ?? currentItem.text,
+                    quantity: variables.body.quantity ?? currentItem.quantity,
+                    updatedAt: new Date().toISOString(),
+                });
             }
 
             return { previousItems };
         },
-        onError: (_, variables, context) => {
+        onError: (_data, variables, context) => {
             if (context?.previousItems) {
                 queryClient.setQueryData(
-                    listItemKeys.byList(
-                        variables.householdId,
-                        variables.listId,
-                    ),
+                    getItemsQueryKey({
+                        path: {
+                            householdId: variables.path.householdId,
+                            listId: variables.path.listId,
+                        },
+                    }),
                     context.previousItems,
                 );
             }
         },
-        onSuccess: (_, variables) => {
+        onSuccess: (_data, variables) => {
             debouncedInvalidate(
-                listItemKeys.byList(variables.householdId, variables.listId),
+                getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
             );
-            debouncedInvalidate(listItemKeys.detail(variables.itemId));
+            debouncedInvalidate(
+                getItemQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                        itemId: variables.path.itemId,
+                    },
+                }),
+            );
         },
     });
 };

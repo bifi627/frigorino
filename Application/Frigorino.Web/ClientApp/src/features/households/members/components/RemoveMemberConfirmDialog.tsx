@@ -17,13 +17,14 @@ export const RemoveMemberConfirmDialog = ({
     householdId,
 }: RemoveMemberConfirmDialogProps) => {
     const { t } = useTranslation();
-    const { mutate: removeMember, isPending } = useRemoveMember(householdId);
+    const { mutate: removeMember, isPending } = useRemoveMember();
 
     const handleConfirm = () => {
         if (!member?.externalId) return;
-        removeMember(member.externalId, {
-            onSuccess: () => onClose(),
-        });
+        removeMember(
+            { path: { householdId, userId: member.externalId } },
+            { onSuccess: () => onClose() },
+        );
     };
 
     return (

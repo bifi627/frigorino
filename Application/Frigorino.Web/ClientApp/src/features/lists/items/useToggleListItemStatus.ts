@@ -1,81 +1,81 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { computeAppendSortOrder } from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import type { ListItemResponse } from "../../../lib/api";
-import { listItemKeys } from "./listItemKeys";
+import {
+    getItemsQueryKey,
+    toggleItemStatusMutation,
+} from "../../../lib/api/@tanstack/react-query.gen";
+import type { ListItemResponse } from "../../../lib/api/types.gen";
 
 export const useToggleListItemStatus = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-            itemId,
-        }: {
-            householdId: number;
-            listId: number;
-            itemId: number;
-        }) =>
-            ClientApi.listItems.toggleItemStatus(householdId, listId, itemId),
+        ...toggleItemStatusMutation(),
         onMutate: async (variables) => {
-            await queryClient.cancelQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
+            const queryKey = getItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                },
             });
 
-            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
-            );
+            await queryClient.cancelQueries({ queryKey });
+
+            const previousItems =
+                queryClient.getQueryData<ListItemResponse[]>(queryKey);
 
             // Optimistic mirror of server math; see common/sortOrder.ts.
-            queryClient.setQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
-                (old) => {
-                    if (!old) return old;
-                    const movedItem = old.find((i) => i.id === variables.itemId);
-                    if (!movedItem) return old;
+            queryClient.setQueryData<ListItemResponse[]>(queryKey, (old) => {
+                if (!old) return old;
+                const movedItem = old.find(
+                    (i) => i.id === variables.path.itemId,
+                );
+                if (!movedItem) return old;
 
-                    const newStatus = !movedItem.status;
-                    const targetSection = old.filter(
-                        (i) => i.status === newStatus,
-                    );
-                    const newSortOrder = computeAppendSortOrder(
-                        targetSection,
-                        newStatus,
-                    );
+                const newStatus = !movedItem.status;
+                const targetSection = old.filter(
+                    (i) => i.status === newStatus,
+                );
+                const newSortOrder = computeAppendSortOrder(
+                    targetSection,
+                    newStatus,
+                );
 
-                    return old.map((i) =>
-                        i.id === movedItem.id
-                            ? { ...i, status: newStatus, sortOrder: newSortOrder }
-                            : i,
-                    );
-                },
-            );
+                return old.map((i) =>
+                    i.id === movedItem.id
+                        ? { ...i, status: newStatus, sortOrder: newSortOrder }
+                        : i,
+                );
+            });
 
             return { previousItems };
         },
-        onError: (_, variables, context) => {
+        onError: (_data, variables, context) => {
             if (context?.previousItems) {
                 queryClient.setQueryData(
-                    listItemKeys.byList(
-                        variables.householdId,
-                        variables.listId,
-                    ),
+                    getItemsQueryKey({
+                        path: {
+                            householdId: variables.path.householdId,
+                            listId: variables.path.listId,
+                        },
+                    }),
                     context.previousItems,
                 );
             }
         },
-        onSettled: (_, __, variables) => {
+        onSettled: (_data, _error, variables) => {
             // Deliberate: no `onSuccess` invalidate. The optimistic update is the only UI
             // signal we want — `onSettled` covers both success and rollback paths with a
             // single debounced refetch. Don't add an `onSuccess` invalidate "for consistency".
             debouncedInvalidate(
-                listItemKeys.byList(variables.householdId, variables.listId),
+                getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
             );
         },
     });

@@ -1,27 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../common/apiClient";
-import type { UpdateListRequest } from "../../lib/api";
-import { listKeys } from "./listKeys";
+import {
+    getListsQueryKey,
+    updateListMutation,
+} from "../../lib/api/@tanstack/react-query.gen";
 
 export const useUpdateList = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-            data,
-        }: {
-            householdId: number;
-            listId: number;
-            data: UpdateListRequest;
-        }) => ClientApi.lists.updateList(householdId, listId, data),
-        onSuccess: (data, variables) => {
-            if (data?.id) {
-                queryClient.setQueryData(listKeys.detail(data.id), data);
-            }
+        ...updateListMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: listKeys.byHousehold(variables.householdId),
+                queryKey: getListsQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });

@@ -1,18 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
-import { householdKeys } from "../../households/householdKeys";
+import {
+    getActiveHouseholdQueryKey,
+    getUserHouseholdsQueryKey,
+    setActiveHouseholdMutation,
+} from "../../../lib/api/@tanstack/react-query.gen";
 
 export const useSetCurrentHousehold = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (householdId: number) =>
-            ClientApi.me.setActiveHousehold({ householdId }),
+        ...setActiveHouseholdMutation(),
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: householdKeys.current(),
+                queryKey: getActiveHouseholdQueryKey(),
             });
-            queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
+            queryClient.invalidateQueries({
+                queryKey: getUserHouseholdsQueryKey(),
+            });
         },
     });
 };

@@ -51,19 +51,15 @@ export const InventoryContainer = forwardRef<
                     error={error}
                     onReorder={async (itemId, afterId) => {
                         await reorderMutation.mutateAsync({
-                            householdId,
-                            inventoryId,
-                            itemId,
-                            data: { afterId },
+                            path: { householdId, inventoryId, itemId },
+                            body: { afterId },
                         });
                     }}
                     onToggleStatus={async () => {}}
                     onEdit={onEdit}
                     onDelete={async (itemId) => {
                         await deleteMutation.mutateAsync({
-                            householdId,
-                            inventoryId,
-                            itemId,
+                            path: { householdId, inventoryId, itemId },
                         });
                     }}
                     editingItem={editingItem}

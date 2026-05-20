@@ -64,8 +64,7 @@ export const InventoriesPage = () => {
     const handleDeleteInventory = () => {
         if (selectedInventory?.id && householdId) {
             deleteInventoryMutation.mutate({
-                householdId,
-                inventoryId: selectedInventory.id,
+                path: { householdId, inventoryId: selectedInventory.id },
             });
         }
         handleMenuClose();
