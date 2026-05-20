@@ -464,5 +464,10 @@ Application/Frigorino.Web/ClientApp/build/
 # is fine; the `.local` suffix is the per-developer-machine variant.
 **/.env*.local
 
+# Local dev stack logs (written by scripts/dev-up.ps1)
+/.dev/
+
 # Reqnroll-generated test code (regenerated on build by Reqnroll.Tools.MsBuild.Generation)
 *.feature.cs
+
+.playwright-mcp/

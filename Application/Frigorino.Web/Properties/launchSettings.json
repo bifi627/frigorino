@@ -17,6 +17,19 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
+    "LocalDb": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__Database": "Host=localhost;Port=5432;Database=frigorino;Username=postgres;Password=postgres",
+        "DevAuth__Enabled": "true",
+        "DevAuth__UserId": "dev-user",
+        "DevAuth__Email": "dev@frigorino.local",
+        "DevAuth__Name": "Dev User"
+      }
+    },
     "Release": {
       "commandName": "Project",
       "launchBrowser": false,

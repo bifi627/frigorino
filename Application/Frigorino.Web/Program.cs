@@ -42,7 +42,19 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddEntityFramework(builder.Configuration);
 if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi)
 {
-    builder.Services.AddFirebaseAuth(builder.Configuration);
+    // DevAuth is a Development-only bypass for the Firebase JWT flow so a fresh clone
+    // can run end-to-end without a real Firebase tenant. Both gates required.
+    var devAuthEnabled = builder.Environment.IsDevelopment()
+        && builder.Configuration.GetValue<bool>($"{DevAuthSettings.SECTION_NAME}:Enabled");
+
+    if (devAuthEnabled)
+    {
+        builder.Services.AddDevAuth(builder.Configuration);
+    }
+    else
+    {
+        builder.Services.AddFirebaseAuth(builder.Configuration);
+    }
 }
 builder.Services.AddMaintenanceServices();
 

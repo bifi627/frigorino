@@ -28,6 +28,21 @@ export const useAuthStore = create<AuthState>((set) => ({
             return;
         }
 
+        // Dev mode bypass: paired with the backend DevAuthHandler so `npm run dev` reaches
+        // protected routes without a real Firebase tenant. Identity must mirror the
+        // backend DevAuth principal (see Frigorino.Infrastructure/Auth/DevAuthHandler.cs).
+        if (import.meta.env.VITE_DEV_AUTH === "true") {
+            const devUser = {
+                uid: "dev-user",
+                email: "dev@frigorino.local",
+                displayName: "Dev User",
+                photoURL: null,
+            } as unknown as User;
+            identifyUser({ id: devUser.uid, email: devUser.email });
+            set({ user: devUser, loading: false });
+            return;
+        }
+
         // Set up new subscription
         unsubscribe = onAuthStateChanged(getAuth(), (user) => {
             window.console.log("Auth state changed:", user);
