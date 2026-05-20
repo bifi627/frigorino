@@ -1,22 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
-import type { UpdateMemberRoleRequest } from "../../../lib/api";
-import { householdKeys } from "../householdKeys";
+import {
+    getMembersQueryKey,
+    updateMemberRoleMutation,
+} from "../../../lib/api/@tanstack/react-query.gen";
 
-export const useUpdateMemberRole = (householdId: number) => {
+export const useUpdateMemberRole = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({
-            userId,
-            role,
-        }: {
-            userId: string;
-            role: UpdateMemberRoleRequest["role"];
-        }) => ClientApi.members.updateMemberRole(householdId, userId, { role }),
-        onSuccess: () => {
+        ...updateMemberRoleMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: householdKeys.members(householdId),
+                queryKey: getMembersQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });

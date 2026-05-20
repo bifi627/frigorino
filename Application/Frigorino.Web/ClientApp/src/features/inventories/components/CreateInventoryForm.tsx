@@ -24,11 +24,11 @@ export const CreateInventoryForm = ({
 }: CreateInventoryFormProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const createInventoryMutation = useCreateInventory(householdId);
+    const createInventoryMutation = useCreateInventory();
     const [name, setName] = useState("");
 
     const isLoading = createInventoryMutation.isPending;
-    const error = createInventoryMutation.error;
+    const error: unknown = createInventoryMutation.error;
     const isInvalid = !name.trim() && name.length > 0;
 
     const handleSubmit = async (event: React.FormEvent) => {
@@ -37,10 +37,10 @@ export const CreateInventoryForm = ({
 
         try {
             const response = await createInventoryMutation.mutateAsync({
-                name: name.trim(),
-                description: null,
+                path: { householdId },
+                body: { name: name.trim(), description: null },
             });
-            if (response.id) {
+            if (response?.id) {
                 navigate({ to: `/inventories/${response.id}/view` });
             }
         } catch (err) {
@@ -53,13 +53,13 @@ export const CreateInventoryForm = ({
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <form onSubmit={handleSubmit}>
                     <Stack spacing={3}>
-                        {error && (
+                        {error ? (
                             <Alert severity="error">
                                 {error instanceof Error
                                     ? error.message
                                     : t("common.errorOccurred")}
                             </Alert>
-                        )}
+                        ) : null}
 
                         <Box>
                             <Typography

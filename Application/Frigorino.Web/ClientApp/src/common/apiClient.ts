@@ -1,18 +1,11 @@
 import { getAuth } from "firebase/auth";
-import { OpenAPI, type OpenAPIConfig } from "../lib/api";
-import { FrigorinoApiClient } from "../lib/api/FrigorinoApiClient";
+import { client } from "../lib/api/client.gen";
 
-export const getApiConfig = (token = "") => {
-    const apiConfig: OpenAPIConfig = { ...OpenAPI, TOKEN: token };
-    return apiConfig;
-};
-
-export const getClientApiConfig = () => {
-    const apiConfig: OpenAPIConfig = {
-        ...OpenAPI,
-        TOKEN: async () => (await getAuth().currentUser?.getIdToken()) ?? "",
-    };
-    return apiConfig;
-};
-
-export const ClientApi = new FrigorinoApiClient(getClientApiConfig());
+// Single client.setConfig replaces the old FrigorinoApiClient instance + OpenAPIConfig.TOKEN
+// resolver. The `client` singleton is the one every generated SDK function imports
+// internally — configuring it here propagates to all call sites at module load.
+client.setConfig({
+    baseUrl: "",
+    auth: async () =>
+        (await getAuth().currentUser?.getIdToken()) ?? "",
+});

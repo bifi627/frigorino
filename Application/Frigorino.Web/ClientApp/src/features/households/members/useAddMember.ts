@@ -1,19 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
-import type { AddMemberRequest } from "../../../lib/api";
-import { householdKeys } from "../householdKeys";
+import {
+    addMemberMutation,
+    getMembersQueryKey,
+    getUserHouseholdsQueryKey,
+} from "../../../lib/api/@tanstack/react-query.gen";
 
-export const useAddMember = (householdId: number) => {
+export const useAddMember = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: AddMemberRequest) =>
-            ClientApi.members.addMember(householdId, data),
-        onSuccess: () => {
+        ...addMemberMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: householdKeys.members(householdId),
+                queryKey: getMembersQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
-            queryClient.invalidateQueries({ queryKey: householdKeys.lists() });
+            queryClient.invalidateQueries({
+                queryKey: getUserHouseholdsQueryKey(),
+            });
         },
     });
 };

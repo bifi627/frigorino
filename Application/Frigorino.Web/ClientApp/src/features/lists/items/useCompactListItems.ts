@@ -1,22 +1,23 @@
 import { useMutation } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import { listItemKeys } from "./listItemKeys";
+import {
+    compactItemsMutation,
+    getItemsQueryKey,
+} from "../../../lib/api/@tanstack/react-query.gen";
 
 export const useCompactListItems = () => {
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-        }: {
-            householdId: number;
-            listId: number;
-        }) => ClientApi.listItems.compactItems(householdId, listId),
-        onSuccess: (_, variables) => {
+        ...compactItemsMutation(),
+        onSuccess: (_data, variables) => {
             debouncedInvalidate(
-                listItemKeys.byList(variables.householdId, variables.listId),
+                getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
             );
         },
     });

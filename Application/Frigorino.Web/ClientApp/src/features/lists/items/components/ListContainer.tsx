@@ -48,25 +48,19 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                     error={error}
                     onReorder={async (itemId, afterId) => {
                         await reorderMutation.mutateAsync({
-                            householdId,
-                            listId,
-                            itemId,
-                            data: { afterId },
+                            path: { householdId, listId, itemId },
+                            body: { afterId },
                         });
                     }}
                     onToggleStatus={async (itemId) => {
                         await toggleMutation.mutateAsync({
-                            householdId,
-                            listId,
-                            itemId,
+                            path: { householdId, listId, itemId },
                         });
                     }}
                     onEdit={onEdit}
                     onDelete={async (itemId) => {
                         await deleteMutation.mutateAsync({
-                            householdId,
-                            listId,
-                            itemId,
+                            path: { householdId, listId, itemId },
                         });
                     }}
                     editingItem={editingItem}

@@ -1,29 +1,23 @@
 import { useMutation } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import { inventoryItemKeys } from "./inventoryItemKeys";
+import {
+    compactInventoryItemsMutation,
+    getInventoryItemsQueryKey,
+} from "../../../lib/api/@tanstack/react-query.gen";
 
 export const useCompactInventoryItems = () => {
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            inventoryId,
-        }: {
-            householdId: number;
-            inventoryId: number;
-        }) =>
-            ClientApi.inventoryItems.compactInventoryItems(
-                householdId,
-                inventoryId,
-            ),
-        onSuccess: (_, variables) => {
+        ...compactInventoryItemsMutation(),
+        onSuccess: (_data, variables) => {
             debouncedInvalidate(
-                inventoryItemKeys.byInventory(
-                    variables.householdId,
-                    variables.inventoryId,
-                ),
+                getInventoryItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        inventoryId: variables.path.inventoryId,
+                    },
+                }),
             );
         },
     });

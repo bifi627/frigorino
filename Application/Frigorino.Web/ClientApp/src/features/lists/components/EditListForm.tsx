@@ -35,9 +35,8 @@ export const EditListForm = ({ householdId, list }: EditListFormProps) => {
         if (!list.id) return;
         updateListMutation.mutate(
             {
-                householdId,
-                listId: list.id,
-                data: {
+                path: { householdId, listId: list.id },
+                body: {
                     name: editedName.trim(),
                     description: list.description ?? null,
                 },

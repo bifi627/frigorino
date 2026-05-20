@@ -1,79 +1,63 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import type { InventoryItemResponse } from "../../../lib/api";
-import { inventoryItemKeys } from "./inventoryItemKeys";
+import {
+    deleteInventoryItemMutation,
+    getInventoryItemsQueryKey,
+} from "../../../lib/api/@tanstack/react-query.gen";
+import type { InventoryItemResponse } from "../../../lib/api/types.gen";
 
 export const useDeleteInventoryItem = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            inventoryId,
-            itemId,
-        }: {
-            householdId: number;
-            inventoryId: number;
-            itemId: number;
-        }) =>
-            ClientApi.inventoryItems.deleteInventoryItem(
-                householdId,
-                inventoryId,
-                itemId,
-            ),
+        ...deleteInventoryItemMutation(),
         onMutate: async (variables) => {
-            await queryClient.cancelQueries({
-                queryKey: inventoryItemKeys.byInventory(
-                    variables.householdId,
-                    variables.inventoryId,
-                ),
+            const queryKey = getInventoryItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    inventoryId: variables.path.inventoryId,
+                },
             });
 
-            const previousItems = queryClient.getQueryData<
-                InventoryItemResponse[]
-            >(
-                inventoryItemKeys.byInventory(
-                    variables.householdId,
-                    variables.inventoryId,
-                ),
-            );
+            await queryClient.cancelQueries({ queryKey });
+
+            const previousItems =
+                queryClient.getQueryData<InventoryItemResponse[]>(queryKey);
 
             queryClient.setQueryData<InventoryItemResponse[]>(
-                inventoryItemKeys.byInventory(
-                    variables.householdId,
-                    variables.inventoryId,
-                ),
+                queryKey,
                 (old) => {
                     if (!old) return old;
-                    return old.filter((item) => item.id !== variables.itemId);
+                    return old.filter(
+                        (item) => item.id !== variables.path.itemId,
+                    );
                 },
             );
 
-            queryClient.removeQueries({
-                queryKey: inventoryItemKeys.detail(variables.itemId),
-            });
-
             return { previousItems };
         },
-        onError: (_, variables, context) => {
+        onError: (_data, variables, context) => {
             if (context?.previousItems) {
                 queryClient.setQueryData(
-                    inventoryItemKeys.byInventory(
-                        variables.householdId,
-                        variables.inventoryId,
-                    ),
+                    getInventoryItemsQueryKey({
+                        path: {
+                            householdId: variables.path.householdId,
+                            inventoryId: variables.path.inventoryId,
+                        },
+                    }),
                     context.previousItems,
                 );
             }
         },
-        onSettled: (_, __, variables) => {
+        onSettled: (_data, _error, variables) => {
             debouncedInvalidate(
-                inventoryItemKeys.byInventory(
-                    variables.householdId,
-                    variables.inventoryId,
-                ),
+                getInventoryItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        inventoryId: variables.path.inventoryId,
+                    },
+                }),
             );
         },
     });

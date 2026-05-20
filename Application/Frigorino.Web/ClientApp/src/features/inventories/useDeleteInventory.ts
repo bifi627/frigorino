@@ -1,25 +1,28 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../common/apiClient";
-import { inventoryKeys } from "./inventoryKeys";
+import {
+    deleteInventoryMutation,
+    getInventoriesQueryKey,
+    getInventoryQueryKey,
+} from "../../lib/api/@tanstack/react-query.gen";
 
 export const useDeleteInventory = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            inventoryId,
-        }: {
-            householdId: number;
-            inventoryId: number;
-        }) =>
-            ClientApi.inventories.deleteInventory(householdId, inventoryId),
-        onSuccess: (_, variables) => {
+        ...deleteInventoryMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.removeQueries({
-                queryKey: inventoryKeys.detail(variables.inventoryId),
+                queryKey: getInventoryQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        inventoryId: variables.path.inventoryId,
+                    },
+                }),
             });
             queryClient.invalidateQueries({
-                queryKey: inventoryKeys.byHousehold(variables.householdId),
+                queryKey: getInventoriesQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });

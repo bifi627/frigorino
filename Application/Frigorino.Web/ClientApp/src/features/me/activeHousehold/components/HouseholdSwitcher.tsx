@@ -40,7 +40,10 @@ export const HouseholdSwitcher = ({
             handleClose();
             return;
         }
-        switchHousehold(householdId, { onSuccess: handleClose });
+        switchHousehold(
+            { body: { householdId } },
+            { onSuccess: handleClose },
+        );
     };
 
     const currentHouseholdName =

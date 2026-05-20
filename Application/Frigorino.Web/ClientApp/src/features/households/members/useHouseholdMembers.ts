@@ -1,11 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
-import { householdKeys } from "../householdKeys";
+import { getMembersOptions } from "../../../lib/api/@tanstack/react-query.gen";
 
-export const useHouseholdMembers = (householdId: number, enabled = true) => {
-    return useQuery({
-        queryKey: householdKeys.members(householdId),
-        queryFn: () => ClientApi.members.getMembers(householdId),
+export const useHouseholdMembers = (householdId: number, enabled = true) =>
+    useQuery({
+        ...getMembersOptions({ path: { householdId } }),
         enabled: enabled && !!householdId,
     });
-};

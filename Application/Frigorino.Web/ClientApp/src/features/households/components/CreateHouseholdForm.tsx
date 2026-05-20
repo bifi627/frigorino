@@ -35,11 +35,12 @@ export const CreateHouseholdForm = () => {
 
         try {
             const household = await createHouseholdMutation.mutateAsync({
-                name: name.trim(),
-                description: null,
+                body: { name: name.trim(), description: null },
             });
-            if (household.id) {
-                await setCurrentHouseholdMutation.mutateAsync(household.id);
+            if (household?.id) {
+                await setCurrentHouseholdMutation.mutateAsync({
+                    body: { householdId: household.id },
+                });
             }
             navigate({ to: "/" });
         } catch (err) {

@@ -14,7 +14,7 @@ import {
     TextField,
 } from "@mui/material";
 import React, { useState } from "react";
-import { ApiError, type HouseholdRole } from "../../../../lib/api";
+import type { HouseholdRole } from "../../../../lib/api";
 import { HouseholdRoleValue, useRoleLabels } from "../../householdRole";
 import { useAddMember } from "../useAddMember";
 
@@ -25,11 +25,12 @@ interface AddMemberDialogProps {
 }
 
 function readEmailError(error: unknown): string {
-    if (error instanceof ApiError) {
-        const emailErrors = error.body?.errors?.email;
-        if (Array.isArray(emailErrors) && emailErrors.length > 0) {
-            return emailErrors[0];
-        }
+    // hey-api throws the parsed error response body (HttpValidationProblemDetails) when
+    // throwOnError: true. The shape is { errors?: Record<string, string[]> }.
+    const errors = (error as { errors?: { email?: string[] } } | null)?.errors;
+    const emailErrors = errors?.email;
+    if (Array.isArray(emailErrors) && emailErrors.length > 0) {
+        return emailErrors[0];
     }
     return "Failed to add member";
 }
@@ -44,7 +45,7 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
     const [role, setRole] = useState<HouseholdRole>(HouseholdRoleValue.Member);
     const [error, setError] = useState<string | null>(null);
 
-    const addMemberMutation = useAddMember(householdId);
+    const addMemberMutation = useAddMember();
 
     const handleClose = () => {
         setEmail("");
@@ -68,7 +69,10 @@ export const AddMemberDialog: React.FC<AddMemberDialogProps> = ({
         }
 
         addMemberMutation.mutate(
-            { email: email.trim(), role },
+            {
+                path: { householdId },
+                body: { email: email.trim(), role },
+            },
             {
                 onSuccess: () => handleClose(),
                 onError: (err) => setError(readEmailError(err)),

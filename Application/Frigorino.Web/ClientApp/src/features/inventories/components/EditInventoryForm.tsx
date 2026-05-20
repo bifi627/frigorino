@@ -38,9 +38,8 @@ export const EditInventoryForm = ({
         if (!inventory.id) return;
         updateInventoryMutation.mutate(
             {
-                householdId,
-                inventoryId: inventory.id,
-                data: {
+                path: { householdId, inventoryId: inventory.id },
+                body: {
                     name: editedName.trim(),
                     description: inventory.description ?? null,
                 },

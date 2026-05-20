@@ -1,63 +1,69 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../../common/apiClient";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
-import type { ListItemResponse } from "../../../lib/api";
-import { listItemKeys } from "./listItemKeys";
+import {
+    deleteItemMutation,
+    getItemQueryKey,
+    getItemsQueryKey,
+} from "../../../lib/api/@tanstack/react-query.gen";
+import type { ListItemResponse } from "../../../lib/api/types.gen";
 
 export const useDeleteListItem = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
 
     return useMutation({
-        mutationFn: ({
-            householdId,
-            listId,
-            itemId,
-        }: {
-            householdId: number;
-            listId: number;
-            itemId: number;
-        }) => ClientApi.listItems.deleteItem(householdId, listId, itemId),
+        ...deleteItemMutation(),
         onMutate: async (variables) => {
-            await queryClient.cancelQueries({
-                queryKey: listItemKeys.byList(
-                    variables.householdId,
-                    variables.listId,
-                ),
+            const queryKey = getItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                },
             });
 
-            const previousItems = queryClient.getQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
-            );
+            await queryClient.cancelQueries({ queryKey });
 
-            queryClient.setQueryData<ListItemResponse[]>(
-                listItemKeys.byList(variables.householdId, variables.listId),
-                (old) => {
-                    if (!old) return old;
-                    return old.filter((item) => item.id !== variables.itemId);
-                },
-            );
+            const previousItems =
+                queryClient.getQueryData<ListItemResponse[]>(queryKey);
+
+            queryClient.setQueryData<ListItemResponse[]>(queryKey, (old) => {
+                if (!old) return old;
+                return old.filter((item) => item.id !== variables.path.itemId);
+            });
 
             queryClient.removeQueries({
-                queryKey: listItemKeys.detail(variables.itemId),
+                queryKey: getItemQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                        itemId: variables.path.itemId,
+                    },
+                }),
             });
 
             return { previousItems };
         },
-        onError: (_, variables, context) => {
+        onError: (_data, variables, context) => {
             if (context?.previousItems) {
                 queryClient.setQueryData(
-                    listItemKeys.byList(
-                        variables.householdId,
-                        variables.listId,
-                    ),
+                    getItemsQueryKey({
+                        path: {
+                            householdId: variables.path.householdId,
+                            listId: variables.path.listId,
+                        },
+                    }),
                     context.previousItems,
                 );
             }
         },
-        onSettled: (_, __, variables) => {
+        onSettled: (_data, _error, variables) => {
             debouncedInvalidate(
-                listItemKeys.byList(variables.householdId, variables.listId),
+                getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
             );
         },
     });

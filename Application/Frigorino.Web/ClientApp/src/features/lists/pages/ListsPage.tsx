@@ -62,8 +62,7 @@ export const ListsPage = () => {
     const handleDeleteList = () => {
         if (selectedList?.id && householdId) {
             deleteListMutation.mutate({
-                householdId,
-                listId: selectedList.id,
+                path: { householdId, listId: selectedList.id },
             });
         }
         handleMenuClose();

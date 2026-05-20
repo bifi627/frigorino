@@ -32,7 +32,7 @@ export const DeleteInventoryConfirmDialog = ({
     const handleConfirm = () => {
         if (confirmationText !== inventoryName) return;
         deleteInventoryMutation.mutate(
-            { householdId, inventoryId },
+            { path: { householdId, inventoryId } },
             {
                 onSuccess: () => {
                     onClose();

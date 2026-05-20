@@ -23,12 +23,15 @@ export const MemberActionsMenu = ({
     onRemoveClick,
 }: MemberActionsMenuProps) => {
     const { t } = useTranslation();
-    const { mutate: updateRole } = useUpdateMemberRole(householdId);
+    const { mutate: updateRole } = useUpdateMemberRole();
 
     const handleRoleChange = (role: HouseholdRole) => {
         if (!member?.externalId) return;
         updateRole(
-            { userId: member.externalId, role },
+            {
+                path: { householdId, userId: member.externalId },
+                body: { role },
+            },
             { onSuccess: () => onClose() },
         );
     };

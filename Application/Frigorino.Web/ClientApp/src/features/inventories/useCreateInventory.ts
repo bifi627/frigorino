@@ -1,21 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClientApi } from "../../common/apiClient";
-import type { CreateInventoryRequest } from "../../lib/api";
-import { inventoryKeys } from "./inventoryKeys";
+import {
+    createInventoryMutation,
+    getInventoriesQueryKey,
+} from "../../lib/api/@tanstack/react-query.gen";
 
-export const useCreateInventory = (householdId: number) => {
+export const useCreateInventory = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: CreateInventoryRequest) =>
-            ClientApi.inventories.createInventory(householdId, data),
-        onSuccess: (data) => {
+        ...createInventoryMutation(),
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: inventoryKeys.byHousehold(householdId),
+                queryKey: getInventoriesQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
-            if (data.id) {
-                queryClient.setQueryData(inventoryKeys.detail(data.id), data);
-            }
         },
     });
 };

@@ -10,6 +10,7 @@ import { initObservability, pushPageView } from "./common/observability";
 initObservability();
 
 import "./common/auth"; // Ensure Firebase is initialized
+import "./common/apiClient"; // Configure hey-api client with Firebase token resolver
 import "./i18n"; // Initialize i18n
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
