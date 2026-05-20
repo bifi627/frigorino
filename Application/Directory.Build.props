@@ -1,0 +1,12 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      Commits a packages.lock.json per project capturing the full transitive graph.
+      Combined with `dotnet restore` `locked-mode` in CI/Docker, a compromised or
+      retagged transitive cannot land silently between builds of the same commit.
+    -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+</Project>
