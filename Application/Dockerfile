@@ -15,7 +15,14 @@ COPY Application/Frigorino.Web/Frigorino.Web.csproj ./Application/Frigorino.Web/
 COPY Application/Frigorino.Test/Frigorino.Test.csproj ./Application/Frigorino.Test/
 COPY Application/Frigorino.Features/Frigorino.Features.csproj ./Application/Frigorino.Features/
 COPY Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj ./Application/Frigorino.IntegrationTests/
-RUN dotnet restore ./Application/Frigorino.sln
+COPY Application/Directory.Build.props ./Application/
+COPY Application/Frigorino.Domain/packages.lock.json ./Application/Frigorino.Domain/
+COPY Application/Frigorino.Features/packages.lock.json ./Application/Frigorino.Features/
+COPY Application/Frigorino.Infrastructure/packages.lock.json ./Application/Frigorino.Infrastructure/
+COPY Application/Frigorino.Web/packages.lock.json ./Application/Frigorino.Web/
+COPY Application/Frigorino.Test/packages.lock.json ./Application/Frigorino.Test/
+COPY Application/Frigorino.IntegrationTests/packages.lock.json ./Application/Frigorino.IntegrationTests/
+RUN dotnet restore ./Application/Frigorino.sln --locked-mode
 COPY . .
 # Web-only publish, RID-pinned so PublishReadyToRun pre-JITs IL for linux-x64.
 # --self-contained false keeps the runtime in the base image, not in /app/publish.
@@ -28,7 +35,9 @@ FROM node:22-bookworm-slim AS build_frontend
 WORKDIR /src/Frigorino.Web/ClientApp
 # npm cache layer: only invalidated when package.json/package-lock.json change
 COPY Application/Frigorino.Web/ClientApp/package.json Application/Frigorino.Web/ClientApp/package-lock.json ./
-RUN npm ci
+# --ignore-scripts blocks postinstall hooks on transitives — primary npm supply-chain
+# attack surface. None of our direct deps need install scripts to run.
+RUN npm ci --ignore-scripts
 COPY Application/Frigorino.Web/ClientApp/ ./
 # VITE_* values are inlined into the JS bundle at build time by `npm run build`.
 # Railway only injects service variables into the build context if they're declared

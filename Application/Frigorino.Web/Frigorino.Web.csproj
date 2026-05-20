@@ -12,6 +12,9 @@
     <!-- Pre-JIT IL at publish so first-request latency doesn't pay tier-1 compilation. -->
     <!-- Only takes effect when publish supplies a RID (see Dockerfile). -->
     <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Lockfile must enumerate every RID we restore for. Dockerfile publishes linux-x64;
+         devs restore on win-x64. Both go into packages.lock.json so locked-mode works. -->
+    <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -24,12 +27,8 @@
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageReference Include="FirebaseAdmin" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>10.*-*</Version>
-    </PackageReference>
-	  <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions">
-		  <Version>10.*-*</Version>
-	  </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

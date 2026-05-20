@@ -35,7 +35,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: Application/Frigorino.Web/ClientApp
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Lint
         working-directory: Application/Frigorino.Web/ClientApp
@@ -74,14 +74,18 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/*.csproj', 'Application/Frigorino.sln') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/packages.lock.json') }}
           restore-keys: |
             nuget-${{ runner.os }}-
+
+      - name: Restore (locked)
+        run: dotnet restore Application/Frigorino.Test/Frigorino.Test.csproj --locked-mode
 
       - name: Run Frigorino.Test
         run: >
           dotnet test Application/Frigorino.Test/Frigorino.Test.csproj
           --configuration Release
+          --no-restore
           --logger "trx;LogFileName=unit-tests.trx"
           --logger "console;verbosity=normal"
           --results-directory TestResults
@@ -112,9 +116,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/*.csproj', 'Application/Frigorino.sln') }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/packages.lock.json') }}
           restore-keys: |
             nuget-${{ runner.os }}-
+
+      - name: Restore (locked)
+        run: dotnet restore Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj --locked-mode
 
       - name: Download SPA build artifact
         uses: actions/download-artifact@v4
@@ -133,6 +140,7 @@ jobs:
           command: >
             dotnet test Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj
             --configuration Release
+            --no-restore
             --logger "trx;LogFileName=integration-tests.trx"
             --logger "console;verbosity=normal"
             --results-directory TestResults

@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/Application"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      microsoft:
+        patterns:
+          - "Microsoft.*"
+      opentelemetry:
+        patterns:
+          - "OpenTelemetry.*"
+
+  - package-ecosystem: npm
+    directory: "/Application/Frigorino.Web/ClientApp"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      mui:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      grafana-faro:
+        patterns:
+          - "@grafana/faro-*"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      types:
+        patterns:
+          - "@types/*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: "/Application"
+    schedule:
+      interval: weekly
