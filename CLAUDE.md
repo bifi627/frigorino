@@ -63,6 +63,17 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 - `HangfireAuth:Username` / `Password` — basic-auth gate for the `/hangfire` dashboard. **Startup throws if password is empty**, so the app will not boot without these set.
 - `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
+### Local dev: two modes
+
+The dev-auth bypass is **opt-in, not a committed default**. Manual `dotnet run` / `npm run dev` keep the real Firebase flow (requires user-secrets).
+
+- **Real Firebase + your DB** (default): `dotnet run --project Application/Frigorino.Web` + `npm run dev`. Uses your user-secrets.
+- **Bypass + local Postgres** (agents / fresh-clone): `powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1` (down: same with `dev-down.ps1`). Activated by the `LocalDb` launch profile (sets `DevAuth__Enabled=true` + local conn string) and `$env:VITE_DEV_AUTH=true` set by the script before spawning vite. Identity on both sides: `dev-user` / `dev@frigorino.local`.
+
+Bypass implementation: `DevAuthHandler` (`Frigorino.Infrastructure/Auth/DevAuthHandler.cs`, gated on `Development` env + `DevAuth:Enabled`) and `authProvider.ts` (gated on `VITE_DEV_AUTH`). Scripts log to `.dev/*.log` (gitignored); port-based kill handles Windows' missing process-group cascade. `/readyz` returns 503 in bypass mode (cosmetic — `/healthz` still 200).
+
+Agent skills wrap the scripts: `/dev-up` is auto-invokable (description gates on actual UI verification need); `/dev-down` is manual-only. Pair with Playwright MCP `--isolated` (`~/.claude.json`) for ephemeral browser profiles.
+
 ## Architecture notes
 
 ### Vertical slice architecture (in progress)
