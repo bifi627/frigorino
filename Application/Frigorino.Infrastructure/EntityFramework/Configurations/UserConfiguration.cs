@@ -32,6 +32,9 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .IsRequired()
                 .HasDefaultValue(true);
 
+            builder.Property(u => u.LastActiveHouseholdId)
+                .IsRequired(false);
+
             // Configure relationships
             builder.HasMany(u => u.UserHouseholds)
                 .WithOne(uh => uh.User)
@@ -42,6 +45,13 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .WithOne(h => h.CreatedByUser)
                 .HasForeignKey(h => h.CreatedByUserId)
                 .HasPrincipalKey(u => u.ExternalId);
+
+            // User.LastActiveHouseholdId is a "last-selected" pointer, not ownership.
+            // SetNull on delete so deleting a household does not delete the user.
+            builder.HasOne(u => u.LastActiveHousehold)
+                .WithMany()
+                .HasForeignKey(u => u.LastActiveHouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Indexes
             builder.HasIndex(u => u.Email)
