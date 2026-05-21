@@ -72,6 +72,18 @@ public class CurrentHouseholdService : ICurrentHouseholdService
         {
             session.Set(CurrentHouseholdSessionKey, BitConverter.GetBytes(householdId));
         }
+
+        // Persist on the User row so the choice survives session loss / server restart.
+        // ApplicationDbContext.SaveChangesAsync does not stamp any field on User during Modified,
+        // so this write is scoped to LastActiveHouseholdId only.
+        var userId = _currentUserService.UserId;
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.ExternalId == userId);
+        if (user is not null && user.LastActiveHouseholdId != householdId)
+        {
+            user.LastActiveHouseholdId = householdId;
+            await _context.SaveChangesAsync();
+        }
+
         return Result.Ok();
     }
 
