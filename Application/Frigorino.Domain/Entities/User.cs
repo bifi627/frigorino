@@ -9,7 +9,10 @@
         public DateTime LastLoginAt { get; set; }
         public bool IsActive { get; set; } = true;
 
+        public int? LastActiveHouseholdId { get; set; }
+
         // Navigation properties
+        public Household? LastActiveHousehold { get; set; }
         public ICollection<UserHousehold> UserHouseholds { get; set; } = new List<UserHousehold>();
         public ICollection<Household> CreatedHouseholds { get; set; } = new List<Household>();
     }
