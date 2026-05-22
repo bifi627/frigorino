@@ -31,7 +31,7 @@ RUN dotnet publish "./Application/Frigorino.Web/Frigorino.Web.csproj" \
     /p:UseAppHost=false -r linux-x64 --self-contained false
 
 # Frontend build: slim Node LTS only — no .NET SDK overhead.
-FROM node:22-bookworm-slim AS build_frontend
+FROM node:26-bookworm-slim AS build_frontend
 WORKDIR /src/Frigorino.Web/ClientApp
 # npm cache layer: only invalidated when package.json/package-lock.json change
 COPY Application/Frigorino.Web/ClientApp/package.json Application/Frigorino.Web/ClientApp/package-lock.json ./
