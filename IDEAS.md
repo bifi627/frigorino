@@ -10,18 +10,6 @@ Format per item:
 
 ---
 
-## Persist last-active-household per user
-
-- **Why:** Today the active household lives only in `HttpContext.Session` (in-memory cache, browser-session cookie, 30-min idle timeout). When the user closes their browser or the server restarts, the selection is lost and the system silently falls back to the highest-role / earliest-joined household — *not* what the user last picked. For users who live in a non-default household (e.g. a Member household used more often than an Owner one), this is a daily annoyance.
-- **Sketch:**
-  - Add nullable column `User.LastActiveHouseholdId` (FK Households, ON DELETE SET NULL).
-  - Update `CurrentHouseholdService.SetCurrentHouseholdAsync` to write both the session cache and the user column.
-  - Update `CurrentHouseholdService.GetCurrentHouseholdIdAsync` lookup order: session → `User.LastActiveHouseholdId` (verify access still valid) → role-based default. Each fallback rehydrates the session.
-  - Migration to add the column, no data backfill needed (NULL is fine for existing users).
-- **Impact / cost:** ~1 EF migration, ~15 LOC service change, no API surface change, no frontend change. Integration test for "selection survives backend restart" would be valuable but requires Testcontainers restart support — secondary.
-
----
-
 ## Lightweight CQRS: query repositories + domain repositories
 
 - **Why:** Read and write paths have different shapes but currently share `ApplicationDbContext` directly inside slices. Reads need cheap, per-feature projections to read models (no change tracking, no aggregate loading). Writes need rich domain objects that enforce invariants (`Household.Create`, future `Household.Update`, etc.) and a single `SaveChangesAsync` per slice. Splitting them lets each path stay sharp: query repos for reads, domain repos for writes. Explicitly **no MediatR** — the slice handler stays inline; we just move the EF query out of it.
@@ -111,6 +99,47 @@ Format per item:
 
 ---
 
+## Wire up Hangfire for queued background jobs (sleep-safe, no cron)
+
+- **Why:** Several future features need an async background runner with durability + visibility: classifying a list item via an LLM (~1s, would block list-add otherwise), OCR-ing receipt photos, sending invite emails, etc. CLAUDE.md and `knowledge/Backend_Architecture.md` describe Hangfire as already in place, but the wiring was never actually committed — there's no package reference, no `Program.cs` registration, no dashboard, no `hangfire` schema. The existing `MaintenanceHostedService` is a one-shot startup batch, not a continuous queue. Hangfire fills that gap and amortizes across the next several features rather than each one rolling its own background runner.
+- **Sketch:**
+  - **Packages.** Add `Hangfire.AspNetCore` + `Hangfire.PostgreSql` to `Frigorino.Infrastructure.csproj`. Pin exact versions per `feedback_dependency_pinning`.
+  - **DI registration.** New `Frigorino.Infrastructure/Hangfire/HangfireDependencyInjection.cs` with an `AddHangfireServices(IConfiguration)` extension — `AddHangfire(...)` + `AddHangfireServer(...)` + Postgres storage. Called from `Program.cs` next to `AddEntityFramework`.
+  - **Schema.** Hangfire auto-creates its `hangfire` schema and tables on first startup. No manual EF migration needed; confirm schema name doesn't collide with anything in the existing model snapshot.
+  - **Dashboard.** Map `/hangfire` gated by a `HangfireAuthorizationFilter` reading `HangfireAuth:Username` + `HangfireAuth:Password` from config. **Fail boot if password is empty in non-Development environments** — same pattern CLAUDE.md describes. Add the config keys to `appsettings.json` as empty placeholders (user-secrets / env vars supply real values).
+  - **Job conventions.** Jobs live in `Frigorino.Infrastructure/Jobs/` as scoped classes with an `ExecuteAsync(CancellationToken)` signature; activator uses DI. Enqueuer slices inject `IBackgroundJobClient` and call `_jobs.Enqueue<TJob>(j => j.ExecuteAsync(args, default))`.
+  - **Queued / triggered only — NO recurring jobs.** Railway free-tier sleep silently drops cron schedules that fire while the container is asleep (see `project_no_synthetic_uptime_checks` memory). Document this constraint in `HangfireDependencyInjection.cs`'s file header AND in `knowledge/Backend_Architecture.md`. Anything that wants to "run periodically" goes through `MaintenanceHostedService`'s startup batch instead (sleep-safe by design — only runs on wake).
+  - **Coexistence with `MaintenanceHostedService`.** Both stay. They cover different shapes: startup-batch maintenance vs. user-triggered queued work. Don't migrate the existing maintenance tasks; they already work.
+  - **Smoke-check.** Before declaring done, confirm in-process Hangfire server polling doesn't accidentally trip Railway's sleep detector (HTTP-idle-based, but worth verifying once on stage). The `project_no_synthetic_uptime_checks` memory already notes "in-process Hangfire metrics" as a safe passive signal, but the server's heartbeat row updates are a slightly separate question — worth a stage observation.
+  - **Docs cleanup in the same PR.** Strip the aspirational "Hangfire is already in place" sections from `knowledge/Backend_Architecture.md` (currently misleading) and tighten the Hangfire bullet in `CLAUDE.md` to match what's actually committed.
+- **Impact / cost:** 2 new packages, ~1 DI extension file, ~1 auth filter, schema auto-created on first run. Once landed, future queued jobs cost ~1 file each (`SomethingJob.cs` with `ExecuteAsync`) plus the `Enqueue` call from the producer slice. CLAUDE.md / knowledge-doc drift gets corrected in the same change. Reversible if Hangfire turns out wrong: rip out the DI call and dashboard route, drop the schema; consumers (the classifier feature, etc.) would swap to `System.Threading.Channels` or similar.
+
+---
+
+## Promote checked list items into inventory (classifier-driven)
+
+- **Why:** Today the Inventory feature only pays off if items end up in it, and the only way to put them there is manual entry — typing the name, quantity, expiry. That step happens *after* shopping, which is the worst possible time (groceries to put away, kids to feed, etc.), so most users skip it. The expiry tracking that's already wired (colored bars, sort-by-expiry, human-readable countdowns in `InventoryItemContent.tsx`) is invisible to anyone who never adds inventory items. Closing this loop turns Inventory from "another feature you have to maintain" into "the natural other half of the shopping flow."
+- **Sketch:**
+  - **Trigger.** When a list item is checked off (`ToggleItemStatus` slice), the response optionally includes a `PromoteSuggestion`. Frontend opens a small modal pre-filled with classifier output. User confirms / tweaks / dismisses. Confirm calls the existing `CreateInventoryItem` slice — no new write endpoint.
+  - **Classifier shape (vendor-agnostic).** `IClassificationService` in `Frigorino.Domain.Interfaces` returns one of three `ExpiryHandling` modes: `NonPerishable` (skip the modal entirely — toothpaste, batteries), `UserEntersFromPackage` (open modal, empty date field, "check the package" hint — milk, packaged meat), `AiRecommendsShelfLife` (open modal, date pre-filled to `today + DefaultShelfLifeDays` — fresh produce, baked goods). Vendor selected: **OpenAI** (see next bullet for specifics); interface stays neutral so a future swap is a one-line DI change. Config keys, DI extension, and settings stay vendor-neutral (`Classifier:*`, not `OpenAi:*`) — see `feedback_vendor_agnostic_by_default` in user memory.
+  - **OpenAI integration specifics.** Picked after a short vendor comparison (top alternatives Gemini 2.5 Flash-Lite and Mistral Small 3 — kept on file as the GDPR / cost-floor fallbacks; reversible).
+    - **Model:** `gpt-4.1-nano` — cheapest viable nano-tier with native Structured Outputs (~$0.025 per 1K calls at this shape, ~$1-10/year at expected volume). Re-verify the exact model name string at implementation time; OpenAI renames things.
+    - **Strict Structured Outputs**, not JSON mode. `ChatResponseFormat.CreateJsonSchemaFormat(name, schema, isStrict: true)` constrains output during sampling — invalid JSON / off-schema output is impossible. No retry-on-parse-failure path needed. Leftover branch to handle: `message.refusal` (safety) can come back instead of `message.content` — treat as `NonPerishable` and log; near-impossible for inputs of this shape but cheap to cover.
+    - **Integration via `Microsoft.Extensions.AI`**, not the raw OpenAI SDK. The implementation depends on `IChatClient` (Microsoft's vendor-neutral chat abstraction) injected from a `ChatClientBuilder` pipeline; swapping to a different provider later is a one-line DI registration change. Side benefit: `.UseOpenTelemetry(loggerFactory, sourceName)` middleware ships token usage + latency + errors into the existing Grafana Cloud OTel pipeline for free, no custom instrumentation.
+    - **Packages to pin** (per `feedback_dependency_pinning`): `Microsoft.Extensions.AI` + `Microsoft.Extensions.AI.OpenAI` (provider) + direct pin on transitive `OpenAI`.
+    - **Prompt shape.** System message defines the 3 categories with 2-3 bilingual examples each (en + de) — ~150 tokens. User message is just the normalized name. Schema: `expiryHandling` enum + nullable `defaultShelfLifeDays` (1-365), `strict: true`, `additionalProperties: false`. Open door: the same call could also return a category hint (Fridge/Pantry/Freezer) to feed the smart-inventory-target enhancement listed below — defer until a second inventory is the norm.
+  - **Async dispatch.** Classifying takes ~1s and shouldn't block list-add. `CreateItem` enqueues a `ClassifyItemJob(householdId, normalizedName)` via Hangfire. **Prerequisite:** the Hangfire wiring itself is its own IDEAS entry ("Wire up Hangfire for queued background jobs") — that work has to land first, or this feature falls back to `System.Threading.Channels` in-process (lossy on restart, no dashboard).
+  - **Knowledge cache (per household).** New `ItemKnowledge` entity: `(HouseholdId, NormalizedName)` unique → `ExpiryHandling`, `DefaultShelfLifeDays?`, `ClassifiedAt`, `ClassifierVersion`. The classifier job is cache-aware: skip if a row exists, otherwise call the vendor and write. Knowledge is **household-scoped**, not global — same name can be classified differently per household, and there's no cross-household exposure. Cascade-delete with the household.
+  - **Denorm hint on `ListItem`.** Add nullable `ExpiryHandling?` + `DefaultShelfLifeDays?` to `ListItem` so the hot-path toggle handler doesn't need an extra read. Classifier job's last step: backfill these fields on every matching `ListItem` in the household. New list items added before classification finishes stay null (toggle silent) — see "race we accept" below.
+  - **Normalization v1.** Lowercase + trim + collapse whitespace. **No** stemming / plural-stripping / article-stripping in v1 — language-dependent (app is bilingual en/de) and adds risk for marginal wins. Revisit if usage shows near-miss duplication.
+  - **Inventory target selection.** If the household has exactly one inventory, the modal skips the picker and uses it. With 2+, show a dropdown defaulting to the inventory most-recently-promoted-to (per-user preference, store on `User`). Zero-cognition path for single-inventory households (the common case), one tap for multi-.
+  - **Race we accept.** If the user adds an item AND checks it off in the same ~3s window before classification finishes, the modal won't fire that one time. Cached on every subsequent add of the same name. Not worth a real-time push channel for v1.
+  - **Frontend.** One new modal component (`PromoteToInventoryModal`) consumed from `features/lists/items/useToggleListItemStatus.ts`'s `onSuccess`. Modal calls the existing `useCreateInventoryItem` hook. No new generated API surface beyond the toggle-response field.
+  - **Reqnroll scenarios.** Happy path (perishable item, classifier runs, user promotes). Edge: non-perishable item, modal never fires. Edge: classifier hasn't completed yet, modal doesn't fire (race acceptance documented).
+- **Impact / cost:** Two layers on top of the Hangfire prerequisite: (1) Classifier abstraction + OpenAI implementation via `Microsoft.Extensions.AI` — small, ~3 packages + 1 DI extension + 1 service file; (2) Feature itself — 1 new entity + 2 nullable columns + 1 new job + 1 new modal + 1 modified toggle slice + 1 new `ItemKnowledge` cache patch step. Running cost is rounding error at this volume (~$1-10/year). Future doors deliberately left open: classifier could also return a storage hint (Fridge/Pantry/Freezer) to make multi-inventory target selection smarter; `ClassifierVersion` lets us re-classify when the prompt is tuned; same `IClassificationService` could power inventory-side enrichment later. If OpenAI ever needs swapping (cost / availability / EU residency push), the `IChatClient` layer makes it a one-line DI change.
+
+---
+
 ## Frontend business events (Faro `pushEvent`)
 
 - **Why:** Faro is wired and capturing pageviews + errors + Web Vitals automatically. What it doesn't yet give us is **which features people actually use** — when someone creates a household, switches active household, invites a member, etc. Without these, dashboards show traffic but not behaviour, and "did anyone use the new feature?" is unanswerable. This is the natural follow-up to the Faro rollout and the missing piece for a usable product-side view in Grafana's Frontend Observability dashboards.
@@ -128,3 +157,49 @@ Format per item:
   - Cross-tool bridging (Faro events → Loki). They live in the Faro app inside Grafana Cloud; no bridging needed at this scale.
   - Custom funnels / retention curves. Grafana's Frontend Observability standard cuts cover event volume by user / env. DIY LogQL funnel queries are possible but only worth building when a product team starts consuming them — at which point PostHog becomes the better tool, see the revisit triggers in `OBSERVABILITY.md`.
 - **Impact / cost:** ~15 LOC (one helper export, ~6 hook call sites). No new dependencies. No backend changes. No env-var changes. Zero ongoing cost (well within Faro free-tier event volume). ~1 hour once the slices to instrument are agreed on. Reversible: deletes cleanly.
+
+---
+
+## First-run onboarding: dedicated "create your first household" page
+
+- **Why:** A user who signs in for the first time has zero households. Today the `_protected` layout assumes an active household exists — `CurrentHouseholdService` falls back to "highest-role / earliest-joined", which returns nothing, and the UI lands in an awkward empty state where most navigation is meaningless. New users need a single, obvious next step ("create a household") rather than a dashboard full of dead links. This is especially load-bearing once we start onboarding real users beyond the dev/stage tester pool.
+- **Sketch:**
+  - Detect the zero-household case on app boot — `useUserHouseholds()` returns `[]` after auth resolves.
+  - Route guard inside `_protected`: if households-list is loaded and empty, redirect to `/onboarding` (or `/household/create` reused with onboarding mode) instead of rendering the normal shell. Avoid rendering the household switcher / sidebar when there's nothing to switch to.
+  - Onboarding page is a single-purpose view: friendly copy, one form (household name), submit → `useCreateHousehold` → on success, set active household + redirect to the normal app shell. No "skip" — the app is unusable without a household.
+  - Edge case: user removed from their last household while session is live → same flow re-engages (next navigation lands on onboarding). Worth verifying.
+  - Consider whether invite-acceptance is a parallel onboarding entry point (user invited before they signed up): out of scope for v1, but the page copy shouldn't preclude it ("Create a household, or wait for an invite to be accepted" — TBD).
+- **Impact / cost:** one new route + page component (~50 LOC), one `_protected` guard change (~10 LOC), no backend changes (the empty-list signal already exists). Mostly a UX/copy exercise. ~half-day including i18n strings (en + de).
+
+---
+
+## Undo on item delete (snackbar with revert)
+
+- **Why:** Delete is a one-tap action on list items and inventory items, and mistakes happen — fat-finger on mobile, wrong row, regret a second later. Today the only recovery is "type it back in", which loses any metadata (sort order, classification, quantity, original `CreatedAt`). A "deleted — undo" snackbar is the standard mobile-first UX for destructive single actions, and given entities already use `IsActive` soft-delete (managed centrally in `ApplicationDbContext`), the backend cost is just exposing a restore endpoint.
+- **Sketch:**
+  - **Backend:** add `POST /api/households/{hh}/lists/{l}/items/{id}/restore` (and inventory equivalent) as a vertical slice — flips `IsActive` back to true, returns the restored DTO. Aggregate method: `List.RestoreItem(itemId)` / `Inventory.RestoreItem(itemId)` returning `Result<ListItem>` with `EntityNotFoundError` if no soft-deleted row exists. Permission: same as delete.
+  - **Frontend:** mutation hook `useRestoreListItem` / `useRestoreInventoryItem` following the existing arg-less mutation pattern. The delete mutation's `onSuccess` triggers a MUI `Snackbar` (existing in the codebase or add via `notistack`) with an "Undo" action that calls the restore mutation with the deleted item's id. On undo success, invalidate the list/inventory query so the item reappears in its original sort position.
+  - **Snackbar shape:** ~5s auto-dismiss, single-line ("Item deleted") + "UNDO" button. Stacks if multiple deletes happen rapidly — each undo restores its own item. Translatable via existing i18n setup.
+  - **Open questions:**
+    - Sort order on restore: does the item return to its original `SortOrder` value (preserved on the row), or get appended to the bottom? Lean toward preserving the original — minimizes surprise.
+    - TTL for "undoable" deletes: today soft-deletes live forever. Should restore work indefinitely (anyone with the item id can resurrect) or only within the snackbar window? Lean indefinitely — the snackbar is just the UX entry point; a future "trash bin" view could surface older soft-deletes.
+    - Scope: items only for v1. Restoring a deleted *list* or *inventory* (parent aggregates) is a bigger conversation — cascades, child item state, who's authorized — and warrants its own idea.
+- **Impact / cost:** two new slices + two aggregate methods (~80 LOC backend), two new mutation hooks + snackbar wiring (~60 LOC frontend), i18n strings. ~half-day. Reversible. Pairs naturally with the Lists/Inventories vertical-slice migration — do it as part of that work rather than retrofitting the legacy controllers.
+
+---
+
+## Stale checked-item cleanup: schedule it + extend to inventories
+
+- **What already exists:** `Frigorino.Infrastructure.Tasks.DeleteInactiveItems` (`Application/Frigorino.Infrastructure/Tasks/DeleteInactiveItems.cs`) already hard-deletes soft-deleted Households/Inventories/Lists/InventoryItems and **checked `ListItems` where `UpdatedAt < UtcNow - 30 days`**. It's wired through `AddMaintenanceServices` (`Frigorino.Infrastructure/Services/MaintenanceDependencyInjection.cs`) and runs **once on app startup** via `MaintenanceHostedService` (a `BackgroundService` with a 5s delay). So the *idea* is half-done; the gaps below are what's missing.
+- **Why this needs follow-up:**
+  - **Triggered by deploys, not by time.** On Railway with sleep mode, the app may stay warm for days or sleep for days — cleanup cadence is unpredictable. Active users on a long-warm instance build up checked-item cruft until the next deploy.
+  - **No equivalent rule for `InventoryItems`.** Inventories often have items "consumed" (checked) that linger forever. The same staleness signal applies.
+  - **30-day threshold is a magic number** baked into the cleanup file. Should be a configurable setting (`Maintenance:StaleCheckedItemDays`) so households with different rhythms can tune it later (out of scope: per-household setting).
+  - **CLAUDE.md doc drift.** The "Background jobs (Hangfire)" section in `CLAUDE.md` says the `IMaintenanceTask` / `MaintenanceHostedService` system was *replaced* by Hangfire, but the wiring is still active in `Program.cs:59`. Either migrate to Hangfire (the documented direction) or update CLAUDE.md to admit both systems coexist. The migration is the cleaner fix and a natural home for this idea.
+- **Sketch:**
+  - Migrate `DeleteInactiveItems` to a Hangfire recurring job (`StaleItemCleanupJob` in `Frigorino.Infrastructure/Jobs/`, per the pattern CLAUDE.md describes for `Frigorino.Web/Services/HangfireDependencyInjection.cs`). Register with `Cron.Daily()` (or `Cron.Hourly()` if 30 days starts feeling sluggish in practice — the work is cheap, the cadence doesn't matter much).
+  - Extend the query to cover `InventoryItems` with the same `IsChecked && UpdatedAt < threshold` rule. Verify `InventoryItem` actually has a `Status`/checked column — if it doesn't, the inventory side of this idea needs a separate "items have a consumed state" discussion first.
+  - Move the threshold into `appsettings.json` (`Maintenance:StaleCheckedItemDays`, default 30). Read via `IOptions<MaintenanceOptions>`.
+  - Once the Hangfire job lands and is verified, delete `MaintenanceHostedService.cs`, `MaintenanceDependencyInjection.cs`, `DemoMaintenanceTask.cs`, `DeleteInactiveItems.cs`, `IMaintenanceTask`, and the `AddMaintenanceServices()` call. Per the "remove dead code" rule, no leftover scaffolding.
+  - **Pairs with [[Undo on item delete]]:** if users can restore checked items via a snackbar, a 30-day hard-delete is fine (snackbar window is seconds, restore via "trash bin" is a separate future feature). If a trash bin lands later, this cleanup job becomes the trash-bin TTL enforcer.
+- **Impact / cost:** ~half-day. One new Hangfire job (~30 LOC), one DI registration, one `appsettings` key, ~5 files deleted. CLAUDE.md update. No new packages. No EF migration (no schema change). Reversible — the cleanup is just a SQL `DELETE` by predicate; if the rule is wrong, narrow the predicate or disable the recurring job in the Hangfire dashboard.
