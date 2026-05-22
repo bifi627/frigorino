@@ -28,6 +28,39 @@ namespace Frigorino.Test.Infrastructure
             Assert.Equal(20, user.LastActiveHouseholdId);
         }
 
+        [Fact]
+        public async Task GetCurrentHouseholdIdAsync_NoSession_ReturnsStoredLastActive()
+        {
+            var (service, ctx, _, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+
+            // Simulate "user previously picked 20, then session was lost" — set the column directly.
+            var user = await ctx.Users.SingleAsync(u => u.ExternalId == UserId);
+            user.LastActiveHouseholdId = 20;
+            await ctx.SaveChangesAsync();
+
+            var id = await service.GetCurrentHouseholdIdAsync();
+
+            Assert.Equal(20, id);
+        }
+
+        [Fact]
+        public async Task GetCurrentHouseholdIdAsync_StoredAndSessionEmpty_RehydratesSession()
+        {
+            var (service, _, session, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+
+            // First set via the service to seed the column …
+            await service.SetCurrentHouseholdAsync(20);
+
+            // … then wipe the session to simulate browser restart and re-read.
+            session.Clear();
+
+            var id = await service.GetCurrentHouseholdIdAsync();
+
+            Assert.Equal(20, id);
+            // Subsequent call should hit session; value must still be 20, not flip to the role default (10).
+            Assert.Equal(20, await service.GetCurrentHouseholdIdAsync());
+        }
+
         // ----- helpers -----
 
         private static async Task<(CurrentHouseholdService service, TestApplicationDbContext ctx, FakeSession session, string dbName)>
