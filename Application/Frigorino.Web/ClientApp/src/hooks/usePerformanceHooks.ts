@@ -8,7 +8,7 @@ export const useThrottle = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number,
 ): T => {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastExecRef = useRef<number>(0);
 
     return useCallback(
@@ -43,7 +43,7 @@ export const useDebounce = <T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number,
 ): T => {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     return useCallback(
         ((...args: Parameters<T>) => {

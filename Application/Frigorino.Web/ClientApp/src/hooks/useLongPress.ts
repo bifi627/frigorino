@@ -23,7 +23,7 @@ export const useLongPress = ({
     delay = 500,
     shouldPreventDefault = true,
 }: UseLongPressOptions): UseLongPressReturn => {
-    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressTriggered = useRef(false);
 
     const clearTimer = useCallback(() => {
