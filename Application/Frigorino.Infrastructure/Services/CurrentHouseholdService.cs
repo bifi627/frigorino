@@ -32,24 +32,33 @@ public class CurrentHouseholdService : ICurrentHouseholdService
         var session = _httpContextAccessor.HttpContext?.Session;
         if (session == null) return null;
 
-        // Try to get from session
+        // 1. Session cache (hot path).
         if (session.TryGetValue(CurrentHouseholdSessionKey, out var householdIdBytes))
         {
             var householdId = BitConverter.ToInt32(householdIdBytes);
-            
-            // Verify user still has access to this household
             if (await HasHouseholdAccessAsync(householdId))
             {
                 return householdId;
             }
-            else
-            {
-                // Remove invalid household from session
-                session.Remove(CurrentHouseholdSessionKey);
-            }
+            // Stale session entry — remove and continue to durable fallback.
+            session.Remove(CurrentHouseholdSessionKey);
         }
 
-        // Fallback to user's first available household
+        // 2. Persisted last-active choice on the User row. Re-verify access in case the user
+        //    was removed from the household between sessions.
+        var userId = _currentUserService.UserId;
+        var storedHouseholdId = await _context.Users
+            .Where(u => u.ExternalId == userId)
+            .Select(u => u.LastActiveHouseholdId)
+            .FirstOrDefaultAsync();
+
+        if (storedHouseholdId is int stored && await HasHouseholdAccessAsync(stored))
+        {
+            await SetCurrentHouseholdAsync(stored);
+            return stored;
+        }
+
+        // 3. Role-based default.
         var defaultHouseholdId = await GetDefaultHouseholdIdAsync();
         if (defaultHouseholdId.HasValue)
         {
@@ -72,6 +81,18 @@ public class CurrentHouseholdService : ICurrentHouseholdService
         {
             session.Set(CurrentHouseholdSessionKey, BitConverter.GetBytes(householdId));
         }
+
+        // Persist on the User row so the choice survives session loss / server restart.
+        // ApplicationDbContext.SaveChangesAsync does not stamp any field on User during Modified,
+        // so this write is scoped to LastActiveHouseholdId only.
+        var userId = _currentUserService.UserId;
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.ExternalId == userId);
+        if (user is not null && user.LastActiveHouseholdId != householdId)
+        {
+            user.LastActiveHouseholdId = householdId;
+            await _context.SaveChangesAsync();
+        }
+
         return Result.Ok();
     }
 

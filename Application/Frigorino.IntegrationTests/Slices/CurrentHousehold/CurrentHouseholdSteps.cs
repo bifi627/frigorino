@@ -28,4 +28,10 @@ public class CurrentHouseholdSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         await ctx.Page.ReloadAsync(new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
+
+    [When("I clear my browser session")]
+    public async Task WhenIClearMyBrowserSession()
+    {
+        await ctx.BrowserContext.ClearCookiesAsync();
+    }
 }
