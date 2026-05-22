@@ -61,6 +61,23 @@ namespace Frigorino.Test.Infrastructure
             Assert.Equal(20, await service.GetCurrentHouseholdIdAsync());
         }
 
+        [Fact]
+        public async Task GetCurrentHouseholdIdAsync_StoredHouseholdInaccessible_FallsBackToDefault()
+        {
+            var (service, ctx, _, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+
+            // User's stored choice points to a household they're no longer a member of.
+            var user = await ctx.Users.SingleAsync(u => u.ExternalId == UserId);
+            user.LastActiveHouseholdId = 999; // never seeded → no access
+            await ctx.SaveChangesAsync();
+
+            var id = await service.GetCurrentHouseholdIdAsync();
+
+            // The default is the highest-role / earliest-joined household. Both seeded households
+            // are Owner; ties break on JoinedAt ASC; since seeding order is 10 then 20, expect 10.
+            Assert.Equal(10, id);
+        }
+
         // ----- helpers -----
 
         private static async Task<(CurrentHouseholdService service, TestApplicationDbContext ctx, FakeSession session, string dbName)>
