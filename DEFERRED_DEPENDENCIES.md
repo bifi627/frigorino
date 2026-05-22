@@ -5,16 +5,14 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 ## Status (2026-05-22)
 
 Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
-- **Backend NuGet**: 1 major (FluentAssertions v8 — licensing-model change).
+- **Backend NuGet**: none.
 - **Frontend npm**: 4 majors (TypeScript 6, @vitejs/plugin-react v6, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
 
 ## Backend — NuGet (`/Application`)
 
-| Package | From | To | Bump |
-|---|---|---|---|
-| FluentAssertions (Frigorino.IntegrationTests) | 7.2.2 | 8.10.0 | **major** — v8 changed licensing model; check compatibility before bumping |
+_All deferred backend bumps have been applied or dropped._
 
-> Applied: all Microsoft.* 10.0.7 → 10.0.8 patches, FirebaseAdmin 3.3.0 → 3.5.0, Microsoft.Playwright 1.59.0 → 1.60.0, Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.22.1 → 1.23.0, FakeItEasy 8.3.0 → 9.0.1, coverlet.collector 6.0.0 → 10.0.1, Microsoft.NET.Test.Sdk 17.x → 18.5.1.
+> Applied: all Microsoft.* 10.0.7 → 10.0.8 patches, FirebaseAdmin 3.3.0 → 3.5.0, Microsoft.Playwright 1.59.0 → 1.60.0, Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.22.1 → 1.23.0, FakeItEasy 8.3.0 → 9.0.1, coverlet.collector 6.0.0 → 10.0.1, Microsoft.NET.Test.Sdk 17.x → 18.5.1. Dropped: FluentAssertions (26 usages refactored to xUnit `Assert.*`) — avoids the v8 licensing-model change.
 
 ## Frontend — npm (`/Application/Frigorino.Web/ClientApp`)
 

@@ -56,13 +56,13 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
         var response = await api.TryGetInventoryItemsAsync(inventoryId);
-        response.Status.Should().Be(200);
+        Assert.Equal(200, response.Status);
 
         var json = await response.JsonAsync();
         var items = json!.Value.EnumerateArray()
             .Select(e => e.GetProperty("text").GetString())
             .ToArray();
-        items.Should().NotContain(itemText);
+        Assert.DoesNotContain(itemText, items);
     }
 
     [Then("the API items of inventory {string} appear in order: {string}")]
@@ -71,12 +71,12 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         var expected = commaSeparated.Split(',').Select(s => s.Trim()).ToArray();
         var inventoryId = ctx.InventoryIds[inventoryName];
         var response = await api.TryGetInventoryItemsAsync(inventoryId);
-        response.Status.Should().Be(200);
+        Assert.Equal(200, response.Status);
 
         var json = await response.JsonAsync();
         var actual = json!.Value.EnumerateArray()
             .Select(e => e.GetProperty("text").GetString()!)
             .ToArray();
-        actual.Should().Equal(expected);
+        Assert.Equal(expected, actual);
     }
 }

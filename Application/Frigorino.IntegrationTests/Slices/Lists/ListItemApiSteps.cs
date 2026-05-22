@@ -72,13 +72,13 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var listId = ctx.ListIds[listName];
         var response = await api.TryGetListItemsAsync(listId);
-        response.Status.Should().Be(200);
+        Assert.Equal(200, response.Status);
 
         var json = await response.JsonAsync();
         var items = json!.Value.EnumerateArray()
             .Select(e => e.GetProperty("text").GetString())
             .ToArray();
-        items.Should().NotContain(itemText);
+        Assert.DoesNotContain(itemText, items);
     }
 
     [Then("the API items of {string} appear in order: {string}")]
@@ -87,12 +87,12 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         var expected = commaSeparated.Split(',').Select(s => s.Trim()).ToArray();
         var listId = ctx.ListIds[listName];
         var response = await api.TryGetListItemsAsync(listId);
-        response.Status.Should().Be(200);
+        Assert.Equal(200, response.Status);
 
         var json = await response.JsonAsync();
         var actual = json!.Value.EnumerateArray()
             .Select(e => e.GetProperty("text").GetString()!)
             .ToArray();
-        actual.Should().Equal(expected);
+        Assert.Equal(expected, actual);
     }
 }
