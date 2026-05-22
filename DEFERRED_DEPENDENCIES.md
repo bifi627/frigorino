@@ -2,6 +2,14 @@
 
 Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) that were closed unmerged when we tightened the policy. After the new config (`/dependabot.yml`) lands, Dependabot will only open patch + minor PRs — every entry below was either a major bump or part of a group containing one. Re-evaluate manually; bump in `package.json` / `*.csproj` / workflow YAML and let CI verify.
 
+## Status (2026-05-22)
+
+Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
+- **Backend NuGet**: 4 majors (FluentAssertions v8, FakeItEasy v9, coverlet.collector v10, Microsoft.NET.Test.Sdk v18).
+- **Frontend npm**: 5 majors (TypeScript 6, @vitejs/plugin-react v6, @types/node v25, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
+- **GitHub Actions**: 5 majors.
+- **Docker base image**: Node 22 → 26.
+
 ## Backend — NuGet (`/Application`)
 
 | Package | From | To | Bump |
@@ -9,18 +17,9 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 | FluentAssertions (Frigorino.IntegrationTests) | 7.2.2 | 8.10.0 | **major** — v8 changed licensing model; check compatibility before bumping |
 | FakeItEasy (Frigorino.Test) | 8.3.0 | 9.0.1 | **major** |
 | coverlet.collector (Frigorino.Test) | 6.0.0 | 10.0.1 | **major** (4 majors at once — verify reporter output) |
-| FirebaseAdmin (Frigorino.Features) | 3.3.0 | 3.5.0 | minor — safe to take |
 | Microsoft.NET.Test.Sdk (multiple projects) | 17.8.0 / 17.14.1 | 18.5.1 | **major** |
-| Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.7 | 10.0.8 | patch |
-| Microsoft.AspNetCore.OpenApi | 10.0.7 | 10.0.8 | patch |
-| Microsoft.EntityFrameworkCore (+ Design, InMemory, Tools) | 10.0.7 | 10.0.8 | patch |
-| Microsoft.Extensions.ApiDescription.Server | 10.0.7 | 10.0.8 | patch |
-| Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions | 10.0.7 | 10.0.8 | patch |
-| Microsoft.Extensions.Options | 10.0.7 | 10.0.8 | patch |
-| Microsoft.Playwright | 1.59.0 | 1.60.0 | minor |
-| Microsoft.VisualStudio.Azure.Containers.Tools.Targets | 1.22.1 | 1.23.0 | minor |
 
-> The patch/minor rows above will re-open automatically next Dependabot cycle (now bundled in the `microsoft` group); only the four major bumps need manual decisions.
+> All Microsoft.* 10.0.7 → 10.0.8 patches, FirebaseAdmin 3.3.0 → 3.5.0, Microsoft.Playwright 1.59.0 → 1.60.0, and Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.22.1 → 1.23.0 have been applied. Only the four majors above need manual decisions.
 
 ## Frontend — npm (`/Application/Frigorino.Web/ClientApp`)
 
@@ -31,12 +30,8 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 | @types/node | 22.16.5 | 25.9.1 | **major** — keep aligned with the Node version in `Dockerfile` (currently 22 LTS) |
 | @mui/material | 7.2.0 | 9.0.1 | **major** (skipped v8) — has codemods; allocate time |
 | @mui/icons-material | 7.2.0 | 9.0.1 | **major** |
-| @tanstack/react-query | 5.83.0 | 5.100.11 | minor |
-| @tanstack/react-router | 1.128.8 | 1.170.7 | minor |
-| @tanstack/react-router-devtools | 1.128.8 | 1.167.0 | minor |
-| @tanstack/router-plugin | 1.128.8 | 1.168.10 | minor |
 
-> All @tanstack/* minors will re-open next cycle in the `tanstack` group. Majors above stay manual.
+> @tanstack/react-query has been bumped to 5.100.11. The other three @tanstack/* packages (`react-router`, `react-router-devtools`, `router-plugin`) stay at 1.128.8 — see the `TECH_DEBT.md` entry for the regression details.
 
 ## GitHub Actions (`/.github/workflows`)
 
