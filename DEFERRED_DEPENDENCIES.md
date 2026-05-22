@@ -6,7 +6,7 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 
 Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
 - **Backend NuGet**: none.
-- **Frontend npm**: 4 majors (TypeScript 6, @vitejs/plugin-react v6, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
+- **Frontend npm**: 3 majors (TypeScript 6, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
 
 ## Backend — NuGet (`/Application`)
 
@@ -19,11 +19,12 @@ _All deferred backend bumps have been applied or dropped._
 | Package | From | To | Bump |
 |---|---|---|---|
 | typescript | 5.8.3 | 6.0.3 | **major** — TS 6 is stable; needs a focused upgrade session (compiler diagnostics, lib.d.ts changes) |
-| @vitejs/plugin-react | 4.7.0 | 6.0.2 | **major** (skipped v5) |
 | @mui/material | 7.2.0 | 9.0.1 | **major** (skipped v8) — has codemods; allocate time |
 | @mui/icons-material | 7.2.0 | 9.0.1 | **major** |
 
 > @tanstack/react-query has been bumped to 5.100.11. The other three @tanstack/* packages (`react-router`, `react-router-devtools`, `router-plugin`) stay at 1.128.8 — see the `TECH_DEBT.md` entry for the regression details.
+>
+> Vite has been bumped 7 → 8 (rolldown bundler) alongside `@vitejs/plugin-react` 4 → 6 and `vite-plugin-pwa` 1.0.2 → 1.3.0. `@tanstack/router-plugin` stays at 1.128.8 (its peer declares vite ≤6 but worked under 7 and continues to work under 8).
 
 ## GitHub Actions (`/.github/workflows`)
 
