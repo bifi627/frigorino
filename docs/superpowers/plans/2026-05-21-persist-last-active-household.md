@@ -10,9 +10,9 @@
 
 ---
 
-## Progress (as of 2026-05-21, paused mid-Task-5)
+## Progress (complete as of 2026-05-22)
 
-**Branch:** `feat/persist-last-active-household` (off `stage`). Plan committed at `c7e5b90`.
+**Branch:** `feat/persist-last-active-household` (off `stage`, merge-base `19e3c80`). Plan committed at `c7e5b90`. Head: `2c17f50`.
 
 | Task | Status | Commit | Notes |
 |------|--------|--------|-------|
@@ -20,12 +20,14 @@
 | 2 — EF FK + migration | ✅ done | `d090975` | Migration filename: `20260521212218_Persist_Last_Active_Household.cs`. `ProductVersion` in snapshot rebased 8.0.18 → 10.0.7 (benign — actual tooling version). |
 | 3 — FakeSession helper | ✅ done | `1e51f22` | Added `[NotNullWhen(true)]` attribute on `TryGetValue` out param (matches `ISession` contract); block braces instead of expression bodies (matches project style). |
 | 4 — TDD Set persistence | ✅ done | `a2563f2` | **Helper signature changed** from `(service, ctx)` to `(service, ctx, session, dbName)` — the plan's `ctx.Database.GetDbConnection().Database` throws on EF InMemory; the test now uses the saved `dbName` directly. Extra fields prefetched for Tasks 5–6 reuse. |
-| 5 — TDD Get fallback | ⏸ in progress | — | Implementer was dispatched but interrupted. Below corrections (see "Task 5 — Resume notes") must be applied: use `session.Clear()` from the tuple, NOT the reflection trick the original plan shows. |
-| 6 — Inaccessible-stored edge case | ⏸ pending | — | |
-| 7 — Reqnroll session-loss scenario | ⏸ pending | — | |
-| 8 — Full-stack verify | ⏸ pending | — | |
+| 5 — TDD Get fallback | ✅ done | `0a74ec5` | 3-step chain (session → stored → role default), each non-session resolution calls `SetCurrentHouseholdAsync` to rehydrate. Red was meaningful (both failed `Expected: 20, Actual: 10`). |
+| 6 — Inaccessible-stored edge case | ✅ done | `902339e` | Single new `[Fact]`; passes against the Task 5 implementation unchanged. |
+| 7 — Reqnroll session-loss scenario | ✅ done | `2c17f50` | New Gherkin scenario + `WhenIClearMyBrowserSession` step (clears Playwright `IBrowserContext` cookies). Auth survives because tests inject `X-Test-*` headers per request, not cookies. |
+| 8 — Full-stack verify | ✅ done | — | Unit 162/162, Integration 58/58 (one transient flake on unrelated `HouseholdSetup` scenario, clean on retry), `npm run tsc` clean, `docker build` clean. |
 
-### Task 5 — Resume notes
+**Final review (`19e3c80..2c17f50`):** Ready to merge to `stage`. No critical or important issues; minor observations are pre-existing patterns (double access-check on cold reads, side-effecting `Get*`) or stale plan comments (line 52 "no index" — EF auto-creates `IX_Users_LastActiveHouseholdId` for the FK).
+
+### Task 5 — Resume notes (historical, kept for reference)
 
 When resuming, dispatch a fresh implementer with these explicit corrections to the plan's Task 5 text:
 
