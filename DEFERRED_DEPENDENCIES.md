@@ -6,9 +6,8 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 
 Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
 - **Backend NuGet**: 4 majors (FluentAssertions v8, FakeItEasy v9, coverlet.collector v10, Microsoft.NET.Test.Sdk v18).
-- **Frontend npm**: 5 majors (TypeScript 6, @vitejs/plugin-react v6, @types/node v25, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
+- **Frontend npm**: 4 majors (TypeScript 6, @vitejs/plugin-react v6, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
 - **GitHub Actions**: 5 majors.
-- **Docker base image**: Node 22 → 26.
 
 ## Backend — NuGet (`/Application`)
 
@@ -27,7 +26,6 @@ Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remain
 |---|---|---|---|
 | typescript | 5.8.3 | 6.0.3 | **major** — TS 6 is stable; needs a focused upgrade session (compiler diagnostics, lib.d.ts changes) |
 | @vitejs/plugin-react | 4.7.0 | 6.0.2 | **major** (skipped v5) |
-| @types/node | 22.16.5 | 25.9.1 | **major** — keep aligned with the Node version in `Dockerfile` (currently 22 LTS) |
 | @mui/material | 7.2.0 | 9.0.1 | **major** (skipped v8) — has codemods; allocate time |
 | @mui/icons-material | 7.2.0 | 9.0.1 | **major** |
 
@@ -47,6 +45,4 @@ Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remain
 
 ## Docker (`/Application/Dockerfile`)
 
-| Image | From | To | Bump |
-|---|---|---|---|
-| node | 22-bookworm-slim | 26-bookworm-slim | **major** — stay on 22 (active LTS). Bump only when Node 24 LTS is mature and `@types/node` is bumped in lockstep. |
+_All deferred Docker bumps have been applied — currently tracking active Node LTS (24)._
