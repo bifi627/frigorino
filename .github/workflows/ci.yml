@@ -124,7 +124,7 @@ jobs:
         run: dotnet restore Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj --locked-mode
 
       - name: Download SPA build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: client-app-build
           path: Application/Frigorino.Web/ClientApp/build
