@@ -10,6 +10,42 @@
 
 ---
 
+## Progress (as of 2026-05-21, paused mid-Task-5)
+
+**Branch:** `feat/persist-last-active-household` (off `stage`). Plan committed at `c7e5b90`.
+
+| Task | Status | Commit | Notes |
+|------|--------|--------|-------|
+| 1 — User entity property | ✅ done | `11e6262` | Clean. |
+| 2 — EF FK + migration | ✅ done | `d090975` | Migration filename: `20260521212218_Persist_Last_Active_Household.cs`. `ProductVersion` in snapshot rebased 8.0.18 → 10.0.7 (benign — actual tooling version). |
+| 3 — FakeSession helper | ✅ done | `1e51f22` | Added `[NotNullWhen(true)]` attribute on `TryGetValue` out param (matches `ISession` contract); block braces instead of expression bodies (matches project style). |
+| 4 — TDD Set persistence | ✅ done | `a2563f2` | **Helper signature changed** from `(service, ctx)` to `(service, ctx, session, dbName)` — the plan's `ctx.Database.GetDbConnection().Database` throws on EF InMemory; the test now uses the saved `dbName` directly. Extra fields prefetched for Tasks 5–6 reuse. |
+| 5 — TDD Get fallback | ⏸ in progress | — | Implementer was dispatched but interrupted. Below corrections (see "Task 5 — Resume notes") must be applied: use `session.Clear()` from the tuple, NOT the reflection trick the original plan shows. |
+| 6 — Inaccessible-stored edge case | ⏸ pending | — | |
+| 7 — Reqnroll session-loss scenario | ⏸ pending | — | |
+| 8 — Full-stack verify | ⏸ pending | — | |
+
+### Task 5 — Resume notes
+
+When resuming, dispatch a fresh implementer with these explicit corrections to the plan's Task 5 text:
+
+1. **Drop the reflection trick.** The plan shows:
+   ```csharp
+   var accessorField = service.GetType().GetField("_httpContextAccessor", ...);
+   var accessor = (IHttpContextAccessor)accessorField.GetValue(service)!;
+   accessor.HttpContext!.Session.Clear();
+   ```
+   Replace with simply: `session.Clear();` using the `session` field from the helper's tuple. The first test's tuple destructure becomes `var (service, ctx, _, _) = ...` and the second test's is `var (service, _, session, _) = ...`.
+
+2. The implementer should keep TDD discipline (red before green), and at the end run the broader filter `dotnet test ... --filter "FullyQualifiedName~CurrentHouseholdServiceTests"` to confirm all 3 tests pass (the Task 4 test plus both new ones).
+
+### File-state divergences from the original plan (for anyone reading the plan body below)
+
+- **Task 4 Step 1 code block**: in the *committed* test file the helper returns `(CurrentHouseholdService service, TestApplicationDbContext ctx, FakeSession session, string dbName)` and the test destructures `var (service, ctx, _, _) = …`. The verification context is built via `NewContext(dbName)`, not `NewContext(ctx.Database.GetDbConnection().Database)`. The body in the plan below is the *original* spec — when reading the actual code, expect the 4-tuple shape.
+- **Task 3 FakeSession**: actual file uses block braces and adds `[NotNullWhen(true)]` to `TryGetValue`'s out param; otherwise identical.
+
+---
+
 ## File Structure
 
 - **Modify** `Application/Frigorino.Domain/Entities/User.cs` — add `LastActiveHouseholdId` (nullable `int?`) and `LastActiveHousehold` nav property.
@@ -29,7 +65,7 @@ The split keeps the persistence concern colocated with `CurrentHouseholdService`
 **Files:**
 - Modify: `Application/Frigorino.Domain/Entities/User.cs`
 
-- [ ] **Step 1: Add the property + navigation**
+- [x] **Step 1: Add the property + navigation** *(done — commit `11e6262`)*
 
 Replace the body of `User` with:
 
@@ -55,12 +91,12 @@ namespace Frigorino.Domain.Entities
 }
 ```
 
-- [ ] **Step 2: Verify the project still builds**
+- [x] **Step 2: Verify the project still builds** *(done — 0 warnings, 0 errors)*
 
 Run: `dotnet build Application/Frigorino.Domain/Frigorino.Domain.csproj`
 Expected: build succeeds (no consumers reference the new property yet).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit** *(done — `11e6262`)*
 
 ```bash
 git add Application/Frigorino.Domain/Entities/User.cs
@@ -76,7 +112,7 @@ git commit -m "feat: add User.LastActiveHouseholdId domain property"
 - Create: `Application/Frigorino.Infrastructure/Migrations/<timestamp>_Persist_Last_Active_Household.cs` (auto-generated)
 - Modify: `Application/Frigorino.Infrastructure/Migrations/ApplicationDbContextModelSnapshot.cs` (auto-updated)
 
-- [ ] **Step 1: Configure the FK**
+- [x] **Step 1: Configure the FK** *(done — commit `d090975`)*
 
 Inside `UserConfiguration.Configure`, immediately after the existing `IsActive` `.HasDefaultValue(true)` block and **before** the `// Configure relationships` comment, insert:
 
@@ -96,12 +132,12 @@ Then, inside the `// Configure relationships` region, append:
                 .OnDelete(DeleteBehavior.SetNull);
 ```
 
-- [ ] **Step 2: Build to confirm the model compiles**
+- [x] **Step 2: Build to confirm the model compiles** *(done)*
 
 Run: `dotnet build Application/Frigorino.Infrastructure/Frigorino.Infrastructure.csproj`
 Expected: build succeeds.
 
-- [ ] **Step 3: Generate the EF migration**
+- [x] **Step 3: Generate the EF migration** *(done — `20260521212218_Persist_Last_Active_Household.cs`)*
 
 Run from repo root:
 
@@ -116,7 +152,7 @@ Expected:
   `<timestamp>_Persist_Last_Active_Household.cs` and `<timestamp>_Persist_Last_Active_Household.Designer.cs`.
 - `ApplicationDbContextModelSnapshot.cs` is updated with the new column + FK.
 
-- [ ] **Step 4: Sanity-check the generated migration**
+- [x] **Step 4: Sanity-check the generated migration** *(done — AddColumn nullable, IX_Users_LastActiveHouseholdId, FK with `ReferentialAction.SetNull`, matching `Down`)*
 
 Open `<timestamp>_Persist_Last_Active_Household.cs`. It must contain:
 - `migrationBuilder.AddColumn<int>(name: "LastActiveHouseholdId", table: "Users", type: "integer", nullable: true ...)`
@@ -126,7 +162,7 @@ Open `<timestamp>_Persist_Last_Active_Household.cs`. It must contain:
 
 If the migration looks wrong (e.g. nullable: false, or onDelete: Cascade), delete both new files, fix the configuration, and re-run Step 3.
 
-- [ ] **Step 5: Apply the migration locally + confirm app boots**
+- [x] **Step 5: Apply the migration locally + confirm app boots** *(done — `dotnet build Application/Frigorino.sln` clean)*
 
 Run: `dotnet build Application/Frigorino.sln`
 Expected: build succeeds.
@@ -141,7 +177,7 @@ dotnet ef database update \
 
 Expected: `Done.` (Skip this step if no local DB; `dotnet build` already proved the model snapshot is consistent.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit** *(done — `d090975`)*
 
 ```bash
 git add Application/Frigorino.Infrastructure/EntityFramework/Configurations/UserConfiguration.cs
@@ -158,7 +194,7 @@ git commit -m "feat: add LastActiveHouseholdId FK column with SetNull cascade"
 
 Service tests need an `ISession` that survives across calls in the same test. `Microsoft.AspNetCore.Http`'s default session implementation needs a backing store + DI we don't want to wire. A 30-line in-memory fake is the minimum.
 
-- [ ] **Step 1: Create the fake session**
+- [x] **Step 1: Create the fake session** *(done — commit `1e51f22`. Implementer used block braces instead of expression bodies and added `[NotNullWhen(true)]` on the `TryGetValue` out param.)*
 
 Write file:
 
@@ -189,12 +225,12 @@ namespace Frigorino.Test.TestInfrastructure
 }
 ```
 
-- [ ] **Step 2: Build the test project**
+- [x] **Step 2: Build the test project** *(done — 0 warnings)*
 
 Run: `dotnet build Application/Frigorino.Test/Frigorino.Test.csproj`
 Expected: build succeeds.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit** *(done — `1e51f22`)*
 
 ```bash
 git add Application/Frigorino.Test/TestInfrastructure/FakeSession.cs
@@ -209,7 +245,7 @@ git commit -m "test: add FakeSession helper for service-level tests"
 - Create: `Application/Frigorino.Test/Infrastructure/CurrentHouseholdServiceTests.cs`
 - Modify: `Application/Frigorino.Infrastructure/Services/CurrentHouseholdService.cs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test** *(done — commit `a2563f2`. **NOTE:** the actual committed helper signature is `(CurrentHouseholdService service, TestApplicationDbContext ctx, FakeSession session, string dbName)` — see Progress section above for why. Read the real file rather than the block below.)*
 
 Create `Application/Frigorino.Test/Infrastructure/CurrentHouseholdServiceTests.cs`:
 
@@ -296,12 +332,12 @@ namespace Frigorino.Test.Infrastructure
 }
 ```
 
-- [ ] **Step 2: Run the test to confirm it fails**
+- [x] **Step 2: Run the test to confirm it fails** *(done — red was meaningful: `Assert.Equal() Failure: Values differ. Expected: 20, Actual: null`)*
 
 Run: `dotnet test Application/Frigorino.Test --filter "FullyQualifiedName~CurrentHouseholdServiceTests.SetCurrentHouseholdAsync_Success_PersistsToUserRow"`
 Expected: FAIL — the verify step finds `user.LastActiveHouseholdId == null` because the service does not write to the User row yet.
 
-- [ ] **Step 3: Implement persistence in `SetCurrentHouseholdAsync`**
+- [x] **Step 3: Implement persistence in `SetCurrentHouseholdAsync`** *(done)*
 
 In `Application/Frigorino.Infrastructure/Services/CurrentHouseholdService.cs`, replace the existing `SetCurrentHouseholdAsync` method (lines 63–76) with:
 
@@ -334,12 +370,12 @@ In `Application/Frigorino.Infrastructure/Services/CurrentHouseholdService.cs`, r
     }
 ```
 
-- [ ] **Step 4: Run the test to confirm it passes**
+- [x] **Step 4: Run the test to confirm it passes** *(done — 1 passed, 899 ms)*
 
 Run: `dotnet test Application/Frigorino.Test --filter "FullyQualifiedName~CurrentHouseholdServiceTests.SetCurrentHouseholdAsync_Success_PersistsToUserRow"`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit** *(done — `a2563f2`)*
 
 ```bash
 git add Application/Frigorino.Test/Infrastructure/CurrentHouseholdServiceTests.cs
@@ -355,15 +391,15 @@ git commit -m "feat: persist active household to User row on Set"
 - Modify: `Application/Frigorino.Test/Infrastructure/CurrentHouseholdServiceTests.cs`
 - Modify: `Application/Frigorino.Infrastructure/Services/CurrentHouseholdService.cs`
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing tests**
 
-Append to `CurrentHouseholdServiceTests`:
+Append two `[Fact]`s to `CurrentHouseholdServiceTests`, before the `// ----- helpers -----` line. **The helper actually committed in Task 4 returns a 4-tuple `(service, ctx, session, dbName)`** — destructure with `_` to discard the fields you don't need (no reflection required).
 
 ```csharp
         [Fact]
         public async Task GetCurrentHouseholdIdAsync_NoSession_ReturnsStoredLastActive()
         {
-            var (service, ctx) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+            var (service, ctx, _, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
 
             // Simulate "user previously picked 20, then session was lost" — set the column directly.
             var user = await ctx.Users.SingleAsync(u => u.ExternalId == UserId);
@@ -378,22 +414,18 @@ Append to `CurrentHouseholdServiceTests`:
         [Fact]
         public async Task GetCurrentHouseholdIdAsync_StoredAndSessionEmpty_RehydratesSession()
         {
-            var (service, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+            var (service, _, session, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
 
             // First set via the service to seed the column …
             await service.SetCurrentHouseholdAsync(20);
 
             // … then wipe the session to simulate browser restart and re-read.
-            var accessorField = service.GetType().GetField("_httpContextAccessor",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-            var accessor = (IHttpContextAccessor)accessorField.GetValue(service)!;
-            accessor.HttpContext!.Session.Clear();
+            session.Clear();
 
             var id = await service.GetCurrentHouseholdIdAsync();
 
             Assert.Equal(20, id);
-            // Subsequent call should hit session (we can't easily assert this without mocks, but the
-            // value must still be 20 and not have flipped to the default-by-role 10).
+            // Subsequent call should hit session; value must still be 20, not flip to the role default (10).
             Assert.Equal(20, await service.GetCurrentHouseholdIdAsync());
         }
 ```
@@ -475,13 +507,13 @@ The user might have left the household they last picked (membership soft-deleted
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `CurrentHouseholdServiceTests`:
+Append to `CurrentHouseholdServiceTests` (using the 4-tuple destructure, same as Task 5):
 
 ```csharp
         [Fact]
         public async Task GetCurrentHouseholdIdAsync_StoredHouseholdInaccessible_FallsBackToDefault()
         {
-            var (service, ctx) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
+            var (service, ctx, _, _) = await CreateServiceWithSeededUserAsync(seedHouseholdIds: new[] { 10, 20 });
 
             // User's stored choice points to a household they're no longer a member of.
             var user = await ctx.Users.SingleAsync(u => u.ExternalId == UserId);
