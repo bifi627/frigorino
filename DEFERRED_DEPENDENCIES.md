@@ -7,7 +7,6 @@ Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) tha
 Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
 - **Backend NuGet**: 4 majors (FluentAssertions v8, FakeItEasy v9, coverlet.collector v10, Microsoft.NET.Test.Sdk v18).
 - **Frontend npm**: 4 majors (TypeScript 6, @vitejs/plugin-react v6, @mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
-- **GitHub Actions**: 5 majors.
 
 ## Backend — NuGet (`/Application`)
 
@@ -33,15 +32,7 @@ Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remain
 
 ## GitHub Actions (`/.github/workflows`)
 
-| Action | From | To | Bump |
-|---|---|---|---|
-| actions/cache | 4 | 5 | **major** |
-| actions/setup-dotnet | 4 | 5 | **major** |
-| actions/setup-node | 4 | 6 | **major** (skipped v5) |
-| actions/upload-artifact | 4 | 7 | **major** — v4↔v5 changed default artifact behavior (no longer overwrites); review before bump |
-| actions/download-artifact | 4 | 8 | **major** — same v4↔v5 breaking change |
-
-> All five were majors. With the new policy these won't re-open; they need a deliberate workflow update.
+_All deferred Action bumps have been applied (cache v5, setup-dotnet v5, setup-node v6, upload-artifact v7, download-artifact v8). `actions/checkout@v4` stays as-is._
 
 ## Docker (`/Application/Dockerfile`)
 
