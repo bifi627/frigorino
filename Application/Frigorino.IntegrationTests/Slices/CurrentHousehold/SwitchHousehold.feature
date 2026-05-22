@@ -22,3 +22,19 @@ Feature: Switch active household
     And an existing household "Smiths" owned by "owner" that I am not a member of
     When I attempt to switch the active household to the seeded one via the API
     Then the API response status is 403
+
+  Scenario: Active household survives session loss
+    Given I am logged in as "owner"
+    When I navigate to "/household/create"
+    And I fill in the household name "Alpha"
+    And I submit the household form
+    Then I am redirected to "/"
+    When I navigate to "/household/create"
+    And I fill in the household name "Bravo"
+    And I submit the household form
+    Then I am redirected to "/"
+    When I switch the active household to "Bravo"
+    Then the active household should be "Bravo"
+    When I clear my browser session
+    And I reload the page
+    Then the active household should be "Bravo"
