@@ -1,10 +1,36 @@
 version: 2
+
+# Shared policy (applied per-ecosystem below):
+#   - PRs target the `stage` branch (FF-promoted to `main` via the normal workflow).
+#   - Major-version bumps are ignored — handle them manually (see DEFERRED_DEPENDENCIES.md).
+#   - Patch + minor updates are grouped into a single PR per ecosystem to cut noise.
+#   - Cooldown defers a release for a few days so retracted versions don't reach a PR.
+#
+# Note: Dependabot reads THIS file from the default branch (`main`), regardless of
+# `target-branch`. So changes here only take effect once they land on `main`.
+
 updates:
+  # ====== NuGet (.NET) ======
   - package-ecosystem: nuget
     directory: "/Application"
+    target-branch: "stage"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    cooldown:
+      semver-minor-days: 5
+      semver-patch-days: 2
     groups:
       microsoft:
         patterns:
@@ -12,12 +38,34 @@ updates:
       opentelemetry:
         patterns:
           - "OpenTelemetry.*"
+      nuget-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
+  # ====== npm (React SPA) ======
   - package-ecosystem: npm
     directory: "/Application/Frigorino.Web/ClientApp"
+    target-branch: "stage"
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+      day: monday
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    cooldown:
+      semver-minor-days: 5
+      semver-patch-days: 2
     groups:
       mui:
         patterns:
@@ -35,13 +83,57 @@ updates:
       types:
         patterns:
           - "@types/*"
+      npm-minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
+  # ====== GitHub Actions ======
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: "stage"
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    cooldown:
+      semver-minor-days: 5
+      semver-patch-days: 2
+    groups:
+      actions:
+        patterns:
+          - "*"
 
+  # ====== Docker base images ======
   - package-ecosystem: docker
     directory: "/Application"
+    target-branch: "stage"
     schedule:
       interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+    cooldown:
+      semver-minor-days: 5
+      semver-patch-days: 2
