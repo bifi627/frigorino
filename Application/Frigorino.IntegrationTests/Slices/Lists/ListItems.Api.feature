@@ -57,3 +57,10 @@ Feature: List Items API
     Given there is a list named "Weekly Groceries" with item "Milk"
     When I PUT an all-null update to "Milk" in "Weekly Groceries" via the API
     Then the API response status is 400
+
+  Scenario: Restoring a deleted item via the API returns it to the list
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I DELETE the item "Milk" in "Weekly Groceries" via the API
+    And I POST restore for the item "Milk" in list "Weekly Groceries" via the API
+    Then the API response status is 200
+    And the API response when getting items of list "Weekly Groceries" includes "Milk"

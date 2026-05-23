@@ -25,6 +25,14 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryDeleteInventoryItemAsync(inventoryId, itemId);
     }
 
+    [When("I POST restore for the inventory item {string} in inventory {string} via the API")]
+    public async Task WhenIPostRestoreForTheInventoryItemViaTheApi(string itemText, string inventoryName)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        var itemId = ctx.GetInventoryItemId(inventoryName, itemText);
+        ctx.LastApiResponse = await api.TryRestoreInventoryItemAsync(inventoryId, itemId);
+    }
+
     [When("I POST compact for inventory {string} via the API")]
     public async Task WhenIPostCompactForInventoryViaTheApi(string inventoryName)
     {
@@ -63,6 +71,20 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
             .Select(e => e.GetProperty("text").GetString())
             .ToArray();
         Assert.DoesNotContain(itemText, items);
+    }
+
+    [Then("the API response when getting items of inventory {string} includes {string}")]
+    public async Task ThenTheApiResponseWhenGettingItemsOfInventoryIncludes(string inventoryName, string itemText)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        var response = await api.TryGetInventoryItemsAsync(inventoryId);
+        Assert.Equal(200, response.Status);
+
+        var json = await response.JsonAsync();
+        var items = json!.Value.EnumerateArray()
+            .Select(e => e.GetProperty("text").GetString())
+            .ToArray();
+        Assert.Contains(itemText, items);
     }
 
     [Then("the API items of inventory {string} appear in order: {string}")]

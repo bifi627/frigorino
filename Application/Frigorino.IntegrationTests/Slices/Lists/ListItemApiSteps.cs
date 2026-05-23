@@ -25,6 +25,14 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryDeleteListItemAsync(listId, itemId);
     }
 
+    [When("I POST restore for the item {string} in list {string} via the API")]
+    public async Task WhenIPostRestoreForTheItemInListViaTheApi(string itemText, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, itemText);
+        ctx.LastApiResponse = await api.TryRestoreListItemAsync(listId, itemId);
+    }
+
     [When("I POST compact for {string} via the API")]
     public async Task WhenIPostCompactForViaTheApi(string listName)
     {
@@ -79,6 +87,20 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
             .Select(e => e.GetProperty("text").GetString())
             .ToArray();
         Assert.DoesNotContain(itemText, items);
+    }
+
+    [Then("the API response when getting items of list {string} includes {string}")]
+    public async Task ThenTheApiResponseWhenGettingItemsOfListIncludes(string listName, string itemText)
+    {
+        var listId = ctx.ListIds[listName];
+        var response = await api.TryGetListItemsAsync(listId);
+        Assert.Equal(200, response.Status);
+
+        var json = await response.JsonAsync();
+        var items = json!.Value.EnumerateArray()
+            .Select(e => e.GetProperty("text").GetString())
+            .ToArray();
+        Assert.Contains(itemText, items);
     }
 
     [Then("the API items of {string} appear in order: {string}")]

@@ -45,3 +45,10 @@ Feature: Inventory Items API
     When I PATCH "Sugar" after "Salt" in inventory "Pantry" via the API
     Then the API response status is 200
     And the API items of inventory "Pantry" appear in order: "Flour, Salt, Sugar"
+
+  Scenario: Restoring a deleted inventory item via the API returns it to the inventory
+    Given there is an inventory named "Pantry" with item "Flour"
+    When I DELETE the inventory item "Flour" in "Pantry" via the API
+    And I POST restore for the inventory item "Flour" in inventory "Pantry" via the API
+    Then the API response status is 200
+    And the API response when getting items of inventory "Pantry" includes "Flour"
