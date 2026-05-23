@@ -45,6 +45,10 @@ jobs:
         working-directory: Application/Frigorino.Web/ClientApp
         run: npm run tsc
 
+      - name: Verify route tree is up to date
+        working-directory: Application/Frigorino.Web/ClientApp
+        run: npm run routes:check
+
       - name: Build
         working-directory: Application/Frigorino.Web/ClientApp
         run: npm run build
