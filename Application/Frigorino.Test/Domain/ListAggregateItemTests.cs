@@ -292,6 +292,61 @@ namespace Frigorino.Test.Domain
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
         }
 
+        // ------- RestoreItem -------
+
+        [Fact]
+        public void RestoreItem_ReactivatesSoftDeletedItemAndStampsUpdatedAt()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+            item.IsActive = false;
+            item.UpdatedAt = DateTime.UtcNow.AddMinutes(-5);
+            var before = item.UpdatedAt;
+
+            var result = list.RestoreItem(item.Id);
+
+            Assert.True(result.IsSuccess);
+            Assert.True(item.IsActive);
+            Assert.Same(item, result.Value);
+            Assert.True(item.UpdatedAt > before);
+        }
+
+        [Fact]
+        public void RestoreItem_PreservesOriginalSortOrder()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk", sortOrder: 1_234_567);
+            item.IsActive = false;
+
+            var result = list.RestoreItem(item.Id);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(1_234_567, item.SortOrder);
+        }
+
+        [Fact]
+        public void RestoreItem_NotFound_ReturnsEntityNotFound()
+        {
+            var list = NewList();
+
+            var result = list.RestoreItem(itemId: 999);
+
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
+
+        [Fact]
+        public void RestoreItem_AlreadyActive_ReturnsEntityNotFound()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk"); // active by default
+
+            var result = list.RestoreItem(item.Id);
+
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
+
         // ------- ToggleItemStatus -------
 
         [Fact]
