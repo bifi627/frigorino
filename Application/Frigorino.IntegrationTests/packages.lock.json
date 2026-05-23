@@ -44,31 +44,29 @@
       },
       "Reqnroll.Microsoft.Extensions.DependencyInjection": {
         "type": "Direct",
-        "requested": "[2.4.1, )",
-        "resolved": "2.4.1",
-        "contentHash": "ACwrXgW5khZZD7lEBFSWoQ7IlmGddq5RSh9oRoYlP6Cd3XmB2FoLRirMUg+3nIFsrSY+oXWpW8qBIFhGcLBM0g==",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "PHjhBhabDgahFEwBmK+Pt0m2rnm2ikTRvjFRJ4441KMONGCy0FGrkdONFbuGU5Zqc+QuRprWDRAFSbkreVmj2A==",
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection": "6.0.0",
-          "Reqnroll": "[2.4.1, 3.0.0)"
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.0",
+          "Reqnroll": "[3.3.4, 4.0.0)"
         }
       },
       "Reqnroll.Tools.MsBuild.Generation": {
         "type": "Direct",
-        "requested": "[2.4.1, )",
-        "resolved": "2.4.1",
-        "contentHash": "+Up0eUWnKRKPdRIttE52DYzwayUd4bGMyRytYeeCwtqwZA4tLhK2NspOZJ8axPcmATOM9QSTCUHUlyp9pgcfQg==",
-        "dependencies": {
-          "Reqnroll": "[2.4.1]"
-        }
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "atTwejJRcKgUcJCofp4uSPKNXBav6ZITHtuD6dhByg1ubyVJirjz5TkcVCR9oFnHAEbZvOdd4cYCJNPO9rSAsQ=="
       },
       "Reqnroll.xUnit": {
         "type": "Direct",
-        "requested": "[2.4.1, )",
-        "resolved": "2.4.1",
-        "contentHash": "FIJ1CjLM9XY3wVmRwZT2csgQCpNSUVdtHIOaXHrFLPEHBH36ioEK9+iWbD8g6gyAm8Tfg/O0Mz8WqK0VJnWc7w==",
+        "requested": "[3.3.4, )",
+        "resolved": "3.3.4",
+        "contentHash": "J8olct/J9yE/n+ZNwIBWpNBrCoBxB5sidzoShGO+spM2G+jgNcAFu4S75xnpQeXVPVqH+MYLKMmrAAz2+WvDEQ==",
         "dependencies": {
-          "Reqnroll": "[2.4.1]",
-          "Reqnroll.Tools.MsBuild.Generation": "[2.4.1]",
+          "Reqnroll": "3.3.4",
+          "Reqnroll.Tools.MsBuild.Generation": "3.3.4",
           "Xunit.SkippableFact": "1.4.13",
           "xunit.core": "2.8.1"
         }
@@ -133,6 +131,19 @@
         "type": "Transitive",
         "resolved": "17.1.0",
         "contentHash": "IZFDLLwrUCKuGDXQzmAWZa+kQFpVmVwWD8wEl0UWGOR83UQfzqg8hZeSSNUOXlW0Kh3vMO6kEm3FpNC4amKMaw=="
+      },
+      "Cucumber.HtmlFormatter": {
+        "type": "Transitive",
+        "resolved": "22.2.0",
+        "contentHash": "hlP9GGzRADDKh0/GEt2aWD9G08qEDD4z6TC6iqJt3xH8kiU3iAbg1rOCtorN13zNdaaVxdraHzznWTMT/DnM1g==",
+        "dependencies": {
+          "Cucumber.Messages": "30.1.0"
+        }
+      },
+      "Cucumber.Messages": {
+        "type": "Transitive",
+        "resolved": "30.1.0",
+        "contentHash": "HDfIzDd7JFDEwiNHpgOHBPEiyVjXQws+CEnVb+Lwiq58jHNA/xYwmTswbqknOxcAejCRFP1de/hHHw+ZuTzV6A=="
       },
       "Docker.DotNet.Enhanced": {
         "type": "Transitive",
@@ -214,8 +225,11 @@
       },
       "Gherkin": {
         "type": "Transitive",
-        "resolved": "30.0.0",
-        "contentHash": "jZM9zm9eg62vRSAOtYvcmQh4w0oYqjP6myKxMaJAlQq9VCKm4wnTfHhS5QRnLhx/sH3R5jTaoQAKLs5hhjuq7g=="
+        "resolved": "35.0.0",
+        "contentHash": "ha+QNevQsXEESbzazUceHTCtKOjoBTBa8kLFdKpu6vSEbb3UMt3a55RG78tIoU/C4qzIqX3jQxaIdIcYGO+IWQ==",
+        "dependencies": {
+          "Cucumber.Messages": "29.0.1"
+        }
       },
       "Google.Api.Gax": {
         "type": "Transitive",
@@ -298,8 +312,8 @@
       },
       "Microsoft.Bcl.AsyncInterfaces": {
         "type": "Transitive",
-        "resolved": "6.0.0",
-        "contentHash": "UcSjPsst+DfAdJGVDsu346FX0ci0ah+lw3WRtn18NUwEqRt70HaOQ7lI72vy3+1LxtqI3T5GWwV39rQSrCzAeg=="
+        "resolved": "9.0.6",
+        "contentHash": "82rLw487j5jBXEi2r3WvA/cagOhcRREVRtet6izzjDMY+i392W5oNSN2KCtuIvlTpyMONEUD0MIlGAgDdsvQ/w=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
@@ -822,11 +836,14 @@
       },
       "Reqnroll": {
         "type": "Transitive",
-        "resolved": "2.4.1",
-        "contentHash": "Ui229q21Kmkrv3L89THgsxGMXooJGK5OrFPLvYDXfE2nO/u4tqYsbmMRddyEE3fsR40IDP++HsRrDxlkR6reVw==",
+        "resolved": "3.3.4",
+        "contentHash": "tFFx0xACekjT9F/aFZjQMNTbaxy7zNU4uXFXvU1Eybuko2Rx1RLCAzN+uPDiDxsGB/Nd0wZC0M8Ho5i9xm8Jdg==",
         "dependencies": {
           "Cucumber.CucumberExpressions": "17.1.0",
-          "Gherkin": "30.0.0",
+          "Cucumber.HtmlFormatter": "22.2.0",
+          "Cucumber.Messages": "30.1.0",
+          "Gherkin": "35.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "9.0.6",
           "Microsoft.Extensions.DependencyModel": "8.0.2"
         }
       },
