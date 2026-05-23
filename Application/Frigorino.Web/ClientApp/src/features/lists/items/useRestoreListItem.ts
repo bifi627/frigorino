@@ -1,24 +1,23 @@
-import { useMutation } from "@tanstack/react-query";
-import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     getItemsQueryKey,
     restoreItemMutation,
 } from "../../../lib/api/@tanstack/react-query.gen";
 
 export const useRestoreListItem = () => {
-    const debouncedInvalidate = useDebouncedInvalidation();
+    const queryClient = useQueryClient();
 
     return useMutation({
         ...restoreItemMutation(),
-        onSettled: (_data, _error, variables) => {
-            debouncedInvalidate(
-                getItemsQueryKey({
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: getItemsQueryKey({
                     path: {
                         householdId: variables.path.householdId,
                         listId: variables.path.listId,
                     },
                 }),
-            );
+            });
         },
     });
 };
