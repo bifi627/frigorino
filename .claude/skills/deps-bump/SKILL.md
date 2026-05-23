@@ -12,7 +12,7 @@ description: >-
 
 ## Core principle
 
-**Group into smart waves to minimize verify runs; commit per wave on `fix/update-dependencies` (or a topic branch).** One full verify cycle (tsc + lint + npm build + dotnet test sln + dotnet test IntegrationTests + docker build) is the budget unit — don't burn it per package.
+**Group into smart waves to minimize verify runs; commit per wave on `fix/update-dependencies` (or a topic branch).** One full verify cycle (tsc + lint + npm build + dotnet test sln + docker build) is the budget unit — don't burn it per package.
 
 ## Wave order
 
@@ -31,13 +31,14 @@ Pause and confirm before starting each major. Workflow pattern: user says "conti
 ## Per-wave verify (default, don't skip)
 
 ```bash
-# Backend
+# Backend (sln includes Frigorino.Test + Frigorino.IntegrationTests in one run —
+# do NOT also kick off a separate IntegrationTests run in parallel: both hit the
+# same Testcontainers postgres port and Reqnroll OnTestRunStartAsync explodes).
 dotnet restore Application/Frigorino.sln --force-evaluate
-dotnet test    Application/Frigorino.sln                      # unit, ~30s
-dotnet test    Application/Frigorino.IntegrationTests         # ~2 min, Playwright + Testcontainers
+dotnet test    Application/Frigorino.sln                      # ~3 min total
 
 # Frontend (from Application/Frigorino.Web/ClientApp/)
-npm install
+npm install   # or `npm update <pkgs>` for routine within-^ bumps — see npm specifics
 npm run tsc && npm run lint && npm run build
 
 # Whole stack
@@ -57,7 +58,11 @@ IntegrationTests (~2 min) are NOT "expensive" — include by default. They catch
 - **Use caret-minor (`^x.y.z`); never `~`, `*`, or `x.*`.** Exact pinning was reverted because it makes `npm audit fix` flag every advisory as breaking (no range overlap with patched-versions ⇒ requires `--force`). Reproducibility comes from the committed `package-lock.json` + `npm ci` in CI, not from declared ranges.
 - **Some packages are deliberately exact-pinned for regression holds** (currently the three `@tanstack/react-router*` packages held at `1.128.8`). Don't widen these to `^` — see `TECH_DEBT.md`.
 - **`.npmrc` hardening:** `ignore-scripts=true` (skips lifecycle scripts during install — supply-chain defense) and `min-release-age=7` (refuses versions <7 days old, catches malicious releases before they're yanked). If a real CVE patch needs to land before the quarantine elapses: `npm install <pkg>@<ver> --min-release-age=0`.
-- Workflow per bump: edit `package.json` to `^<new>`, run `npm install`, commit `package.json` + `package-lock.json` (+ `.npmrc` if changed). The lockfile diff is the source of truth for what actually moved.
+- **Two workflows depending on what's moving:**
+  - **Range change** (bump the `^x.y.z` base, e.g. for majors or to take a specific minor): edit `package.json`, then `npm install`. The new range forces re-resolution.
+  - **Within-range bump** (take "Wanted" from `npm outdated` without changing `package.json`): `npm update <pkg1> <pkg2> ...`. **Plain `npm install` is a no-op** here — it only re-resolves when `package.json` changes or the lockfile is missing.
+- `npm update` with no args re-resolves the whole tree, which **cascades-fails on `min-release-age=7`** if ANY single package in the tree has a fresh release (you get `Found: <pkg>@undefined` for the fresh one and nothing moves). Always pass an explicit package list and exclude anything <7 days old. Check release dates with `npm view <pkg> time --json | tail`.
+- Commit `package.json` (if edited) + `package-lock.json` (+ `.npmrc` if changed). The lockfile diff is the source of truth for what actually moved.
 - Before bumping a build-chain package (Vite plugins, eslint plugins): `npm view <pkg> peerDependencies` to confirm host compatibility.
 - TypeScript major bumps may expose implicit `@types/node` usage in SPA code (TS 6 defaults `types: []`). Replace with cross-env idioms — `ReturnType<typeof setTimeout>` instead of `NodeJS.Timeout`, `import.meta.env.DEV` instead of `process.env.NODE_ENV` — rather than adding `@types/node` to browser code.
 
