@@ -474,3 +474,5 @@ Application/Frigorino.Web/ClientApp/build/
 
 # Local-only screenshots used for visual diffs across dep bumps (e.g. .screenshots/before/ vs .screenshots/after/)
 .screenshots/
+
+Application/Frigorino.Web/ClientApp/.tanstack/tmp/

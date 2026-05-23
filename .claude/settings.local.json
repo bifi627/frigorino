@@ -46,7 +46,8 @@
       "Skill(find-docs)",
       "Bash(curl -ks https://localhost:5001/healthz)",
       "WebFetch(domain:claude.com)",
-      "WebFetch(domain:platform.openai.com)"
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:railway.com)"
     ],
     "deny": [],
     "ask": []
