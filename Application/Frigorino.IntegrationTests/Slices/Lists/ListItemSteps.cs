@@ -156,6 +156,6 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
             var testId = await toggles.Nth(i).GetAttributeAsync("data-testid");
             actual.Add(testId!["toggle-item-".Length..]);
         }
-        actual.Should().Equal(expected);
+        Assert.Equal(expected, actual);
     }
 }

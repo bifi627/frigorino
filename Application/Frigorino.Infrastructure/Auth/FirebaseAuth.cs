@@ -18,7 +18,7 @@ namespace Frigorino.Infrastructure.Auth
 
             var app = FirebaseApp.Create(new AppOptions
             {
-                Credential = GoogleCredential.FromJson(firebaseConfig!.AccessJson),
+                Credential = CredentialFactory.FromJson<ServiceAccountCredential>(firebaseConfig!.AccessJson).ToGoogleCredential(),
             });
 
             services.AddSingleton(FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance);

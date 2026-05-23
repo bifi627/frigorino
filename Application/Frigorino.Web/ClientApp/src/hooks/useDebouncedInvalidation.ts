@@ -3,7 +3,7 @@ import { useCallback, useEffect } from "react";
 
 // Shared debouncer for all query invalidations
 class QueryInvalidationDebouncer {
-    private timeouts = new Map<string, NodeJS.Timeout>();
+    private timeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
     debounce(
         queryClient: QueryClient,

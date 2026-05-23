@@ -44,7 +44,9 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
       "Skill(find-docs)",
-      "Bash(curl -ks https://localhost:5001/healthz)"
+      "Bash(curl -ks https://localhost:5001/healthz)",
+      "WebFetch(domain:claude.com)",
+      "WebFetch(domain:platform.openai.com)"
     ],
     "deny": [],
     "ask": []

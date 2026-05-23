@@ -24,12 +24,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Node 22
-        uses: actions/setup-node@v4
+      - name: Setup Node 24
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: Application/Frigorino.Web/ClientApp/package-lock.json
 
@@ -50,7 +50,7 @@ jobs:
         run: npm run build
 
       - name: Upload SPA build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: client-app-build
           path: Application/Frigorino.Web/ClientApp/build
@@ -63,15 +63,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/packages.lock.json') }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-unit
           path: TestResults/*.trx
@@ -105,15 +105,15 @@ jobs:
     needs: frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Application/**/packages.lock.json') }}
@@ -124,13 +124,13 @@ jobs:
         run: dotnet restore Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj --locked-mode
 
       - name: Download SPA build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: client-app-build
           path: Application/Frigorino.Web/ClientApp/build
 
       - name: Run Frigorino.IntegrationTests
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         env:
           FRIGORINO_SKIP_SPA_BUILD: '1'
         with:
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-integration
           path: TestResults/*.trx

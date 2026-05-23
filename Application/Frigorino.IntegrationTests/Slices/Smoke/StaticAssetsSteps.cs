@@ -29,33 +29,33 @@ public class StaticAssetsSteps(ScenarioContextHolder ctx)
     [Then("the static-asset response status is {int}")]
     public void ThenTheStaticAssetResponseStatusIs(int expected)
     {
-        _response.Should().NotBeNull();
-        _response!.Status.Should().Be(expected);
+        Assert.NotNull(_response);
+        Assert.Equal(expected, _response.Status);
     }
 
     [Then("the static-asset response header {string} equals {string}")]
     public void ThenTheStaticAssetResponseHeaderEquals(string name, string expected)
     {
-        _response.Should().NotBeNull();
+        Assert.NotNull(_response);
         var actual = GetHeader(name);
-        actual.Should().NotBeNull($"response was missing the {name} header");
-        actual.Should().Be(expected);
+        Assert.True(actual is not null, $"response was missing the {name} header");
+        Assert.Equal(expected, actual);
     }
 
     [Then("the static-asset response header {string} contains {string}")]
     public void ThenTheStaticAssetResponseHeaderContains(string name, string expected)
     {
-        _response.Should().NotBeNull();
+        Assert.NotNull(_response);
         var actual = GetHeader(name);
-        actual.Should().NotBeNull($"response was missing the {name} header");
-        actual!.Should().Contain(expected);
+        Assert.True(actual is not null, $"response was missing the {name} header");
+        Assert.Contains(expected, actual);
     }
 
     [Then("the static-asset response has no {string} header")]
     public void ThenTheStaticAssetResponseHasNoHeader(string name)
     {
-        _response.Should().NotBeNull();
-        GetHeader(name).Should().BeNull();
+        Assert.NotNull(_response);
+        Assert.Null(GetHeader(name));
     }
 
     private string? GetHeader(string name)
@@ -80,12 +80,12 @@ public class StaticAssetsSteps(ScenarioContextHolder ctx)
         {
             Headers = new Dictionary<string, string> { ["Accept-Encoding"] = "identity" },
         });
-        indexResponse.Status.Should().Be(200);
+        Assert.Equal(200, indexResponse.Status);
 
         var bodyBytes = await indexResponse.BodyAsync();
         var body = System.Text.Encoding.UTF8.GetString(bodyBytes);
         var match = _hashedAssetPattern.Match(body);
-        match.Success.Should().BeTrue(
+        Assert.True(match.Success,
             $"expected /assets/*.js reference in index.html — got body:\n{body[..Math.Min(body.Length, 500)]}");
         return match.Value;
     }
