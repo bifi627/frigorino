@@ -46,3 +46,12 @@ Feature: List Items
     And I toggle "Milk" as done
     And I toggle "Milk" as done
     Then the unchecked items appear in order: "Bread, Milk"
+
+  Scenario: Undo restores a deleted list item via the toast
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I open the list "Weekly Groceries"
+    And I open the item menu for "Milk"
+    And I click delete from the item menu
+    Then "Milk" no longer appears in the list
+    When I click undo in the delete toast
+    Then "Milk" appears in the list

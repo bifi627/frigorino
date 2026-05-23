@@ -15,3 +15,12 @@ Feature: Inventory Items
     And I open the inventory item menu for "Flour"
     And I click delete from the inventory item menu
     Then "Flour" no longer appears in the inventory
+
+  Scenario: Undo restores a deleted inventory item via the toast
+    Given there is an inventory named "Pantry" with item "Flour"
+    When I open the inventory "Pantry"
+    And I open the inventory item menu for "Flour"
+    And I click delete from the inventory item menu
+    Then "Flour" no longer appears in the inventory
+    When I click undo in the delete toast
+    Then "Flour" appears in the inventory

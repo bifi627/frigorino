@@ -76,7 +76,11 @@ createRoot(document.getElementById("root")!).render(
                 >
                     <RouterProvider router={router} />
                 </Suspense>
-                <Toaster />
+                <Toaster
+                    toastOptions={{
+                        classNames: { actionButton: "undo-action-button" },
+                    }}
+                />
                 {/* <App /> */}
             </ThemeProvider>
         </QueryClientProvider>
