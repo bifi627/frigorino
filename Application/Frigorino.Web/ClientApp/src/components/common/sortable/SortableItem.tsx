@@ -33,11 +33,7 @@ export function SortableItem<T extends SortableItemData>({
     disabled = false,
 }: SortableItemProps<T>) {
     if (dragHandle === "none") {
-        return (
-            <Box sx={{ ...containerSx, pl: 1.5 }}>
-                {children}
-            </Box>
-        );
+        return <Box sx={{ ...containerSx, pl: 1.5 }}>{children}</Box>;
     }
 
     return (
@@ -66,7 +62,10 @@ function SortableItemInner<T extends SortableItemData>({
     dragHandleTestId,
     isDragging: externalIsDragging,
     disabled,
-}: SortableItemProps<T> & { dragHandle: "left" | "right" | "custom"; disabled: boolean }) {
+}: SortableItemProps<T> & {
+    dragHandle: "left" | "right" | "custom";
+    disabled: boolean;
+}) {
     const {
         attributes,
         listeners,

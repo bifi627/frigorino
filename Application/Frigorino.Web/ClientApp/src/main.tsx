@@ -1,7 +1,9 @@
 // Fire-and-forget wake-ping: kick the backend awake in parallel with Firebase
 // init, i18n init, and the user reading the login UI. Errors are irrelevant —
 // real API calls will surface any actual outage.
-void fetch("/healthz", { credentials: "omit", cache: "no-store" }).catch(() => {});
+void fetch("/healthz", { credentials: "omit", cache: "no-store" }).catch(
+    () => {},
+);
 
 import { initObservability, pushPageView } from "./common/observability";
 
@@ -61,10 +63,12 @@ createRoot(document.getElementById("root")!).render(
                 <Suspense
                     fallback={
                         <Box
-                            display="flex"
-                            justifyContent="center"
-                            alignItems="center"
-                            minHeight="100vh"
+                            sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                minHeight: "100vh",
+                            }}
                         >
                             <CircularProgress />
                         </Box>

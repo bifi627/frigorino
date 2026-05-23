@@ -39,15 +39,18 @@ export const MemberListItem = ({
         >
             <ListItemText
                 primary={
-                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
+                    <Typography
+                        variant="body1"
+                        sx={{ fontWeight: 500, mb: 0.5 }}
+                    >
                         {member.name || "Unknown User"}
                     </Typography>
                 }
                 secondary={
                     <Typography
                         variant="body2"
-                        color="text.secondary"
                         sx={{
+                            color: "text.secondary",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
@@ -58,10 +61,13 @@ export const MemberListItem = ({
                 }
             />
             <Box
-                display="flex"
-                alignItems="center"
-                gap={1}
-                sx={{ ml: { xs: 1, sm: 2 }, flexShrink: 0 }}
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    ml: { xs: 1, sm: 2 },
+                    flexShrink: 0,
+                }}
             >
                 <Chip
                     data-testid={`household-member-${member.externalId}-role`}

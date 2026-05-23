@@ -15,10 +15,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (loading) {
         return (
             <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                minHeight="50vh"
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "50vh",
+                }}
             >
                 <CircularProgress />
             </Box>

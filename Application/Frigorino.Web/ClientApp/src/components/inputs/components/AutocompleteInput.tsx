@@ -122,7 +122,9 @@ export const AutocompleteInput = memo(
                                 {option.secondaryText && (
                                     <Typography
                                         variant="caption"
-                                        color="text.secondary"
+                                        sx={{
+                                            color: "text.secondary",
+                                        }}
                                     >
                                         {option.secondaryText}
                                     </Typography>
@@ -159,8 +161,10 @@ export const AutocompleteInput = memo(
                                 onKeyDown(event);
                             }}
                             slotProps={{
+                                ...params.slotProps,
+
                                 input: {
-                                    ...params.InputProps,
+                                    ...params.slotProps.input,
                                     sx: styles.inputContainerStyles,
                                 },
                             }}

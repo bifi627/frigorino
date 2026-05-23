@@ -45,7 +45,11 @@ export function ManageHouseholdPage() {
         return (
             <Container maxWidth="md" sx={pageContainerSx}>
                 <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                    <Skeleton variant="rectangular" height={40} sx={{ mb: 1 }} />
+                    <Skeleton
+                        variant="rectangular"
+                        height={40}
+                        sx={{ mb: 1 }}
+                    />
                     <Skeleton variant="text" width="60%" height={32} />
                 </Box>
                 <Skeleton variant="rectangular" height={200} />

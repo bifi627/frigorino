@@ -15,7 +15,10 @@ import type { ListResponse } from "../../../lib/api";
 interface ListSummaryCardProps {
     list: ListResponse;
     onClick: (listId: number) => void;
-    onMenuOpen: (event: React.MouseEvent<HTMLElement>, list: ListResponse) => void;
+    onMenuOpen: (
+        event: React.MouseEvent<HTMLElement>,
+        list: ListResponse,
+    ) => void;
     menuDisabled?: boolean;
 }
 
@@ -88,8 +91,10 @@ export const ListSummaryCard = ({
                                 list.description && (
                                     <Typography
                                         variant="body2"
-                                        color="text.secondary"
-                                        sx={{ mt: 0.5 }}
+                                        sx={{
+                                            color: "text.secondary",
+                                            mt: 0.5,
+                                        }}
                                     >
                                         {list.description}
                                     </Typography>

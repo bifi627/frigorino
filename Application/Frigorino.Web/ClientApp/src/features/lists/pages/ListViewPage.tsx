@@ -28,7 +28,9 @@ export const ListViewPage = () => {
     const router = useRouter();
     const { listId } = useParams({ from: "/lists/$listId/view" });
     const { t } = useTranslation();
-    const [editingItem, setEditingItem] = useState<ListItemResponse | null>(null);
+    const [editingItem, setEditingItem] = useState<ListItemResponse | null>(
+        null,
+    );
     const [showDragHandles, setShowDragHandles] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 

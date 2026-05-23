@@ -2,4 +2,5 @@
 build
 coverage
 src/lib/api
+src/lib/openapi.json
 src/routeTree.gen.ts

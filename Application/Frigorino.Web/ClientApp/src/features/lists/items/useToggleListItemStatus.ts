@@ -35,9 +35,7 @@ export const useToggleListItemStatus = () => {
                 if (!movedItem) return old;
 
                 const newStatus = !movedItem.status;
-                const targetSection = old.filter(
-                    (i) => i.status === newStatus,
-                );
+                const targetSection = old.filter((i) => i.status === newStatus);
                 const newSortOrder = computeAppendSortOrder(
                     targetSection,
                     newStatus,

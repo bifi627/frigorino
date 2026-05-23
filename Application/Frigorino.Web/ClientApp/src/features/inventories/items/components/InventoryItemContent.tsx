@@ -56,7 +56,6 @@ export function InventoryItemContent({ item }: Props) {
                     }}
                 />
             )}
-
             <ListItemText
                 {...events}
                 sx={{ pl: item.expiryDate ? 2 : 0 }} // Add padding when highlight bar is present
@@ -73,11 +72,13 @@ export function InventoryItemContent({ item }: Props) {
                 }
                 secondary={
                     <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        mt={0.5}
-                        sx={{ minHeight: 20 }}
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mt: 0.5,
+                            minHeight: 20,
+                        }}
                     >
                         {/* Left side - Quantity */}
                         <Box>
@@ -133,7 +134,6 @@ export function InventoryItemContent({ item }: Props) {
                     </Box>
                 }
             />
-
             {/* Snackbar for mobile date display */}
             <Snackbar
                 open={showDateSnackbar}

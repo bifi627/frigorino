@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
-import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
@@ -27,10 +26,6 @@ import { Route as InventoriesInventoryIdEditRouteImport } from './routes/invento
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedRoute = ProtectedRouteImport.update({
-  id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -104,8 +99,8 @@ export interface FileRoutesByFullPath {
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
-  '/inventories': typeof InventoriesIndexRoute
-  '/lists': typeof ListsIndexRoute
+  '/inventories/': typeof InventoriesIndexRoute
+  '/lists/': typeof ListsIndexRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
@@ -129,7 +124,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_protected': typeof ProtectedRoute
   '/about': typeof AboutRoute
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
@@ -153,8 +147,8 @@ export interface FileRouteTypes {
     | '/household/manage'
     | '/inventories/create'
     | '/lists/create'
-    | '/inventories'
-    | '/lists'
+    | '/inventories/'
+    | '/lists/'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
@@ -177,7 +171,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/_protected'
     | '/about'
     | '/auth/login'
     | '/household/create'
@@ -194,7 +187,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ProtectedRoute: typeof ProtectedRoute
   AboutRoute: typeof AboutRoute
   AuthLoginRoute: typeof AuthLoginRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
@@ -218,13 +210,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected': {
-      id: '/_protected'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof ProtectedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -235,14 +220,14 @@ declare module '@tanstack/react-router' {
     '/lists/': {
       id: '/lists/'
       path: '/lists'
-      fullPath: '/lists'
+      fullPath: '/lists/'
       preLoaderRoute: typeof ListsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inventories/': {
       id: '/inventories/'
       path: '/inventories'
-      fullPath: '/inventories'
+      fullPath: '/inventories/'
       preLoaderRoute: typeof InventoriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -314,7 +299,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProtectedRoute: ProtectedRoute,
   AboutRoute: AboutRoute,
   AuthLoginRoute: AuthLoginRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,

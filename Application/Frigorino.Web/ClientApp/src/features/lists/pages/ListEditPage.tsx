@@ -41,7 +41,11 @@ export const ListEditPage = () => {
         data: list,
         isLoading: listLoading,
         error: listError,
-    } = useList(householdId, listIdNum, hasActiveHousehold && !isNaN(listIdNum));
+    } = useList(
+        householdId,
+        listIdNum,
+        hasActiveHousehold && !isNaN(listIdNum),
+    );
 
     const handleBack = () => router.history.back();
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) =>
@@ -59,7 +63,11 @@ export const ListEditPage = () => {
         return (
             <Container maxWidth="md" sx={pageContainerSx}>
                 <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                    <Skeleton variant="rectangular" height={40} sx={{ mb: 1 }} />
+                    <Skeleton
+                        variant="rectangular"
+                        height={40}
+                        sx={{ mb: 1 }}
+                    />
                     <Skeleton variant="text" width="60%" height={32} />
                 </Box>
                 <Skeleton variant="rectangular" height={200} />

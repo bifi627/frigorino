@@ -20,7 +20,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
 
         // Playwright integration test bypass: skip Firebase if a test user is injected
-        const testUser = (window as unknown as Record<string, unknown>).__PLAYWRIGHT_TEST_USER__;
+        const testUser = (window as unknown as Record<string, unknown>)
+            .__PLAYWRIGHT_TEST_USER__;
         if (testUser) {
             const u = testUser as User;
             identifyUser({ id: u.uid, email: u.email });

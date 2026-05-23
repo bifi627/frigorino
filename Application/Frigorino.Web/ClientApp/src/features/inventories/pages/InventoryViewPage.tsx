@@ -53,9 +53,8 @@ export const InventoryViewPage = () => {
         return "custom";
     };
 
-    const [editingItem, setEditingItem] = useState<InventoryItemResponse | null>(
-        null,
-    );
+    const [editingItem, setEditingItem] =
+        useState<InventoryItemResponse | null>(null);
     const [sortMode, setSortMode] = useState<SortMode>(loadSortMode());
 
     useEffect(() => {
@@ -109,7 +108,8 @@ export const InventoryViewPage = () => {
 
     const handleToggleSortMode = useCallback(() => {
         setSortMode((prev) => {
-            const next = SORT_MODES[(SORT_MODES.indexOf(prev) + 1) % SORT_MODES.length];
+            const next =
+                SORT_MODES[(SORT_MODES.indexOf(prev) + 1) % SORT_MODES.length];
             return next;
         });
     }, []);

@@ -46,8 +46,9 @@ export const useCreateInventoryItem = () => {
                 isExpiring: false,
             };
 
-            queryClient.setQueryData<InventoryItemResponse[]>(queryKey, (old) =>
-                old ? [...old, optimisticItem] : [optimisticItem],
+            queryClient.setQueryData<InventoryItemResponse[]>(
+                queryKey,
+                (old) => (old ? [...old, optimisticItem] : [optimisticItem]),
             );
 
             return { previousItems };

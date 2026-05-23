@@ -39,8 +39,7 @@ export const useReorderListItem = () => {
 
                 const section = old.filter(
                     (i) =>
-                        i.status === movedItem.status &&
-                        i.id !== movedItem.id,
+                        i.status === movedItem.status && i.id !== movedItem.id,
                 );
 
                 const newSortOrder = computeReorderSortOrder({

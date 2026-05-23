@@ -53,15 +53,12 @@ export function computeReorderSortOrder<
         : undefined;
 
     if (!afterItem) {
-        return sorted.length
-            ? sorted[0].sortOrder - DEFAULT_GAP
-            : emptyDefault;
+        return sorted.length ? sorted[0].sortOrder - DEFAULT_GAP : emptyDefault;
     }
     if (!beforeItem) {
         return afterItem.sortOrder + DEFAULT_GAP;
     }
     return Math.floor(
-        afterItem.sortOrder +
-            (beforeItem.sortOrder - afterItem.sortOrder) / 2,
+        afterItem.sortOrder + (beforeItem.sortOrder - afterItem.sortOrder) / 2,
     );
 }

@@ -1,5 +1,12 @@
 import { ArrowBack } from "@mui/icons-material";
-import { Alert, Box, Button, Container, IconButton, Typography } from "@mui/material";
+import {
+    Alert,
+    Box,
+    Button,
+    Container,
+    IconButton,
+    Typography,
+} from "@mui/material";
 import { useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { pageContainerSx } from "../../../theme";

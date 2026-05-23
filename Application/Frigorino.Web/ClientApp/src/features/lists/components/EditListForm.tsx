@@ -90,9 +90,7 @@ export const EditListForm = ({ householdId, list }: EditListFormProps) => {
                             data-testid="list-edit-save-button"
                             sx={{ minWidth: 100, fontWeight: 600 }}
                         >
-                            {isPending
-                                ? t("common.saving")
-                                : t("common.save")}
+                            {isPending ? t("common.saving") : t("common.save")}
                         </Button>
                     </Box>
                 </Stack>

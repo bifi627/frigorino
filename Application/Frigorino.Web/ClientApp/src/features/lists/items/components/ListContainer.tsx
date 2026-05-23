@@ -17,10 +17,7 @@ interface ListContainerProps {
 }
 
 export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
-    (
-        { householdId, listId, editingItem, onEdit, showDragHandles },
-        ref,
-    ) => {
+    ({ householdId, listId, editingItem, onEdit, showDragHandles }, ref) => {
         const {
             data: items = [],
             isLoading,

@@ -43,7 +43,11 @@ export const MembersPanel = ({
         null,
     );
 
-    const { data: members, isLoading, error } = useHouseholdMembers(householdId);
+    const {
+        data: members,
+        isLoading,
+        error,
+    } = useHouseholdMembers(householdId);
 
     const handleRemoveClick = (member: MemberResponse) => {
         setMemberToRemove(member);
@@ -52,7 +56,13 @@ export const MembersPanel = ({
 
     if (isLoading) {
         return (
-            <Box display="flex" justifyContent="center" p={3}>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    p: 3,
+                }}
+            >
                 <CircularProgress />
             </Box>
         );
@@ -60,9 +70,7 @@ export const MembersPanel = ({
 
     if (error) {
         return (
-            <Alert severity="error">
-                {t("household.failedToLoadMembers")}
-            </Alert>
+            <Alert severity="error">{t("household.failedToLoadMembers")}</Alert>
         );
     }
 
@@ -71,11 +79,10 @@ export const MembersPanel = ({
             <Card elevation={1}>
                 <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                     <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        mb={2}
                         sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 2,
                             flexDirection: { xs: "column", sm: "row" },
                             gap: { xs: 2, sm: 0 },
                             alignItems: { xs: "stretch", sm: "center" },
@@ -129,16 +136,17 @@ export const MembersPanel = ({
                         </List>
                     ) : (
                         <Typography
-                            color="text.secondary"
-                            textAlign="center"
-                            py={3}
+                            sx={{
+                                color: "text.secondary",
+                                textAlign: "center",
+                                py: 3,
+                            }}
                         >
                             {t("household.noMembersFound")}
                         </Typography>
                     )}
                 </CardContent>
             </Card>
-
             <MemberActionsMenu
                 anchorEl={actionsTarget?.anchor ?? null}
                 member={actionsTarget?.member ?? null}
@@ -147,13 +155,11 @@ export const MembersPanel = ({
                 onClose={() => setActionsTarget(null)}
                 onRemoveClick={handleRemoveClick}
             />
-
             <AddMemberDialog
                 open={addDialogOpen}
                 onClose={() => setAddDialogOpen(false)}
                 householdId={householdId}
             />
-
             <RemoveMemberConfirmDialog
                 open={memberToRemove !== null}
                 onClose={() => setMemberToRemove(null)}
