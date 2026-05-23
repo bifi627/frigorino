@@ -224,7 +224,7 @@ namespace Frigorino.Domain.Entities
             if (item is null)
             {
                 return Result.Fail<ListItem>(
-                    new EntityNotFoundError($"Soft-deleted list item {itemId} not found."));
+                    new EntityNotFoundError($"List item {itemId} not found."));
             }
 
             item.IsActive = true;
