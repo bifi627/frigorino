@@ -208,6 +208,20 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
+        public Result<InventoryItem> RestoreItem(int itemId)
+        {
+            var item = InventoryItems.FirstOrDefault(i => i.Id == itemId && !i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<InventoryItem>(
+                    new EntityNotFoundError($"Inventory item {itemId} not found."));
+            }
+
+            item.IsActive = true;
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
         // AfterItemId == 0 means "move to the top of the section". An afterItemId that doesn't
         // resolve to an active sibling silently falls back to top-of-section — preserves the
         // legacy InventoryItemService wire contract the frontend's optimistic UI depends on.
