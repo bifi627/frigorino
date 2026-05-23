@@ -30,18 +30,22 @@ Pause and confirm before starting each major. Workflow pattern: user says "conti
 
 ## Per-wave verify (default, don't skip)
 
+**Sequence matters** — never parallelize verify steps that share state, see `feedback-verify-with-integration-tests` memory. The sln test internally calls `npm run build` via MSBuild, so a standalone build alongside it races; a second `dotnet test` against IT collides on the Testcontainers port.
+
 ```bash
-# Backend (sln includes Frigorino.Test + Frigorino.IntegrationTests in one run —
-# do NOT also kick off a separate IntegrationTests run in parallel: both hit the
-# same Testcontainers postgres port and Reqnroll OnTestRunStartAsync explodes).
+# 1. NuGet (after csproj edits)
 dotnet restore Application/Frigorino.sln --force-evaluate
-dotnet test    Application/Frigorino.sln                      # ~3 min total
 
-# Frontend (from Application/Frigorino.Web/ClientApp/)
-npm install   # or `npm update <pkgs>` for routine within-^ bumps — see npm specifics
-npm run tsc && npm run lint && npm run build
+# 2. npm (range edit → `npm install`; within-^ → `npm update <pkgs>` — see npm specifics)
+cd Application/Frigorino.Web/ClientApp && npm install
 
-# Whole stack
+# 3. Frontend cheap checks (no build — sln test does that)
+npm run tsc && npm run lint
+
+# 4. Backend (covers Test + IT; also builds the SPA via MSBuild target)
+cd ../../.. && dotnet test Application/Frigorino.sln       # ~3 min total
+
+# 5. Full container build
 docker build -f Application/Dockerfile -t frigorino .
 ```
 
