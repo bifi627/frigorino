@@ -14,6 +14,10 @@ _All deferred backend bumps have been applied or dropped._
 
 > Applied: all Microsoft.* 10.0.7 → 10.0.8 patches, FirebaseAdmin 3.3.0 → 3.5.0, Microsoft.Playwright 1.59.0 → 1.60.0, Microsoft.VisualStudio.Azure.Containers.Tools.Targets 1.22.1 → 1.23.0, FakeItEasy 8.3.0 → 9.0.1, coverlet.collector 6.0.0 → 10.0.1, Microsoft.NET.Test.Sdk 17.x → 18.5.1. Dropped: FluentAssertions (26 usages refactored to xUnit `Assert.*`) — avoids the v8 licensing-model change.
 
+### Intentionally on prerelease
+
+- **`OpenTelemetry.Instrumentation.EntityFrameworkCore 1.15.1-beta.1`** — no stable version exists and won't until upstream OpenTelemetry's DB semantic conventions stabilize (no ETA). The package's "beta" label is a versioning policy, not a stability signal; it's the only EFCore-specific instrumentation option. Alternatives (`Npgsql.OpenTelemetry` for driver-level spans, or dropping DB tracing) lose EFCore context and are not like-for-like. Re-evaluate when `OpenTelemetry.Instrumentation.EntityFrameworkCore` ships a stable `1.x` (or `2.0`). Note: `dotnet list package --outdated` omits this without `--include-prerelease` — that absence is expected, not a "missing source" anomaly.
+
 ## Frontend — npm (`/Application/Frigorino.Web/ClientApp`)
 
 | Package | From | To | Bump |
