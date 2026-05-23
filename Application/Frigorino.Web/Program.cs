@@ -316,6 +316,7 @@ inventoryItems.MapGetInventoryItems();
 inventoryItems.MapCreateInventoryItem();
 inventoryItems.MapUpdateInventoryItem();
 inventoryItems.MapDeleteInventoryItem();
+inventoryItems.MapRestoreInventoryItem();
 inventoryItems.MapReorderInventoryItem();
 inventoryItems.MapCompactInventoryItems();
 
