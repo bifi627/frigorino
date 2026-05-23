@@ -92,8 +92,8 @@
       },
       "FluentResults": {
         "type": "Transitive",
-        "resolved": "3.16.0",
-        "contentHash": "VWacGzOyN9k7LOKqiNLnFvqTDLbFvepHlINdM3pPTD0YWI+a+VW/Q9gcx4gmJDpDZ32cAsczz5vmRjLCL5UOhA==",
+        "resolved": "4.0.0",
+        "contentHash": "wKfdLvDnDVhXlSreU7u/NFNHH6EfoOhAloEID4ePAyk+ZliowKZJvX+aCL4hxhFc9Jj74t62amS4LyOYTjXGCg==",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "2.1.1"
         }
@@ -419,7 +419,7 @@
       "frigorino.domain": {
         "type": "Project",
         "dependencies": {
-          "FluentResults": "[3.16.0, )"
+          "FluentResults": "[4.0.0, )"
         }
       }
     }
