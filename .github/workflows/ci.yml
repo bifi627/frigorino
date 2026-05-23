@@ -130,7 +130,7 @@ jobs:
           path: Application/Frigorino.Web/ClientApp/build
 
       - name: Run Frigorino.IntegrationTests
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         env:
           FRIGORINO_SKIP_SPA_BUILD: '1'
         with:
