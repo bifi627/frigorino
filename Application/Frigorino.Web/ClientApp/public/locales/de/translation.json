@@ -65,7 +65,9 @@
         "addItemPlaceholder": "Artikel hinzufügen...",
         "alreadyExists": "bereits vorhanden",
         "completed": "abgeschlossen",
-        "textCopiedToClipboard": "Text in die Zwischenablage kopiert"
+        "textCopiedToClipboard": "Text in die Zwischenablage kopiert",
+        "itemDeleted": "Element gelöscht",
+        "undo": "Rückgängig"
     },
     "auth": {
         "login": "Anmelden",

@@ -65,7 +65,9 @@
         "addItemPlaceholder": "Add item...",
         "alreadyExists": "already exists",
         "completed": "completed",
-        "textCopiedToClipboard": "Text copied to clipboard"
+        "textCopiedToClipboard": "Text copied to clipboard",
+        "itemDeleted": "Item deleted",
+        "undo": "Undo"
     },
     "auth": {
         "login": "Login",
