@@ -87,26 +87,28 @@ export const QuantityPanel = memo(
                             borderRadius: 2,
                         },
                     }}
-                    InputProps={{
-                        sx: {
-                            "& .MuiOutlinedInput-notchedOutline": {
-                                border: "1px solid",
-                                borderColor: "divider",
-                            },
-                            "& .MuiInputBase-input": {
-                                py: 0.75,
-                            },
-                            "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "primary.main",
-                            },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "primary.main",
-                                borderWidth: 2,
+                    slotProps={{
+                        input: {
+                            sx: {
+                                "& .MuiOutlinedInput-notchedOutline": {
+                                    border: "1px solid",
+                                    borderColor: "divider",
+                                },
+                                "& .MuiInputBase-input": {
+                                    py: 0.75,
+                                },
+                                "&:hover .MuiOutlinedInput-notchedOutline": {
+                                    borderColor: "primary.main",
+                                },
+                                "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                    {
+                                        borderColor: "primary.main",
+                                        borderWidth: 2,
+                                    },
                             },
                         },
                     }}
                 />
-
                 {/* Quick Quantity Buttons */}
                 <ButtonGroup variant="outlined" size="small">
                     {[1, 2, 5].map((num) => (
@@ -135,7 +137,6 @@ export const QuantityPanel = memo(
                         </Button>
                     ))}
                 </ButtonGroup>
-
                 {/* Quantity Adjustment Buttons */}
                 <IconButton
                     size="small"

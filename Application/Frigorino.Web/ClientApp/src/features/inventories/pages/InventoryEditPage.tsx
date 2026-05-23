@@ -22,7 +22,9 @@ import { useInventory } from "../useInventory";
 
 export const InventoryEditPage = () => {
     const router = useRouter();
-    const { inventoryId } = useParams({ from: "/inventories/$inventoryId/edit" });
+    const { inventoryId } = useParams({
+        from: "/inventories/$inventoryId/edit",
+    });
     const { t } = useTranslation();
     const inventoryIdNum = parseInt(inventoryId, 10);
 
@@ -63,7 +65,11 @@ export const InventoryEditPage = () => {
         return (
             <Container maxWidth="md" sx={pageContainerSx}>
                 <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                    <Skeleton variant="rectangular" height={40} sx={{ mb: 1 }} />
+                    <Skeleton
+                        variant="rectangular"
+                        height={40}
+                        sx={{ mb: 1 }}
+                    />
                     <Skeleton variant="text" width="60%" height={32} />
                 </Box>
                 <Skeleton variant="rectangular" height={200} />

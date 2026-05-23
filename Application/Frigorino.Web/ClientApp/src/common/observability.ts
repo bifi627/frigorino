@@ -11,7 +11,8 @@ import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 // leave them unset (default) or set them to opt in.
 const collectorUrl = import.meta.env.VITE_FARO_URL as string | undefined;
 const appName =
-    (import.meta.env.VITE_FARO_APP_NAME as string | undefined) ?? "frigorino-web";
+    (import.meta.env.VITE_FARO_APP_NAME as string | undefined) ??
+    "frigorino-web";
 const envTag = (import.meta.env.VITE_FARO_ENV as string | undefined) ?? "local";
 const appVersion =
     (import.meta.env.VITE_APP_VERSION as string | undefined) ?? "0.0.0";
@@ -53,7 +54,10 @@ export function initObservability(): void {
     );
 }
 
-export function identifyUser(user: { id: string; email?: string | null }): void {
+export function identifyUser(user: {
+    id: string;
+    email?: string | null;
+}): void {
     if (!faro) {
         return;
     }

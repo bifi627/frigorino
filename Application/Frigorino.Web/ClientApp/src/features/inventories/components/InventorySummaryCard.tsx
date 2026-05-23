@@ -91,8 +91,10 @@ export const InventorySummaryCard = ({
                                 inventory.description && (
                                     <Typography
                                         variant="body2"
-                                        color="text.secondary"
-                                        sx={{ mt: 0.5 }}
+                                        sx={{
+                                            color: "text.secondary",
+                                            mt: 0.5,
+                                        }}
                                     >
                                         {inventory.description}
                                     </Typography>

@@ -21,7 +21,12 @@ export const EditingHeader = memo(
             <Box sx={styles.editingHeaderStyles}>
                 <Box sx={styles.editingHeaderContentStyles}>
                     <Edit fontSize="small" color="warning" />
-                    <Typography variant="caption" color="warning.dark">
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            color: "warning.dark",
+                        }}
+                    >
                         Bearbeiten
                     </Typography>
                     {editingItem.status && (

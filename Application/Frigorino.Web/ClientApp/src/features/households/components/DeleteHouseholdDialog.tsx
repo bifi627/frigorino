@@ -70,26 +70,42 @@ export const DeleteHouseholdDialog = ({
             >
                 <Typography
                     variant="body2"
-                    color="error.dark"
-                    sx={{ fontWeight: 500 }}
+                    sx={{
+                        color: "error.dark",
+                        fontWeight: 500,
+                    }}
                 >
                     {t("common.warningPermanentlyDelete")}
                 </Typography>
                 <Typography
                     variant="body2"
-                    color="error.dark"
-                    sx={{ mt: 1, ml: 2 }}
+                    sx={{
+                        color: "error.dark",
+                        mt: 1,
+                        ml: 2,
+                    }}
                 >
                     {t("household.allHouseholdDataSettings")}
                 </Typography>
-                <Typography variant="body2" color="error.dark" sx={{ ml: 2 }}>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        color: "error.dark",
+                        ml: 2,
+                    }}
+                >
                     {t("household.allMemberAssociations")}
                 </Typography>
-                <Typography variant="body2" color="error.dark" sx={{ ml: 2 }}>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        color: "error.dark",
+                        ml: 2,
+                    }}
+                >
                     {t("household.allSharedContentFuture")}
                 </Typography>
             </Box>
-
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
                 {t("household.confirmTypeHouseholdName")}{" "}
                 <strong>{householdName}</strong>
@@ -109,7 +125,9 @@ export const DeleteHouseholdDialog = ({
                 })}
                 disabled={deleteHouseholdMutation.isPending}
                 error={confirmationMismatch}
-                helperText={confirmationMismatch ? t("lists.nameDoesntMatch") : ""}
+                helperText={
+                    confirmationMismatch ? t("lists.nameDoesntMatch") : ""
+                }
             />
         </ConfirmDialog>
     );

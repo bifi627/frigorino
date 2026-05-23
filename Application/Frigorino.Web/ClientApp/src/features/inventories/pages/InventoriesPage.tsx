@@ -40,8 +40,7 @@ export const InventoriesPage = () => {
         useState<InventoryResponse | null>(null);
 
     const handleBack = () => navigate({ to: "/" });
-    const handleCreateInventory = () =>
-        navigate({ to: "/inventories/create" });
+    const handleCreateInventory = () => navigate({ to: "/inventories/create" });
     const handleInventoryClick = (inventoryId: number) =>
         navigate({
             to: "/inventories/$inventoryId/view",
@@ -126,19 +125,16 @@ export const InventoriesPage = () => {
                     {t("common.create")}
                 </Button>
             </Box>
-
             {isLoading && (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                     <CircularProgress />
                 </Box>
             )}
-
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     {t("inventory.failedToLoadInventories")}
                 </Alert>
             )}
-
             {inventories && inventories.length === 0 && !isLoading && (
                 <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
                     <CardContent>
@@ -147,8 +143,10 @@ export const InventoriesPage = () => {
                         </Typography>
                         <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 3 }}
+                            sx={{
+                                color: "text.secondary",
+                                mb: 3,
+                            }}
                         >
                             {t("inventory.createFirstInventory")}
                         </Typography>
@@ -163,7 +161,6 @@ export const InventoriesPage = () => {
                     </CardContent>
                 </Card>
             )}
-
             {inventories && inventories.length > 0 && (
                 <Stack spacing={2}>
                     {inventories.map((inventory) => (
@@ -177,7 +174,6 @@ export const InventoriesPage = () => {
                     ))}
                 </Stack>
             )}
-
             <InventoryActionsMenu
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}

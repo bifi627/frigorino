@@ -359,15 +359,19 @@ export const SortableList = <T extends SortableItemInterface>({
                     >
                         <Typography
                             variant="h6"
-                            color="text.secondary"
                             gutterBottom
+                            sx={{
+                                color: "text.secondary",
+                            }}
                         >
                             List ist leer
                         </Typography>
                         <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 2 }}
+                            sx={{
+                                color: "text.secondary",
+                                mb: 2,
+                            }}
                         >
                             Füge deinen ersten Artikel hinzu, um zu beginnen!
                         </Typography>

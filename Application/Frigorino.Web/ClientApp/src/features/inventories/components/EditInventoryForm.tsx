@@ -93,9 +93,7 @@ export const EditInventoryForm = ({
                             data-testid="inventory-edit-save-button"
                             sx={{ minWidth: 100, fontWeight: 600 }}
                         >
-                            {isPending
-                                ? t("common.saving")
-                                : t("common.save")}
+                            {isPending ? t("common.saving") : t("common.save")}
                         </Button>
                     </Box>
                 </Stack>

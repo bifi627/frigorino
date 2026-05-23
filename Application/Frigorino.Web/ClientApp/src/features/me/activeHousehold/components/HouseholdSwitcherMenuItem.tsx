@@ -38,9 +38,11 @@ export const HouseholdSwitcherMenuItem = ({
             <ListItemText
                 primary={
                     <Box
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="space-between"
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                        }}
                     >
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             {household.name}

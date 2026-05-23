@@ -40,7 +40,6 @@ export const HouseholdSummaryCard = ({
             >
                 <Business fontSize="small" />
             </Box>
-
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <Typography
                     variant="h6"
@@ -58,8 +57,11 @@ export const HouseholdSummaryCard = ({
                 <Stack
                     direction="row"
                     spacing={1}
-                    alignItems="center"
-                    sx={{ flexWrap: "wrap", gap: 0.5 }}
+                    sx={{
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 0.5,
+                    }}
                 >
                     <Box
                         sx={{
@@ -68,10 +70,13 @@ export const HouseholdSummaryCard = ({
                             gap: 0.5,
                         }}
                     >
-                        <Group
-                            sx={{ fontSize: 14, color: "text.secondary" }}
-                        />
-                        <Typography variant="caption" color="text.secondary">
+                        <Group sx={{ fontSize: 14, color: "text.secondary" }} />
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                color: "text.secondary",
+                            }}
+                        >
                             {memberCount} {t("household.members")}
                         </Typography>
                     </Box>

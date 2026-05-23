@@ -40,10 +40,7 @@ export const HouseholdSwitcher = ({
             handleClose();
             return;
         }
-        switchHousehold(
-            { body: { householdId } },
-            { onSuccess: handleClose },
-        );
+        switchHousehold({ body: { householdId } }, { onSuccess: handleClose });
     };
 
     const currentHouseholdName =
@@ -99,7 +96,6 @@ export const HouseholdSwitcher = ({
                     </Typography>
                 </Box>
             </Button>
-
             <Menu
                 anchorEl={anchorEl}
                 open={open}
@@ -126,10 +122,10 @@ export const HouseholdSwitcher = ({
                                 household.id === currentHousehold?.householdId
                             }
                             disabled={isSwitching}
-                            onSelect={() => handleHouseholdSelect(household.id!)}
-                            onEdit={() =>
-                                navigate({ to: "/household/manage" })
+                            onSelect={() =>
+                                handleHouseholdSelect(household.id!)
                             }
+                            onEdit={() => navigate({ to: "/household/manage" })}
                         />
                     ))
                 ) : (
@@ -138,7 +134,9 @@ export const HouseholdSwitcher = ({
                             primary={
                                 <Typography
                                     variant="body2"
-                                    color="text.secondary"
+                                    sx={{
+                                        color: "text.secondary",
+                                    }}
                                 >
                                     No households yet
                                 </Typography>
@@ -146,7 +144,9 @@ export const HouseholdSwitcher = ({
                             secondary={
                                 <Typography
                                     variant="caption"
-                                    color="text.secondary"
+                                    sx={{
+                                        color: "text.secondary",
+                                    }}
                                 >
                                     Create your first household below
                                 </Typography>
@@ -169,8 +169,10 @@ export const HouseholdSwitcher = ({
                         primary={
                             <Typography
                                 variant="body2"
-                                color="primary.main"
-                                sx={{ fontWeight: 500 }}
+                                sx={{
+                                    color: "primary.main",
+                                    fontWeight: 500,
+                                }}
                             >
                                 Create New Household
                             </Typography>

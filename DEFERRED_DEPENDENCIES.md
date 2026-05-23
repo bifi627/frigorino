@@ -2,11 +2,11 @@
 
 Snapshot of the 16 updates Dependabot proposed on 2026-05-22 (PRs #18–#33) that were closed unmerged when we tightened the policy. After the new config (`/dependabot.yml`) lands, Dependabot will only open patch + minor PRs — every entry below was either a major bump or part of a group containing one. Re-evaluate manually; bump in `package.json` / `*.csproj` / workflow YAML and let CI verify.
 
-## Status (2026-05-22)
+## Status (2026-05-23)
 
-Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). Remaining list below is the still-deferred set:
+Patches + safe minors shipped on `fix/update-dependencies` (waves 1–3). MUI v9 shipped on `feat/upgrade-mui` (2026-05-23). Remaining list below is the still-deferred set:
 - **Backend NuGet**: none.
-- **Frontend npm**: 2 majors (@mui/material v9, @mui/icons-material v9). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
+- **Frontend npm**: none (MUI v9 applied). The @tanstack/react-router 1.170.7 minor is held back due to a runtime regression — tracked in `TECH_DEBT.md`.
 
 ## Backend — NuGet (`/Application`)
 
@@ -20,11 +20,10 @@ _All deferred backend bumps have been applied or dropped._
 
 ## Frontend — npm (`/Application/Frigorino.Web/ClientApp`)
 
-| Package | From | To | Bump |
-|---|---|---|---|
-| @mui/material | 7.2.0 | 9.0.1 | **major** (skipped v8) — has codemods; allocate time |
-| @mui/icons-material | 7.2.0 | 9.0.1 | **major** |
+_All deferred frontend bumps have been applied._
 
+> Applied: @mui/material 7.2.0 → 9.0.1, @mui/icons-material 7.2.0 → 9.0.1 (skipped v8). Codemods `v9.0.0/system-props` + `deprecations/all` migrated 20 files from Box system props (`display`/`alignItems`/`mt`/etc.) onto `sx={{}}`; one manual fix removed a duplicate `alignItems` key the codemod produced in `MembersPanel.tsx`.
+>
 > @tanstack/react-query has been bumped to 5.100.11. The other three @tanstack/* packages (`react-router`, `react-router-devtools`, `router-plugin`) stay at 1.128.8 — see the `TECH_DEBT.md` entry for the regression details.
 >
 > Vite has been bumped 7 → 8 (rolldown bundler) alongside `@vitejs/plugin-react` 4 → 6 and `vite-plugin-pwa` 1.0.2 → 1.3.0. `@tanstack/router-plugin` stays at 1.128.8 (its peer declares vite ≤6 but worked under 7 and continues to work under 8).

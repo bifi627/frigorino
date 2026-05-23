@@ -31,27 +31,30 @@ export const useReorderInventoryItem = () => {
 
             // Optimistic mirror of server math; see common/sortOrder.ts.
             // Inventory has a single section — treat it as the "unchecked" range.
-            queryClient.setQueryData<InventoryItemResponse[]>(queryKey, (old) => {
-                if (!old) return old;
-                const movedItem = old.find(
-                    (i) => i.id === variables.path.itemId,
-                );
-                if (!movedItem) return old;
+            queryClient.setQueryData<InventoryItemResponse[]>(
+                queryKey,
+                (old) => {
+                    if (!old) return old;
+                    const movedItem = old.find(
+                        (i) => i.id === variables.path.itemId,
+                    );
+                    if (!movedItem) return old;
 
-                const section = old.filter((i) => i.id !== movedItem.id);
+                    const section = old.filter((i) => i.id !== movedItem.id);
 
-                const newSortOrder = computeReorderSortOrder({
-                    section,
-                    afterId: variables.body.afterId,
-                    emptyDefault: computeAppendSortOrder([], false),
-                });
+                    const newSortOrder = computeReorderSortOrder({
+                        section,
+                        afterId: variables.body.afterId,
+                        emptyDefault: computeAppendSortOrder([], false),
+                    });
 
-                return old.map((i) =>
-                    i.id === movedItem.id
-                        ? { ...i, sortOrder: newSortOrder }
-                        : i,
-                );
-            });
+                    return old.map((i) =>
+                        i.id === movedItem.id
+                            ? { ...i, sortOrder: newSortOrder }
+                            : i,
+                    );
+                },
+            );
 
             return { previousItems };
         },

@@ -84,8 +84,10 @@ export const PageHeadActionBar = memo(
                             {subtitle && (
                                 <Typography
                                     variant="body2"
-                                    color="text.secondary"
-                                    sx={{ lineHeight: 1.4 }}
+                                    sx={{
+                                        color: "text.secondary",
+                                        lineHeight: 1.4,
+                                    }}
                                 >
                                     {subtitle}
                                 </Typography>
@@ -130,7 +132,6 @@ export const PageHeadActionBar = memo(
                         </Box>
                     </Box>
                 </Container>
-
                 {menuActions.length > 0 && (
                     <Menu
                         anchorEl={menuAnchorEl}

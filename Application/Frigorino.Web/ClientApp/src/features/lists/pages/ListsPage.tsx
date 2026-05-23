@@ -124,19 +124,16 @@ export const ListsPage = () => {
                     {t("common.create")}
                 </Button>
             </Box>
-
             {isLoading && (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                     <CircularProgress />
                 </Box>
             )}
-
             {error && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     {t("lists.failedToLoadLists")}
                 </Alert>
             )}
-
             {lists && lists.length === 0 && !isLoading && (
                 <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
                     <CardContent>
@@ -145,8 +142,10 @@ export const ListsPage = () => {
                         </Typography>
                         <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 3 }}
+                            sx={{
+                                color: "text.secondary",
+                                mb: 3,
+                            }}
                         >
                             {t("lists.createFirstShoppingList")}
                         </Typography>
@@ -161,7 +160,6 @@ export const ListsPage = () => {
                     </CardContent>
                 </Card>
             )}
-
             {lists && lists.length > 0 && (
                 <Stack spacing={2}>
                     {lists.map((list) => (
@@ -175,7 +173,6 @@ export const ListsPage = () => {
                     ))}
                 </Stack>
             )}
-
             <ListActionsMenu
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
