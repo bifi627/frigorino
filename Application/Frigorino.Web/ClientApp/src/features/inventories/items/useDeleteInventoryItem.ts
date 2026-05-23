@@ -1,14 +1,19 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     deleteInventoryItemMutation,
     getInventoryItemsQueryKey,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import type { InventoryItemResponse } from "../../../lib/api/types.gen";
+import { useRestoreInventoryItem } from "./useRestoreInventoryItem";
 
 export const useDeleteInventoryItem = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
+    const { t } = useTranslation();
+    const restoreItem = useRestoreInventoryItem();
 
     return useMutation({
         ...deleteInventoryItemMutation(),
@@ -49,6 +54,17 @@ export const useDeleteInventoryItem = () => {
                     context.previousItems,
                 );
             }
+        },
+        onSuccess: (_data, variables) => {
+            toast(t("common.itemDeleted"), {
+                action: {
+                    label: t("common.undo"),
+                    onClick: () => {
+                        restoreItem.mutate({ path: variables.path });
+                    },
+                },
+                duration: 5000,
+            });
         },
         onSettled: (_data, _error, variables) => {
             debouncedInvalidate(
