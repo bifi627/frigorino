@@ -45,6 +45,7 @@ export function InventoryItemContent({ item }: Props) {
             {/* Colored highlight bar on the very left */}
             {item.expiryDate && (
                 <Box
+                    data-testid={`inventory-item-expiry-${item.text}`}
                     sx={{
                         position: "absolute",
                         top: 0,
@@ -85,6 +86,7 @@ export function InventoryItemContent({ item }: Props) {
                             {item.quantity && (
                                 <Typography
                                     variant="caption"
+                                    data-testid={`inventory-item-quantity-${item.text}`}
                                     sx={{
                                         display: "flex",
                                         alignItems: "center",

@@ -124,6 +124,15 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
             .GetByText(itemText).WaitForAsync();
     }
 
+    [Then("the list item {string} shows quantity {string}")]
+    public async Task ThenTheListItemShowsQuantity(string itemText, string quantity)
+    {
+        // The quantity is user-entered data (not translated UI text), so asserting its value
+        // is fine. ToHaveTextAsync retries until the row re-renders post server-confirm.
+        await Assertions.Expect(ctx.Page.GetByTestId($"list-item-quantity-{itemText}"))
+            .ToHaveTextAsync(quantity);
+    }
+
     [Then("{string} is shown as checked")]
     public async Task ThenIsShownAsChecked(string itemText)
     {

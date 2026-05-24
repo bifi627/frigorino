@@ -67,7 +67,9 @@
         "completed": "abgeschlossen",
         "textCopiedToClipboard": "Text in die Zwischenablage kopiert",
         "itemDeleted": "Element gelöscht",
-        "undo": "Rückgängig"
+        "undo": "Rückgängig",
+        "date": "Datum",
+        "setToday": "Heute"
     },
     "auth": {
         "login": "Anmelden",

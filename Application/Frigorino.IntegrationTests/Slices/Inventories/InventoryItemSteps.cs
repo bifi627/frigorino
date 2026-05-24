@@ -45,4 +45,22 @@ public class InventoryItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         await Assertions.Expect(ctx.Page.GetByTestId($"toggle-item-{itemText}"))
             .Not.ToBeVisibleAsync();
     }
+
+    [Then("the inventory item {string} shows quantity {string}")]
+    public async Task ThenTheInventoryItemShowsQuantity(string itemText, string quantity)
+    {
+        // The quantity caption also renders a ShoppingBag icon (no text), so assert the
+        // value is contained rather than exact-equal.
+        await Assertions.Expect(ctx.Page.GetByTestId($"inventory-item-quantity-{itemText}"))
+            .ToContainTextAsync(quantity);
+    }
+
+    [Then("the inventory item {string} shows an expiry indicator")]
+    public async Task ThenTheInventoryItemShowsAnExpiryIndicator(string itemText)
+    {
+        // The coloured highlight bar renders for ANY expiryDate, unlike the human-readable
+        // caption which is translated and stays empty for dates more than 30 days out.
+        await Assertions.Expect(ctx.Page.GetByTestId($"inventory-item-expiry-{itemText}"))
+            .ToBeVisibleAsync();
+    }
 }

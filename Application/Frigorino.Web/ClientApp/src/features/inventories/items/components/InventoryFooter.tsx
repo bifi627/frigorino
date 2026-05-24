@@ -1,12 +1,17 @@
-import { Collapse, Container } from "@mui/material";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { AddInput } from "../../../../components/inputs/AddInput";
-import { DateInputPanel } from "../../../../components/inputs/DateInputPanel";
+import { Chip, Container } from "@mui/material";
+import { memo, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
-    QuantityPanel,
-    QuantityToggle,
-} from "../../../../components/inputs/QuantityPanel";
+    Composer,
+    expiryFeature,
+    quantityFeature,
+    type Completion,
+    type DuplicateResult,
+} from "../../../../components/composer";
+import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { InventoryItemResponse } from "../../../../lib/api";
+
+const features = [quantityFeature, expiryFeature] as const;
 
 interface InventoryFooterProps {
     editingItem: InventoryItemResponse | null;
@@ -26,134 +31,67 @@ export const InventoryFooter = memo(
         onAddItem,
         onUpdateItem,
         onCancelEdit,
-        onUncheckExisting,
         isLoading,
         onScrollToLastUnchecked,
     }: InventoryFooterProps) => {
-        const [quantity, setQuantity] = useState("");
-        const [date, setDate] = useState<Date | null>(null);
-        const [showPanels, setShowQuantityPanel] = useState(false);
+        const { t } = useTranslation();
 
-        // Update quantity state when editing item changes
-        useEffect(() => {
-            if (editingItem) {
-                setQuantity(editingItem.quantity || "");
-                setDate(
-                    editingItem.expiryDate
-                        ? new Date(editingItem.expiryDate)
-                        : null,
-                );
-                if (editingItem.quantity) {
-                    setShowQuantityPanel(true);
-                }
-            } else {
-                setQuantity("");
-            }
-        }, [editingItem]);
-
-        const handleAddItem = useCallback(
-            (data: string) => {
-                onAddItem(
-                    data,
-                    quantity.trim() || undefined,
-                    date || undefined,
-                );
-                setQuantity("");
-                setDate(null);
-                onScrollToLastUnchecked();
-            },
-            [onAddItem, quantity, onScrollToLastUnchecked, date],
-        );
-
-        const handleUpdateItem = useCallback(
-            (data: string) => {
-                onUpdateItem(
-                    data,
-                    quantity.trim() || undefined,
-                    date || undefined,
-                );
-            },
-            [onUpdateItem, quantity, date],
-        );
-
-        const handleToggleQuantityPanel = useCallback(() => {
-            setShowQuantityPanel(!showPanels);
-        }, [showPanels]);
-
-        const onClearText = () => {
-            setQuantity("");
-            setDate(null);
-            setShowQuantityPanel(false);
-        };
-
-        const handlePanelKeyPress = useCallback(
-            (event: React.KeyboardEvent) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    // The AddInput component will handle the submit
-                }
-            },
+        const getBadge = useCallback(
+            (item: InventoryItemResponse) =>
+                item.isExpiring ? (
+                    <Chip
+                        label="!"
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
+                    />
+                ) : undefined,
             [],
         );
 
-        // Memoize the existing items mapping to prevent unnecessary re-renders
-        const mappedExistingItems = useMemo(
-            () =>
-                existingItems.map((item) => ({
-                    ...item,
-                    secondaryText: item.quantity || null,
-                })),
-            [existingItems],
+        const onDuplicate = useCallback(
+            (match: InventoryItemResponse): DuplicateResult => ({
+                message: `"${match.text}" ${t("common.alreadyExists")}`,
+                block: true,
+            }),
+            [t],
         );
 
-        // Memoize the editing item mapping
-        const mappedEditingItem = useMemo(
+        const { suggestions, duplicate } = useItemComposer({
+            editingItem,
+            existingItems,
+            getBadge,
+            onDuplicate,
+        });
+
+        const initialDraft = useMemo(
             () =>
                 editingItem
                     ? {
-                          ...editingItem,
-                          secondaryText: editingItem?.quantity,
+                          text: editingItem.text,
+                          values: {
+                              quantity: editingItem.quantity ?? "",
+                              expiry: editingItem.expiryDate
+                                  ? new Date(editingItem.expiryDate)
+                                  : null,
+                          },
                       }
                     : undefined,
             [editingItem],
         );
 
-        // Memoize right controls
-        const rightControls = useMemo(
-            () => [
-                <QuantityToggle
-                    key="quantity-toggle"
-                    value={quantity}
-                    active={showPanels}
-                    onToggle={handleToggleQuantityPanel}
-                />,
-            ],
-            [quantity, handleToggleQuantityPanel, showPanels],
+        const handleComplete = useCallback(
+            (r: Completion<typeof features>) => {
+                if (r.mode === "edit") {
+                    onUpdateItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
+                } else {
+                    onAddItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
+                    onScrollToLastUnchecked();
+                }
+            },
+            [onAddItem, onUpdateItem, onScrollToLastUnchecked],
         );
-
-        const topPanels = useMemo(
-            () => [
-                <Collapse key="date-panel" in={showPanels}>
-                    <DateInputPanel
-                        value={date}
-                        onChange={(value) => setDate(value)}
-                        isLoading={isLoading}
-                        onKeyPress={handlePanelKeyPress}
-                    ></DateInputPanel>
-                </Collapse>,
-                <Collapse key="quantity-panel" in={showPanels}>
-                    <QuantityPanel
-                        value={quantity}
-                        onChange={setQuantity}
-                        isLoading={isLoading}
-                        onKeyPress={handlePanelKeyPress}
-                    />
-                </Collapse>,
-            ],
-            [showPanels, date, isLoading, handlePanelKeyPress, quantity],
-        );
-
-        const bottomPanels = useMemo(() => [], []);
 
         return (
             <Container
@@ -167,19 +105,15 @@ export const InventoryFooter = memo(
                     bgcolor: "background.paper",
                 }}
             >
-                <AddInput
-                    onAdd={handleAddItem}
-                    onUpdate={handleUpdateItem}
-                    onCancelEdit={onCancelEdit}
-                    onUncheckExisting={onUncheckExisting}
-                    onClearText={onClearText}
-                    editingItem={mappedEditingItem}
-                    existingItems={mappedExistingItems}
-                    isLoading={isLoading}
-                    hasItems={existingItems.length > 0}
-                    rightControls={rightControls}
-                    bottomPanels={bottomPanels}
-                    topPanels={topPanels}
+                <Composer
+                    key={editingItem?.id ?? "new"}
+                    features={features}
+                    disabled={isLoading}
+                    editing={{ active: Boolean(editingItem), onCancel: onCancelEdit }}
+                    initialDraft={initialDraft}
+                    suggestions={suggestions}
+                    duplicate={duplicate}
+                    onComplete={handleComplete}
                 />
             </Container>
         );

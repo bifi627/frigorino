@@ -478,3 +478,6 @@ Application/Frigorino.Web/ClientApp/build/
 Application/Frigorino.Web/ClientApp/.tanstack/tmp/
 
 .claude/worktrees/
+
+# Superpowers brainstorm visual-companion artifacts (local-only)
+.superpowers/
