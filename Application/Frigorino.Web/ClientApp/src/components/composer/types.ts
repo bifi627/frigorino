@@ -14,10 +14,12 @@ export interface ModifierFeature<Id extends string, V> {
     kind: "modifier";
     id: Id;
     initial: V;
-    /** Optional emptiness test; used to decide whether a seeded value opens its panel. */
+    /** Optional emptiness test; used to decide whether a value renders a chip. */
     isEmpty?: (value: V) => boolean;
     renderToggle?: (slot: FeatureSlot<V>) => ReactNode;
     renderPanel?: (slot: FeatureSlot<V>) => ReactNode;
+    /** Optional chip shown above the field when the value is non-empty; tapping it opens the panel. */
+    renderChip?: (slot: FeatureSlot<V>) => ReactNode;
 }
 
 /** Context handed to an action feature's trigger. */
