@@ -69,6 +69,10 @@ export const InventoryFooter = memo(
             () => ({
                 check: (text) => {
                     const needle = text.trim().toLowerCase();
+                    // Don't flag duplicates on 1–2 char input; matches the autocomplete minChars floor.
+                    if (needle.length < 3) {
+                        return null;
+                    }
                     const match = existingItems.find(
                         (item) =>
                             item.text.toLowerCase() === needle &&
