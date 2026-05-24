@@ -1,13 +1,12 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: frigorino-postgres
     environment:
       POSTGRES_DB: frigorino
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${PG_PORT:-5432}:5432"
     volumes:
       - frigorino-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -18,12 +17,11 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: frigorino-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: test@test.de
       PGADMIN_DEFAULT_PASSWORD: test
     ports:
-      - "8080:80"
+      - "${PGADMIN_PORT:-8080}:80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:

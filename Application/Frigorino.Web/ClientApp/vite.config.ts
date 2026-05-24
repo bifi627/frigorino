@@ -12,7 +12,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 const compressionExclude = [/\.(br|gz)$/, /\.(png|jpe?g|gif|webp|woff2?)$/i];
 
-const target = "https://localhost:5001";
+const target = env.VITE_PROXY_TARGET ?? "https://localhost:5001";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
@@ -86,7 +86,7 @@ export default defineConfig(({ command }) => ({
                 secure: false,
             },
         },
-        port: 44375,
+        port: Number(env.VITE_DEV_PORT) || 44375,
         https: command === "serve" ? loadDevCertHttps() : undefined,
     },
 }));
