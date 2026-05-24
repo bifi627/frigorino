@@ -1,34 +1,33 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
    descriptor (non-component) alongside local presentational components. */
-import { Add, Remove, ShoppingBag } from "@mui/icons-material";
-import {
-    Box,
-    Button,
-    ButtonGroup,
-    IconButton,
-    TextField,
-    Typography,
-} from "@mui/material";
+import { Add, Clear, Remove, ShoppingBag } from "@mui/icons-material";
+import { Box, Button, ButtonGroup, Chip, IconButton, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
 
 const QuantityToggle = ({ value, open, toggleOpen }: FeatureSlot<string>) => (
-    <IconButton onClick={toggleOpen} size="small">
-        {value ? (
-            <Typography
-                variant="caption"
-                sx={{ fontWeight: "bold", color: "primary.main", minWidth: "30px" }}
-            >
-                {value}
-            </Typography>
-        ) : (
-            <ShoppingBag
-                fontSize="small"
-                sx={{ color: open ? "primary.main" : "inherit" }}
-            />
-        )}
+    <IconButton
+        onClick={toggleOpen}
+        sx={{
+            minWidth: 44,
+            minHeight: 44,
+            color: value || open ? "primary.main" : "inherit",
+        }}
+    >
+        <ShoppingBag fontSize="small" />
     </IconButton>
+);
+
+const QuantityChip = ({ value, toggleOpen }: FeatureSlot<string>) => (
+    <Chip
+        clickable
+        onClick={toggleOpen}
+        size="small"
+        icon={<ShoppingBag fontSize="small" />}
+        label={value}
+        sx={{ minHeight: 32 }}
+    />
 );
 
 const QuantityPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
@@ -54,30 +53,38 @@ const QuantityPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
                         onClick={() => setValue(num.toString())}
                         variant={value === num.toString() ? "contained" : "outlined"}
                         size="small"
-                        sx={{ minWidth: 40 }}
+                        sx={{ minWidth: 44, minHeight: 44 }}
                     >
                         {num}
                     </Button>
                 ))}
             </ButtonGroup>
             <IconButton
-                size="small"
                 onClick={() => {
                     const current = parseInt(value) || 0;
                     if (current > 0) setValue((current - 1).toString());
                 }}
                 disabled={!value || parseInt(value) <= 0}
+                sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Remove fontSize="small" />
             </IconButton>
             <IconButton
-                size="small"
                 onClick={() => {
                     const current = parseInt(value) || 0;
                     setValue((current + 1).toString());
                 }}
+                sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Add fontSize="small" />
+            </IconButton>
+            <IconButton
+                onClick={() => setValue("")}
+                disabled={!value}
+                title={t("common.clear")}
+                sx={{ minWidth: 44, minHeight: 44 }}
+            >
+                <Clear fontSize="small" />
             </IconButton>
         </Box>
     );
@@ -89,4 +96,5 @@ export const quantityFeature = defineModifier({
     isEmpty: (value) => value.trim() === "",
     renderToggle: (slot) => <QuantityToggle {...slot} />,
     renderPanel: (slot) => <QuantityPanel {...slot} />,
+    renderChip: (slot) => <QuantityChip {...slot} />,
 });
