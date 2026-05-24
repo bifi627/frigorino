@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
    descriptor (non-component) alongside local presentational components. */
 import { CalendarToday, Clear, Today } from "@mui/icons-material";
-import { Box, IconButton, TextField, Typography } from "@mui/material";
+import { Box, Chip, IconButton, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
@@ -13,21 +13,27 @@ const formatForInput = (date: Date | null) =>
     date ? date.toISOString().split("T")[0] : "";
 
 const ExpiryToggle = ({ value, open, toggleOpen }: FeatureSlot<Date | null>) => (
-    <IconButton onClick={toggleOpen} size="small">
-        {value ? (
-            <Typography
-                variant="caption"
-                sx={{ fontWeight: "bold", color: "primary.main", minWidth: "30px" }}
-            >
-                {formatForDisplay(value)}
-            </Typography>
-        ) : (
-            <CalendarToday
-                fontSize="small"
-                sx={{ color: open ? "primary.main" : "inherit" }}
-            />
-        )}
+    <IconButton
+        onClick={toggleOpen}
+        sx={{
+            minWidth: 44,
+            minHeight: 44,
+            color: value || open ? "primary.main" : "inherit",
+        }}
+    >
+        <CalendarToday fontSize="small" />
     </IconButton>
+);
+
+const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => (
+    <Chip
+        clickable
+        onClick={toggleOpen}
+        size="small"
+        icon={<CalendarToday fontSize="small" />}
+        label={formatForDisplay(value)}
+        sx={{ minHeight: 32 }}
+    />
 );
 
 const ExpiryPanel = ({ value, setValue, disabled }: FeatureSlot<Date | null>) => {
@@ -56,17 +62,17 @@ const ExpiryPanel = ({ value, setValue, disabled }: FeatureSlot<Date | null>) =>
                 size="small"
             />
             <IconButton
-                size="small"
                 onClick={() => setValue(new Date())}
                 title={t("common.setToday")}
+                sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Today fontSize="small" />
             </IconButton>
             <IconButton
-                size="small"
                 onClick={() => setValue(null)}
                 disabled={!value}
                 title={t("common.clear")}
+                sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Clear fontSize="small" />
             </IconButton>
@@ -80,4 +86,5 @@ export const expiryFeature = defineModifier({
     isEmpty: (value) => value === null,
     renderToggle: (slot) => <ExpiryToggle {...slot} />,
     renderPanel: (slot) => <ExpiryPanel {...slot} />,
+    renderChip: (slot) => <ExpiryChip {...slot} />,
 });
