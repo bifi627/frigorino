@@ -203,3 +203,14 @@ Format per item:
   - Once the Hangfire job lands and is verified, delete `MaintenanceHostedService.cs`, `MaintenanceDependencyInjection.cs`, `DemoMaintenanceTask.cs`, `DeleteInactiveItems.cs`, `IMaintenanceTask`, and the `AddMaintenanceServices()` call. Per the "remove dead code" rule, no leftover scaffolding.
   - **Pairs with [[Undo on item delete]]:** if users can restore checked items via a snackbar, a 30-day hard-delete is fine (snackbar window is seconds, restore via "trash bin" is a separate future feature). If a trash bin lands later, this cleanup job becomes the trash-bin TTL enforcer.
 - **Impact / cost:** ~half-day. One new Hangfire job (~30 LOC), one DI registration, one `appsettings` key, ~5 files deleted. CLAUDE.md update. No new packages. No EF migration (no schema change). Reversible — the cleanup is just a SQL `DELETE` by predicate; if the rule is wrong, narrow the predicate or disable the recurring job in the Hangfire dashboard.
+
+---
+
+## Rich list items: photos & documents (text / image / document)
+
+- **Spec:** fully designed — see [`docs/superpowers/specs/2026-05-23-rich-list-items-design.md`](docs/superpowers/specs/2026-05-23-rich-list-items-design.md). This entry is just the pointer; the spec is authoritative.
+- **Why:** Items are text-only today. Users want to attach a **photo they took** or a **document** (PDF manual/warranty/receipt) to a list, while the item still checks off, reorders, and soft-deletes like any other. The existing URL-in-text image/link hack (`ListItemContent.tsx`) doesn't cover real uploads.
+- **Sketch (headline decisions):** typed `ListItem` (`Type ∈ {Text, Image, Document}`) on a **single flat table** — nullable file columns, **no EF inheritance**. One coupled file pipeline behind a vendor-neutral `IFileStorage` port (proxy upload through the API, which stays the authz gatekeeper since membership lives in Postgres, not Firebase rules). Thumbnails via ImageSharp. Three per-type frontend renderers + a WhatsApp-style attach affordance.
+- **Scope / sequencing:** v1 ships the seam + a `LocalFileStorage` dev backend (demoable/testable locally). Production backend (Firebase-GCS / R2 / S3) is a **separate follow-up** — Firebase Storage now requires the Blaze plan (stays $0 under free limits). Post-upload classify/analyze and orphaned-blob cleanup are future backend hooks.
+- **Dependencies:** restore behavior leans on [[Undo on item delete]]'s `RestoreItem`, not yet in `stage`. A future classify hook would build on [[Wire up Hangfire for queued background jobs (sleep-safe, no cron)]] and reuse the [[Promote checked list items into inventory (classifier-driven)]] classifier.
+- **Impact / cost:** one EF migration (1 enum + 5 nullable columns), ~3 new slices + 1 aggregate method, `IFileStorage` + dev impl + ImageSharp, three renderers + upload/blob hooks. Production storage backend is additional, separately scoped.
