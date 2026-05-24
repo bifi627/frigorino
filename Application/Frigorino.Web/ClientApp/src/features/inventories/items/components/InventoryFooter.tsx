@@ -110,9 +110,6 @@ export const InventoryFooter = memo(
                 quantity: string;
                 expiry: Date | null;
             }) => {
-                if (r.kind !== "text") {
-                    return;
-                }
                 if (r.mode === "edit") {
                     onUpdateItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
                 } else {

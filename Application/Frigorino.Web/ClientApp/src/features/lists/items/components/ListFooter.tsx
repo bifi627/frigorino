@@ -105,9 +105,6 @@ export const ListFooter = memo(
 
         const handleComplete = useCallback(
             (r: { kind: "text"; mode: "create" | "edit"; text: string; quantity: string }) => {
-                if (r.kind !== "text") {
-                    return;
-                }
                 if (r.mode === "edit") {
                     onUpdateItem(r.text, r.quantity || undefined);
                 } else {
