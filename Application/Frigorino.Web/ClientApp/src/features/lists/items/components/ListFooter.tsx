@@ -1,10 +1,13 @@
-import { Collapse, Container } from "@mui/material";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { AddInput } from "../../../../components/inputs/AddInput";
+import { Chip, Container } from "@mui/material";
+import { memo, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
-    QuantityPanel,
-    QuantityToggle,
-} from "../../../../components/inputs/QuantityPanel";
+    Composer,
+    quantityFeature,
+    type DuplicateConfig,
+    type Suggestion,
+    type SuggestionsConfig,
+} from "../../../../components/composer";
 import type { ListItemResponse } from "../../../../lib/api";
 
 interface ListFooterProps {
@@ -29,98 +32,90 @@ export const ListFooter = memo(
         isLoading,
         onScrollToLastUnchecked,
     }: ListFooterProps) => {
-        const [quantity, setQuantity] = useState("");
-        const [showQuantityPanel, setShowQuantityPanel] = useState(false);
+        const { t } = useTranslation();
 
-        useEffect(() => {
-            if (editingItem) {
-                setQuantity(editingItem.quantity || "");
-                if (editingItem.quantity) {
-                    setShowQuantityPanel(true);
-                }
-            } else {
-                setQuantity("");
-            }
-        }, [editingItem]);
+        const toSuggestion = (item: ListItemResponse): Suggestion => ({
+            id: item.id,
+            label: item.text,
+            secondaryLabel: item.quantity ?? undefined,
+            badge: item.status ? (
+                <Chip
+                    label="✓"
+                    size="small"
+                    color="success"
+                    variant="outlined"
+                    sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
+                />
+            ) : undefined,
+        });
 
-        const handleAddItem = useCallback(
-            (data: string) => {
-                onAddItem(data, quantity.trim() || undefined);
-                setQuantity("");
-                onScrollToLastUnchecked();
-            },
-            [onAddItem, quantity, onScrollToLastUnchecked],
+        const suggestions = useMemo<SuggestionsConfig>(
+            () => ({
+                getItems: (query) => {
+                    const q = query.trim().toLowerCase();
+                    return existingItems
+                        .filter(
+                            (item) =>
+                                item.id !== editingItem?.id &&
+                                item.text.toLowerCase().startsWith(q),
+                        )
+                        .map(toSuggestion);
+                },
+            }),
+            [existingItems, editingItem?.id],
         );
 
-        const handleUpdateItem = useCallback(
-            (data: string) => {
-                onUpdateItem(data, quantity.trim() || undefined);
-            },
-            [onUpdateItem, quantity],
+        const duplicate = useMemo<DuplicateConfig>(
+            () => ({
+                check: (text) => {
+                    const needle = text.trim().toLowerCase();
+                    const match = existingItems.find(
+                        (item) =>
+                            item.text.toLowerCase() === needle &&
+                            item.id !== editingItem?.id,
+                    );
+                    if (!match) {
+                        return null;
+                    }
+                    if (match.status && !editingItem) {
+                        return {
+                            message: `"${match.text}" ${t("common.alreadyExists")} (${t("common.completed")})`,
+                            onResolve: () => onUncheckExisting(match.id),
+                        };
+                    }
+                    return {
+                        message: `"${match.text}" ${t("common.alreadyExists")}`,
+                        block: true,
+                    };
+                },
+            }),
+            [existingItems, editingItem, onUncheckExisting, t],
         );
 
-        const handleToggleQuantityPanel = useCallback(() => {
-            setShowQuantityPanel(!showQuantityPanel);
-        }, [showQuantityPanel]);
-
-        const handleQuantityKeyPress = useCallback(
-            (event: React.KeyboardEvent) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                }
-            },
-            [],
-        );
-
-        const onClearText = () => {
-            setQuantity("");
-            setShowQuantityPanel(false);
-        };
-
-        const mappedExistingItems = useMemo(
-            () =>
-                existingItems.map((item) => ({
-                    ...item,
-                    secondaryText: item.quantity || null,
-                })),
-            [existingItems],
-        );
-
-        const mappedEditingItem = useMemo(
+        const initialDraft = useMemo(
             () =>
                 editingItem
                     ? {
-                          ...editingItem,
-                          secondaryText: editingItem?.quantity,
+                          text: editingItem.text,
+                          values: { quantity: editingItem.quantity ?? "" },
                       }
                     : undefined,
             [editingItem],
         );
 
-        const rightControls = useMemo(
-            () => [
-                <QuantityToggle
-                    key="quantity-toggle"
-                    value={quantity}
-                    active={showQuantityPanel}
-                    onToggle={handleToggleQuantityPanel}
-                />,
-            ],
-            [quantity, handleToggleQuantityPanel, showQuantityPanel],
-        );
-
-        const topPanels = useMemo(
-            () => [
-                <Collapse key="quantity-panel" in={showQuantityPanel}>
-                    <QuantityPanel
-                        value={quantity}
-                        onChange={setQuantity}
-                        isLoading={isLoading}
-                        onKeyPress={handleQuantityKeyPress}
-                    />
-                </Collapse>,
-            ],
-            [showQuantityPanel, quantity, isLoading, handleQuantityKeyPress],
+        const handleComplete = useCallback(
+            (r: { kind: "text"; mode: "create" | "edit"; text: string; quantity: string }) => {
+                if (r.kind !== "text") {
+                    return;
+                }
+                if (r.mode === "edit") {
+                    onUpdateItem(r.text, r.quantity || undefined);
+                } else {
+                    onAddItem(r.text, r.quantity || undefined);
+                    onScrollToLastUnchecked();
+                }
+            },
+            [onAddItem, onUpdateItem, onScrollToLastUnchecked],
         );
 
         return (
@@ -135,18 +130,14 @@ export const ListFooter = memo(
                     bgcolor: "background.paper",
                 }}
             >
-                <AddInput
-                    onAdd={handleAddItem}
-                    onUpdate={handleUpdateItem}
-                    onCancelEdit={onCancelEdit}
-                    onUncheckExisting={onUncheckExisting}
-                    onClearText={onClearText}
-                    editingItem={mappedEditingItem}
-                    existingItems={mappedExistingItems}
-                    isLoading={isLoading}
-                    hasItems={existingItems.length > 0}
-                    rightControls={rightControls}
-                    topPanels={topPanels}
+                <Composer
+                    features={[quantityFeature]}
+                    disabled={isLoading}
+                    editing={{ active: Boolean(editingItem), onCancel: onCancelEdit }}
+                    initialDraft={initialDraft}
+                    suggestions={suggestions}
+                    duplicate={duplicate}
+                    onComplete={handleComplete}
                 />
             </Container>
         );
