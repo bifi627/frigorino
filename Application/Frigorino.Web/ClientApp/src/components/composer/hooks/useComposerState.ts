@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AnyFeature, AnyModifierFeature } from "../types";
 
 type ValuesMap = Record<string, unknown>;
-type OpenMap = Record<string, boolean>;
 
 interface InitialDraft {
     text?: string;
@@ -17,7 +16,10 @@ interface UseComposerStateArgs {
 const onlyModifiers = (features: readonly AnyFeature[]): AnyModifierFeature[] =>
     features.filter((f): f is AnyModifierFeature => f.kind === "modifier");
 
-const isValueEmpty = (feature: AnyModifierFeature, value: unknown): boolean => {
+export const isModifierValueEmpty = (
+    feature: AnyModifierFeature,
+    value: unknown,
+): boolean => {
     if (feature.isEmpty) {
         return feature.isEmpty(value);
     }
@@ -38,10 +40,11 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
 
     const [text, setText] = useState<string>(() => initialDraft?.text ?? "");
     const [values, setValues] = useState<ValuesMap>(seedValues);
-    const [open, setOpen] = useState<OpenMap>({});
+    const [openId, setOpenId] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Re-seed text + values whenever a new draft object is supplied (e.g. editing a new item).
+    // Seeded values surface as chips, so no panel is auto-opened.
     const draftRef = useRef<InitialDraft | undefined>(initialDraft);
     useEffect(() => {
         if (draftRef.current === initialDraft) {
@@ -49,23 +52,20 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
         }
         draftRef.current = initialDraft;
         setText(initialDraft?.text ?? "");
-        const nextValues = seedValues();
-        setValues(nextValues);
-        const nextOpen: OpenMap = {};
-        for (const f of modifiers) {
-            if (!isValueEmpty(f, nextValues[f.id])) {
-                nextOpen[f.id] = true;
-            }
-        }
-        setOpen(nextOpen);
-    }, [initialDraft, seedValues, modifiers]);
+        setValues(seedValues());
+        setOpenId(null);
+    }, [initialDraft, seedValues]);
 
     const setValue = useCallback((id: string, value: unknown) => {
         setValues((prev) => ({ ...prev, [id]: value }));
     }, []);
 
     const toggleOpen = useCallback((id: string) => {
-        setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+        setOpenId((prev) => (prev === id ? null : id));
+    }, []);
+
+    const openPanel = useCallback((id: string) => {
+        setOpenId(id);
     }, []);
 
     const focusInput = useCallback(() => {
@@ -79,7 +79,7 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
             cleared[f.id] = f.initial;
         }
         setValues(cleared);
-        setOpen({});
+        setOpenId(null);
     }, [modifiers]);
 
     return {
@@ -87,7 +87,8 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
         setText,
         values,
         setValue,
-        open,
+        openId,
+        openPanel,
         toggleOpen,
         inputRef,
         focusInput,

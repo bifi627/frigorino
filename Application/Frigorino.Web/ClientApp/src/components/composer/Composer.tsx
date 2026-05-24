@@ -32,7 +32,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [features],
     );
 
-    const { text, setText, values, setValue, open, toggleOpen, inputRef, focusInput, reset } =
+    const { text, setText, values, setValue, openId, toggleOpen, inputRef, focusInput, reset } =
         useComposerState({ features: featureList, initialDraft });
 
     const isEditing = editing?.active ?? false;
@@ -114,7 +114,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     const slotFor = (feature: AnyModifierFeature): FeatureSlot<unknown> => ({
         value: values[feature.id],
         setValue: (value) => setValue(feature.id, value),
-        open: Boolean(open[feature.id]),
+        open: openId === feature.id,
         toggleOpen: () => toggleOpen(feature.id),
         disabled,
     });
@@ -150,7 +150,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                     <Collapse
                         key={feature.id}
                         className="composer-panel"
-                        in={Boolean(open[feature.id])}
+                        in={openId === feature.id}
                     >
                         <Box sx={{ mb: 0.5 }}>{feature.renderPanel(slotFor(feature))}</Box>
                     </Collapse>
