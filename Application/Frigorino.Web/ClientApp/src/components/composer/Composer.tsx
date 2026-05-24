@@ -114,7 +114,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     const chipFeatures = modifierFeatures.filter(
         (feature) =>
             feature.renderChip &&
-            openId !== feature.id &&
             !isModifierValueEmpty(feature, values[feature.id]),
     );
 

@@ -66,7 +66,15 @@ export const ComposerTextField = ({
                         : filter(opts, params)
                 }
                 inputValue={text}
-                onInputChange={(_, value) => onTextChange(value)}
+                onInputChange={(_, value, reason) => {
+                    // Only react to real typing. MUI fires a "reset" event on
+                    // mount (and on selection) that would otherwise wipe a
+                    // seeded value when editing an item; selections are handled
+                    // in onChange below.
+                    if (reason === "input") {
+                        onTextChange(value);
+                    }
+                }}
                 onChange={(_, value) => {
                     if (value && typeof value !== "string") {
                         if (suggestions?.onSelect) {
