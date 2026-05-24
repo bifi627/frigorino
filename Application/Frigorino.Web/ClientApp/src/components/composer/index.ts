@@ -1,5 +1,7 @@
 export { Composer } from "./Composer";
 export { defineAction, defineModifier } from "./defineFeature";
+export { quantityFeature } from "./features/quantityFeature";
+export { expiryFeature } from "./features/expiryFeature";
 export type {
     ActionFeature,
     Completion,
