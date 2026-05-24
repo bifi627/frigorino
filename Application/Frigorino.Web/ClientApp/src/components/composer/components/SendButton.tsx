@@ -27,6 +27,8 @@ export const SendButton = ({
             color={color}
             title={title ?? (editing ? t("common.update") : t("common.add"))}
             sx={{
+                minWidth: 44,
+                minHeight: 44,
                 bgcolor: disabled ? "transparent" : `${color}.main`,
                 color: disabled ? "action.disabled" : "common.white",
                 "&:hover": { bgcolor: disabled ? "transparent" : `${color}.dark` },
