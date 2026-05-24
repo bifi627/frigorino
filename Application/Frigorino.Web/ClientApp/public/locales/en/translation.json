@@ -67,7 +67,9 @@
         "completed": "completed",
         "textCopiedToClipboard": "Text copied to clipboard",
         "itemDeleted": "Item deleted",
-        "undo": "Undo"
+        "undo": "Undo",
+        "date": "Date",
+        "setToday": "Today"
     },
     "auth": {
         "login": "Login",
