@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
-   descriptor (non-component) alongside local presentational components, mirroring the
-   existing pattern in components/inputs/context/AddInputContext.tsx. */
+   descriptor (non-component) alongside local presentational components. */
 import { CalendarToday, Clear, Today } from "@mui/icons-material";
 import { Box, IconButton, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
