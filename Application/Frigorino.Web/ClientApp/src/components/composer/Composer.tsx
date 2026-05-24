@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
 import { EditHeader } from "./components/EditHeader";
 import { SendButton } from "./components/SendButton";
-import { useComposerState } from "./hooks/useComposerState";
+import { isModifierValueEmpty, useComposerState } from "./hooks/useComposerState";
 import type {
     AnyActionFeature,
     AnyFeature,
@@ -32,7 +32,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [features],
     );
 
-    const { text, setText, values, setValue, openId, toggleOpen, inputRef, focusInput, reset } =
+    const { text, setText, values, setValue, openId, openPanel, toggleOpen, inputRef, focusInput, reset } =
         useComposerState({ features: featureList, initialDraft });
 
     const isEditing = editing?.active ?? false;
@@ -145,6 +145,36 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                 <EditHeader label={editing.label} onCancel={handleCancelEdit} />
             )}
 
+            {modifierFeatures.some(
+                (feature) =>
+                    feature.renderChip &&
+                    openId !== feature.id &&
+                    !isModifierValueEmpty(feature, values[feature.id]),
+            ) && (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
+                    {modifierFeatures.map((feature) => {
+                        if (
+                            !feature.renderChip ||
+                            openId === feature.id ||
+                            isModifierValueEmpty(feature, values[feature.id])
+                        ) {
+                            return null;
+                        }
+                        return (
+                            <Box
+                                key={feature.id}
+                                className="composer-panel"
+                                role="button"
+                                onClick={() => openPanel(feature.id)}
+                                sx={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
+                            >
+                                {feature.renderChip(slotFor(feature))}
+                            </Box>
+                        );
+                    })}
+                </Box>
+            )}
+
             {modifierFeatures.map((feature) =>
                 feature.renderPanel ? (
                     <Collapse
@@ -163,6 +193,8 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         onClick={handleDiscard}
                         title={t("common.discardInput")}
                         sx={{
+                            minWidth: 44,
+                            minHeight: 44,
                             color: "text.secondary",
                             bgcolor: "action.hover",
                             "&:hover": { color: "error.main", bgcolor: "error.50" },
