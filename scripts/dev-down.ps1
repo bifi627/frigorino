@@ -1,32 +1,34 @@
-# Local dev stack tear-down.
+# Local dev stack tear-down (agent-only). Tears down ONLY this worktree's stack,
+# read from .dev/stack.json. Never blind-kills the user's canonical 5001/44375.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts/dev-down.ps1
-# Idempotent: safe to run when stack is already down. Preserves the postgres volume.
+# Idempotent: safe when the stack is already down. Preserves the postgres volume.
 
 [CmdletBinding()]
 param()
 
 $ErrorActionPreference = "Continue"
-$RepoRoot = Split-Path -Parent $PSScriptRoot
+. "$PSScriptRoot/dev-common.ps1"
 
-function Stop-Listener {
-    param([int]$Port)
-    $listenerPids = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
-        Select-Object -ExpandProperty OwningProcess -Unique
-    foreach ($processId in $listenerPids) {
-        Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-    }
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+$state = Read-StackState -RepoRoot $RepoRoot
+
+if (-not $state) {
+    Write-Host "[dev-down] No .dev/stack.json - nothing this worktree owns. Done."
+    return
 }
 
-Write-Host "[dev-down] Killing listeners on 5001/44375..."
-Stop-Listener -Port 5001
-Stop-Listener -Port 44375
+$composeProject = [string]$state.composeProject
+Write-Host "[dev-down] Killing listeners on $($state.backendPort)/$($state.vitePort)..."
+Stop-Listener -Port ([int]$state.backendPort)
+Stop-Listener -Port ([int]$state.vitePort)
 
-Write-Host "[dev-down] docker compose down (volume preserved)..."
+Write-Host "[dev-down] docker compose -p $composeProject down (volume preserved)..."
 Push-Location $RepoRoot
 try {
-    & docker compose down | Out-Null
+    & docker compose -p $composeProject down | Out-Null
 } finally {
     Pop-Location
 }
 
+Remove-Item (Get-StackStatePath -RepoRoot $RepoRoot) -ErrorAction SilentlyContinue
 Write-Host "[dev-down] Done."
