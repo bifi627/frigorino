@@ -255,50 +255,42 @@ At the top of `Composer.tsx`, the hook is imported on line 8 (`import { useCompo
 import { isModifierValueEmpty, useComposerState } from "./hooks/useComposerState";
 ```
 
-- [ ] **Step 2: Add `openPanel` back to the destructure**
+- [ ] **Step 2: Remove the now-unused `openPanel` from the hook**
+
+`openPanel` was added to `useComposerState.ts` in Task 2 in anticipation of chip clicks, but chips instead use the slot's `toggleOpen` (a chip only renders when its panel is closed, so toggling always opens). Remove it to avoid dead code: delete the `openPanel` `useCallback` and its entry in the returned object in `src/components/composer/hooks/useComposerState.ts`. The `Composer.tsx` destructure stays `openId, toggleOpen` (unchanged from Task 2).
+
+- [ ] **Step 3: Compute the visible-chip list and render the chip row**
+
+First compute the list once in the component body (right after the `modifierFeatures` `useMemo`, before the `return`):
 
 ```tsx
-    const { text, setText, values, setValue, openId, openPanel, toggleOpen, inputRef, focusInput, reset } =
-        useComposerState({ features: featureList, initialDraft });
+    const chipFeatures = modifierFeatures.filter(
+        (feature) =>
+            feature.renderChip &&
+            openId !== feature.id &&
+            !isModifierValueEmpty(feature, values[feature.id]),
+    );
 ```
 
-- [ ] **Step 3: Render the chip row**
-
-Insert the chip row immediately after the `EditHeader` block (after the `{isEditing && editing && (...)}` block, before the `{modifierFeatures.map(... renderPanel)}` Collapse block):
+Then insert the chip row immediately after the `EditHeader` block (before the `{modifierFeatures.map(... renderPanel)}` Collapse block):
 
 ```tsx
-            {modifierFeatures.some(
-                (feature) =>
-                    feature.renderChip &&
-                    openId !== feature.id &&
-                    !isModifierValueEmpty(feature, values[feature.id]),
-            ) && (
+            {chipFeatures.length > 0 && (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
-                    {modifierFeatures.map((feature) => {
-                        if (
-                            !feature.renderChip ||
-                            openId === feature.id ||
-                            isModifierValueEmpty(feature, values[feature.id])
-                        ) {
-                            return null;
-                        }
-                        return (
-                            <Box
-                                key={feature.id}
-                                className="composer-panel"
-                                role="button"
-                                onClick={() => openPanel(feature.id)}
-                                sx={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
-                            >
-                                {feature.renderChip(slotFor(feature))}
-                            </Box>
-                        );
-                    })}
+                    {chipFeatures.map((feature) => (
+                        <Box
+                            key={feature.id}
+                            className="composer-panel"
+                            sx={{ display: "inline-flex", alignItems: "center" }}
+                        >
+                            {feature.renderChip?.(slotFor(feature))}
+                        </Box>
+                    ))}
                 </Box>
             )}
 ```
 
-Notes: chips are hidden for a feature whose panel is currently open (`openId === feature.id`) to avoid duplicating the live editor. The `composer-panel` class keeps the existing `handleContainerClick` (line 92) from stealing focus when a chip is tapped.
+Notes: the wrapper `<Box>` is NON-interactive — it carries only the `composer-panel` class (so the existing `handleContainerClick` doesn't steal focus when a chip is tapped) and layout. Interactivity lives on the MUI `<Chip onClick>` itself (Tasks 4/5), which gives native keyboard/focus accessibility. Chips are hidden for a feature whose panel is currently open (`openId === feature.id`) to avoid duplicating the live editor.
 
 - [ ] **Step 4: Mobile-size the discard button**
 
@@ -367,8 +359,10 @@ const QuantityToggle = ({ value, open, toggleOpen }: FeatureSlot<string>) => (
     </IconButton>
 );
 
-const QuantityChip = ({ value }: FeatureSlot<string>) => (
+const QuantityChip = ({ value, toggleOpen }: FeatureSlot<string>) => (
     <Chip
+        clickable
+        onClick={toggleOpen}
         size="small"
         icon={<ShoppingBag fontSize="small" />}
         label={value}
@@ -499,8 +493,10 @@ const ExpiryToggle = ({ value, open, toggleOpen }: FeatureSlot<Date | null>) => 
     </IconButton>
 );
 
-const ExpiryChip = ({ value }: FeatureSlot<Date | null>) => (
+const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => (
     <Chip
+        clickable
+        onClick={toggleOpen}
         size="small"
         icon={<CalendarToday fontSize="small" />}
         label={formatForDisplay(value)}
@@ -640,6 +636,6 @@ git commit -m "feat(composer): mobile touch-target size for send button"
 - Consumer migration (no edits, behavior-only) → verified in Task 6 Step 4. ✓
 - Out of scope (`pin`/overflow/`ActionFeature` caption/`exclusive()`) → not present in any task. ✓
 
-**Type consistency:** `openId` / `openPanel` / `toggleOpen` names match between `useComposerState.ts` (Task 2) and `Composer.tsx` (Tasks 2, 3). `isModifierValueEmpty` exported in Task 2, imported in Task 3. `renderChip` signature `(slot: FeatureSlot<V>) => ReactNode` matches between Task 1 (type) and Tasks 4/5 (usage). `FeatureSlot` shape (`value/setValue/open/toggleOpen/disabled`) is unchanged, so feature render functions keep their existing signatures.
+**Type consistency:** `openId` / `toggleOpen` names match between `useComposerState.ts` and `Composer.tsx`. `isModifierValueEmpty` exported in Task 2, imported in Task 3. `renderChip` signature `(slot: FeatureSlot<V>) => ReactNode` matches between Task 1 (type) and Tasks 4/5 (usage); chip components consume the slot's `toggleOpen` for click-to-open. `FeatureSlot` shape (`value/setValue/open/toggleOpen/disabled`) is unchanged, so feature render functions keep their existing signatures.
 
-**Placeholder scan:** No TBD/TODO; every code step shows full code; commands and expected outcomes are explicit. The one cross-task ordering subtlety (`openPanel` unused between Task 2 and Task 3) is resolved by omitting it from the Task 2 destructure and adding it in Task 3 — both commits stay lint-clean.
+**Placeholder scan:** No TBD/TODO; every code step shows full code; commands and expected outcomes are explicit. Note: Task 2 introduces `openPanel` in the hook, but Task 3 removes it (chips use the slot's `toggleOpen`), so the net tree has no dead export.
