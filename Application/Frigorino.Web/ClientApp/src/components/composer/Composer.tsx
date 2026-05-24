@@ -178,7 +178,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                {trimmed && (
+                {trimmed && !isEditing && (
                     <IconButton
                         onClick={handleDiscard}
                         title={t("common.discardInput")}
