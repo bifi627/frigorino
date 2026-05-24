@@ -32,7 +32,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [features],
     );
 
-    const { text, setText, values, setValue, openId, openPanel, toggleOpen, inputRef, focusInput, reset } =
+    const { text, setText, values, setValue, openId, toggleOpen, inputRef, focusInput, reset } =
         useComposerState({ features: featureList, initialDraft });
 
     const isEditing = editing?.active ?? false;
@@ -111,6 +111,13 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [featureList],
     );
 
+    const chipFeatures = modifierFeatures.filter(
+        (feature) =>
+            feature.renderChip &&
+            openId !== feature.id &&
+            !isModifierValueEmpty(feature, values[feature.id]),
+    );
+
     const slotFor = (feature: AnyModifierFeature): FeatureSlot<unknown> => ({
         value: values[feature.id],
         setValue: (value) => setValue(feature.id, value),
@@ -145,33 +152,17 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                 <EditHeader label={editing.label} onCancel={handleCancelEdit} />
             )}
 
-            {modifierFeatures.some(
-                (feature) =>
-                    feature.renderChip &&
-                    openId !== feature.id &&
-                    !isModifierValueEmpty(feature, values[feature.id]),
-            ) && (
+            {chipFeatures.length > 0 && (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
-                    {modifierFeatures.map((feature) => {
-                        if (
-                            !feature.renderChip ||
-                            openId === feature.id ||
-                            isModifierValueEmpty(feature, values[feature.id])
-                        ) {
-                            return null;
-                        }
-                        return (
-                            <Box
-                                key={feature.id}
-                                className="composer-panel"
-                                role="button"
-                                onClick={() => openPanel(feature.id)}
-                                sx={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}
-                            >
-                                {feature.renderChip(slotFor(feature))}
-                            </Box>
-                        );
-                    })}
+                    {chipFeatures.map((feature) => (
+                        <Box
+                            key={feature.id}
+                            className="composer-panel"
+                            sx={{ display: "inline-flex", alignItems: "center" }}
+                        >
+                            {feature.renderChip?.(slotFor(feature))}
+                        </Box>
+                    ))}
                 </Box>
             )}
 

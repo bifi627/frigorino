@@ -64,10 +64,6 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
         setOpenId((prev) => (prev === id ? null : id));
     }, []);
 
-    const openPanel = useCallback((id: string) => {
-        setOpenId(id);
-    }, []);
-
     const focusInput = useCallback(() => {
         inputRef.current?.focus();
     }, []);
@@ -88,7 +84,6 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
         values,
         setValue,
         openId,
-        openPanel,
         toggleOpen,
         inputRef,
         focusInput,
