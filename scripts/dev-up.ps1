@@ -48,6 +48,19 @@ if ($existing) {
 
 Write-Host "[dev-up] Project '$composeProject' - backend $backendPort, vite $vitePort, pg $pgPort, pgAdmin $pgAdminPort"
 
+# Record ports + project BEFORE spawning anything, so a mid-bring-up failure still
+# leaves dev-down enough state to tear down this worktree's compose project + ports.
+# PIDs are filled in at the end once the processes exist.
+Write-StackState -RepoRoot $RepoRoot -State @{
+    backendPort = $backendPort
+    vitePort = $vitePort
+    pgPort = $pgPort
+    pgAdminPort = $pgAdminPort
+    composeProject = $composeProject
+    backendPid = 0
+    vitePid = 0
+}
+
 Write-Host "[dev-up] Starting compose (postgres + pgadmin)..."
 Push-Location $RepoRoot
 try {

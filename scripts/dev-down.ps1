@@ -26,6 +26,7 @@ Write-Host "[dev-down] docker compose -p $composeProject down (volume preserved)
 Push-Location $RepoRoot
 try {
     & docker compose -p $composeProject down | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Warning "docker compose down exited $LASTEXITCODE; containers may still be running." }
 } finally {
     Pop-Location
 }
