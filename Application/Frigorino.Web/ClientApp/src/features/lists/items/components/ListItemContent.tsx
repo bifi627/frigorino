@@ -38,6 +38,7 @@ export function ListItemContent({ item }: Props) {
                 item.quantity && (
                     <Typography
                         variant="caption"
+                        data-testid={`list-item-quantity-${item.text}`}
                         sx={{
                             color: item.status
                                 ? "text.disabled"

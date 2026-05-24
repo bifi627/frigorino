@@ -9,6 +9,19 @@ Feature: Inventory Items
     And I add item "Flour" to the inventory
     Then "Flour" appears in the inventory
 
+  Scenario: User adds an inventory item with quantity and expiry via the panels
+    Given there is an inventory named "Pantry"
+    When I open the inventory "Pantry"
+    And I type "Flour" in the composer
+    And I open the "quantity" composer panel
+    And I set the quantity to "2"
+    And I open the "expiry" composer panel
+    And I set the expiry date to "2030-12-31"
+    And I submit the composer
+    Then "Flour" appears in the inventory
+    And the inventory item "Flour" shows quantity "2"
+    And the inventory item "Flour" shows an expiry indicator
+
   Scenario: User removes an inventory item via the row menu
     Given there is an inventory named "Pantry" with item "Flour"
     When I open the inventory "Pantry"

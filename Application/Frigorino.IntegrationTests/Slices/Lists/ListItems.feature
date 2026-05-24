@@ -17,6 +17,34 @@ Feature: List Items
     And I add item "Eggs" to the list
     Then the unchecked items appear in order: "Milk, Bread, Eggs"
 
+  Scenario: User adds a list item with a quantity via the panel
+    Given there is a list named "Weekly Groceries"
+    When I open the list "Weekly Groceries"
+    And I type "Milk" in the composer
+    And I open the "quantity" composer panel
+    And I set the quantity to "3"
+    And I submit the composer
+    Then "Milk" appears in the list
+    And the list item "Milk" shows quantity "3"
+
+  Scenario: The quantity chip stays visible while its panel is open
+    Given there is a list named "Weekly Groceries"
+    When I open the list "Weekly Groceries"
+    And I type "Milk" in the composer
+    And I open the "quantity" composer panel
+    And I set the quantity to "3"
+    Then the "quantity" composer chip is visible
+
+  Scenario: User updates a list item quantity via the panel in edit mode
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    When I open the list "Weekly Groceries"
+    And I open the item menu for "Milk"
+    And I start editing the item
+    And I open the "quantity" composer panel
+    And I set the quantity to "5"
+    And I save the composer edit
+    Then the list item "Milk" shows quantity "5"
+
   Scenario: User checks off a list item
     Given there is a list named "Weekly Groceries" with item "Milk"
     When I open the list "Weekly Groceries"

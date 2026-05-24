@@ -157,6 +157,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         <Box
                             key={feature.id}
                             className="composer-panel"
+                            data-testid={`composer-chip-${feature.id}`}
                             sx={{ display: "inline-flex", alignItems: "center" }}
                         >
                             {feature.renderChip?.(slotFor(feature))}
@@ -172,7 +173,12 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         className="composer-panel"
                         in={openId === feature.id}
                     >
-                        <Box sx={{ mb: 0.5 }}>{feature.renderPanel(slotFor(feature))}</Box>
+                        <Box
+                            sx={{ mb: 0.5 }}
+                            data-testid={`composer-panel-${feature.id}`}
+                        >
+                            {feature.renderPanel(slotFor(feature))}
+                        </Box>
                     </Collapse>
                 ) : null,
             )}
@@ -197,7 +203,11 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
 
                 {modifierFeatures.map((feature) =>
                     feature.renderToggle ? (
-                        <Box key={feature.id} className="composer-panel">
+                        <Box
+                            key={feature.id}
+                            className="composer-panel"
+                            data-testid={`composer-toggle-${feature.id}`}
+                        >
                             {feature.renderToggle(slotFor(feature))}
                         </Box>
                     ) : null,
