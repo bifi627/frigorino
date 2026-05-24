@@ -90,10 +90,12 @@ export const ComposerTextField = ({
                                 width: "100%",
                             }}
                         >
-                            <Typography variant="body2">
-                                {option.label}
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                                <Typography variant="body2" component="span">
+                                    {option.label}
+                                </Typography>
                                 {option.badge}
-                            </Typography>
+                            </Box>
                             {option.secondaryLabel && (
                                 <Typography
                                     variant="caption"
