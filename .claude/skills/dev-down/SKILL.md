@@ -19,7 +19,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev-down.ps1
 ```
 
 What it does:
-- Kills any process listening on 5001 (backend) and 44375 (vite). Port-based because Windows orphan node processes after their wrapper shell exits — PID files would go stale.
-- Runs `docker compose down` without `-v`, so the named `frigorino-postgres-data` volume is preserved. Next `/dev-up` finds the same DB state.
+- Reads `.dev/stack.json` and kills only the backend/vite ports THIS worktree recorded. Port-based (Windows orphans node processes after their wrapper shell exits) and worktree-scoped, so it never touches the user's 5001/44375 or another worktree's stack.
+- Runs `docker compose -p <project> down` (project name from `.dev/stack.json`) without `-v`, so this worktree's named volume is preserved. Next `/dev-up` finds the same DB state. If there is no `.dev/stack.json`, it's a no-op.
 
 To also wipe the DB on the way down, add `docker compose down -v` manually after.

@@ -9,9 +9,12 @@ description: >-
   not require a running stack. The bring-up takes ~30s and pulls compose/dotnet/vite
   logs into context, so only fire when the cost is justified.
 
-  After the script returns, the stack is reachable at https://localhost:5001 (backend)
-  and https://localhost:44375 (SPA, authenticated as dev@frigorino.local via DevAuth
-  + VITE_DEV_AUTH). The Playwright MCP browser can then be pointed there.
+  After the script returns, it prints the resolved URLs. Ports are scanned per
+  worktree ABOVE the user's canonical 5001/44375 (so parallel worktrees don't
+  collide and the user's own env is untouched), and recorded in .dev/stack.json.
+  Read the backend/SPA URLs from the script output or .dev/stack.json; the
+  SPA is authenticated as dev@frigorino.local via DevAuth + VITE_DEV_AUTH, and
+  the Playwright MCP browser can be pointed at the printed SPA URL.
 ---
 
 # Bring up the Frigorino local dev stack
@@ -20,7 +23,7 @@ Run the orchestration script and then verify by hitting the SPA via Playwright.
 
 ## Steps
 
-1. **Run the bring-up script.** It's idempotent: kills stale listeners on 5001/44375, brings up `docker compose` (postgres + pgadmin), waits for the postgres healthcheck, spawns the backend (`--launch-profile LocalDb`) and vite as detached background processes, polls `/healthz` and the Vite root until both return 200. Backend + vite stdout/stderr land in `.dev/backend.{out,err}.log` and `.dev/vite.{out,err}.log` — read those if anything fails.
+1. **Run the bring-up script.** It's idempotent: kills only this worktree's previously-recorded listeners (from `.dev/stack.json`), scans free ports above the canonical 5001/44375/5432/8080, brings up a per-worktree `docker compose` project (postgres + pgadmin), waits for the postgres healthcheck, spawns the backend (`--launch-profile LocalDb`) and vite as detached background processes, polls `/healthz` and the Vite root until both return 200. Backend + vite stdout/stderr land in `.dev/backend.{out,err}.log` and `.dev/vite.{out,err}.log` — read those if anything fails.
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1
@@ -29,10 +32,11 @@ Run the orchestration script and then verify by hitting the SPA via Playwright.
 2. **Open the SPA in Playwright.** The MCP server is configured with `--isolated`, so each session starts in an ephemeral profile — no stale Firebase data.
 
    ```
-   mcp__playwright__browser_navigate → https://localhost:44375/
+   mcp__playwright__browser_navigate -> the SPA URL printed by the script
+   (or read .dev/stack.json -> vitePort: https://localhost:<vitePort>/)
    ```
 
-3. **Verify the identity rendered.** A successful bring-up shows `dev@frigorino.local` in the SPA top-bar. If you see "Sign In" / "Get Started", the SPA's `VITE_DEV_AUTH` bypass didn't fire — check `.dev/vite.out.log`. The script sets `$env:VITE_DEV_AUTH=true` before spawning vite; `Start-Process` inherits the env, so if it didn't take effect, vite was likely already running on 44375 and the port-kill missed it.
+3. **Verify the identity rendered.** A successful bring-up shows `dev@frigorino.local` in the SPA top-bar. If you see "Sign In" / "Get Started", the SPA's `VITE_DEV_AUTH` bypass didn't fire — check `.dev/vite.out.log`. The script sets `$env:VITE_DEV_AUTH=true` before spawning vite; `Start-Process` inherits the env, so if it didn't take effect, vite was likely already running on the recorded port and the port-kill missed it.
 
    ```
    mcp__playwright__browser_evaluate → () => document.body.innerText.split("\n").filter(l => l.trim()).slice(0, 5).join(" | ")
