@@ -145,6 +145,14 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    public Task<IAPIResponse> TryRestoreListItemAsync(int listId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}/restore",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     public Task<IAPIResponse> TryCompactListItemsAsync(int listId, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
@@ -252,6 +260,14 @@ public class TestApiClient(ScenarioContextHolder ctx)
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
         return ctx.BrowserContext.APIRequest.DeleteAsync(
             $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/{itemId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryRestoreInventoryItemAsync(int inventoryId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/{itemId}/restore",
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 

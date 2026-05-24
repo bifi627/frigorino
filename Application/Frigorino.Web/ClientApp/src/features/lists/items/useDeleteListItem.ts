@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     deleteItemMutation,
@@ -6,10 +8,13 @@ import {
     getItemsQueryKey,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import type { ListItemResponse } from "../../../lib/api/types.gen";
+import { useRestoreListItem } from "./useRestoreListItem";
 
 export const useDeleteListItem = () => {
     const queryClient = useQueryClient();
     const debouncedInvalidate = useDebouncedInvalidation();
+    const { t } = useTranslation();
+    const restoreItem = useRestoreListItem();
 
     return useMutation({
         ...deleteItemMutation(),
@@ -55,6 +60,17 @@ export const useDeleteListItem = () => {
                     context.previousItems,
                 );
             }
+        },
+        onSuccess: (_data, variables) => {
+            toast(t("common.itemDeleted"), {
+                action: {
+                    label: t("common.undo"),
+                    onClick: () => {
+                        restoreItem.mutate({ path: variables.path });
+                    },
+                },
+                duration: 5000,
+            });
         },
         onSettled: (_data, _error, variables) => {
             debouncedInvalidate(

@@ -295,6 +295,7 @@ listItems.MapGetItem();
 listItems.MapCreateItem();
 listItems.MapUpdateItem();
 listItems.MapDeleteItem();
+listItems.MapRestoreItem();
 listItems.MapToggleItemStatus();
 listItems.MapReorderItem();
 listItems.MapCompactItems();
@@ -315,6 +316,7 @@ inventoryItems.MapGetInventoryItems();
 inventoryItems.MapCreateInventoryItem();
 inventoryItems.MapUpdateInventoryItem();
 inventoryItems.MapDeleteInventoryItem();
+inventoryItems.MapRestoreInventoryItem();
 inventoryItems.MapReorderInventoryItem();
 inventoryItems.MapCompactInventoryItems();
 

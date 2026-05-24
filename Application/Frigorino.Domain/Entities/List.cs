@@ -218,6 +218,20 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
+        public Result<ListItem> RestoreItem(int itemId)
+        {
+            var item = ListItems.FirstOrDefault(i => i.Id == itemId && !i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<ListItem>(
+                    new EntityNotFoundError($"List item {itemId} not found."));
+            }
+
+            item.IsActive = true;
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
         public Result<ListItem> ToggleItemStatus(int itemId)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);

@@ -671,6 +671,33 @@ export type UpdateItemResponses = {
 
 export type UpdateItemResponse = UpdateItemResponses[keyof UpdateItemResponses];
 
+export type RestoreItemData = {
+    body?: never;
+    path: {
+        householdId: number;
+        listId: number;
+        itemId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/items/{itemId}/restore';
+};
+
+export type RestoreItemErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreItemResponses = {
+    /**
+     * OK
+     */
+    200: ListItemResponse;
+};
+
+export type RestoreItemResponse = RestoreItemResponses[keyof RestoreItemResponses];
+
 export type ToggleItemStatusData = {
     body?: never;
     path: {
@@ -1016,6 +1043,33 @@ export type UpdateInventoryItemResponses = {
 };
 
 export type UpdateInventoryItemResponse = UpdateInventoryItemResponses[keyof UpdateInventoryItemResponses];
+
+export type RestoreInventoryItemData = {
+    body?: never;
+    path: {
+        householdId: number;
+        inventoryId: number;
+        itemId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/items/{itemId}/restore';
+};
+
+export type RestoreInventoryItemErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreInventoryItemResponses = {
+    /**
+     * OK
+     */
+    200: InventoryItemResponse;
+};
+
+export type RestoreInventoryItemResponse = RestoreInventoryItemResponses[keyof RestoreInventoryItemResponses];
 
 export type ReorderInventoryItemData = {
     body: ReorderItemRequest;
