@@ -5,11 +5,13 @@ import {
     Composer,
     expiryFeature,
     quantityFeature,
-    type DuplicateConfig,
-    type Suggestion,
-    type SuggestionsConfig,
+    type Completion,
+    type DuplicateResult,
 } from "../../../../components/composer";
+import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { InventoryItemResponse } from "../../../../lib/api";
+
+const features = [quantityFeature, expiryFeature] as const;
 
 interface InventoryFooterProps {
     editingItem: InventoryItemResponse | null;
@@ -34,61 +36,34 @@ export const InventoryFooter = memo(
     }: InventoryFooterProps) => {
         const { t } = useTranslation();
 
-        const toSuggestion = (item: InventoryItemResponse): Suggestion => ({
-            id: item.id,
-            label: item.text,
-            secondaryLabel: item.quantity ?? undefined,
-            badge: item.isExpiring ? (
-                <Chip
-                    label="!"
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                    sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
-                />
-            ) : undefined,
+        const getBadge = useCallback(
+            (item: InventoryItemResponse) =>
+                item.isExpiring ? (
+                    <Chip
+                        label="!"
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
+                    />
+                ) : undefined,
+            [],
+        );
+
+        const onDuplicate = useCallback(
+            (match: InventoryItemResponse): DuplicateResult => ({
+                message: `"${match.text}" ${t("common.alreadyExists")}`,
+                block: true,
+            }),
+            [t],
+        );
+
+        const { suggestions, duplicate } = useItemComposer({
+            editingItem,
+            existingItems,
+            getBadge,
+            onDuplicate,
         });
-
-        const suggestions = useMemo<SuggestionsConfig>(
-            () => ({
-                getItems: (query) => {
-                    const q = query.trim().toLowerCase();
-                    return existingItems
-                        .filter(
-                            (item) =>
-                                item.id !== editingItem?.id &&
-                                item.text.toLowerCase().startsWith(q),
-                        )
-                        .map(toSuggestion);
-                },
-            }),
-            [existingItems, editingItem?.id],
-        );
-
-        const duplicate = useMemo<DuplicateConfig>(
-            () => ({
-                check: (text) => {
-                    const needle = text.trim().toLowerCase();
-                    // Don't flag duplicates on 1–2 char input; matches the autocomplete minChars floor.
-                    if (needle.length < 3) {
-                        return null;
-                    }
-                    const match = existingItems.find(
-                        (item) =>
-                            item.text.toLowerCase() === needle &&
-                            item.id !== editingItem?.id,
-                    );
-                    if (!match) {
-                        return null;
-                    }
-                    return {
-                        message: `"${match.text}" ${t("common.alreadyExists")}`,
-                        block: true,
-                    };
-                },
-            }),
-            [existingItems, editingItem?.id, t],
-        );
 
         const initialDraft = useMemo(
             () =>
@@ -107,13 +82,7 @@ export const InventoryFooter = memo(
         );
 
         const handleComplete = useCallback(
-            (r: {
-                kind: "text";
-                mode: "create" | "edit";
-                text: string;
-                quantity: string;
-                expiry: Date | null;
-            }) => {
+            (r: Completion<typeof features>) => {
                 if (r.mode === "edit") {
                     onUpdateItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
                 } else {
@@ -137,7 +106,8 @@ export const InventoryFooter = memo(
                 }}
             >
                 <Composer
-                    features={[quantityFeature, expiryFeature]}
+                    key={editingItem?.id ?? "new"}
+                    features={features}
                     disabled={isLoading}
                     editing={{ active: Boolean(editingItem), onCancel: onCancelEdit }}
                     initialDraft={initialDraft}

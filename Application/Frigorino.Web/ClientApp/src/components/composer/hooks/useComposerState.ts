@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { AnyFeature, AnyModifierFeature } from "../types";
 
 type ValuesMap = Record<string, unknown>;
@@ -42,19 +42,6 @@ export function useComposerState({ features, initialDraft }: UseComposerStateArg
     const [values, setValues] = useState<ValuesMap>(seedValues);
     const [openId, setOpenId] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-
-    // Re-seed text + values whenever a new draft object is supplied (e.g. editing a new item).
-    // Seeded values surface as chips, so no panel is auto-opened.
-    const draftRef = useRef<InitialDraft | undefined>(initialDraft);
-    useEffect(() => {
-        if (draftRef.current === initialDraft) {
-            return;
-        }
-        draftRef.current = initialDraft;
-        setText(initialDraft?.text ?? "");
-        setValues(seedValues());
-        setOpenId(null);
-    }, [initialDraft, seedValues]);
 
     const setValue = useCallback((id: string, value: unknown) => {
         setValues((prev) => ({ ...prev, [id]: value }));

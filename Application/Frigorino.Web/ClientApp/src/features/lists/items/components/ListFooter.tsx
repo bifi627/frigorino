@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import {
     Composer,
     quantityFeature,
-    type DuplicateConfig,
-    type Suggestion,
-    type SuggestionsConfig,
+    type Completion,
+    type DuplicateResult,
 } from "../../../../components/composer";
+import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse } from "../../../../lib/api";
+
+const features = [quantityFeature] as const;
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
@@ -34,67 +36,42 @@ export const ListFooter = memo(
     }: ListFooterProps) => {
         const { t } = useTranslation();
 
-        const toSuggestion = (item: ListItemResponse): Suggestion => ({
-            id: item.id,
-            label: item.text,
-            secondaryLabel: item.quantity ?? undefined,
-            badge: item.status ? (
-                <Chip
-                    label="✓"
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                    sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
-                />
-            ) : undefined,
-        });
-
-        const suggestions = useMemo<SuggestionsConfig>(
-            () => ({
-                getItems: (query) => {
-                    const q = query.trim().toLowerCase();
-                    return existingItems
-                        .filter(
-                            (item) =>
-                                item.id !== editingItem?.id &&
-                                item.text.toLowerCase().startsWith(q),
-                        )
-                        .map(toSuggestion);
-                },
-            }),
-            [existingItems, editingItem?.id],
+        const getBadge = useCallback(
+            (item: ListItemResponse) =>
+                item.status ? (
+                    <Chip
+                        label="✓"
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                        sx={{ ml: 1, height: 16, fontSize: "0.7rem" }}
+                    />
+                ) : undefined,
+            [],
         );
 
-        const duplicate = useMemo<DuplicateConfig>(
-            () => ({
-                check: (text) => {
-                    const needle = text.trim().toLowerCase();
-                    // Don't flag duplicates on 1–2 char input; matches the autocomplete minChars floor.
-                    if (needle.length < 3) {
-                        return null;
-                    }
-                    const match = existingItems.find(
-                        (item) =>
-                            item.text.toLowerCase() === needle &&
-                            item.id !== editingItem?.id,
-                    );
-                    if (!match) {
-                        return null;
-                    }
-                    if (match.status && !editingItem) {
-                        return {
-                            message: `"${match.text}" ${t("common.alreadyExists")} (${t("common.completed")})`,
-                            onResolve: () => onUncheckExisting(match.id),
-                        };
-                    }
+        const onDuplicate = useCallback(
+            (match: ListItemResponse): DuplicateResult => {
+                if (match.status && !editingItem) {
                     return {
-                        message: `"${match.text}" ${t("common.alreadyExists")}`,
-                        block: true,
+                        message: `"${match.text}" ${t("common.alreadyExists")} (${t("common.completed")})`,
+                        onResolve: () => onUncheckExisting(match.id),
                     };
-                },
-            }),
-            [existingItems, editingItem, onUncheckExisting, t],
+                }
+                return {
+                    message: `"${match.text}" ${t("common.alreadyExists")}`,
+                    block: true,
+                };
+            },
+            [editingItem, onUncheckExisting, t],
         );
+
+        const { suggestions, duplicate } = useItemComposer({
+            editingItem,
+            existingItems,
+            getBadge,
+            onDuplicate,
+        });
 
         const initialDraft = useMemo(
             () =>
@@ -108,7 +85,7 @@ export const ListFooter = memo(
         );
 
         const handleComplete = useCallback(
-            (r: { kind: "text"; mode: "create" | "edit"; text: string; quantity: string }) => {
+            (r: Completion<typeof features>) => {
                 if (r.mode === "edit") {
                     onUpdateItem(r.text, r.quantity || undefined);
                 } else {
@@ -132,7 +109,8 @@ export const ListFooter = memo(
                 }}
             >
                 <Composer
-                    features={[quantityFeature]}
+                    key={editingItem?.id ?? "new"}
+                    features={features}
                     disabled={isLoading}
                     editing={{ active: Boolean(editingItem), onCancel: onCancelEdit }}
                     initialDraft={initialDraft}
