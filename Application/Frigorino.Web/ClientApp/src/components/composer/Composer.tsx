@@ -183,6 +183,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                     <IconButton
                         onClick={handleDiscard}
                         title={t("common.discardInput")}
+                        aria-label={t("common.discardInput")}
                         sx={{
                             minWidth: 44,
                             minHeight: 44,

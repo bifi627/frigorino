@@ -6,32 +6,48 @@ import { useTranslation } from "react-i18next";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
 
-const QuantityToggle = ({ value, open, toggleOpen }: FeatureSlot<string>) => (
-    <IconButton
-        onClick={toggleOpen}
-        sx={{
-            minWidth: 44,
-            minHeight: 44,
-            color: value || open ? "primary.main" : "inherit",
-        }}
-    >
-        <ShoppingBag fontSize="small" />
-    </IconButton>
-);
+const QuantityToggle = ({ value, open, toggleOpen }: FeatureSlot<string>) => {
+    const { t } = useTranslation();
+    return (
+        <IconButton
+            onClick={toggleOpen}
+            aria-label={t("common.quantity")}
+            sx={{
+                minWidth: 44,
+                minHeight: 44,
+                color: value || open ? "primary.main" : "inherit",
+            }}
+        >
+            <ShoppingBag fontSize="small" />
+        </IconButton>
+    );
+};
 
-const QuantityChip = ({ value, toggleOpen }: FeatureSlot<string>) => (
-    <Chip
-        clickable
-        onClick={toggleOpen}
-        size="small"
-        icon={<ShoppingBag fontSize="small" />}
-        label={value}
-        sx={{ minHeight: 32 }}
-    />
-);
+const QuantityChip = ({ value, toggleOpen }: FeatureSlot<string>) => {
+    const { t } = useTranslation();
+    return (
+        <Chip
+            clickable
+            onClick={toggleOpen}
+            aria-label={`${t("common.edit")} ${t("common.quantity")}`}
+            size="small"
+            icon={<ShoppingBag fontSize="small" />}
+            label={value}
+            sx={{ minHeight: 32 }}
+        />
+    );
+};
 
 const QuantityPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
     const { t } = useTranslation();
+    const trimmed = value.trim();
+    // Steppers only apply to a plain integer; free-text like "2 kg" stays untouched.
+    const numeric =
+        trimmed === ""
+            ? 0
+            : /^\d+$/.test(trimmed)
+              ? parseInt(trimmed, 10)
+              : null;
     return (
         <Box
             sx={{ display: "flex", gap: 0.75, alignItems: "center", p: 1 }}
@@ -61,19 +77,22 @@ const QuantityPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
             </ButtonGroup>
             <IconButton
                 onClick={() => {
-                    const current = parseInt(value) || 0;
-                    if (current > 0) setValue((current - 1).toString());
+                    if (numeric !== null && numeric > 0) {
+                        setValue((numeric - 1).toString());
+                    }
                 }}
-                disabled={!value || parseInt(value) <= 0}
+                disabled={numeric === null || numeric <= 0}
                 sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Remove fontSize="small" />
             </IconButton>
             <IconButton
                 onClick={() => {
-                    const current = parseInt(value) || 0;
-                    setValue((current + 1).toString());
+                    if (numeric !== null) {
+                        setValue((numeric + 1).toString());
+                    }
                 }}
+                disabled={numeric === null}
                 sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <Add fontSize="small" />

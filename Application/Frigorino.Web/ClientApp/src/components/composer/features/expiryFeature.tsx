@@ -12,29 +12,37 @@ const formatForDisplay = (date: Date | null) =>
 const formatForInput = (date: Date | null) =>
     date ? date.toISOString().split("T")[0] : "";
 
-const ExpiryToggle = ({ value, open, toggleOpen }: FeatureSlot<Date | null>) => (
-    <IconButton
-        onClick={toggleOpen}
-        sx={{
-            minWidth: 44,
-            minHeight: 44,
-            color: value || open ? "primary.main" : "inherit",
-        }}
-    >
-        <CalendarToday fontSize="small" />
-    </IconButton>
-);
+const ExpiryToggle = ({ value, open, toggleOpen }: FeatureSlot<Date | null>) => {
+    const { t } = useTranslation();
+    return (
+        <IconButton
+            onClick={toggleOpen}
+            aria-label={t("common.date")}
+            sx={{
+                minWidth: 44,
+                minHeight: 44,
+                color: value || open ? "primary.main" : "inherit",
+            }}
+        >
+            <CalendarToday fontSize="small" />
+        </IconButton>
+    );
+};
 
-const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => (
-    <Chip
-        clickable
-        onClick={toggleOpen}
-        size="small"
-        icon={<CalendarToday fontSize="small" />}
-        label={formatForDisplay(value)}
-        sx={{ minHeight: 32 }}
-    />
-);
+const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => {
+    const { t } = useTranslation();
+    return (
+        <Chip
+            clickable
+            onClick={toggleOpen}
+            aria-label={`${t("common.edit")} ${t("common.date")}`}
+            size="small"
+            icon={<CalendarToday fontSize="small" />}
+            label={formatForDisplay(value)}
+            sx={{ minHeight: 32 }}
+        />
+    );
+};
 
 const ExpiryPanel = ({ value, setValue, disabled }: FeatureSlot<Date | null>) => {
     const { t } = useTranslation();
