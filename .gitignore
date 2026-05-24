@@ -476,3 +476,5 @@ Application/Frigorino.Web/ClientApp/build/
 .screenshots/
 
 Application/Frigorino.Web/ClientApp/.tanstack/tmp/
+
+.claude/worktrees/
