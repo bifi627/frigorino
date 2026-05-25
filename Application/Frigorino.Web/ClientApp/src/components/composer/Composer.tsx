@@ -96,6 +96,13 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         focusInput();
     };
 
+    // Tapping a panel toggle/chip must not blur the text input — on mobile a blur
+    // collapses the soft keyboard. preventDefault on mousedown keeps focus where it
+    // is while still firing the click that opens/closes the panel.
+    const preventInputBlur = (event: React.MouseEvent) => {
+        event.preventDefault();
+    };
+
     const modifierFeatures = useMemo(
         () =>
             featureList.filter(
@@ -158,6 +165,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             key={feature.id}
                             className="composer-panel"
                             data-testid={`composer-chip-${feature.id}`}
+                            onMouseDown={preventInputBlur}
                             sx={{ display: "inline-flex", alignItems: "center" }}
                         >
                             {feature.renderChip?.(slotFor(feature))}
@@ -207,6 +215,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             key={feature.id}
                             className="composer-panel"
                             data-testid={`composer-toggle-${feature.id}`}
+                            onMouseDown={preventInputBlur}
                         >
                             {feature.renderToggle(slotFor(feature))}
                         </Box>
