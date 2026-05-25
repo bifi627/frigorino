@@ -36,11 +36,12 @@ namespace Frigorino.Infrastructure.Hangfire
 
             services.AddHangfireServer();
 
-            // ILogger -> Hangfire.Console bridge. Registered as a logger provider; mirrors job
-            // ILogger output into the dashboard console during execution (see Task 2).
-            services.AddSingleton<IPerformingContextAccessor, AsyncLocalPerformingContextAccessor>();
+            // ILogger -> Hangfire.Console bridge. One type plays two roles: as an IServerFilter it
+            // captures the running job's context; as an ILoggerProvider it emits captured logs to
+            // the dashboard console. They coordinate via a static AsyncLocal, so the GlobalJobFilters
+            // instance and the DI-resolved provider don't need to be the same object.
             services.AddSingleton<ILoggerProvider, HangfireConsoleLoggerProvider>();
-            GlobalJobFilters.Filters.Add(new PerformingContextCapture());
+            GlobalJobFilters.Filters.Add(new HangfireConsoleLoggerProvider());
 
             return services;
         }

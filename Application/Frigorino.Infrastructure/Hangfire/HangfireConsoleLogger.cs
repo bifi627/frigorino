@@ -5,13 +5,6 @@ namespace Frigorino.Infrastructure.Hangfire
 {
     internal sealed class HangfireConsoleLogger : ILogger
     {
-        private readonly IPerformingContextAccessor _accessor;
-
-        public HangfireConsoleLogger(IPerformingContextAccessor accessor)
-        {
-            _accessor = accessor;
-        }
-
         public IDisposable BeginScope<TState>(TState state) where TState : notnull
         {
             return NullScope.Instance;
@@ -24,12 +17,14 @@ namespace Frigorino.Infrastructure.Hangfire
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            var context = _accessor.Get();
+            var context = HangfireConsoleLoggerProvider.Current;
             if (context is null)
             {
                 return;
             }
 
+            // Pass null exception to the formatter, then append it ourselves below — avoids the
+            // default formatter double-printing the exception.
             var message = $"{logLevel}: {formatter(state, null)}";
             if (exception is not null)
             {
