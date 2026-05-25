@@ -111,6 +111,8 @@ The "credential" baked into `VITE_FARO_URL` is public-by-design. Abuse defense i
 | `OpenTelemetry:OtlpProtocol` | optional | Defaults to `http/protobuf` in `appsettings.json`. |
 | `ASPNETCORE_ENVIRONMENT` | environmental | Maps to `deployment.environment` (`Production`/`Staging`/other → `prod`/`stage`/`local`). |
 
+**Scale-to-zero tradeoff — leave `OtlpHeaders` UNSET on free-tier Railway.** The metrics exporter is a `PeriodicExportingMetricReader` (60s) and runtime instrumentation always has a value, so when OTel is registered the backend POSTs a telemetry batch to Grafana every 60s **even with zero users**. That steady outbound egress resets Railway's idle timer and the container never sleeps. On any Railway environment that should scale-to-zero, do **not** set `OpenTelemetry__OtlpHeaders` (the gate stays closed → no exporter → no heartbeat → container sleeps; a real request wakes it via inbound traffic). This disables *all* backend telemetry in that env — accepted for free-tier UAT. Frontend Faro is unaffected: it runs in the browser, not the container, so it generates no container egress and `VITE_FARO_URL` can stay set. See [memory: no-synthetic-uptime-checks](../C--Repositories-frigorino/memory/project_no_synthetic_uptime_checks.md).
+
 ### Frontend (`ClientApp`)
 
 | Key | Required | Notes |
