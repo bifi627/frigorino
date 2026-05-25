@@ -15,7 +15,7 @@ Application/
   Frigorino.Application/     # Pre-migration service implementations (Lists/Inventories only — being phased out)
   Frigorino.Features/        # Vertical slices: one file per endpoint, request/response DTOs colocated
   Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, Hangfire jobs, OpenAI client
-  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, Hangfire wiring, MapGroup wiring for slices
+  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, Hangfire dashboard auth, MapGroup wiring for slices
     ClientApp/               # React 19 + Vite + TanStack Router SPA
   Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory; aggregate-method unit tests; ArchUnitNET layer rules
   Frigorino.IntegrationTests/# Reqnroll (BDD) + Playwright + Postgres Testcontainers — drives the SPA end-to-end
@@ -59,8 +59,10 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (converted by `PostgresHelper.ConvertPostgresUrlToConnectionString`).
+- `ConnectionStrings:Hangfire` — optional separate Postgres connection for Hangfire storage; falls back to `Database` when blank.
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
-- `HangfireAuth:Username` / `Password` — basic-auth gate for the `/hangfire` dashboard. **Startup throws if password is empty**, so the app will not boot without these set.
+- `Hangfire:AdminEmail` — email claim required to access the `/hangfire` dashboard (production/staging; open in Development). Set in user-secrets or Railway env.
+- `VITE_ADMIN_EMAILS` (frontend build-time env, comma-separated) — mirrors `Hangfire:AdminEmail`; cosmetic only, gates visibility of the SPA's Hangfire menu item. The dashboard itself is enforced server-side, so drift just hides/shows the menu entry.
 - `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
 ### Local dev: two modes
@@ -101,13 +103,28 @@ Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. 
 - `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext`. New entities should follow the same pattern instead of setting timestamps in services.
 
 ### Background jobs (Hangfire)
-The previous in-process `IMaintenanceTask` / `MaintenanceHostedService` system has been **replaced by Hangfire** backed by Postgres (`schema=hangfire`). `MaintenanceService.cs` is now empty and should not be used. Knowledge docs in `knowledge/Backend_Architecture.md` predate this change — trust the code.
 
-Wiring lives in `Frigorino.Web/Services/HangfireDependencyInjection.cs`:
-- Jobs are registered as scoped services and discovered by Hangfire's DI activator.
-- `ConfigureHangfireJobs()` (called at the end of `Program.cs`) declares recurring jobs via `RecurringJob.AddOrUpdate<T>(...)`. Adding a new recurring job means: implement `Frigorino.Infrastructure.Jobs.<JobName>` with an `ExecuteAsync()` method, register it in `AddHangfireServices`, and add an `AddOrUpdate` entry here.
-- `Cron.Never` is used to register manually-triggered jobs (e.g. `ClassifyListsJob`) so they appear in the dashboard but don't run on a schedule.
-- The dashboard at `/hangfire` is gated by `HangfireAuthorizationFilter` (basic auth from `HangfireAuth:*` config).
+Hangfire (Hangfire.AspNetCore + Hangfire.PostgreSql, `schema=hangfire`, auto-created on first
+run) is the durable fire-and-forget queue. Wiring lives in
+`Frigorino.Infrastructure/Hangfire/HangfireDependencyInjection.cs` (`AddHangfireServices`), called
+from `Program.cs` and gated off at build-time OpenAPI generation and in the `IntegrationTest`
+environment (configuring Postgres storage opens a DB connection). Storage uses
+`ConnectionStrings:Hangfire` when set, else falls back to `Database`; processed jobs are retained
+for 7 days (`WithJobExpirationTimeout`, up from Hangfire's 24h default) for post-mortem history.
+
+- **Queue-first, sleep-tolerant.** Railway free-tier sleeps on HTTP-idle, so no in-process
+  scheduler fires while suspended. Recurring jobs are allowed ONLY with
+  `MisfireHandlingMode.Relaxed` (catch up once on wake); never rely on a precise wall-clock time.
+- **Producers** inject `IBackgroundJobClient` and call `Enqueue<TJob>(j => j.ExecuteAsync(...))`.
+  Jobs live in `Frigorino.Infrastructure/Jobs/` as scoped classes with `ExecuteAsync(...)` and log
+  via `ILogger<T>` only — an `ILogger`→Hangfire.Console bridge (in `Frigorino.Infrastructure/Hangfire/`)
+  mirrors output to the dashboard's per-job console.
+- The only recurring job today is `CleanupInactiveEntitiesJob` (`Cron.Daily()`), which replaced the
+  former `MaintenanceHostedService` startup batch.
+- The dashboard at `/hangfire` is gated by `HangfireDashboardAuthFilter`: open in Development,
+  otherwise an authenticated Firebase principal whose email claim equals `Hangfire:AdminEmail`
+  (the token reaches dashboard requests via the `hf_dashboard_token` cookie shim in
+  `FirebaseAuth.OnMessageReceived`).
 
 ### API surface
 - Endpoints come from two sources during the slice migration: vertical slices in `Frigorino.Features` are wired via `MapGroup(...).Map<SliceName>()` declarations in `Program.cs` (each group owns the route prefix + `RequireAuthorization()` + `WithTags(...)`); legacy endpoints are still in controllers under `Frigorino.Web/Controllers/`. New endpoints should be slices, not controllers — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
