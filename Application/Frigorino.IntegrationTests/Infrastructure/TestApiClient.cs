@@ -111,9 +111,9 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public async Task<int> CreateListItemAsync(int listId, string text)
+    public async Task<int> CreateListItemAsync(int listId, string text, string? quantity = null)
     {
-        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/items", new { text });
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/items", new { text, quantity });
         return json.GetProperty("id").GetInt32();
     }
 
@@ -227,11 +227,11 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public async Task<int> CreateInventoryItemAsync(int inventoryId, string text)
+    public async Task<int> CreateInventoryItemAsync(int inventoryId, string text, string? quantity = null)
     {
         var json = await PostAsync(
             $"/api/household/{ctx.HouseholdId}/inventories/{inventoryId}/items",
-            new { text });
+            new { text, quantity });
         return json.GetProperty("id").GetInt32();
     }
 

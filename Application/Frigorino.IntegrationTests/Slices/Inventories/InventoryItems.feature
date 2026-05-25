@@ -22,6 +22,16 @@ Feature: Inventory Items
     And the inventory item "Flour" shows quantity "2"
     And the inventory item "Flour" shows an expiry indicator
 
+  Scenario: User clears an inventory item quantity in edit mode
+    Given there is an inventory named "Pantry" with item "Flour" and quantity "5"
+    When I open the inventory "Pantry"
+    And I open the inventory item menu for "Flour"
+    And I start editing the item
+    And I open the "quantity" composer panel
+    And I clear the quantity
+    And I save the composer edit
+    Then the inventory item "Flour" shows no quantity
+
   Scenario: User removes an inventory item via the row menu
     Given there is an inventory named "Pantry" with item "Flour"
     When I open the inventory "Pantry"

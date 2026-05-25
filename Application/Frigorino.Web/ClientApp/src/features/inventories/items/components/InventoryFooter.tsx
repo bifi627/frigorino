@@ -84,9 +84,9 @@ export const InventoryFooter = memo(
         const handleComplete = useCallback(
             (r: Completion<typeof features>) => {
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
+                    onUpdateItem(r.text, r.quantity, r.expiry ?? undefined);
                 } else {
-                    onAddItem(r.text, r.quantity || undefined, r.expiry ?? undefined);
+                    onAddItem(r.text, r.quantity, r.expiry ?? undefined);
                     onScrollToLastUnchecked();
                 }
             },

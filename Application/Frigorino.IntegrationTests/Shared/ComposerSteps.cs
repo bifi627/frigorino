@@ -27,6 +27,13 @@ public class ComposerSteps(ScenarioContextHolder ctx)
             .FillAsync(quantity);
     }
 
+    [When("I clear the quantity")]
+    public async Task WhenIClearTheQuantity()
+    {
+        await ctx.Page.Locator("[data-testid='composer-panel-quantity'] input")
+            .FillAsync("");
+    }
+
     [When("I set the expiry date to {string}")]
     public async Task WhenISetTheExpiryDateTo(string isoDate)
     {

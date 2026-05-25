@@ -12,6 +12,15 @@ public class InventoryItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.SetInventoryItemId(inventoryName, itemText, itemId);
     }
 
+    [Given("there is an inventory named {string} with item {string} and quantity {string}")]
+    public async Task GivenThereIsAnInventoryNamedWithItemAndQuantity(string inventoryName, string itemText, string quantity)
+    {
+        var inventoryId = await api.CreateInventoryAsync(inventoryName);
+        ctx.InventoryIds[inventoryName] = inventoryId;
+        var itemId = await api.CreateInventoryItemAsync(inventoryId, itemText, quantity);
+        ctx.SetInventoryItemId(inventoryName, itemText, itemId);
+    }
+
     [Given("the inventory {string} also has item {string}")]
     public async Task GivenTheInventoryAlsoHasItem(string inventoryName, string itemText)
     {
@@ -53,6 +62,13 @@ public class InventoryItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         // value is contained rather than exact-equal.
         await Assertions.Expect(ctx.Page.GetByTestId($"inventory-item-quantity-{itemText}"))
             .ToContainTextAsync(quantity);
+    }
+
+    [Then("the inventory item {string} shows no quantity")]
+    public async Task ThenTheInventoryItemShowsNoQuantity(string itemText)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId($"inventory-item-quantity-{itemText}"))
+            .Not.ToBeVisibleAsync();
     }
 
     [Then("the inventory item {string} shows an expiry indicator")]
