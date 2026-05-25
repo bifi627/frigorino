@@ -172,7 +172,7 @@ Single consumer updated: `src/features/lists/pages/ListViewPage.tsx` swaps impor
 - **`src/components/list/` rename to `components/inputs/`** — `AddInput.tsx`, `QuantityPanel.tsx`, `DateInputPanel.tsx`, and everything under `components/list/components/`, `components/list/context/`, `components/list/hooks/`, `components/list/types/` are shared with `src/components/inventory/InventoryFooter.tsx`. Bundle the rename + import sweep into the Inventory migration round so Inventory's consumer changes in lockstep.
 - **i18n cleanup of hardcoded strings in shared inputs** — `EditingHeader.tsx` ("Bearbeiten", "Completed") and `DateInputPanel.tsx` ("Datum", "Heute", "Löschen") live in *shared* files. Translate during the Inventory migration round to keep this PR's blast radius tight.
 - **Inventories migration + InventoryItems migration** — same pattern when scheduled. Will free the second-to-last legacy service (`InventoryService`); after that `ArchitectureTests` assembly marker will need another swap.
-- **MaintenanceHostedService cleanup** — `RecalculateSortOrderTask` removed in the post-review cleanup; `DemoMaintenanceTask` + `DeleteInactiveItems` still wired. Per CLAUDE.md the whole system is intended for Hangfire migration. Delete the rest in a focused cleanup pass.
+- **MaintenanceHostedService cleanup** — ✅ Done. `RecalculateSortOrderTask`, `DemoMaintenanceTask`, `DeleteInactiveItems`, `IMaintenanceTask`, and `MaintenanceHostedService` all removed; replaced by `CleanupInactiveEntitiesJob` running via Hangfire (`Cron.Daily()`).
 - **Renaming `HouseholdMappingExtensions.cs` / `HouseholdDto.cs` / `InventoryDto.cs`** — still consumed by Inventory layer. Defer until Inventory migrates.
 
 ## Cross-references
