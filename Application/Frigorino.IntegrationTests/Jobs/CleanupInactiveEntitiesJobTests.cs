@@ -82,6 +82,23 @@ public class CleanupInactiveEntitiesJobTests : IAsyncLifetime
                 new ListItem { ListId = list.Id, Text = "recent done", IsActive = true, Status = true, CreatedAt = now.AddDays(-2), UpdatedAt = now.AddDays(-2) },
                 new ListItem { ListId = list.Id, Text = "open old", IsActive = true, Status = false, CreatedAt = now.AddDays(-100), UpdatedAt = now.AddDays(-100) });
             await db.SaveChangesAsync();
+
+            // Inactive household WITH active children — exercises the FK cascade path: deleting the
+            // household must cascade to its lists/inventories/items without an FK violation (a switch
+            // from Cascade to Restrict on those FKs would surface as a failing delete here).
+            var dropWithChildren = new Household { Name = "drop-with-children", CreatedByUserId = "u", IsActive = false };
+            db.Households.Add(dropWithChildren);
+            await db.SaveChangesAsync();
+
+            var childList = new List { Name = "child list", HouseholdId = dropWithChildren.Id, CreatedByUserId = "u", IsActive = true };
+            var childInventory = new Inventory { Name = "child inventory", HouseholdId = dropWithChildren.Id, CreatedByUserId = "u", IsActive = true };
+            db.Lists.Add(childList);
+            db.Inventories.Add(childInventory);
+            await db.SaveChangesAsync();
+
+            db.ListItems.Add(new ListItem { ListId = childList.Id, Text = "child list item", IsActive = true, Status = false, CreatedAt = now, UpdatedAt = now });
+            db.InventoryItems.Add(new InventoryItem { InventoryId = childInventory.Id, Text = "child inventory item", IsActive = true, CreatedAt = now, UpdatedAt = now });
+            await db.SaveChangesAsync();
         }
 
         await using (var run = _provider.CreateAsyncScope())
@@ -100,6 +117,12 @@ public class CleanupInactiveEntitiesJobTests : IAsyncLifetime
 
             var items = await db.ListItems.OrderBy(i => i.Text).Select(i => i.Text).ToListAsync();
             Assert.Equal(new[] { "open old", "recent done" }, items);
+
+            // The inactive household's list + inventory + their items were cascade-deleted with it.
+            var lists = await db.Lists.Select(l => l.Name).ToListAsync();
+            Assert.Equal(new[] { "list" }, lists);
+            Assert.Empty(await db.Inventories.ToListAsync());
+            Assert.Empty(await db.InventoryItems.ToListAsync());
         }
     }
 }
