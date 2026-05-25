@@ -277,6 +277,33 @@ if (hangfireEnabled)
             new HangfireDashboardAuthFilter(app.Environment, app.Configuration),
         },
     });
+
+    // The dashboard's browser sub-requests can't carry an Authorization header, so exchange a
+    // validated Firebase bearer token for an HttpOnly, path-scoped cookie that those requests
+    // carry instead (read back in FirebaseAuth.OnMessageReceived). RequireAuthorization fully
+    // validates the bearer before we mint the cookie; HttpOnly keeps the token off the JS heap.
+    app.MapPost("/api/hangfire/session", (HttpContext http) =>
+    {
+        var authHeader = http.Request.Headers.Authorization.ToString();
+        const string scheme = "Bearer ";
+        if (!authHeader.StartsWith(scheme, StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.Unauthorized();
+        }
+
+        http.Response.Cookies.Append(
+            "hf_dashboard_token",
+            authHeader[scheme.Length..].Trim(),
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Path = "/hangfire",
+                MaxAge = TimeSpan.FromHours(1),
+            });
+        return Results.NoContent();
+    }).RequireAuthorization();
 }
 
 // Anonymous health + version endpoints (skipped at build-time OpenAPI generation

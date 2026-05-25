@@ -52,7 +52,16 @@ export const Navigation: React.FC = () => {
         if (!token) {
             return;
         }
-        document.cookie = `hf_dashboard_token=${token}; path=/hangfire; Secure; SameSite=Strict; Max-Age=3600`;
+        // Exchange the bearer token for a server-set HttpOnly cookie that the dashboard's browser
+        // sub-requests carry (see Program.cs POST /api/hangfire/session + FirebaseAuth cookie shim).
+        // The token never lives in a JS-readable cookie.
+        const res = await fetch("/api/hangfire/session", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+            return;
+        }
         window.open("/hangfire", "_blank", "noopener,noreferrer");
     };
 
