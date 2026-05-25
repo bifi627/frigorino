@@ -1,4 +1,4 @@
-import { AccountCircle, Logout } from "@mui/icons-material";
+import { AccountCircle, Dashboard, Logout } from "@mui/icons-material";
 import {
     AppBar,
     Avatar,
@@ -15,6 +15,7 @@ import {
 import { Link, useRouter } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getAuth } from "firebase/auth";
 import { useAuth } from "../../hooks/useAuth";
 import { LanguageSwitcher } from "../common/LanguageSwitcher";
 
@@ -36,6 +37,23 @@ export const Navigation: React.FC = () => {
         handleMenuClose();
         await logout();
         router.navigate({ to: "." });
+    };
+
+    const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((e: string) => e.trim().toLowerCase())
+        .filter(Boolean);
+    const isAdmin =
+        !!user?.email && adminEmails.includes(user.email.toLowerCase());
+
+    const handleOpenHangfire = async () => {
+        handleMenuClose();
+        const token = await getAuth().currentUser?.getIdToken(true);
+        if (!token) {
+            return;
+        }
+        document.cookie = `hf_dashboard_token=${token}; path=/hangfire; Secure; SameSite=Strict; Max-Age=3600`;
+        window.open("/hangfire", "_blank", "noopener,noreferrer");
     };
 
     return (
@@ -96,6 +114,18 @@ export const Navigation: React.FC = () => {
                                     },
                                 }}
                             >
+                                {isAdmin && (
+                                    <MenuItem onClick={handleOpenHangfire}>
+                                        <ListItemIcon>
+                                            <Dashboard fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText
+                                            primary={t(
+                                                "admin.openHangfireDashboard",
+                                            )}
+                                        />
+                                    </MenuItem>
+                                )}
                                 <MenuItem onClick={handleLogout}>
                                     <ListItemIcon>
                                         <Logout fontSize="small" />
