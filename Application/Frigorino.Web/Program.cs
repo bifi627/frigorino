@@ -10,8 +10,12 @@ using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
+using Frigorino.Infrastructure.Hangfire;
+using Frigorino.Infrastructure.Jobs;
 using Frigorino.Infrastructure.Services;
 using Frigorino.Infrastructure.HealthChecks;
+using Frigorino.Web.Hangfire;
+using Hangfire;
 using Frigorino.Web.Middlewares;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
@@ -40,6 +44,21 @@ builder.Services.AddOpenApi(options =>
 });
 
 builder.Services.AddEntityFramework(builder.Configuration);
+
+var hangfireEnabled = !isBuildTimeOpenApi
+    && !builder.Environment.IsEnvironment("IntegrationTest");
+if (hangfireEnabled)
+{
+    if (!builder.Environment.IsDevelopment()
+        && string.IsNullOrWhiteSpace(builder.Configuration["Hangfire:AdminEmail"]))
+    {
+        throw new InvalidOperationException(
+            "Hangfire:AdminEmail must be set in non-Development environments to protect the /hangfire dashboard.");
+    }
+
+    builder.Services.AddHangfireServices(builder.Configuration);
+}
+
 if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi)
 {
     // DevAuth is a Development-only bypass for the Firebase JWT flow so a fresh clone
@@ -56,8 +75,6 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
         builder.Services.AddFirebaseAuth(builder.Configuration);
     }
 }
-builder.Services.AddMaintenanceServices();
-
 if (!isBuildTimeOpenApi)
 {
     builder.Services.Configure<FirebaseSettings>(
@@ -185,6 +202,17 @@ if (!isBuildTimeOpenApi)
     await context.Database.MigrateAsync();
 }
 
+if (hangfireEnabled)
+{
+    using var hangfireScope = app.Services.CreateScope();
+    var recurringJobs = hangfireScope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobs.AddOrUpdate<CleanupInactiveEntitiesJob>(
+        "cleanup-inactive-entities",
+        job => job.ExecuteAsync(CancellationToken.None),
+        Cron.Daily(),
+        new RecurringJobOptions { MisfireHandling = MisfireHandlingMode.Relaxed });
+}
+
 // Configure middleware pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -239,6 +267,17 @@ app.UseSession();
 // login via the auth_time claim, not per request.
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (hangfireEnabled)
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[]
+        {
+            new HangfireDashboardAuthFilter(app.Environment, app.Configuration),
+        },
+    });
+}
 
 // Anonymous health + version endpoints (skipped at build-time OpenAPI generation
 // because AddHealthChecks isn't registered there).
