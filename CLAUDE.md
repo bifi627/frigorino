@@ -62,6 +62,7 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 - `ConnectionStrings:Hangfire` — optional separate Postgres connection for Hangfire storage; falls back to `Database` when blank.
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
 - `Hangfire:AdminEmail` — email claim required to access the `/hangfire` dashboard (production/staging; open in Development). Set in user-secrets or Railway env.
+- `VITE_ADMIN_EMAILS` (frontend build-time env, comma-separated) — mirrors `Hangfire:AdminEmail`; cosmetic only, gates visibility of the SPA's Hangfire menu item. The dashboard itself is enforced server-side, so drift just hides/shows the menu entry.
 - `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
 ### Local dev: two modes
