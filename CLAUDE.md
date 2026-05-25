@@ -59,6 +59,7 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (converted by `PostgresHelper.ConvertPostgresUrlToConnectionString`).
+- `ConnectionStrings:Hangfire` — optional separate Postgres connection for Hangfire storage; falls back to `Database` when blank.
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
 - `Hangfire:AdminEmail` — email claim required to access the `/hangfire` dashboard (production/staging; open in Development). Set in user-secrets or Railway env.
 - `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
@@ -106,7 +107,9 @@ Hangfire (Hangfire.AspNetCore + Hangfire.PostgreSql, `schema=hangfire`, auto-cre
 run) is the durable fire-and-forget queue. Wiring lives in
 `Frigorino.Infrastructure/Hangfire/HangfireDependencyInjection.cs` (`AddHangfireServices`), called
 from `Program.cs` and gated off at build-time OpenAPI generation and in the `IntegrationTest`
-environment (configuring Postgres storage opens a DB connection).
+environment (configuring Postgres storage opens a DB connection). Storage uses
+`ConnectionStrings:Hangfire` when set, else falls back to `Database`; processed jobs are retained
+for 7 days (`WithJobExpirationTimeout`, up from Hangfire's 24h default) for post-mortem history.
 
 - **Queue-first, sleep-tolerant.** Railway free-tier sleeps on HTTP-idle, so no in-process
   scheduler fires while suspended. Recurring jobs are allowed ONLY with

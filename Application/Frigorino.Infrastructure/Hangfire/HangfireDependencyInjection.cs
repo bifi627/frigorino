@@ -17,12 +17,21 @@ namespace Frigorino.Infrastructure.Hangfire
     {
         public static IServiceCollection AddHangfireServices(this IServiceCollection services, IConfiguration configuration)
         {
+            // Hangfire may use its own database/schema; falls back to the app DB when unset.
+            var rawConnectionString = configuration.GetConnectionString("Hangfire");
+            if (string.IsNullOrWhiteSpace(rawConnectionString))
+            {
+                rawConnectionString = configuration.GetConnectionString("Database");
+            }
+
             var connectionString = DependencyInjection.ConvertPostgresUrlToConnectionString(
-                configuration.GetConnectionString("Database") ?? "");
+                rawConnectionString ?? "");
 
             services.AddHangfire(config => config
                 .UseRecommendedSerializerSettings()
                 .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString))
+                // Keep a week of processed-job history (default is 24h) for post-mortem visibility.
+                .WithJobExpirationTimeout(TimeSpan.FromDays(7))
                 .UseConsole());
 
             services.AddHangfireServer();
