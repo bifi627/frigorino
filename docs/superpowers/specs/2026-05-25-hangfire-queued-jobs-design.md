@@ -238,11 +238,17 @@ runs the data-deleting `DeleteInactiveItems` ~5s after startup — a latent
 longer than 5s. Removing it (and not scheduling its Hangfire replacement in tests) is strictly
 safer. No test references `Maintenance` / `DeleteInactiveItems`, so removal is zero-risk.
 
-**Test the job logic as a plain unit test.** `CleanupInactiveEntitiesJob` is a DI service with
-`ExecuteAsync(CancellationToken)` — add an xUnit test in `Frigorino.Test` that seeds
-soft-deleted + old-completed rows into a `TestApplicationDbContext`, calls `ExecuteAsync`, and
-asserts the deletions. No Hangfire involved. The current `DeleteInactiveItems` has no test, so
-this adds coverage that doesn't exist today.
+**Test the job against Testcontainers Postgres, not InMemory.** The job uses
+`ExecuteDeleteAsync`, which the EF **InMemory** provider (`Frigorino.Test`) does not support —
+so the job test lives in `Frigorino.IntegrationTests`, which already has a real Postgres via
+Testcontainers. Add an xUnit `IAsyncLifetime` test that owns its own Postgres container, builds
+the context through the production `AddEntityFramework(config)` path (because
+`ApplicationDbContext.OnConfiguring` calls `UseNpgsql()` unconditionally), runs migrations, seeds
+soft-deleted + stale-completed rows, `new`s the job and calls `ExecuteAsync`, then asserts the
+deletions. No Hangfire involved (the job is instantiated directly), so it's independent of the
+Hangfire-gating in the IntegrationTest web host. This exercises the real `ExecuteDeleteAsync`
+against the real schema/FKs and keeps the production job free of any test-only seam. The current
+`DeleteInactiveItems` has no test, so this adds coverage that doesn't exist today.
 
 **Future producers: assert enqueue, not execution, and use in-memory storage in tests.** No
 slice injects `IBackgroundJobClient` in this PR, so DI resolves fine in tests with the server
@@ -256,8 +262,8 @@ cross-scenario contention even if storage is registered.
 ## Verification
 
 - `dotnet test Application/Frigorino.sln` (architecture rules + existing suite + the new
-  `CleanupInactiveEntitiesJob` unit test; also boots the IntegrationTests, which is why the
-  IntegrationTest gate above must be in place).
+  `CleanupInactiveEntitiesJob` Postgres-backed test in IntegrationTests; also boots the
+  IntegrationTests web host, which is why the IntegrationTest gate above must be in place).
 - `docker build -f Application/Dockerfile` (catches csproj/Dockerfile drift).
 - dev-up smoke: dashboard loads behind the email gate; manually trigger
   `cleanup-inactive-entities` → it shows **Succeeded**; a no-op enqueue runs and completes.
