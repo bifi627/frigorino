@@ -24,7 +24,13 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { SortableListItem } from "./SortableListItem";
 
@@ -234,7 +240,9 @@ export const SortableList = <T extends SortableItemInterface>({
             // directly above the dragged one in its section (0 = top of section).
             const key = sectionOf(dragOrder, active.id.toString());
             const section = dragOrder[key];
-            const index = section.findIndex((item) => idStr(item) === active.id);
+            const index = section.findIndex(
+                (item) => idStr(item) === active.id,
+            );
             if (index === -1) {
                 setDragOrder(null);
                 return;

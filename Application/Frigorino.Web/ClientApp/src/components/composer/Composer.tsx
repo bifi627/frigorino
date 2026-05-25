@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
 import { EditHeader } from "./components/EditHeader";
 import { SendButton } from "./components/SendButton";
-import { isModifierValueEmpty, useComposerState } from "./hooks/useComposerState";
+import {
+    isModifierValueEmpty,
+    useComposerState,
+} from "./hooks/useComposerState";
 import type {
     AnyActionFeature,
     AnyFeature,
@@ -32,8 +35,17 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [features],
     );
 
-    const { text, setText, values, setValue, openId, toggleOpen, inputRef, focusInput, reset } =
-        useComposerState({ features: featureList, initialDraft });
+    const {
+        text,
+        setText,
+        values,
+        setValue,
+        openId,
+        toggleOpen,
+        inputRef,
+        focusInput,
+        reset,
+    } = useComposerState({ features: featureList, initialDraft });
 
     const isEditing = editing?.active ?? false;
     const trimmed = text.trim();
@@ -159,14 +171,24 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
             )}
 
             {chipFeatures.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 0.5 }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 0.5,
+                        mb: 0.5,
+                    }}
+                >
                     {chipFeatures.map((feature) => (
                         <Box
                             key={feature.id}
                             className="composer-panel"
                             data-testid={`composer-chip-${feature.id}`}
                             onMouseDown={preventInputBlur}
-                            sx={{ display: "inline-flex", alignItems: "center" }}
+                            sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                            }}
                         >
                             {feature.renderChip?.(slotFor(feature))}
                         </Box>
@@ -202,7 +224,10 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             minHeight: 44,
                             color: "text.secondary",
                             bgcolor: "action.hover",
-                            "&:hover": { color: "error.main", bgcolor: "error.50" },
+                            "&:hover": {
+                                color: "error.main",
+                                bgcolor: "error.50",
+                            },
                         }}
                     >
                         <Delete />

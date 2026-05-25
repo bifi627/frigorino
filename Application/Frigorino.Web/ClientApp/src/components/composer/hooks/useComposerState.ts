@@ -26,7 +26,10 @@ export const isModifierValueEmpty = (
     return value === undefined || value === null || value === "";
 };
 
-export function useComposerState({ features, initialDraft }: UseComposerStateArgs) {
+export function useComposerState({
+    features,
+    initialDraft,
+}: UseComposerStateArgs) {
     const modifiers = useMemo(() => onlyModifiers(features), [features]);
 
     const seedValues = useCallback((): ValuesMap => {

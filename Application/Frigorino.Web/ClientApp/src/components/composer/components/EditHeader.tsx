@@ -32,7 +32,10 @@ export const EditHeader = ({ label, onCancel }: EditHeaderProps) => {
                 size="small"
                 onClick={onCancel}
                 aria-label={t("common.cancel")}
-                sx={{ color: "warning.dark", "&:hover": { bgcolor: "warning.100" } }}
+                sx={{
+                    color: "warning.dark",
+                    "&:hover": { bgcolor: "warning.100" },
+                }}
             >
                 <Close fontSize="small" />
             </IconButton>
