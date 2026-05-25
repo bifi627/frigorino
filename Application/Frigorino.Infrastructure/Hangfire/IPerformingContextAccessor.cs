@@ -2,7 +2,7 @@ using Hangfire.Server;
 
 namespace Frigorino.Infrastructure.Hangfire
 {
-    public interface IPerformingContextAccessor
+    internal interface IPerformingContextAccessor
     {
         PerformingContext? Get();
     }

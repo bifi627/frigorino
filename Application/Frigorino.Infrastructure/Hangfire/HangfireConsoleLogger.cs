@@ -30,7 +30,7 @@ namespace Frigorino.Infrastructure.Hangfire
                 return;
             }
 
-            var message = $"{logLevel}: {formatter(state, exception)}";
+            var message = $"{logLevel}: {formatter(state, null)}";
             if (exception is not null)
             {
                 message += Environment.NewLine + exception;
