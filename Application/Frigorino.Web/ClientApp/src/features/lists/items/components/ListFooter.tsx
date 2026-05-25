@@ -87,9 +87,9 @@ export const ListFooter = memo(
         const handleComplete = useCallback(
             (r: Completion<typeof features>) => {
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, r.quantity || undefined);
+                    onUpdateItem(r.text, r.quantity);
                 } else {
-                    onAddItem(r.text, r.quantity || undefined);
+                    onAddItem(r.text, r.quantity);
                     onScrollToLastUnchecked();
                 }
             },

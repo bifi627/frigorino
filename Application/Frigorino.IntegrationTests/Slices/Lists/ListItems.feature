@@ -45,6 +45,16 @@ Feature: List Items
     And I save the composer edit
     Then the list item "Milk" shows quantity "5"
 
+  Scenario: User clears a list item quantity in edit mode
+    Given there is a list named "Weekly Groceries" with item "Milk" and quantity "5"
+    When I open the list "Weekly Groceries"
+    And I open the item menu for "Milk"
+    And I start editing the item
+    And I open the "quantity" composer panel
+    And I clear the quantity
+    And I save the composer edit
+    Then the list item "Milk" shows no quantity
+
   Scenario: User checks off a list item
     Given there is a list named "Weekly Groceries" with item "Milk"
     When I open the list "Weekly Groceries"
