@@ -1,0 +1,192 @@
+# Wire up Hangfire for queued background jobs (queue-first, sleep-tolerant)
+
+**Date:** 2026-05-25
+**Branch:** `feat/hangfire-queued-jobs` (off `stage`)
+**Status:** Design approved — pending spec review
+
+## Problem
+
+CLAUDE.md and `knowledge/Backend_Architecture.md` describe Hangfire as already wired
+(DI extension, `/hangfire` dashboard, recurring jobs, `hangfire` schema). **None of that
+exists.** Verified current state:
+
+- No `Hangfire.*` package reference in any `.csproj`.
+- No `Hangfire*.cs`, no `Frigorino.Infrastructure/Jobs/` folder.
+- The only `/hangfire` reference in `Program.cs:152` is an anticipatory path-exclusion in
+  the OpenTelemetry trace filter — no dashboard is mapped.
+- The vite proxy (`vite.config.ts:63-88`) does **not** include `/hangfire` (CLAUDE.md claims
+  it does).
+- The in-process maintenance system is **fully live**, not "replaced by Hangfire":
+  `MaintenanceHostedService` (a `BackgroundService` that runs every `IMaintenanceTask` once,
+  ~5s after boot), `IMaintenanceTask` (in `Domain/Interfaces/IMaintainanceTask.cs`),
+  `DeleteInactiveItems`, and a no-op `DemoMaintenanceTask`. `MaintenanceService.cs` is empty.
+
+So the docs are aspirational fiction and must be corrected as part of this work.
+
+The real need: a durable fire-and-forget queue for upcoming async features — classifying a
+list item via an LLM (~1s, would block list-add), OCR-ing receipt photos, sending invite
+emails. These need durability + retry + visibility across restarts. Hangfire fills that gap
+and amortizes across the next several features instead of each rolling its own runner.
+
+## Scope
+
+**Primary purpose:** stand up Hangfire as a durable fire-and-forget queue.
+
+**First / proving consumer:** migrate the existing `DeleteInactiveItems` cleanup off the
+bespoke `MaintenanceHostedService` startup-batch onto a Hangfire **recurring job**. This
+exercises the pipeline end-to-end and retires the hand-rolled background runner.
+
+**Not in this PR:** the classifier / OCR / email producers themselves (future, separate
+tasks). This PR is plumbing + the one recurring consumer + doc correction.
+
+## Key constraint: Railway free-tier sleep
+
+The container sleeps on HTTP-idle. No in-process scheduler (Hangfire recurring, a timer, a
+`BackgroundService`) can fire while the process is suspended. A cleanup job has **no hard
+timing requirement** — while asleep nobody writes data, so nothing accumulates, and
+"catch up once on next wake" is adequate. Therefore:
+
+- Recurring jobs are permitted **only** with sleep-tolerant misfire handling
+  (`MisfireHandlingMode.Relaxed`): on the next wake after a missed occurrence, enqueue **one**
+  catch-up run, then resume the schedule — never multiple catch-up runs, never relying on a
+  run firing at a precise wall-clock time.
+- `Strict` (enqueues every missed occurrence) and `Ignorable` (skips missed runs entirely)
+  are both wrong for this use case.
+- Hangfire server polling does **not** keep the container awake (Railway sleeps on HTTP-idle,
+  not DB-activity), so it does not defeat free-tier sleep. Confirm once on stage post-merge.
+
+## Design
+
+### Component placement (driven by `ArchitectureTests`)
+
+The architecture tests forbid only **Domain → Hangfire** (`ArchitectureTests.cs:38`) and
+**Infrastructure → Web** (`:47`). Features → Hangfire is allowed. This dictates:
+
+- **`AddHangfireServices(IConfiguration, IHostEnvironment)`** → `Frigorino.Infrastructure/Hangfire/`.
+  Registers `AddHangfire(c => c.UsePostgreSqlStorage(...))` + `AddHangfireServer(...)`.
+  Reuses `ConnectionStrings:Database` converted via `PostgresHelper.ConvertPostgresUrlToConnectionString`
+  (same helper as health checks at `Program.cs:66`). Called from `Program.cs` near
+  `AddEntityFramework`.
+- **Dashboard** (`UseHangfireDashboard("/hangfire", ...)`) + **`HangfireDashboardAuthFilter`**
+  → `Frigorino.Web` (Infrastructure cannot depend on Web).
+- **Jobs** → `Frigorino.Infrastructure/Jobs/` as scoped classes with
+  `ExecuteAsync(CancellationToken)`, resolved via Hangfire's DI activator.
+- **Recurring-job registration** (`RecurringJob.AddOrUpdate`) → in `Program.cs` after
+  `app.Build()`, gated `!isBuildTimeOpenApi`.
+- Domain stays Hangfire-free: the old `IMaintenanceTask` interface in Domain is deleted, not
+  extended.
+
+### Enqueue convention (for future producers)
+
+Producer slices inject Hangfire's **`IBackgroundJobClient`** directly and call
+`_jobs.Enqueue<TJob>(j => j.ExecuteAsync(args, default))`. No vendor-neutral wrapper
+interface: `IBackgroundJobClient` is itself the abstraction, and its strongly-typed
+expression-capture (`Enqueue<TJob>`) is the ergonomic point a wrapper would shed. (Deliberate
+carve-out from the usual vendor-agnostic-by-default stance, because the wrapper would be pure
+overhead here.) No producer code ships in this PR; this is documented guidance for the future
+classifier / OCR / email slices.
+
+### Maintenance migration (the proving consumer)
+
+- New `Frigorino.Infrastructure/Jobs/CleanupInactiveEntitiesJob.cs` — the body of today's
+  `DeleteInactiveItems.Run` verbatim: hard-delete soft-deleted households / inventories /
+  lists, purge completed list items older than 30 days, hard-delete soft-deleted inventory
+  items.
+- Registered recurring in `Program.cs`:
+  ```csharp
+  RecurringJob.AddOrUpdate<CleanupInactiveEntitiesJob>(
+      "cleanup-inactive-entities",
+      j => j.ExecuteAsync(CancellationToken.None),
+      Cron.Daily(),
+      new RecurringJobOptions { MisfireHandling = MisfireHandlingMode.Relaxed });
+  ```
+  Cadence: daily (midnight UTC). `Relaxed` confirmed-at-impl as the default (context7 would not
+  surface the misfire page; trivially checkable in IntelliSense / source).
+- **Delete:** `MaintenanceHostedService.cs`, `MaintenanceDependencyInjection.cs`, empty
+  `MaintenanceService.cs`, `DeleteInactiveItems.cs`, `DemoMaintenanceTask.cs`,
+  `Domain/Interfaces/IMaintainanceTask.cs`, and the `AddMaintenanceServices()` call at
+  `Program.cs:59`.
+
+### Dashboard auth — reuse Firebase, gate on admin email, isolated from bearer flow
+
+The dashboard is browser-navigated and fires many polling / asset sub-requests
+(`/hangfire/stats`, embedded css/js) that the auth filter also gates. A `?access_token=`
+query param (the existing `/signalr` shim) authenticates only the first paint, so it cannot
+carry the dashboard. The credential must ride every `/hangfire` request via a **cookie**.
+
+Mechanism (mirrors the proven path-scoped isolation of the existing `/signalr` shim at
+`FirebaseAuth.cs:42-54`):
+
+- `OnMessageReceived` gains one branch that fires **only when** `path.StartsWithSegments("/hangfire")`
+  **and** no `Authorization` header is present → reads the Firebase ID token from a dedicated
+  cookie `hf_dashboard_token` (HttpOnly, Secure, SameSite=Strict, path-scoped to `/hangfire`).
+  For every `/api` request the branch is never entered and a present `Authorization` header is
+  never overridden, so the existing header-bearer flow is byte-for-byte unchanged. No new auth
+  scheme, no default-scheme change.
+- `HangfireDashboardAuthFilter.Authorize`: **Development** (incl. dev-up bypass) → allow open;
+  **non-Development** → require `User` authenticated **and** `email` claim == `Hangfire:AdminEmail`.
+  Fail-closed if no admin email configured.
+- SPA: an admin-only "open dashboard" action writes the current Firebase ID token into
+  `hf_dashboard_token`, then opens `/hangfire`. Same-origin (vite proxy in dev, .NET host in
+  prod) so the cookie applies to all dashboard sub-requests. Rough edge: Firebase ID tokens
+  expire ~1h → reopen from the SPA to refresh.
+- The `HangfireAuth:Username/Password` basic-auth idea is dropped. Config becomes
+  `"Hangfire": { "AdminEmail": "" }` (real value via env / user-secrets).
+
+Header-injection (ModHeader-style `Authorization: Bearer`) remains a lighter fallback if the
+SPA cookie-write ever feels like too much, but cookie-bridge matches "reachable through vite
+in the browser" without a browser extension.
+
+### Vite passthrough
+
+Add `^/hangfire` and `^/hangfire/*` proxy entries to `vite.config.ts` so the dashboard is
+reachable at `https://localhost:44375/hangfire` and same-origin with the SPA in dev. In prod
+there is no vite — the .NET host serves both at the same origin.
+
+### Config & boot
+
+- Add `"Hangfire": { "AdminEmail": "" }` placeholder to `appsettings.json`.
+- **Boot-fail** if `!IsDevelopment && Hangfire:AdminEmail` is empty (loud misconfig detection;
+  the filter is also fail-closed as defence in depth).
+- **Build-time gate:** skip `AddHangfireServer` + dashboard mapping + recurring registration
+  when `isBuildTimeOpenApi` (`GetDocument.Insider` has no DB), mirroring the existing
+  EF-migrate / Firebase / health-check gating.
+
+### Schema
+
+Hangfire.PostgreSql auto-creates the `hangfire` schema and tables on first server start
+(`PrepareSchemaIfNecessary = true`, default). No EF migration. EF uses the `public` schema, so
+no collision with the existing model snapshot.
+
+## Packages
+
+Add to `Frigorino.Infrastructure.csproj`, pinned to exact versions per the dependency-pinning
+convention:
+
+- `Hangfire.AspNetCore`
+- `Hangfire.PostgreSql`
+
+## Docs cleanup (same PR)
+
+- `CLAUDE.md`: rewrite the Hangfire bullet to match what is actually built; correct the
+  "maintenance replaced by Hangfire" narrative to reference the real `CleanupInactiveEntitiesJob`
+  (and drop the fictional `ClassifyListsJob` / `Cron.Never` examples).
+- `knowledge/Backend_Architecture.md`: replace aspirational Hangfire sections with accurate
+  ones; document the recurring-jobs-only-with-`Relaxed` sleep-tolerance rule.
+- Verify and correct stray Hangfire mentions in `knowledge/Observability.md`,
+  `knowledge/Migrations/ListItems.md`, `knowledge/Migrations/Inventory.md`.
+
+## Verification
+
+- `dotnet test Application/Frigorino.sln` (architecture rules + existing suite).
+- `docker build -f Application/Dockerfile` (catches csproj/Dockerfile drift).
+- dev-up smoke: dashboard loads behind the email gate; manually trigger
+  `cleanup-inactive-entities` → it shows **Succeeded**; a no-op enqueue runs and completes.
+- Post-merge stage observation: in-process Hangfire polling does not trip Railway's HTTP-idle
+  sleep detector.
+
+## Reversibility
+
+If Hangfire proves wrong: remove the DI call + dashboard route, drop the `hangfire` schema,
+and the (future) queued consumers swap to `System.Threading.Channels` or similar. The
+maintenance cleanup would revert to a startup-batch or a persisted-last-run guard.
