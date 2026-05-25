@@ -86,6 +86,35 @@ carve-out from the usual vendor-agnostic-by-default stance, because the wrapper 
 overhead here.) No producer code ships in this PR; this is documented guidance for the future
 classifier / OCR / email slices.
 
+### Dashboard job logs (Hangfire.Console + `ILogger` bridge)
+
+Jobs surface their logs inline on the dashboard's per-job details page, but **the jobs stay
+decoupled from Hangfire.Console** — they log only through
+`Microsoft.Extensions.Logging.ILogger<T>` (which already flows to stdout + OTel → Grafana/Loki).
+Hangfire.Console does **not** scrape stdout or hook `ILogger`; it only renders lines explicitly
+pushed into a per-job storage buffer. A small bridge wired in the composition root connects the
+two:
+
+- `.UseConsole()` added to the storage config in `AddHangfireServices`.
+- A self-written bridge in `Frigorino.Infrastructure/Hangfire/`, modeled on the logging path of
+  `AnderssonPeter/Hangfire.Console.Extensions` (last release ~8 months old, so we own a minimal
+  copy — only the `ILogger` path, none of its progress-bar / job-manager / cancellation extras):
+  - `HangfireConsoleSubscriber : IServerFilter` — stores the running `PerformingContext` in an
+    `AsyncLocal` on `OnPerforming`, clears it on `OnPerformed`.
+  - `IPerformingContextAccessor` + `HangfireConsoleLogger : ILogger` whose `Log<TState>` calls
+    `context.WriteLine(color, message)` **only when** a job context is active on the async flow,
+    and no-ops otherwise (so non-job callers and unit tests are unaffected).
+  - `HangfireConsoleLoggerProvider : ILoggerProvider` with `[ProviderAlias("Hangfire")]`.
+  - Registered as singletons; the filter added to Hangfire's job filters.
+- **Level-filtered via config** so we don't write a storage row per `Debug`/`Trace` line: the
+  `[ProviderAlias("Hangfire")]` lets `appsettings.json` scope it, e.g.
+  `"Logging": { "Hangfire": { "LogLevel": { "Default": "Information" } } }`.
+
+Result: open a job in the dashboard → see its `ILogger` output inline, while job code (and its
+unit tests) know nothing about Hangfire.Console. Console output renders on the job-details page,
+already behind the admin-email filter — no new auth surface; retention follows job retention by
+default. (See the memory note: jobs/services log via `ILogger` only, never `PerformContext`.)
+
 ### Maintenance migration (the proving consumer)
 
 - New `Frigorino.Infrastructure/Jobs/CleanupInactiveEntitiesJob.cs` — the body of today's
@@ -168,6 +197,8 @@ convention:
 
 - `Hangfire.AspNetCore`
 - `Hangfire.PostgreSql`
+- `Hangfire.Console` (dashboard per-job console). **Not** `Hangfire.Console.Extensions` — we
+  own a minimal `ILogger` bridge instead (see "Dashboard job logs").
 
 ## Docs cleanup (same PR)
 
