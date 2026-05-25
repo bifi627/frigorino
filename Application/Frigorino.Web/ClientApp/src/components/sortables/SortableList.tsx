@@ -7,9 +7,11 @@ import {
     useSensor,
     useSensors,
     type DragEndEvent,
+    type DragOverEvent,
     type DragStartEvent,
 } from "@dnd-kit/core";
 import {
+    arrayMove,
     SortableContext,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -22,9 +24,12 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SortableListItem } from "./SortableListItem";
+
+// dnd-kit uses string ids; entity ids are number | string | null.
+const idStr = (item: SortableItemInterface) => item.id?.toString();
 
 // Minimal interface that sortable items must implement
 export interface SortableItemInterface {
@@ -74,6 +79,18 @@ export const SortableList = <T extends SortableItemInterface>({
 }: SortableListProps<T>) => {
     const { t } = useTranslation();
     const [activeItem, setActiveItem] = useState<T | null>(null);
+    // Live drag order: the library reorders this in onDragOver so the rows shift
+    // symmetrically as the dragged item crosses each neighbour, and it holds the
+    // dropped order until the server/optimistic data resyncs (no snap-back). Null
+    // when idle — the list then renders straight from props.
+    const [dragOrder, setDragOrder] = useState<{
+        unchecked: T[];
+        checked: T[];
+    } | null>(null);
+    // Guards the resync effect so a data refetch mid-drag (e.g. a previous
+    // reorder's debounced invalidation) can't yank dragOrder out from under the
+    // pointer. A ref, not state, so flipping it never triggers a render.
+    const isDraggingRef = useRef(false);
     const dividerRef = useRef<HTMLHRElement | null>(null);
 
     // Configure drag sensors - must be at top level, not in useMemo
@@ -149,71 +166,86 @@ export const SortableList = <T extends SortableItemInterface>({
         return { uncheckedItems: unchecked, checkedItems: checked };
     }, [items, sortMode, skipInternalSort]);
 
-    // Event handlers - memoized to prevent unnecessary re-renders
+    // What actually renders: the live drag order while dragging, otherwise props.
+    const displayUnchecked = dragOrder?.unchecked ?? uncheckedItems;
+    const displayChecked = dragOrder?.checked ?? checkedItems;
+
+    // Drop the live order whenever the underlying data changes — including the
+    // optimistic update fired by the drop itself, which now matches the dragged
+    // order, so the handoff is seamless. Skipped mid-drag (see isDraggingRef);
+    // handleDragEnd clears the flag before the drop's optimistic update lands.
+    useEffect(() => {
+        if (!isDraggingRef.current) {
+            setDragOrder(null);
+        }
+    }, [items]);
+
+    const sectionOf = useCallback(
+        (order: { unchecked: T[]; checked: T[] }, id: string) =>
+            order.unchecked.some((item) => idStr(item) === id)
+                ? "unchecked"
+                : "checked",
+        [],
+    );
+
     const handleDragStart = useCallback(
         (event: DragStartEvent) => {
-            const { active } = event;
-            const item = items.find(
-                (item) => item.id?.toString() === active.id,
-            );
+            const item = items.find((item) => idStr(item) === event.active.id);
             setActiveItem(item || null);
+            setDragOrder({ unchecked: uncheckedItems, checked: checkedItems });
+            isDraggingRef.current = true;
         },
-        [items],
+        [items, uncheckedItems, checkedItems],
+    );
+
+    const handleDragOver = useCallback(
+        (event: DragOverEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id) return;
+
+            setDragOrder((prev) => {
+                if (!prev) return prev;
+                const key = sectionOf(prev, active.id.toString());
+                const section = prev[key];
+                const from = section.findIndex(
+                    (item) => idStr(item) === active.id,
+                );
+                const to = section.findIndex((item) => idStr(item) === over.id);
+                // Skip when the pointer is over the other section or nothing moved.
+                if (from === -1 || to === -1 || from === to) return prev;
+                return { ...prev, [key]: arrayMove(section, from, to) };
+            });
+        },
+        [sectionOf],
     );
 
     const handleDragEnd = useCallback(
-        async (event: DragEndEvent) => {
+        (event: DragEndEvent) => {
             const { active, over } = event;
             setActiveItem(null);
+            isDraggingRef.current = false;
 
-            if (!over || active.id === over.id) return;
-
-            const activeItem = items.find(
-                (item) => item.id?.toString() === active.id,
-            );
-            const overItem = items.find(
-                (item) => item.id?.toString() === over.id,
-            );
-
-            if (!activeItem || !overItem || !activeItem.id) return;
-
-            // Prevent dragging between checked/unchecked sections
-            if (activeItem.status !== overItem.status) return;
-
-            // Calculate the appropriate section inside the callback to avoid dependency issues
-            const currentSectionItems = items
-                .filter((item) => item.status === activeItem.status)
-                .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-            let overIndex = currentSectionItems.findIndex(
-                (item) => item.id === overItem.id,
-            );
-            const activeIndex = currentSectionItems.findIndex(
-                (item) => item.id === activeItem.id,
-            );
-
-            if (overIndex < activeIndex) {
-                overIndex--;
+            if (!over || !dragOrder) {
+                setDragOrder(null);
+                return;
             }
 
-            // The afterId should be the ID of the item at overIndex, or 0 if placing at the beginning
-            const afterItemId =
-                overIndex >= 0 ? currentSectionItems[overIndex].id : 0;
-
-            const numericActiveId =
-                typeof activeItem.id === "string"
-                    ? parseInt(activeItem.id)
-                    : activeItem.id;
-            const numericAfterId =
-                typeof afterItemId === "string"
-                    ? parseInt(afterItemId)
-                    : afterItemId;
-
-            if (numericActiveId) {
-                await onReorder(numericActiveId, numericAfterId || 0);
+            // Persist the order the user actually sees: afterId is the item now
+            // directly above the dragged one in its section (0 = top of section).
+            const key = sectionOf(dragOrder, active.id.toString());
+            const section = dragOrder[key];
+            const index = section.findIndex((item) => idStr(item) === active.id);
+            if (index === -1) {
+                setDragOrder(null);
+                return;
             }
+
+            const afterId = index > 0 ? Number(section[index - 1].id) : 0;
+            // Keep dragOrder in place — the resync effect clears it once the
+            // optimistic update lands, avoiding a flash back to the old order.
+            void onReorder(Number(active.id), afterId);
         },
-        [items, onReorder],
+        [dragOrder, sectionOf, onReorder],
     );
 
     const handleEditItem = useCallback(
@@ -239,13 +271,13 @@ export const SortableList = <T extends SortableItemInterface>({
 
     // Memoize item IDs for SortableContext to prevent unnecessary re-renders
     const uncheckedItemIds = useMemo(
-        () => uncheckedItems.map((item) => item.id?.toString() || "0"),
-        [uncheckedItems],
+        () => displayUnchecked.map((item) => idStr(item) || "0"),
+        [displayUnchecked],
     );
 
     const checkedItemIds = useMemo(
-        () => checkedItems.map((item) => item.id?.toString() || "0"),
-        [checkedItems],
+        () => displayChecked.map((item) => idStr(item) || "0"),
+        [displayChecked],
     );
 
     if (isLoading) {
@@ -270,10 +302,11 @@ export const SortableList = <T extends SortableItemInterface>({
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
                 {/* Unchecked Items Section */}
-                {uncheckedItems.length > 0 && (
+                {displayUnchecked.length > 0 && (
                     <SortableContext
                         items={uncheckedItemIds}
                         strategy={verticalListSortingStrategy}
@@ -285,7 +318,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                 "& .MuiListItem-root": { mb: 0.5 },
                             }}
                         >
-                            {uncheckedItems.map((item) => (
+                            {displayUnchecked.map((item) => (
                                 <SortableListItem
                                     key={item.id}
                                     item={item}
@@ -325,7 +358,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                 "& .MuiListItem-root": { mb: 0.5 },
                             }}
                         >
-                            {checkedItems.map((item) => (
+                            {displayChecked.map((item) => (
                                 <SortableListItem
                                     key={item.id}
                                     item={item}
@@ -378,16 +411,25 @@ export const SortableList = <T extends SortableItemInterface>({
                     </Paper>
                 )}
 
-                {/* Drag Overlay */}
+                {/* Drag Overlay — a visible clone of the row that follows the cursor.
+                    The left gutter matches the drag-handle width (SortableItem, 48px)
+                    so the content sits to the right of the grab point instead of under
+                    the finger on touch, keeping the dragged item visible. */}
                 <DragOverlay>
                     {activeItem ? (
                         <Paper
                             elevation={8}
                             sx={{
-                                transform: "rotate(5deg)",
+                                pl: 10,
+                                pr: 1.5,
+                                py: 0.75,
+                                borderRadius: 1,
                                 opacity: 0.95,
+                                cursor: "grabbing",
                             }}
-                        ></Paper>
+                        >
+                            {renderContent(activeItem)}
+                        </Paper>
                     ) : null}
                 </DragOverlay>
             </DndContext>
