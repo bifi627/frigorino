@@ -151,6 +151,9 @@ there is no vite — the .NET host serves both at the same origin.
 - **Build-time gate:** skip `AddHangfireServer` + dashboard mapping + recurring registration
   when `isBuildTimeOpenApi` (`GetDocument.Insider` has no DB), mirroring the existing
   EF-migrate / Firebase / health-check gating.
+- **IntegrationTest gate:** also skip `AddHangfireServer` + recurring registration when
+  `IsEnvironment("IntegrationTest")` (same gate that swaps real auth for `TestAuthHandler` at
+  `Program.cs:43`). See the Testing section for why.
 
 ### Schema
 
@@ -176,9 +179,54 @@ convention:
 - Verify and correct stray Hangfire mentions in `knowledge/Observability.md`,
   `knowledge/Migrations/ListItems.md`, `knowledge/Migrations/Inventory.md`.
 
+## Testing
+
+The integration tests (`Frigorino.IntegrationTests`, Reqnroll + Playwright + Testcontainers)
+boot a **complete app instance per scenario**: `BeforeScenario` creates a fresh
+`frig_test_<guid>` database, calls `TestWebApplicationFactory.StartServer()` (runs EF
+migrations), and `AfterScenario` disposes the factory then **force-drops the database**
+(terminating active connections first). The host runs under the `IntegrationTest` environment.
+That per-scenario lifecycle drives the rules below.
+
+**Do not start the Hangfire server in `IntegrationTest`.** An unconditional `AddHangfireServer`
+would boot polling threads (recurring scheduler, schedule poller, workers, heartbeat) holding
+open DB connections in every scenario — then `AfterScenario` drops the DB out from under them.
+That risks shutdown-timeout-driven teardown slowdowns (default ~15s) and noisy
+connection-terminated exceptions, multiplied across every scenario. Gating the server off (see
+the IntegrationTest gate under Config & boot) removes the threads and the race entirely.
+
+**Do not register the recurring cleanup in `IntegrationTest`.** `CleanupInactiveEntitiesJob`
+hard-deletes data. A freshly-added `Cron.Daily()` + `Relaxed` job won't backfill on a short
+run, but "almost certainly won't delete my test data" is not a guarantee worth keeping in the
+pipeline — gate the `RecurringJob.AddOrUpdate` call off too.
+
+**This migration improves test determinism.** `AddMaintenanceServices()` runs *unconditionally*
+today (`Program.cs:59`), so `MaintenanceHostedService` currently boots in every scenario and
+runs the data-deleting `DeleteInactiveItems` ~5s after startup — a latent
+"background task mutates my test DB mid-scenario" hazard, since many Playwright scenarios run
+longer than 5s. Removing it (and not scheduling its Hangfire replacement in tests) is strictly
+safer. No test references `Maintenance` / `DeleteInactiveItems`, so removal is zero-risk.
+
+**Test the job logic as a plain unit test.** `CleanupInactiveEntitiesJob` is a DI service with
+`ExecuteAsync(CancellationToken)` — add an xUnit test in `Frigorino.Test` that seeds
+soft-deleted + old-completed rows into a `TestApplicationDbContext`, calls `ExecuteAsync`, and
+asserts the deletions. No Hangfire involved. The current `DeleteInactiveItems` has no test, so
+this adds coverage that doesn't exist today.
+
+**Future producers: assert enqueue, not execution, and use in-memory storage in tests.** No
+slice injects `IBackgroundJobClient` in this PR, so DI resolves fine in tests with the server
+gated off. When the first producer (classifier / OCR / email) lands, register
+`Hangfire.InMemory` storage in the test host so `IBackgroundJobClient` resolves with zero
+Postgres schema-prep, and assert the job was *enqueued* rather than driving async
+enqueue→process→assert through Reqnroll (async completion = polling = flaky). Per-scenario DB
+isolation means each scenario gets its own `hangfire` schema anyway, so there is no
+cross-scenario contention even if storage is registered.
+
 ## Verification
 
-- `dotnet test Application/Frigorino.sln` (architecture rules + existing suite).
+- `dotnet test Application/Frigorino.sln` (architecture rules + existing suite + the new
+  `CleanupInactiveEntitiesJob` unit test; also boots the IntegrationTests, which is why the
+  IntegrationTest gate above must be in place).
 - `docker build -f Application/Dockerfile` (catches csproj/Dockerfile drift).
 - dev-up smoke: dashboard loads behind the email gate; manually trigger
   `cleanup-inactive-entities` → it shows **Succeeded**; a no-op enqueue runs and completes.
