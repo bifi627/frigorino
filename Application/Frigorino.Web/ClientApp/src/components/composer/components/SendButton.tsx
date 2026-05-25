@@ -31,8 +31,13 @@ export const SendButton = ({
                 minHeight: 44,
                 bgcolor: disabled ? "transparent" : `${color}.main`,
                 color: disabled ? "action.disabled" : "common.white",
-                "&:hover": { bgcolor: disabled ? "transparent" : `${color}.dark` },
-                "&:disabled": { bgcolor: "transparent", color: "action.disabled" },
+                "&:hover": {
+                    bgcolor: disabled ? "transparent" : `${color}.dark`,
+                },
+                "&:disabled": {
+                    bgcolor: "transparent",
+                    color: "action.disabled",
+                },
                 transition: "all 0.2s ease",
             }}
         >

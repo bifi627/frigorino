@@ -112,7 +112,10 @@ export const ListFooter = memo(
                     key={editingItem?.id ?? "new"}
                     features={features}
                     disabled={isLoading}
-                    editing={{ active: Boolean(editingItem), onCancel: onCancelEdit }}
+                    editing={{
+                        active: Boolean(editingItem),
+                        onCancel: onCancelEdit,
+                    }}
                     initialDraft={initialDraft}
                     suggestions={suggestions}
                     duplicate={duplicate}
