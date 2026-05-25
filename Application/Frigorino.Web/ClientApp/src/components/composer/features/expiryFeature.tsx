@@ -7,12 +7,18 @@ import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
 
 const formatForDisplay = (date: Date | null) =>
-    date ? date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }) : "";
+    date
+        ? date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+        : "";
 
 const formatForInput = (date: Date | null) =>
     date ? date.toISOString().split("T")[0] : "";
 
-const ExpiryToggle = ({ value, open, toggleOpen }: FeatureSlot<Date | null>) => {
+const ExpiryToggle = ({
+    value,
+    open,
+    toggleOpen,
+}: FeatureSlot<Date | null>) => {
     const { t } = useTranslation();
     return (
         <IconButton
@@ -44,7 +50,11 @@ const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => {
     );
 };
 
-const ExpiryPanel = ({ value, setValue, disabled }: FeatureSlot<Date | null>) => {
+const ExpiryPanel = ({
+    value,
+    setValue,
+    disabled,
+}: FeatureSlot<Date | null>) => {
     const { t } = useTranslation();
     const handleChange = (dateString: string) => {
         if (!dateString) {
@@ -56,7 +66,13 @@ const ExpiryPanel = ({ value, setValue, disabled }: FeatureSlot<Date | null>) =>
     };
     return (
         <Box
-            sx={{ display: "flex", alignItems: "center", gap: 0.75, width: "100%", p: 1 }}
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                width: "100%",
+                p: 1,
+            }}
             onClick={(e) => e.stopPropagation()}
         >
             <TextField

@@ -46,12 +46,10 @@ export type AnyFeature = AnyModifierFeature | AnyActionFeature;
 
 /** Map of each modifier feature's id -> its value type. */
 export type ModifierValues<F extends readonly AnyFeature[]> = {
-    [M in Extract<F[number], AnyModifierFeature> as M["id"]]: M extends ModifierFeature<
-        string,
-        infer V
-    >
-        ? V
-        : never;
+    [M in Extract<
+        F[number],
+        AnyModifierFeature
+    > as M["id"]]: M extends ModifierFeature<string, infer V> ? V : never;
 };
 
 /** The text-send completion: text + mode + all modifier values. */

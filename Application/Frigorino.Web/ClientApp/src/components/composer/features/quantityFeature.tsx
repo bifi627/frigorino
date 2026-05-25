@@ -1,7 +1,14 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
    descriptor (non-component) alongside local presentational components. */
 import { Add, Clear, Remove, ShoppingBag } from "@mui/icons-material";
-import { Box, Button, ButtonGroup, Chip, IconButton, TextField } from "@mui/material";
+import {
+    Box,
+    Button,
+    ButtonGroup,
+    Chip,
+    IconButton,
+    TextField,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
@@ -67,7 +74,9 @@ const QuantityPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
                     <Button
                         key={num}
                         onClick={() => setValue(num.toString())}
-                        variant={value === num.toString() ? "contained" : "outlined"}
+                        variant={
+                            value === num.toString() ? "contained" : "outlined"
+                        }
                         size="small"
                         sx={{ minWidth: 44, minHeight: 44 }}
                     >
