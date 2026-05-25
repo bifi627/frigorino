@@ -117,7 +117,7 @@ The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` removed in the post-review cleanup pass; `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired. Per CLAUDE.md the whole system is intended for Hangfire migration. Delete the rest in a focused cleanup pass.
+- **`MaintenanceHostedService` cleanup** — ✅ Done. `RecalculateSortOrderTask`, `DemoMaintenanceTask`, `DeleteInactiveItems`, `IMaintenanceTask`, and `MaintenanceHostedService` all removed; replaced by `CleanupInactiveEntitiesJob` running via Hangfire (`Cron.Daily()`).
 
 ## Cross-references
 

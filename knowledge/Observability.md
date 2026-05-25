@@ -142,7 +142,7 @@ The frontend span shows the network time visible to the browser; the backend spa
 
 - **Synthetic uptime checks** (Grafana Synthetics, Healthchecks.io, periodic `/healthz` pings, Hangfire heartbeat-push). Railway free tier sleeps the container on idle; periodic external probes defeat that and push compute past free-tier limits. Downtime is detected passively: a spike of Faro `fetch` errors means users are seeing it, Railway's own status surfaces hard outages. Revisit on a paid Railway plan or a hosting move. See [memory: no-synthetic-uptime-checks](../C--Repositories-frigorino/memory/project_no_synthetic_uptime_checks.md).
 - **Grafana IRM alerting.** Most of the alerts we'd configure (`/healthz` down, Hangfire heartbeat miss) presuppose synthetics. Without those, on-call paging is more noise than signal at one-UAT-client scale. Faro errors + manual checks suffice today.
-- **Pyroscope (continuous profiling).** No perf question is currently unanswerable by traces. Adopt when one appears (likely candidate: a slow Hangfire job like `ClassifyListsJob`).
+- **Pyroscope (continuous profiling).** No perf question is currently unanswerable by traces. Adopt when one appears (likely candidate: a slow Hangfire job).
 - **k6 Cloud (synthetic load testing).** Same reasoning as Synthetics — would warm the container. The local `k6` CLI remains available for ad-hoc load runs against stage if needed.
 - **PostHog or any second analytics vendor.** Faro covers the use cases at current scale. Revisit triggers (product team needing self-serve funnels, pixel-perfect replay, first-class feature flags, surveys) are listed in `../OBSERVABILITY.md`.
 - **Source-map upload** (`@grafana/faro-rollup-plugin`). Deferred until the first frontend crash makes minified stack traces an actual problem; the plumbing is well-understood and one PR away.
@@ -154,4 +154,4 @@ The frontend span shows the network time visible to the browser; the backend spa
 - **Frontend Web Vitals** → Frontend Observability → Web Vitals tab. Pre-built.
 - **A slow request end-to-end** → Faro → Errors/Slow Requests → click "View Trace" → Tempo shows the full frontend + backend chain.
 - **A specific backend log line** → Loki, query `{service.name="frigorino-web", deployment.environment="prod"} |= "search string"`.
-- **Hangfire job activity** → Mimir, `hangfire_*` counters (added by Hangfire's metric emitter), or Hangfire's own `/hangfire` dashboard (basic-auth gated).
+- **Hangfire job activity** → Mimir, `hangfire_*` counters (added by Hangfire's metric emitter), or Hangfire's own `/hangfire` dashboard (open in Development; Firebase-email-gated in production).

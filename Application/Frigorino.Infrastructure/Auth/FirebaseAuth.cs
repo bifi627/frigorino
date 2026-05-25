@@ -41,16 +41,28 @@ namespace Frigorino.Infrastructure.Auth
                     {
                         OnMessageReceived = context =>
                         {
-                            var accessToken = context.Request.Query["access_token"];
-
-                            // If the request is for our hub...
                             var path = context.HttpContext.Request.Path;
-                            if (!string.IsNullOrEmpty(accessToken) &&
-                                (path.StartsWithSegments("/signalr")))
+
+                            // SignalR keeps its token in the query string (long-lived connection).
+                            var accessToken = context.Request.Query["access_token"];
+                            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/signalr"))
                             {
-                                // Read the token out of the query string
                                 context.Token = accessToken;
+                                return Task.CompletedTask;
                             }
+
+                            // The Hangfire dashboard is browser-navigated and fires its own polling/asset
+                            // sub-requests that can't carry a bearer header, so read the Firebase token from
+                            // a path-scoped cookie. Strictly scoped to /hangfire AND only when no
+                            // Authorization header is present, so the /api bearer flow is untouched.
+                            if (path.StartsWithSegments("/hangfire")
+                                && string.IsNullOrEmpty(context.Request.Headers.Authorization)
+                                && context.Request.Cookies.TryGetValue("hf_dashboard_token", out var cookieToken)
+                                && !string.IsNullOrEmpty(cookieToken))
+                            {
+                                context.Token = cookieToken;
+                            }
+
                             return Task.CompletedTask;
                         },
                         OnTokenValidated = SyncUserOnLoginAsync,
