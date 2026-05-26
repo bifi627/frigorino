@@ -11,6 +11,7 @@ i18n.use(HttpBackend)
     .use(initReactI18next)
     .init({
         fallbackLng: "en",
+        load: "languageOnly", // normalize region locales (de-DE -> de); only de/en files exist
         debug: import.meta.env.DEV,
 
         interpolation: {
