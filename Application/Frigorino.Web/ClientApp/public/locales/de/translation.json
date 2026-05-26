@@ -71,9 +71,6 @@
         "date": "Datum",
         "setToday": "Heute"
     },
-    "admin": {
-        "openHangfireDashboard": "Hangfire-Dashboard öffnen"
-    },
     "auth": {
         "login": "Anmelden",
         "register": "Registrieren",

@@ -77,10 +77,6 @@ export default defineConfig(({ command }) => ({
                 target,
                 secure: false,
             },
-            "^/hangfire": {
-                target,
-                secure: false,
-            },
             "^/healthz$": {
                 target,
                 secure: false,
