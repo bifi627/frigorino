@@ -16,8 +16,7 @@
 - **EntityFramework**: Database context and configurations
 - **Auth**: Firebase authentication setup
 - **Services**: Current user/household context services
-- **Hangfire**: DI wiring (`HangfireDependencyInjection.cs`), `ILogger`→Hangfire.Console bridge
-- **Jobs**: Background jobs (scoped classes with `ExecuteAsync`)
+- **Tasks**: Background maintenance tasks
 
 ### Web Layer (`Frigorino.Web`)
 - **Controllers**: REST API endpoints (being phased out — new endpoints go in `Frigorino.Features` as vertical slices)
@@ -88,8 +87,8 @@
 // Core application services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Background jobs (Hangfire)
-builder.Services.AddHangfireServices(builder.Configuration); // Frigorino.Infrastructure/Hangfire/HangfireDependencyInjection.cs
+// Maintenance system
+builder.Services.AddMaintenanceServices(); // Extension method
 ```
 
 ### Service Interfaces
@@ -125,15 +124,43 @@ builder.Services.AddHangfireServices(builder.Configuration); // Frigorino.Infras
 - **Connection String**: Configured via appsettings.json/environment variables
 - **Entity Configurations**: Fluent API configurations for relationships and constraints
 
-### Background Jobs (Hangfire)
+### Maintenance System
 
-The former bespoke `IMaintenanceTask` / `MaintenanceHostedService` system has been **removed** and replaced by Hangfire (Hangfire.AspNetCore + Hangfire.PostgreSql). See `CLAUDE.md` → "Background jobs (Hangfire)" for the authoritative description.
+#### Architecture
+- **IMaintenanceTask Interface**: Contract for all maintenance operations
+- **MaintenanceHostedService**: Background service that runs all maintenance tasks on startup
+- **MaintenanceDependencyInjection**: Service registration for maintenance system
 
-#### Current jobs
-- **`CleanupInactiveEntitiesJob`** (`Cron.Daily()`, `MisfireHandlingMode.Relaxed`) — removes soft-deleted entities and completed items older than 30 days. This is the sole recurring job today.
+#### Task Implementation
+```csharp
+public interface IMaintenanceTask
+{
+    Task Run(CancellationToken cancellationToken = default);
+}
+```
 
-#### Adding a new job
-1. Implement `Frigorino.Infrastructure.Jobs.<JobName>` as a scoped class with `ExecuteAsync(CancellationToken)`. Log via `ILogger<T>` only.
-2. Register it as scoped in `AddHangfireServices` (`Frigorino.Infrastructure/Hangfire/HangfireDependencyInjection.cs`).
-3. For recurring jobs, add `RecurringJob.AddOrUpdate<TJob>(...)` with `MisfireHandlingMode.Relaxed` in `ConfigureHangfireJobs()` (`Frigorino.Web/Program.cs`).
-4. For on-demand jobs, inject `IBackgroundJobClient` and call `Enqueue<TJob>(j => j.ExecuteAsync(...))` from the producer.
+#### Current Maintenance Tasks
+- **DeleteInactiveItems**: Removes soft-deleted entities and completed items older than 30 days
+- **RecalculateSortOrderTask**: Recalculates sort orders for list items
+- **DemoMaintenanceTask**: Demo/development maintenance operations
+
+#### Task Execution Flow
+1. **Startup Delay**: 5-second delay after application start
+2. **Service Scope**: Each task runs in its own dependency injection scope
+3. **Error Isolation**: Individual task failures don't crash the application
+4. **Logging**: Comprehensive logging for maintenance operations
+
+#### Adding New Tasks
+```csharp
+// 1. Implement IMaintenanceTask
+public class CustomMaintenanceTask : IMaintenanceTask
+{
+    public async Task Run(CancellationToken cancellationToken = default)
+    {
+        // Implementation
+    }
+}
+
+// 2. Register in MaintenanceDependencyInjection
+services.AddScoped<IMaintenanceTask, CustomMaintenanceTask>();
+```

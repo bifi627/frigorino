@@ -154,7 +154,7 @@ Existing `Application/Frigorino.IntegrationTests/Slices/Inventories/Inventories.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` cleanup** — ✅ Done. `RecalculateSortOrderTask`, `DemoMaintenanceTask`, `DeleteInactiveItems`, `IMaintenanceTask`, and `MaintenanceHostedService` all removed; replaced by `CleanupInactiveEntitiesJob` running via Hangfire (`Cron.Daily()`).
+- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` was removed in the post-review cleanup pass (it stamped `UpdatedAt` on every list/inventory item at every startup with no gap-check). `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired and are queued for the full system removal.
 
 ## Cross-references
 
