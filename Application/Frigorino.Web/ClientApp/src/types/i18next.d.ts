@@ -5,7 +5,6 @@ declare module "i18next" {
         defaultNS: "translation";
         resources: {
             translation: {
-                admin: Record<string, string>;
                 common: Record<string, string>;
                 auth: Record<string, string>;
                 navigation: Record<string, string>;
