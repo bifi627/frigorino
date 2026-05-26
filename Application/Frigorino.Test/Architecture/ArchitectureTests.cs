@@ -35,7 +35,6 @@ namespace Frigorino.Test.Architecture
             Types().That().Are(DomainLayer)
                 .Should().NotDependOnAny(Types().That().ResideInNamespace(@"Microsoft\.EntityFrameworkCore.*"))
                 .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"Microsoft\.AspNetCore.*"))
-                .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"Hangfire.*"))
                 .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"FirebaseAdmin.*"))
                 .AndShould().NotDependOnAny(Types().That().ResideInNamespace(@"OpenAI.*"))
                 .Because("Domain stays free of infrastructure concerns; entities and value objects are persistence-ignorant.")

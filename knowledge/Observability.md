@@ -53,7 +53,7 @@ Every dashboard query must filter on `deployment.environment` so local dev data 
 
 ### Tracing filter
 
-`AddAspNetCoreInstrumentation(opt => opt.Filter = ...)` drops spans for `/openapi/*`, `/scalar/*`, `/hangfire/*`, `/healthz`, `/readyz`. The corresponding metric filter is deferred — route cardinality on `http.server.request.duration` is bounded enough not to threaten the active-series ceiling yet.
+`AddAspNetCoreInstrumentation(opt => opt.Filter = ...)` drops spans for `/openapi/*`, `/scalar/*`, `/healthz`, `/readyz`. The corresponding metric filter is deferred — route cardinality on `http.server.request.duration` is bounded enough not to threaten the active-series ceiling yet.
 
 ### Diagnostics
 
@@ -140,9 +140,9 @@ The frontend span shows the network time visible to the browser; the backend spa
 
 ## What is deliberately NOT instrumented
 
-- **Synthetic uptime checks** (Grafana Synthetics, Healthchecks.io, periodic `/healthz` pings, Hangfire heartbeat-push). Railway free tier sleeps the container on idle; periodic external probes defeat that and push compute past free-tier limits. Downtime is detected passively: a spike of Faro `fetch` errors means users are seeing it, Railway's own status surfaces hard outages. Revisit on a paid Railway plan or a hosting move. See [memory: no-synthetic-uptime-checks](../C--Repositories-frigorino/memory/project_no_synthetic_uptime_checks.md).
-- **Grafana IRM alerting.** Most of the alerts we'd configure (`/healthz` down, Hangfire heartbeat miss) presuppose synthetics. Without those, on-call paging is more noise than signal at one-UAT-client scale. Faro errors + manual checks suffice today.
-- **Pyroscope (continuous profiling).** No perf question is currently unanswerable by traces. Adopt when one appears (likely candidate: a slow Hangfire job like `ClassifyListsJob`).
+- **Synthetic uptime checks** (Grafana Synthetics, Healthchecks.io, periodic `/healthz` pings). Railway free tier sleeps the container on idle; periodic external probes defeat that and push compute past free-tier limits. Downtime is detected passively: a spike of Faro `fetch` errors means users are seeing it, Railway's own status surfaces hard outages. Revisit on a paid Railway plan or a hosting move. See [memory: no-synthetic-uptime-checks](../C--Repositories-frigorino/memory/project_no_synthetic_uptime_checks.md).
+- **Grafana IRM alerting.** Most of the alerts we'd configure (`/healthz` down) presuppose synthetics. Without those, on-call paging is more noise than signal at one-UAT-client scale. Faro errors + manual checks suffice today.
+- **Pyroscope (continuous profiling).** No perf question is currently unanswerable by traces. Adopt when one appears (likely candidate: a slow background maintenance task or DB query).
 - **k6 Cloud (synthetic load testing).** Same reasoning as Synthetics — would warm the container. The local `k6` CLI remains available for ad-hoc load runs against stage if needed.
 - **PostHog or any second analytics vendor.** Faro covers the use cases at current scale. Revisit triggers (product team needing self-serve funnels, pixel-perfect replay, first-class feature flags, surveys) are listed in `../OBSERVABILITY.md`.
 - **Source-map upload** (`@grafana/faro-rollup-plugin`). Deferred until the first frontend crash makes minified stack traces an actual problem; the plumbing is well-understood and one PR away.
@@ -154,4 +154,4 @@ The frontend span shows the network time visible to the browser; the backend spa
 - **Frontend Web Vitals** → Frontend Observability → Web Vitals tab. Pre-built.
 - **A slow request end-to-end** → Faro → Errors/Slow Requests → click "View Trace" → Tempo shows the full frontend + backend chain.
 - **A specific backend log line** → Loki, query `{service.name="frigorino-web", deployment.environment="prod"} |= "search string"`.
-- **Hangfire job activity** → Mimir, `hangfire_*` counters (added by Hangfire's metric emitter), or Hangfire's own `/hangfire` dashboard (basic-auth gated).
+- **Maintenance task activity** → Loki, filter the `MaintenanceHostedService` / `DeleteInactiveItems` log lines emitted on each cold start.

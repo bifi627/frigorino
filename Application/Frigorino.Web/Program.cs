@@ -149,7 +149,6 @@ if (!isBuildTimeOpenApi && !string.IsNullOrWhiteSpace(otlpHeaders))
                     var path = ctx.Request.Path.Value ?? string.Empty;
                     return !path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
                         && !path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
-                        && !path.StartsWith("/hangfire", StringComparison.OrdinalIgnoreCase)
                         && !path.Equals("/healthz", StringComparison.OrdinalIgnoreCase)
                         && !path.Equals("/readyz", StringComparison.OrdinalIgnoreCase);
                 };

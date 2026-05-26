@@ -141,8 +141,6 @@ public interface IMaintenanceTask
 
 #### Current Maintenance Tasks
 - **DeleteInactiveItems**: Removes soft-deleted entities and completed items older than 30 days
-- **RecalculateSortOrderTask**: Recalculates sort orders for list items
-- **DemoMaintenanceTask**: Demo/development maintenance operations
 
 #### Task Execution Flow
 1. **Startup Delay**: 5-second delay after application start

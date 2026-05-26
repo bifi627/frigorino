@@ -28,11 +28,10 @@ port; only the rendering and the content-type/thumbnail edges differ per type.
 - **Production storage backend.** v1 ships `IFileStorage` + a `LocalFileStorage` dev backend so the
   feature is fully demoable and testable locally. Binding a production backend
   (Firebase-GCS / Cloudflare R2 / S3) is a **separate follow-up task** and a prerequisite for prod use.
-- **Post-upload classify/analyze.** A future backend-only step (Hangfire job, mirroring the existing
-  `ClassificationService` / `ClassifyListsJob`) that reads the stored blob and writes classification
-  metadata. The architecture leaves room; it is not built here.
+- **Post-upload classify/analyze.** A future backend-only step (a queued background task) that reads
+  the stored blob and writes classification metadata. The architecture leaves room; it is not built here.
 - **Orphaned-blob cleanup job.** Blobs are retained on soft-delete (so undo works) and never
-  auto-purged in v1. Reclaiming blobs of permanently-gone items is a future Hangfire job.
+  auto-purged in v1. Reclaiming blobs of permanently-gone items is a future background-maintenance task.
 - **In-app media transformation** (cropping, EXIF editing, PDF page previews). Users upload as-is.
 - **Signed-URL direct transfer.** v1 proxies bytes through the API; signed URLs remain a later
   optimization behind the same `IFileStorage` port if egress ever bites.
