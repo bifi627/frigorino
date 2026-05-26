@@ -23,9 +23,11 @@ function RootComponent() {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
 
-    // Hide navigation on landing page for non-authenticated users
+    // Hide navigation on the landing page (unauthenticated) and on the
+    // single-purpose onboarding page (no households yet, nothing to navigate to).
     const showNavigation =
-        isAuthenticated || location.pathname.startsWith("/auth");
+        (isAuthenticated || location.pathname.startsWith("/auth")) &&
+        !location.pathname.startsWith("/onboarding");
 
     return (
         <Box>
