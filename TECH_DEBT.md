@@ -12,18 +12,6 @@ Format per item:
 
 ---
 
-- **@hey-api/openapi-ts held at 0.97.2** — newer version blocked by `.npmrc` min-release-age=7 quarantine at the time of the dep-sweep.
-- **Where:** `Application/Frigorino.Web/ClientApp/package.json` (`devDependencies`). 0.97.2 published 2026-05-18; eligible to bump from 2026-05-25.
-- **Why deferred:** the dep-sweep wave that would have included it ran before the 7-day quarantine elapsed. Trying to bump with `--min-release-age=0` was rejected per policy (the override is reserved for CVE patches).
-- **Plan:** check `npm view @hey-api/openapi-ts versions --json` for the latest after 2026-05-25; bump the `^x.y.z` base in `package.json` (it's a `^0.x` package, so any minor is technically a breaking change in semver); `npm install`; regenerate the client with `npm run api` from `ClientApp/`; sanity-check the generated TanStack-Query helpers under `src/lib/api/@tanstack/react-query.gen.ts` for shape changes. Verify with the full sln test (162 unit + 58 IT) — generated client diffs surface in IT.
-- **Risk if left:** missing fixes/improvements in the codegen; the generated client under `src/lib/api/` drifts further from upstream patterns.
-
-- **`<div>`-in-`<p>` hydration warning on inventory items with an expiry date** — invalid DOM nesting in the item display.
-- **Where:** `Application/Frigorino.Web/ClientApp/src/features/inventories/items/components/InventoryItemContent.tsx:73` — a `<Box>` (renders `<div>`) is passed as `ListItemText`'s `secondary` prop, which MUI wraps in a `<p>` (`Typography variant="body2"`). React 19 logs `In HTML, <div> cannot be a descendant of <p>. This will cause a hydration error.` Surfaces for every inventory item that renders the quantity/expiry secondary row.
-- **Why deferred:** spotted during manual verification of the composer-input-redesign branch, but it lives in the item *display* component (not the composer/footer that branch touched), so fixing it there was out of scope. The same class of bug in the composer's autocomplete option *was* fixed on that branch (`ComposerTextField.tsx`).
-- **Plan:** give `ListItemText` a `slotProps={{ secondary: { component: "div" } }}` (MUI v9) so the secondary wrapper is a `<div>`, or pass a plain `<span>`/`component="div"` element as `secondary` instead of a `<Box>`. Confirm in-browser that the console no longer logs the nesting error when an item has quantity/expiry.
-- **Risk if left:** CSR-only today so it renders (browsers auto-close the `<p>`), but it's invalid HTML, spams the dev console, and would become a real hydration mismatch if any SSR/prerender is ever introduced.
-
 - **Expiry-date off-by-one in negative/positive UTC offsets** — local↔UTC round-trip in the composer's expiry feature.
 - **Where:** `Application/Frigorino.Web/ClientApp/src/components/composer/features/expiryFeature.tsx` — `formatForInput` uses `date.toISOString().split("T")[0]` (UTC) while `setToday` sets `new Date()` (local) and `handleChange` parses `new Date("YYYY-MM-DD")` (UTC midnight). Carried over verbatim from the old `DateInputPanel`, not introduced by the redesign.
 - **Why deferred:** pre-existing behavior; the redesign preserved it to avoid scope creep, and the dev/test timezone didn't expose it.

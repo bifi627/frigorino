@@ -60,6 +60,7 @@ export function InventoryItemContent({ item }: Props) {
             <ListItemText
                 {...events}
                 sx={{ pl: item.expiryDate ? 2 : 0 }} // Add padding when highlight bar is present
+                slotProps={{ secondary: { component: "div" } }}
                 primary={
                     <Typography
                         variant="body2"
