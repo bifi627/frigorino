@@ -12,6 +12,7 @@ declare module "i18next" {
                 household: Record<string, string>;
                 inventory: Record<string, string>;
                 dashboard: Record<string, string>;
+                onboarding: Record<string, string>;
             };
         };
     }
