@@ -92,6 +92,11 @@
         "passwordMismatch": "Passwords do not match",
         "passwordMinLength": "Password must be at least 6 characters"
     },
+    "onboarding": {
+        "title": "Welcome to Frigorino",
+        "subtitle": "Create your first household to get started.",
+        "skip": "Skip for now"
+    },
     "household": {
         "title": "Household",
         "createHousehold": "Create Household",

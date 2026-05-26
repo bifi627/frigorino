@@ -1,8 +1,10 @@
-import { Box, CircularProgress } from "@mui/material";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuthStore } from "../common/authProvider";
+import { FullPageSpinner } from "../components/common/FullPageSpinner";
 import { WelcomePage } from "../components/dashboard/WelcomePage";
 import { LandingPage } from "../components/landing/LandingPage";
+import { getOnboardingSkipped } from "../features/households/onboardingSkip";
+import { useUserHouseholds } from "../features/households/useUserHouseholds";
 import { useAuth } from "../hooks/useAuth";
 
 export const Route = createFileRoute("/")({
@@ -12,23 +14,26 @@ export const Route = createFileRoute("/")({
 function Index() {
     const { isAuthenticated } = useAuth();
     const { loading } = useAuthStore();
+    const { data: households, isLoading: householdsLoading } =
+        useUserHouseholds(isAuthenticated);
 
-    // Show loading spinner while authentication state is being determined
+    // Wait for auth to resolve before deciding anything.
     if (loading) {
-        return (
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: "100vh",
-                }}
-            >
-                <CircularProgress size={40} />
-            </Box>
-        );
+        return <FullPageSpinner />;
     }
 
-    // Show appropriate page based on authentication status
-    return isAuthenticated ? <WelcomePage /> : <LandingPage />;
+    if (!isAuthenticated) {
+        return <LandingPage />;
+    }
+
+    // Authenticated: wait for the households list, then route first-run users.
+    if (householdsLoading) {
+        return <FullPageSpinner />;
+    }
+
+    if ((households?.length ?? 0) === 0 && !getOnboardingSkipped()) {
+        return <Navigate to="/onboarding" />;
+    }
+
+    return <WelcomePage />;
 }
