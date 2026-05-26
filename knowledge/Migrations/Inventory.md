@@ -117,7 +117,7 @@ The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` removed in the post-review cleanup pass; `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired. Per CLAUDE.md the whole system is intended for Hangfire migration. Delete the rest in a focused cleanup pass.
+- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` and `DemoMaintenanceTask` removed; `DeleteInactiveItems` stays as the single startup-batch task. The system is **not** migrating to Hangfire — Hangfire was trialled and reverted (its always-on Postgres polling defeats Railway's serverless sleep), so the in-process startup batch (sleep-safe, runs on wake) is the chosen approach.
 
 ## Cross-references
 

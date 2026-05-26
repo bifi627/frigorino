@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 8 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar/hangfire calls to the backend.
+Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 8 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
 
 ## Repository layout
 
@@ -14,8 +14,8 @@ Application/
   Frigorino.Domain/          # Entities (with factories + aggregate methods), service interfaces, errors (FluentResults-based)
   Frigorino.Application/     # Pre-migration service implementations (Lists/Inventories only — being phased out)
   Frigorino.Features/        # Vertical slices: one file per endpoint, request/response DTOs colocated
-  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, Hangfire jobs, OpenAI client
-  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, Hangfire wiring, MapGroup wiring for slices
+  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, background maintenance, OpenAI client
+  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, MapGroup wiring for slices
     ClientApp/               # React 19 + Vite + TanStack Router SPA
   Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory; aggregate-method unit tests; ArchUnitNET layer rules
   Frigorino.IntegrationTests/# Reqnroll (BDD) + Playwright + Postgres Testcontainers — drives the SPA end-to-end
@@ -23,7 +23,7 @@ Application/
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Web → Application → Domain`, `Web → Features → Domain`, `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure`; `Features` does not reference `Web` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddHangfireServices`) called from `Frigorino.Web/Program.cs`.
+The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Web → Application → Domain`, `Web → Features → Domain`, `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure`; `Features` does not reference `Web` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddMaintenanceServices`) called from `Frigorino.Web/Program.cs`.
 
 ## Common commands
 
@@ -41,7 +41,7 @@ Migrations are applied automatically at startup via `context.Database.MigrateAsy
 Frontend (run from `Application/Frigorino.Web/ClientApp/`):
 ```powershell
 npm install
-npm run dev            # Vite dev server on https://localhost:44375 (proxies /api, /openapi, /scalar, /hangfire to :5001)
+npm run dev            # Vite dev server on https://localhost:44375 (proxies /api, /openapi, /scalar to :5001)
 npm run build          # tsc -b && vite build → outputs to ClientApp/build (copied to wwwroot in Docker)
 npm run lint           # eslint .
 npm run fix            # eslint --fix && prettier --write .
@@ -60,7 +60,6 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (converted by `PostgresHelper.ConvertPostgresUrlToConnectionString`).
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
-- `HangfireAuth:Username` / `Password` — basic-auth gate for the `/hangfire` dashboard. **Startup throws if password is empty**, so the app will not boot without these set.
 - `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
 ### Local dev: two modes
@@ -100,14 +99,10 @@ Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. 
 - `UserHousehold` is the join entity carrying a `Role` (Owner/Admin/Member) — permission checks live in the service layer.
 - `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext`. New entities should follow the same pattern instead of setting timestamps in services.
 
-### Background jobs (Hangfire)
-The previous in-process `IMaintenanceTask` / `MaintenanceHostedService` system has been **replaced by Hangfire** backed by Postgres (`schema=hangfire`). `MaintenanceService.cs` is now empty and should not be used. Knowledge docs in `knowledge/Backend_Architecture.md` predate this change — trust the code.
+### Background jobs (startup maintenance)
+Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). The only task today is `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items past 30 days). It re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — which is cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
 
-Wiring lives in `Frigorino.Web/Services/HangfireDependencyInjection.cs`:
-- Jobs are registered as scoped services and discovered by Hangfire's DI activator.
-- `ConfigureHangfireJobs()` (called at the end of `Program.cs`) declares recurring jobs via `RecurringJob.AddOrUpdate<T>(...)`. Adding a new recurring job means: implement `Frigorino.Infrastructure.Jobs.<JobName>` with an `ExecuteAsync()` method, register it in `AddHangfireServices`, and add an `AddOrUpdate` entry here.
-- `Cron.Never` is used to register manually-triggered jobs (e.g. `ClassifyListsJob`) so they appear in the dashboard but don't run on a schedule.
-- The dashboard at `/hangfire` is gated by `HangfireAuthorizationFilter` (basic auth from `HangfireAuth:*` config).
+Request-triggered fire-and-forget work (e.g. future domain-event handlers) should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService`: it's event-driven, so it adds no idle polling and stays sleep-friendly. (Hangfire was trialled and reverted — its always-on `BackgroundJobServer` polls Postgres continuously, keeping the container awake and defeating Railway's serverless sleep.)
 
 ### API surface
 - Endpoints come from two sources during the slice migration: vertical slices in `Frigorino.Features` are wired via `MapGroup(...).Map<SliceName>()` declarations in `Program.cs` (each group owns the route prefix + `RequireAuthorization()` + `WithTags(...)`); legacy endpoints are still in controllers under `Frigorino.Web/Controllers/`. New endpoints should be slices, not controllers — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).

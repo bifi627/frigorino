@@ -154,7 +154,7 @@ Existing `Application/Frigorino.IntegrationTests/Slices/Inventories/Inventories.
 
 ## Deferred / out of scope
 
-- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` was removed in the post-review cleanup pass (it stamped `UpdatedAt` on every list/inventory item at every startup with no gap-check). `DemoMaintenanceTask` + `DeleteInactiveItems` remain wired and are queued for the full system removal.
+- **`MaintenanceHostedService` cleanup** — `RecalculateSortOrderTask` and `DemoMaintenanceTask` removed; `DeleteInactiveItems` stays as the single startup-batch task. The system is **not** migrating to Hangfire — Hangfire was trialled and reverted (its always-on Postgres polling defeats Railway's serverless sleep), so the in-process startup batch (sleep-safe, runs on wake) is the chosen approach.
 
 ## Cross-references
 
