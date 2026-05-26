@@ -92,6 +92,11 @@
         "passwordMismatch": "Passwörter stimmen nicht überein",
         "passwordMinLength": "Passwort muss mindestens 6 Zeichen lang sein"
     },
+    "onboarding": {
+        "title": "Willkommen bei Frigorino",
+        "subtitle": "Erstellen Sie Ihren ersten Haushalt, um loszulegen.",
+        "skip": "Vorerst überspringen"
+    },
     "household": {
         "title": "Haushalt",
         "createHousehold": "Haushalt erstellen",
