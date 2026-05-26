@@ -1,6 +1,6 @@
-import { Box, CircularProgress } from "@mui/material";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuthStore } from "../common/authProvider";
+import { FullPageSpinner } from "../components/common/FullPageSpinner";
 import { WelcomePage } from "../components/dashboard/WelcomePage";
 import { LandingPage } from "../components/landing/LandingPage";
 import { getOnboardingSkipped } from "../features/households/onboardingSkip";
@@ -10,21 +10,6 @@ import { useAuth } from "../hooks/useAuth";
 export const Route = createFileRoute("/")({
     component: Index,
 });
-
-function FullPageSpinner() {
-    return (
-        <Box
-            sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: "100vh",
-            }}
-        >
-            <CircularProgress size={40} />
-        </Box>
-    );
-}
 
 function Index() {
     const { isAuthenticated } = useAuth();

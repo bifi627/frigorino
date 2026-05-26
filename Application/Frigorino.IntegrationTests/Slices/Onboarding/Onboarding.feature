@@ -20,3 +20,13 @@ Feature: First-run onboarding
     Then I am redirected to "/"
     When I reload the page
     Then the onboarding page is not shown
+
+  Scenario: A user with no households cannot reach the create-list page
+    Given I am logged in as "newcomer"
+    When I navigate to "/lists/create"
+    Then I am redirected to "/onboarding"
+
+  Scenario: A user with no households cannot reach the create-inventory page
+    Given I am logged in as "newcomer"
+    When I navigate to "/inventories/create"
+    Then I am redirected to "/onboarding"
