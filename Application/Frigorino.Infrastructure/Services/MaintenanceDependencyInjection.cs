@@ -8,7 +8,6 @@ namespace Frigorino.Infrastructure.Services
     {
         public static IServiceCollection AddMaintenanceServices(this IServiceCollection services)
         {
-            services.AddScoped<IMaintenanceTask, DemoMaintenanceTask>();
             services.AddScoped<IMaintenanceTask, DeleteInactiveItems>();
 
             services.AddHostedService<MaintenanceHostedService>();
