@@ -3,22 +3,25 @@
 import { CalendarToday, Clear, Today } from "@mui/icons-material";
 import { Box, Chip, IconButton, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { parseLocalDate, todayIsoDate } from "../../../utils/dateUtils";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
 
-const formatForDisplay = (date: Date | null) =>
-    date
-        ? date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+// Expiry is a calendar date carried as a "YYYY-MM-DD" string end to end — the value an
+// <input type="date"> natively reads/writes. No Date object, so no local↔UTC day shifts.
+const formatForDisplay = (value: string | null) =>
+    value
+        ? parseLocalDate(value).toLocaleDateString("de-DE", {
+              day: "2-digit",
+              month: "2-digit",
+          })
         : "";
-
-const formatForInput = (date: Date | null) =>
-    date ? date.toISOString().split("T")[0] : "";
 
 const ExpiryToggle = ({
     value,
     open,
     toggleOpen,
-}: FeatureSlot<Date | null>) => {
+}: FeatureSlot<string | null>) => {
     const { t } = useTranslation();
     return (
         <IconButton
@@ -35,7 +38,7 @@ const ExpiryToggle = ({
     );
 };
 
-const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<Date | null>) => {
+const ExpiryChip = ({ value, toggleOpen }: FeatureSlot<string | null>) => {
     const { t } = useTranslation();
     return (
         <Chip
@@ -54,16 +57,8 @@ const ExpiryPanel = ({
     value,
     setValue,
     disabled,
-}: FeatureSlot<Date | null>) => {
+}: FeatureSlot<string | null>) => {
     const { t } = useTranslation();
-    const handleChange = (dateString: string) => {
-        if (!dateString) {
-            setValue(null);
-            return;
-        }
-        const date = new Date(dateString);
-        setValue(isNaN(date.getTime()) ? null : date);
-    };
     return (
         <Box
             sx={{
@@ -80,13 +75,13 @@ const ExpiryPanel = ({
                 variant="outlined"
                 placeholder={t("common.date")}
                 type="date"
-                value={formatForInput(value)}
-                onChange={(e) => handleChange(e.target.value)}
+                value={value ?? ""}
+                onChange={(e) => setValue(e.target.value || null)}
                 disabled={disabled}
                 size="small"
             />
             <IconButton
-                onClick={() => setValue(new Date())}
+                onClick={() => setValue(todayIsoDate())}
                 title={t("common.setToday")}
                 sx={{ minWidth: 44, minHeight: 44 }}
             >
@@ -106,7 +101,7 @@ const ExpiryPanel = ({
 
 export const expiryFeature = defineModifier({
     id: "expiry",
-    initial: null as Date | null,
+    initial: null as string | null,
     isEmpty: (value) => value === null,
     renderToggle: (slot) => <ExpiryToggle {...slot} />,
     renderPanel: (slot) => <ExpiryPanel {...slot} />,

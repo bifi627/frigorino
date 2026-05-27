@@ -4,14 +4,42 @@ export interface ExpiryInfo {
     isOverdue: boolean;
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+// Expiry is a calendar date ("YYYY-MM-DD"), not an instant. Parse it into a LOCAL date so the
+// day never shifts via UTC. `new Date("YYYY-MM-DD")` would parse as UTC midnight and render the
+// wrong day in non-UTC timezones.
+export function parseLocalDate(value: string): Date {
+    const [y, m, d] = value.split("-").map(Number);
+    return new Date(y, m - 1, d);
+}
+
+// Locale-formatted display of an expiry calendar date, parsed in local time.
+export function formatLocalDate(value: string): string {
+    return parseLocalDate(value).toLocaleDateString();
+}
+
+// Today as a "YYYY-MM-DD" string in LOCAL time (matches what an <input type="date"> emits).
+export function todayIsoDate(): string {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+// Whole-day difference between an expiry calendar date and today, both anchored at local midnight.
+// Math.round absorbs the ±1h DST wobble so boundaries land on exact day counts.
+function diffInDays(expiryDate: string): number {
+    const expiry = parseLocalDate(expiryDate);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((expiry.getTime() - today.getTime()) / MS_PER_DAY);
+}
+
 export function getExpiryInfo(
     expiryDate: string,
     t: (key: string) => string,
 ): ExpiryInfo {
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const diffMs = expiry.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffDays = diffInDays(expiryDate);
 
     // Past dates
     if (diffDays < 0) {
@@ -84,10 +112,7 @@ export function getExpiryInfo(
 }
 
 export function getExpiryColor(expiryDate: string) {
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const diffMs = expiry.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffDays = diffInDays(expiryDate);
 
     if (diffDays < 2) {
         return "error.main"; // Red: < 2 days

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Items
 {
-    public sealed record CreateInventoryItemRequest(string Text, string? Quantity, DateTime? ExpiryDate);
+    public sealed record CreateInventoryItemRequest(string Text, string? Quantity, DateOnly? ExpiryDate);
 
     public static class CreateInventoryItemEndpoint
     {

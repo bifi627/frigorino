@@ -11,7 +11,11 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { InventoryItemResponse } from "../../../../lib/api";
-import { getExpiryColor, getExpiryInfo } from "../../../../utils/dateUtils";
+import {
+    formatLocalDate,
+    getExpiryColor,
+    getExpiryInfo,
+} from "../../../../utils/dateUtils";
 
 interface Props {
     item: InventoryItemResponse;
@@ -106,7 +110,7 @@ export function InventoryItemContent({ item }: Props) {
                                 getExpiryInfo(item.expiryDate, translateKey)
                                     .humanReadable && (
                                     <Tooltip
-                                        title={`${t("inventory.expiryDate")}: ${new Date(item.expiryDate).toLocaleDateString()}`}
+                                        title={`${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`}
                                         arrow
                                     >
                                         <Typography
@@ -143,7 +147,7 @@ export function InventoryItemContent({ item }: Props) {
                 onClose={() => setShowDateSnackbar(false)}
                 message={
                     item.expiryDate
-                        ? `${t("inventory.expiryDate")}: ${new Date(item.expiryDate).toLocaleDateString()}`
+                        ? `${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`
                         : ""
                 }
                 autoHideDuration={2000}

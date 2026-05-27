@@ -223,14 +223,14 @@ export const InventoryViewPage = () => {
                     handleAddItem({
                         text,
                         quantity: quantity ?? null,
-                        expiryDate: expiryDate?.toISOString() ?? null,
+                        expiryDate: expiryDate ?? null,
                     })
                 }
                 onUpdateItem={(text, quantity, expiryDate) =>
                     handleUpdateItem({
                         text,
                         quantity: quantity ?? null,
-                        expiryDate: expiryDate?.toISOString() ?? null,
+                        expiryDate: expiryDate ?? null,
                     })
                 }
                 onCancelEdit={() => setEditingItem(null)}

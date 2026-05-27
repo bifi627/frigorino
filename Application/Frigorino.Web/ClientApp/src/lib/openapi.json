@@ -1871,7 +1871,7 @@
               "null",
               "string"
             ],
-            "format": "date-time"
+            "format": "date"
           }
         }
       },
@@ -2076,7 +2076,7 @@
               "null",
               "string"
             ],
-            "format": "date-time"
+            "format": "date"
           },
           "sortOrder": {
             "type": "integer",
@@ -2345,7 +2345,7 @@
               "null",
               "string"
             ],
-            "format": "date-time"
+            "format": "date"
           }
         }
       },

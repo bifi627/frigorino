@@ -13,7 +13,7 @@ namespace Frigorino.Features.Inventories.Items
 {
     // ExpiryDate is intentionally write-through (null clears the value); Text and Quantity
     // preserve on null. See Inventory.UpdateItem for the rationale.
-    public sealed record UpdateInventoryItemRequest(string? Text, string? Quantity, DateTime? ExpiryDate);
+    public sealed record UpdateInventoryItemRequest(string? Text, string? Quantity, DateOnly? ExpiryDate);
 
     public static class UpdateInventoryItemEndpoint
     {

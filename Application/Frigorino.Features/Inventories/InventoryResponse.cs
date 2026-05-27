@@ -47,7 +47,7 @@ namespace Frigorino.Features.Inventories
             i.UpdatedAt,
             new InventoryCreatorResponse(i.CreatedByUser.ExternalId, i.CreatedByUser.Name, i.CreatedByUser.Email),
             i.InventoryItems.Count(x => x.IsActive),
-            i.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= DateTime.UtcNow.AddDays(ExpiringWithinDays)));
+            i.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(ExpiringWithinDays)));
     }
 
     public sealed record InventoryCreatorResponse(

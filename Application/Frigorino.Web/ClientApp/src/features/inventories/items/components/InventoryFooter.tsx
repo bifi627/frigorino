@@ -16,8 +16,12 @@ const features = [quantityFeature, expiryFeature] as const;
 interface InventoryFooterProps {
     editingItem: InventoryItemResponse | null;
     existingItems: InventoryItemResponse[];
-    onAddItem: (data: string, quantity?: string, expiryDate?: Date) => void;
-    onUpdateItem: (data: string, quantity?: string, expiryDate?: Date) => void;
+    onAddItem: (data: string, quantity?: string, expiryDate?: string) => void;
+    onUpdateItem: (
+        data: string,
+        quantity?: string,
+        expiryDate?: string,
+    ) => void;
     onCancelEdit: () => void;
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
@@ -72,9 +76,7 @@ export const InventoryFooter = memo(
                           text: editingItem.text,
                           values: {
                               quantity: editingItem.quantity ?? "",
-                              expiry: editingItem.expiryDate
-                                  ? new Date(editingItem.expiryDate)
-                                  : null,
+                              expiry: editingItem.expiryDate ?? null,
                           },
                       }
                     : undefined,

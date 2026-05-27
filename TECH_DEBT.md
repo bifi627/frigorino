@@ -12,12 +12,6 @@ Format per item:
 
 ---
 
-## - **Expiry-date off-by-one in negative/positive UTC offsets** — local↔UTC round-trip in the composer's expiry feature.
-- **Where:** `Application/Frigorino.Web/ClientApp/src/components/composer/features/expiryFeature.tsx` — `formatForInput` uses `date.toISOString().split("T")[0]` (UTC) while `setToday` sets `new Date()` (local) and `handleChange` parses `new Date("YYYY-MM-DD")` (UTC midnight). Carried over verbatim from the old `DateInputPanel`, not introduced by the redesign.
-- **Why deferred:** pre-existing behavior; the redesign preserved it to avoid scope creep, and the dev/test timezone didn't expose it.
-- **Plan:** format/parse the date in local time consistently — e.g. build the input string from `getFullYear()/getMonth()/getDate()` (zero-padded) instead of `toISOString()`, and parse `YYYY-MM-DD` into a local `Date(y, m-1, d)`. Add a quick check in a non-UTC timezone (set `TZ`/browser tz to e.g. `Pacific/Auckland`) that "today" round-trips to the same calendar day on save.
-- **Risk if left:** users in non-UTC timezones can see the expiry input show, and persist, a day before/after the one they picked.
-
 ## - **Railway Postgres 16 → 18 upgrade** — schedule a side-by-side dump/restore; no in-place path exists on Railway.
 - **Where:** Railway Postgres service (managed; no repo change needed). Connection wiring: `ConnectionStrings__Database` env var on the `Frigorino.Web` Railway service, currently `${{Postgres.DATABASE_URL}}`. Researched 2026-05-23.
 - **Why deferred:** PG16 is supported through Nov 2028; no immediate security/perf driver. Requires brief write downtime + a rollback window with the old service paused — wants explicit scheduling, not folded into an unrelated change. Stage cutover first per [[project_branch_workflow]].

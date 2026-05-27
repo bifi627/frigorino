@@ -103,7 +103,7 @@ namespace Frigorino.Test.Domain
         public void AddItem_WithExpiryDate_StoresIt()
         {
             var inventory = NewInventory();
-            var expiry = DateTime.UtcNow.AddDays(5);
+            var expiry = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(5);
 
             var result = inventory.AddItem("Milk", null, expiry);
 
@@ -141,7 +141,7 @@ namespace Frigorino.Test.Domain
         public void UpdateItem_PartialUpdate_PreservesUnsetTextAndQuantity()
         {
             var inventory = NewInventory();
-            var existingExpiry = DateTime.UtcNow.AddDays(3);
+            var existingExpiry = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3);
             var item = AddSeed(inventory, "Flour", quantity: "1 kg", expiryDate: existingExpiry);
 
             // Text/Quantity null = preserve. ExpiryDate null = clear (write-through).
@@ -159,7 +159,7 @@ namespace Frigorino.Test.Domain
             // Documented asymmetry: ExpiryDate is write-through (null clears), while Text/Quantity
             // preserve on null. Matches the legacy mapping extension behaviour.
             var inventory = NewInventory();
-            var item = AddSeed(inventory, "Milk", expiryDate: DateTime.UtcNow.AddDays(3));
+            var item = AddSeed(inventory, "Milk", expiryDate: DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3));
 
             var result = inventory.UpdateItem(item.Id, text: null, quantity: null, expiryDate: null);
 
@@ -172,7 +172,7 @@ namespace Frigorino.Test.Domain
         {
             var inventory = NewInventory();
             var item = AddSeed(inventory, "Flour", quantity: "1 kg");
-            var newExpiry = DateTime.UtcNow.AddDays(10);
+            var newExpiry = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10);
 
             var result = inventory.UpdateItem(item.Id, "Sugar", "2 kg", newExpiry);
 
@@ -473,7 +473,7 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private InventoryItem AddSeed(Inventory inventory, string text, string? quantity = null, DateTime? expiryDate = null, int? sortOrder = null)
+        private InventoryItem AddSeed(Inventory inventory, string text, string? quantity = null, DateOnly? expiryDate = null, int? sortOrder = null)
         {
             var item = new InventoryItem
             {

@@ -8,7 +8,7 @@ namespace Frigorino.Features.Inventories.Items
         int InventoryId,
         string Text,
         string? Quantity,
-        DateTime? ExpiryDate,
+        DateOnly? ExpiryDate,
         int SortOrder,
         DateTime CreatedAt,
         DateTime UpdatedAt,
@@ -25,7 +25,7 @@ namespace Frigorino.Features.Inventories.Items
                 item.SortOrder,
                 item.CreatedAt,
                 item.UpdatedAt,
-                item.ExpiryDate.HasValue && item.ExpiryDate.Value <= DateTime.UtcNow.AddDays(InventoryResponse.ExpiringWithinDays));
+                item.ExpiryDate.HasValue && item.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(InventoryResponse.ExpiringWithinDays));
         }
 
         // EF-translatable projection used by read slices. Stays simple enough for EF (no
@@ -39,6 +39,6 @@ namespace Frigorino.Features.Inventories.Items
             i.SortOrder,
             i.CreatedAt,
             i.UpdatedAt,
-            i.ExpiryDate.HasValue && i.ExpiryDate.Value <= DateTime.UtcNow.AddDays(InventoryResponse.ExpiringWithinDays));
+            i.ExpiryDate.HasValue && i.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(InventoryResponse.ExpiringWithinDays));
     }
 }

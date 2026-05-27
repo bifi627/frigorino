@@ -134,7 +134,7 @@ namespace Frigorino.Domain.Entities
         // add / update / reorder / delete / compact, matching the legacy InventoryItemService
         // behaviour. The handler enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<InventoryItem> AddItem(string text, string? quantity, DateTime? expiryDate)
+        public Result<InventoryItem> AddItem(string text, string? quantity, DateOnly? expiryDate)
         {
             var errors = ValidateItemFields(text, quantity, requireText: true);
             if (errors.Count > 0)
@@ -162,7 +162,7 @@ namespace Frigorino.Domain.Entities
         // intentionally write-through — null means "clear the value", because ExpiryDate is a
         // first-class field the user explicitly sets/unsets via a date picker, and the legacy
         // mapping extension assigned it unconditionally. Comments out the asymmetry deliberately.
-        public Result<InventoryItem> UpdateItem(int itemId, string? text, string? quantity, DateTime? expiryDate)
+        public Result<InventoryItem> UpdateItem(int itemId, string? text, string? quantity, DateOnly? expiryDate)
         {
             var item = InventoryItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
