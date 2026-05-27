@@ -4,18 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 8 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
+Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 10 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
 
 ## Repository layout
 
 ```
 Application/
   Frigorino.sln
-  Frigorino.Domain/          # Entities (with factories + aggregate methods), service interfaces, errors (FluentResults-based)
-  Frigorino.Application/     # Pre-migration service implementations (Lists/Inventories only — being phased out)
+  Frigorino.Domain/          # Entities (factories + aggregate methods), service interfaces, FluentResults errors, IMaintenanceTask
   Frigorino.Features/        # Vertical slices: one file per endpoint, request/response DTOs colocated
-  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase auth, background maintenance, OpenAI client
-  Frigorino.Web/             # ASP.NET Core host, controllers (legacy slices), middleware, MapGroup wiring for slices
+  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase + dev auth, background maintenance
+  Frigorino.Web/             # ASP.NET Core host, MapGroup slice wiring, middleware; a few legacy controllers (Auth/Demo)
     ClientApp/               # React 19 + Vite + TanStack Router SPA
   Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory; aggregate-method unit tests; ArchUnitNET layer rules
   Frigorino.IntegrationTests/# Reqnroll (BDD) + Playwright + Postgres Testcontainers — drives the SPA end-to-end
@@ -23,7 +22,9 @@ Application/
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Web → Application → Domain`, `Web → Features → Domain`, `Web → Infrastructure → Domain`. `Application` does not reference `Infrastructure`; `Features` does not reference `Web` — Infrastructure types are wired in via DI extension methods (`AddEntityFramework`, `AddApplicationServices`, `AddFirebaseAuth`, `AddMaintenanceServices`) called from `Frigorino.Web/Program.cs`.
+The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Domain` depends on no infrastructure frameworks, `Infrastructure` does not reference `Web`, and `Features` does not reference `Web`. Infrastructure types are wired into the host via DI extension methods (`AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddMaintenanceServices`) called from `Frigorino.Web/Program.cs`.
+
+Deeper notes live in `knowledge/`: `Backend_Architecture.md`, `Vertical_Slices.md`, `Frontend_Architecture.md`, `Frontend_Styling.md`, `Observability.md`, `Testing.md`, `API_Integration.md`, `Firebase_Auth_Setup.md`, `Performance_Optimization.md`, plus per-feature history under `Migrations/`.
 
 ## Common commands
 
@@ -32,8 +33,8 @@ Backend (run from repo root or `Application/`):
 dotnet restore Application/Frigorino.sln
 dotnet build   Application/Frigorino.sln
 dotnet run     --project Application/Frigorino.Web         # starts API on https://localhost:5001
-dotnet test    Application/Frigorino.sln                   # runs all xUnit tests
-dotnet test    Application/Frigorino.Test --filter "FullyQualifiedName~ListItemServiceSortOrderTests"
+dotnet test    Application/Frigorino.sln                   # runs Frigorino.Test + Frigorino.IntegrationTests
+dotnet test    Application/Frigorino.Test --filter "FullyQualifiedName~<TestClass>"
 dotnet ef migrations add <Name> --project Application/Frigorino.Infrastructure --startup-project Application/Frigorino.Web
 ```
 Migrations are applied automatically at startup via `context.Database.MigrateAsync()` in `Program.cs`.
@@ -44,8 +45,8 @@ npm install
 npm run dev            # Vite dev server on https://localhost:44375 (proxies /api, /openapi, /scalar to :5001)
 npm run build          # tsc -b && vite build → outputs to ClientApp/build (copied to wwwroot in Docker)
 npm run lint           # eslint .
-npm run fix            # eslint --fix && prettier --write .
-npm run tsc            # type-check only
+npm run fix            # eslint . --fix && prettier --write .
+npm run tsc            # type-check only (tsc -b)
 npm run api            # rebuild backend (emits ./src/lib/openapi.json via MSBuild target) + regenerate ./src/lib/api
 ```
 
@@ -58,9 +59,8 @@ The Dockerfile builds the .NET solution and the SPA in parallel stages, then cop
 ## Configuration
 
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
-- `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (converted by `PostgresHelper.ConvertPostgresUrlToConnectionString`).
+- `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (auto-converted by a static helper in `Infrastructure/EntityFramework/DependencyInjection.cs`).
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
-- `OpenAiSettings:APIKey` / `Model` — used by `ClassificationService` for article classification.
 
 ### Local dev: two modes
 
@@ -75,29 +75,29 @@ Agent skills wrap the scripts: `/dev-up` is auto-invokable (description gates on
 
 ## Architecture notes
 
-### Vertical slice architecture (in progress)
+### Vertical slice architecture
 
 Authoritative shape: `knowledge/Vertical_Slices.md`. Trust it over older architecture notes.
 
-The codebase is migrating from a controller + service + DTO layered shape to vertical slices. Each slice = one file = one endpoint, with request DTO + response DTO + endpoint registration + handler colocated. Domain rules (validation, role policy, aggregate invariants) live in `Frigorino.Domain` — either in entity factories (`Entity.Create`) for construction or in aggregate methods (`aggregate.DoXxx`) for mutations. Domain methods return `FluentResults.Result<T>`; the slice handler dispatches by error type (`EntityNotFoundError` → 404, `AccessDeniedError` → 403, generic `Error` with `Property` metadata → `ValidationProblem`). Reads stay handler-only — inline EF projection into the response DTO (no mapping libraries).
+The whole API is vertical slices. Each slice = one file = one endpoint, with request DTO + response DTO + endpoint registration + handler colocated. Domain rules (validation, role policy, aggregate invariants) live in `Frigorino.Domain` — either in entity factories (`Entity.Create`) for construction or in aggregate methods (`aggregate.DoXxx`) for mutations. Domain methods return `FluentResults.Result<T>`; the slice handler dispatches by error type (`EntityNotFoundError` → 404, `AccessDeniedError` → 403, generic `Error` with `Property` metadata → `ValidationProblem`). Reads stay handler-only — inline EF projection into the response DTO (no mapping libraries).
 
 Canonical references:
-- Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-13` (rules-as-comments header overrides `Vertical_Slices.md` when they drift).
+- Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-20` (rules-as-comments header overrides `Vertical_Slices.md` when they drift).
 - Write-via-aggregate-method template: `Application/Frigorino.Features/Households/Members/AddMember.cs` (most complex — cross-aggregate user resolution + 3 internal branches).
 - Domain marker errors: `Application/Frigorino.Domain/Errors/DomainErrors.cs`.
 - Result→ValidationProblem helper: `Application/Frigorino.Features/Results/ResultExtensions.cs`.
 
-Migration trackers (per-feature progress, decisions, drops): `knowledge/Migrations/Household.md`, `knowledge/Migrations/Members.md`. Current state: Households + Members are fully migrated to slices (5 writes through aggregate methods on `Household`, 2 reads via direct projection). Lists / ListItems / Inventories / InventoryItems still use the older controller (`Frigorino.Web/Controllers/`) + service (`Frigorino.Application/Services/`) pattern — queued for migration. **When adding a new endpoint, write a slice; do not extend the controllers.**
+All features are migrated to slices: Households, Members, Lists, ListItems, Inventories, InventoryItems, Me/ActiveHousehold, Version. The only remaining controllers (`Frigorino.Web/Controllers/`) are non-domain scaffold (`Auth`, `Demo`, `WeatherForecast`). Per-feature migration history (decisions, drops) lives in `knowledge/Migrations/*.md`. **When adding a new endpoint, write a slice; do not add controllers.**
 
 ### Request pipeline (`Frigorino.Web/Program.cs`)
-Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync is done inside `JwtBearerEvents.OnTokenValidated` (see `Frigorino.Infrastructure/Auth/FirebaseAuth.cs`) — fires once per real Firebase login via the JWT's `auth_time` claim, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
+Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync runs inside `JwtBearerEvents.OnTokenValidated` (`Frigorino.Infrastructure/Auth/FirebaseAuth.cs` → `UserSync.EnsureAsync`) — gated on the JWT's `auth_time` claim so it fires once per real Firebase login, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
 ### Multi-tenant household context
 - `ICurrentUserService` resolves the user from the Firebase JWT and lazily creates a `User` row on first login.
-- `ICurrentHouseholdService` keeps the active household ID in the **HTTP session** (`AddSession`, 30-min idle). Switching households mutates session state, not the JWT — this is why session middleware is mandatory.
-- All household-scoped controllers/services should go through these interfaces rather than reading claims directly.
-- `UserHousehold` is the join entity carrying a `Role` (Owner/Admin/Member) — permission checks live in the service layer.
-- `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext`. New entities should follow the same pattern instead of setting timestamps in services.
+- `ICurrentHouseholdService` keeps the active household ID in the **HTTP session** (`AddSession`, 30-min idle) and persists it to `User.LastActiveHouseholdId` as a durable fallback. Switching households mutates session state, not the JWT — this is why session middleware is mandatory.
+- All household-scoped slices should go through these interfaces rather than reading claims directly.
+- `UserHousehold` is the join entity carrying a `Role` (`HouseholdRole`: Owner/Admin/Member) — permission checks live in `Household` aggregate methods.
+- `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext` (timestamps auto-stamped in `SaveChangesAsync`; `IsActive` is filtered per-slice, not via a global query filter). New entities should follow the same pattern instead of setting timestamps in handlers.
 
 ### Background jobs (startup maintenance)
 Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). The only task today is `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items past 30 days). It re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — which is cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
@@ -105,7 +105,7 @@ Periodic maintenance runs as an in-process startup batch, **not** a wall-clock s
 Request-triggered fire-and-forget work (e.g. future domain-event handlers) should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService`: it's event-driven, so it adds no idle polling and stays sleep-friendly. (Hangfire was trialled and reverted — its always-on `BackgroundJobServer` polls Postgres continuously, keeping the container awake and defeating Railway's serverless sleep.)
 
 ### API surface
-- Endpoints come from two sources during the slice migration: vertical slices in `Frigorino.Features` are wired via `MapGroup(...).Map<SliceName>()` declarations in `Program.cs` (each group owns the route prefix + `RequireAuthorization()` + `WithTags(...)`); legacy endpoints are still in controllers under `Frigorino.Web/Controllers/`. New endpoints should be slices, not controllers — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
+- The API is wired entirely as vertical slices in `Frigorino.Features`, registered in `Program.cs` via `app.MapGroup(prefix).RequireAuthorization().WithTags(...)` groups whose endpoints are added with per-slice extension methods (`households.MapCreateHousehold()`, `lists.MapCreateList()`, …). `MapControllers` remains only for the `Auth`/`Demo` scaffold. New endpoints are slices — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
 - `JsonStringEnumConverter` is registered globally — enums serialize as strings on the wire, and the frontend's generated client expects string enums.
 - OpenAPI is generated via `Microsoft.AspNetCore.OpenApi` + `Microsoft.Extensions.ApiDescription.Server`. `dotnet build Frigorino.Web` writes `ClientApp/src/lib/openapi.json` (configured via `OpenApiDocumentsDirectory` + `OpenApiGenerateDocumentsOptions` in the csproj).
 - The build-time generator runs the app entry point with a mock server. Code paths that require real config (Firebase auth, EF migrations) are gated behind `var isBuildTimeOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"` in `Program.cs`.
@@ -113,10 +113,11 @@ Request-triggered fire-and-forget work (e.g. future domain-event handlers) shoul
 
 ### Frontend
 - TanStack Router uses **file-based routing**; `routeTree.gen.ts` is auto-generated by the `@tanstack/router-plugin/vite` plugin — do not edit by hand.
-- `_protected.tsx` is the auth-gated layout; routes inside it require a Firebase user.
+- Auth gating is per-route: each protected route's `beforeLoad` calls `requireAuth` (`src/common/authGuard.ts`), which reads the Zustand auth store and redirects to `/auth/login` when there's no Firebase user. (There is no `_protected` layout route.)
 - Server state goes through TanStack Query. Every endpoint has generated hooks-ready helpers in `src/lib/api/@tanstack/react-query.gen.ts` (from the hey-api `@tanstack/react-query` plugin). One-hook-per-file under `features/<area>/` spreads the generated options into `useQuery`/`useMutation` — never write `queryFn`/`mutationFn`/`queryKey` by hand. See the "API hook conventions" section below. Client state uses Zustand. Do not introduce a third state layer (Redux, Context-as-store) for new features.
 - Route files under `src/routes/` are thin shells: `createFileRoute` + `requireAuth` + import the page component from `features/<area>/pages/`. See `routes/household/create.tsx` for the canonical shape.
-- The fetch client is configured once at app boot in `src/common/apiClient.ts` (imported for its side effect from `main.tsx`). `client.setConfig` injects Firebase ID tokens via the `auth` resolver. There is no `ClientApi` singleton — generated SDK functions import the configured `client` internally.
+- The fetch client is configured once at app boot in `src/common/apiClient.ts` (imported for its side effect from `main.tsx`). It injects the Firebase ID token via a request **interceptor** (`client.interceptors.request.use`), not the generated `auth` resolver (ASP.NET emits no security schemes, so `auth` never fires). There is no `ClientApi` singleton — generated SDK functions import the configured `client` internally.
+- First-run onboarding: `routes/index.tsx` redirects a signed-in user with no households to `/onboarding` (a household-create form with a Skip option) unless they've skipped, persisted via `features/households/onboardingSkip.ts`.
 - i18n is wired via `i18next` + `i18next-http-backend` — translation files live under `ClientApp/public/locales/{en,de}/translation.json`. **Tests never assert on translated text** — see styling guide.
 
 ### API hook conventions
@@ -163,4 +164,4 @@ Key rules: the theme at `ClientApp/src/theme.ts` owns `shape.borderRadius`, resp
 
 ## Testing
 
-Tests live in `Frigorino.Test/` and use xUnit + FakeItEasy. Database-touching tests use `Microsoft.EntityFrameworkCore.InMemory` via `TestApplicationDbContext`. There is no frontend test runner configured despite `knowledge/Frontend_Architecture.md` mentioning Jest — that section is aspirational, not current.
+Tests live in `Frigorino.Test/` and use xUnit + FakeItEasy. Database-touching tests use `Microsoft.EntityFrameworkCore.InMemory` via `TestApplicationDbContext`. `Frigorino.IntegrationTests/` drives the SPA end-to-end (Reqnroll + Playwright + Postgres Testcontainers). There is no frontend (JS) test runner configured.

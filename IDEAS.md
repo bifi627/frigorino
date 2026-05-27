@@ -10,19 +10,6 @@ Format per item:
 
 ---
 
-## Lightweight CQRS: query repositories + domain repositories
-
-- **Why:** Read and write paths have different shapes but currently share `ApplicationDbContext` directly inside slices. Reads need cheap, per-feature projections to read models (no change tracking, no aggregate loading). Writes need rich domain objects that enforce invariants (`Household.Create`, future `Household.Update`, etc.) and a single `SaveChangesAsync` per slice. Splitting them lets each path stay sharp: query repos for reads, domain repos for writes. Explicitly **no MediatR** — the slice handler stays inline; we just move the EF query out of it.
-- **Sketch:**
-  - **Query side:** `IHouseholdQueries` in `Frigorino.Domain.Interfaces`, implementation in `Frigorino.Infrastructure.Queries.HouseholdQueries`. Methods return read models (e.g. `Task<IReadOnlyList<HouseholdListItem>>`) and use `.AsNoTracking().Select(...)` for projection. Read models live in a new `Frigorino.Domain.ReadModels` namespace (avoids the Infrastructure → Features circular reference). Slice's `Handle` injects `IHouseholdQueries` instead of `ApplicationDbContext`.
-  - **Write side:** `IHouseholdRepository` in `Frigorino.Domain.Interfaces`, implementation in `Frigorino.Infrastructure.Repositories.HouseholdRepository`. Methods load aggregates (`Task<Household?> GetByIdAsync(int, ct)` with the right `Include` chain for the use case), and a `SaveChangesAsync` passthrough — or just expose the aggregate and let the slice call `db.SaveChangesAsync(ct)` once at the end (still need to think this through). `Household.Create()` / future `Household.Update()` stay on the entity.
-  - **Slice rule update:** `CreateHousehold.cs:1-13` header rules + `knowledge/Vertical_Slices.md` get a new bullet: "Reads consume `IXxxQueries`. Writes consume `IXxxRepository` and call `SaveChangesAsync` once."
-  - **Read model vs response DTO:** open question — collapse them (read model IS the response DTO, lives in the slice file or a shared `XxxResponse.cs`) or separate them (read model in Domain, response in Features). Collapsing is simpler; separating gives stricter Domain isolation. Lean toward collapsing initially, split only if a real reason emerges.
-  - **Migration path:** introduce the pattern with one read slice as the first adopter (e.g. the next read slice after `GetUserHouseholds` — `GetHousehold` is a natural candidate since it has the rich shape that needs a real read model). Don't retroactively rewrite already-migrated slices unless touching them for unrelated reasons.
-- **Impact / cost:** small per-slice (one new interface + one new query class), large in aggregate when applied across all reads. New project structure decisions (`Frigorino.Domain.ReadModels`?). Doc updates to `Vertical_Slices.md` and the `CreateHousehold.cs` header. Existing `CreateHousehold.cs` stays as-is — the write side already uses the entity factory + DbContext pattern that this idea endorses.
-
----
-
 ## Strongly-typed IDs (Vogen)
 
 - **Why:** Today `Household.Id` is `int` and `User.ExternalId` is `string`, which means slice handlers can swap `householdId` and `userId` parameters and the compiler won't notice. As the surface grows (Lists/Inventories will add `ListId`, `ListItemId`, `InventoryId`, `InventoryItemId` — all currently `int`), the parameter-swap bug surface multiplies. Modern .NET community has converged on source-generated value objects to eliminate this primitive obsession, with **Vogen** as the de facto choice (more capable than the ID-only `StronglyTypedId` library: validation, code analyzer, broader value-object generation). Source-gen means zero runtime overhead.
@@ -58,43 +45,6 @@ Format per item:
   - **No subscribers initially** — the infra is "armed but unused". When the first feature wants to subscribe (e.g., audit log), it writes one `IDomainEventHandler<MemberAdded>` implementation; everything else stays untouched.
   - **Outbox upgrade path:** for cross-process / at-least-once delivery, swap the in-process dispatcher for one that writes events to an `Outbox` table inside the same transaction (move from `SavedChangesAsync` to `SavingChangesAsync` + a separate poller/worker). Out of scope for the initial introduction; document the upgrade as a follow-up if cross-process integration emerges.
 - **Impact / cost:** ~3 new files (`IDomainEvent`, `AggregateRoot`, `PublishDomainEventsInterceptor`), one DI registration, ~5 lines per aggregate method to raise events, ~half-day total. Zero subscribers = zero behavior change today. Future features avoid retrofitting.
-
----
-
-## Edge-cached reverse proxy in front of Railway
-
-- **Why:** With Railway sleep mode enabled, even with wake-ping + R2R shipped, the *very first* request to a sleeping origin still pays cold-start in full because the wake-ping IS that first request. Putting an edge-caching reverse proxy in front of Railway lets `index.html` and Vite-hashed assets serve from edge cache while the origin is asleep — the user sees the SPA load instantly, Firebase auth runs entirely client-side (`apiClient.ts:13`), and the SPA's wake-ping kicks off the backend wakeup in parallel with their login interaction. Captures most of the UX benefit of a full frontend-on-CDN split (investigated and decided against for the current scale) without the costs: no CORS, no session-cookie migration, no two-deploy coordination, no integration-test rewiring. Bonus on most providers: free WAF / DDoS protection, edge HTTP/3, reduced egress from Railway.
-- **Provider choice (not pinned):** the capability that matters is *reverse proxy to an arbitrary HTTP origin + rule-based path caching + programmatic purge API*. Several providers do this:
-  - **Cloudflare (free plan)** — recommended default. Free tier covers everything. Dashboard UX is the most beginner-friendly. Generous bandwidth.
-  - **BunnyCDN** — cheap pay-as-you-go (~$0.005/GB), supports custom origins, simple purge API. Often faster than Cloudflare in EU/APAC.
-  - **AWS CloudFront** — most configurable, integrates with the rest of AWS if relevant; more setup, paid per-request + bandwidth.
-  - **Fastly / KeyCDN** — similar shape, fewer reasons to pick over the above unless already in use.
-  - **Firebase Hosting is NOT a fit for this pattern.** Its `rewrites` only proxy to Cloud Run, Cloud Functions, or another Firebase Hosting site — *not* to arbitrary external origins like Railway. Firebase Hosting would be a natural pick if revisiting the full SPA-on-static-host split (since the project already uses Firebase for identity), but for keeping the monolithic Railway deploy with edge caching in front, it's the wrong tool. Don't confuse the two architectures.
-  - Decide before implementing. Concrete sketch below assumes Cloudflare since it's the recommended default, but the same shape applies to any of the alternatives.
-- **Sketch:**
-  - **DNS + proxy setup:**
-    - Add the production domain to the chosen provider. For Cloudflare: either full nameserver transfer (recommended; full feature access) or partial CNAME setup if the domain is locked elsewhere.
-    - Enable proxying on the A/CNAME record pointing to Railway.
-    - SSL mode: **Full (strict)** — provider terminates TLS at edge with its own cert, re-encrypts to origin using Railway's cert. Never use Flexible mode equivalents — they leak plaintext on the last hop.
-  - **Caching rules:**
-    - Two cacheable scopes:
-      - `/` and `/index.html` → **Cache Everything**, edge TTL ~1 hour, **ignore cookies** in cache key (otherwise auth/session cookies fragment the cache per-user, killing hit rate and risking cross-user response bleed).
-      - `/assets/*` → respect origin `Cache-Control` headers — the origin already serves `immutable, max-age=31536000` on hashed assets. The provider will cache effectively forever automatically.
-    - Explicit **bypass** for: `/api/*`, `/openapi/*`, `/scalar/*`. Either via a higher-priority bypass rule or by naming the cacheable paths positively and leaving the rest at default.
-    - For the `/` rule, **ignore query strings** in cache key — Vite-hashed assets have none, and `?utm_source=...` shouldn't fragment.
-  - **Deploy-time cache purge:**
-    - After Railway reports deploy healthy, call the provider's purge API for `/` and `/index.html`. Single `curl` step in the deploy workflow, ~10 lines of YAML.
-    - Hashed assets don't need purging — their filenames change each build, so the new `index.html` references new asset names that miss the cache → fetched from origin → cached → served. Old asset names age out naturally and never become stale-yet-served, because nothing references them.
-  - **Stale-window failure mode (the only real risk):**
-    - Between Railway "deploy healthy" and purge completion, edge POPs may still serve old `index.html`. Old `index.html` references old hashed asset filenames, but the old image is gone from origin → those requests 404 → broken page. Three mitigations to evaluate:
-      1. **Just accept it** (preferred). Window is seconds; global purge typically completes in ~30s. PWA service worker (`VitePWA` with `autoUpdate`) already serves the previous SPA from device cache for returning users, masking the window for them entirely. Only new visitors hitting in the exact window see the broken state, and a refresh recovers them.
-      2. Short edge TTL with `stale-while-revalidate` semantics — accepts more origin requests as the cost of self-healing without manual purge.
-      3. Keep N old SPA builds in `wwwroot` for grace coverage. Complicates the Dockerfile, requires multi-stage retention; not worth it for a stage environment.
-  - **Caveats to verify before flipping (varies by provider):**
-    - WebSocket support: not needed today, but check support if any future feature uses WS.
-    - HTTP request timeout (e.g. Cloudflare free is 100s, others vary): no current endpoint exceeds anything reasonable. Track if a long-poll/SSE endpoint is added.
-  - **Stage + prod:** same proxy pattern with separate subdomains/origins. Cache rules scope per hostname on every provider.
-- **Impact / cost:** zero application code changes — the cache headers this idea relies on already ship from origin. Setup is mostly dashboard work plus one purge step in the deploy workflow. ~4-8 hours total including learning the provider's rule UI, testing the stale-window behavior, and wiring the deploy purge. Cloudflare free plan covers everything at zero cost; other providers cents/GB. Reversible — if it goes wrong, flip the proxy off and DNS reverts to direct-to-Railway within minutes.
 
 ---
 
@@ -152,33 +102,6 @@ Format per item:
 
 ---
 
-## First-run onboarding: dedicated "create your first household" page
-
-- **Why:** A user who signs in for the first time has zero households. Today the `_protected` layout assumes an active household exists — `CurrentHouseholdService` falls back to "highest-role / earliest-joined", which returns nothing, and the UI lands in an awkward empty state where most navigation is meaningless. New users need a single, obvious next step ("create a household") rather than a dashboard full of dead links. This is especially load-bearing once we start onboarding real users beyond the dev/stage tester pool.
-- **Sketch:**
-  - Detect the zero-household case on app boot — `useUserHouseholds()` returns `[]` after auth resolves.
-  - Route guard inside `_protected`: if households-list is loaded and empty, redirect to `/onboarding` (or `/household/create` reused with onboarding mode) instead of rendering the normal shell. Avoid rendering the household switcher / sidebar when there's nothing to switch to.
-  - Onboarding page is a single-purpose view: friendly copy, one form (household name), submit → `useCreateHousehold` → on success, set active household + redirect to the normal app shell. No "skip" — the app is unusable without a household.
-  - Edge case: user removed from their last household while session is live → same flow re-engages (next navigation lands on onboarding). Worth verifying.
-  - Consider whether invite-acceptance is a parallel onboarding entry point (user invited before they signed up): out of scope for v1, but the page copy shouldn't preclude it ("Create a household, or wait for an invite to be accepted" — TBD).
-- **Impact / cost:** one new route + page component (~50 LOC), one `_protected` guard change (~10 LOC), no backend changes (the empty-list signal already exists). Mostly a UX/copy exercise. ~half-day including i18n strings (en + de).
-
----
-
-## Undo on item delete (snackbar with revert)
-
-- **Why:** Delete is a one-tap action on list items and inventory items, and mistakes happen — fat-finger on mobile, wrong row, regret a second later. Today the only recovery is "type it back in", which loses any metadata (sort order, classification, quantity, original `CreatedAt`). A "deleted — undo" snackbar is the standard mobile-first UX for destructive single actions, and given entities already use `IsActive` soft-delete (managed centrally in `ApplicationDbContext`), the backend cost is just exposing a restore endpoint.
-- **Sketch:**
-  - **Backend:** add `POST /api/households/{hh}/lists/{l}/items/{id}/restore` (and inventory equivalent) as a vertical slice — flips `IsActive` back to true, returns the restored DTO. Aggregate method: `List.RestoreItem(itemId)` / `Inventory.RestoreItem(itemId)` returning `Result<ListItem>` with `EntityNotFoundError` if no soft-deleted row exists. Permission: same as delete.
-  - **Frontend:** mutation hook `useRestoreListItem` / `useRestoreInventoryItem` following the existing arg-less mutation pattern. The delete mutation's `onSuccess` triggers a MUI `Snackbar` (existing in the codebase or add via `notistack`) with an "Undo" action that calls the restore mutation with the deleted item's id. On undo success, invalidate the list/inventory query so the item reappears in its original sort position.
-  - **Snackbar shape:** ~5s auto-dismiss, single-line ("Item deleted") + "UNDO" button. Stacks if multiple deletes happen rapidly — each undo restores its own item. Translatable via existing i18n setup.
-  - **Open questions:**
-    - Sort order on restore: does the item return to its original `SortOrder` value (preserved on the row), or get appended to the bottom? Lean toward preserving the original — minimizes surprise.
-    - TTL for "undoable" deletes: today soft-deletes live forever. Should restore work indefinitely (anyone with the item id can resurrect) or only within the snackbar window? Lean indefinitely — the snackbar is just the UX entry point; a future "trash bin" view could surface older soft-deletes.
-    - Scope: items only for v1. Restoring a deleted *list* or *inventory* (parent aggregates) is a bigger conversation — cascades, child item state, who's authorized — and warrants its own idea.
-- **Impact / cost:** two new slices + two aggregate methods (~80 LOC backend), two new mutation hooks + snackbar wiring (~60 LOC frontend), i18n strings. ~half-day. Reversible. Pairs naturally with the Lists/Inventories vertical-slice migration — do it as part of that work rather than retrofitting the legacy controllers.
-
----
 
 ## Stale checked-item cleanup: schedule it + extend to inventories
 
@@ -204,3 +127,29 @@ Format per item:
 - **Scope / sequencing:** v1 ships the seam + a `LocalFileStorage` dev backend (demoable/testable locally). Production backend (Firebase-GCS / R2 / S3) is a **separate follow-up** — Firebase Storage now requires the Blaze plan (stays $0 under free limits). Post-upload classify/analyze and orphaned-blob cleanup are future backend hooks.
 - **Dependencies:** restore behavior leans on [[Undo on item delete]]'s `RestoreItem`, not yet in `stage`. A future classify hook would build on [[Async fire-and-forget runner (in-process Channels)]] and reuse the [[Promote checked list items into inventory (classifier-driven)]] classifier.
 - **Impact / cost:** one EF migration (1 enum + 5 nullable columns), ~3 new slices + 1 aggregate method, `IFileStorage` + dev impl + ImageSharp, three renderers + upload/blob hooks. Production storage backend is additional, separately scoped.
+
+---
+
+## Rework user invite to household
+
+- **Status:** placeholder — needs a dedicated brainstorming session before any sketch. This entry just captures the scenarios so they aren't lost.
+- **Why:** Adding a member today (`AddMember.cs`) resolves an *existing* user and attaches them to the household. That only covers the case where the invitee already has an account and is already known. A real invite flow has to handle people who aren't users yet and needs an actual delivery mechanism so the invite reaches them.
+- **Scenarios to work through:**
+  1. **Invited user already exists** — current path; resolve and add (or send them an in-app/notification invite to accept rather than auto-joining?).
+  2. **Invited user does not exist yet** — no `User` row to attach to. Pending-invite record keyed by email/identifier, redeemed when they sign up and first log in? Ties into [[First-run onboarding: dedicated "create your first household" page]] as a parallel onboarding entry point (invite-acceptance vs. create-first-household).
+  3. **Other flows (TBD):** re-invite / revoke a pending invite, invite expiry, role chosen at invite time, declining an invite, inviting someone already in the household.
+- **Open question — delivery:** how does the invitee actually receive the invite? Options to weigh later: email (needs an email sender — none wired today), shareable invite link/code, in-app notification for existing users. Keep vendor-neutral per [[Async fire-and-forget runner (in-process Channels)]] if email/push is involved (sender behind an interface).
+- **Impact / cost:** unknown until brainstormed — likely a new pending-invite entity, new slices (create/accept/revoke invite), and a delivery mechanism. Defer sizing to the planning conversation.
+
+---
+
+## Quantity as a domain value object (value + unit)
+
+- **Why:** `Quantity` is a free-text `string?` today on both `ListItem` and `InventoryItem` (`Frigorino.Domain/Entities/ListItem.cs:13`, `InventoryItem.cs:16`). A user types "2 kg" or "500ml" and it's opaque to the app — we can't sum, compare, convert, or reason about it. Modelling it as a proper value object (a numeric value + a unit) unlocks real features later: "you have 1.5kg, recipe needs 200g", merging duplicate inventory items, low-stock thresholds, shopping-list math.
+- **Sketch:**
+  - New `Quantity` value object in `Frigorino.Domain` — a numeric `Value` + a `Unit` (enum or its own small value object). Parse/format helpers so the existing free-text UI keeps working ("2 kg" → `{ 2, Kilogram }`, round-trips back to a display string).
+  - Unit taxonomy: mass (g/kg), volume (ml/l), count (pieces). Conversions within a dimension; cross-dimension stays unsupported (no g↔ml without density). Keep it small in v1.
+  - Persistence: aligns with [[feedback_flat_db_schema]] — store as flat columns (`QuantityValue` numeric + `QuantityUnit` enum), not a JSON blob or owned-type table. Keep a nullable raw/display string for un-parseable input so nothing is lost (clean-separation per the dirty-invariants rule).
+  - Migration path: needs an EF migration (string → value+unit columns) and a backfill that best-effort parses existing free-text quantities, leaving unparseable ones in the raw column. Frontend input can stay free-text initially, with a structured picker as a later enhancement.
+  - **Open questions:** enum vs. extensible unit table (custom units like "cans", "packs"?); how strict the parser is on mixed/locale input (en/de — "1,5 kg" vs "1.5 kg"); whether `ListItem` and `InventoryItem` share the same value object (likely yes).
+- **Impact / cost:** one value object + EF migration + backfill, touches both item aggregates and their create/update slices + responses. Medium. Mostly enabling work — the payoff features (conversions, merging, thresholds) are separate follow-ups once the data is structured.
