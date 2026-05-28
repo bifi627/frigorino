@@ -54,7 +54,7 @@ Docker (full stack image, used in deployment):
 ```powershell
 docker build -f Application/Dockerfile -t frigorino .
 ```
-The Dockerfile builds the .NET solution and the SPA in parallel stages, then copies the SPA `build/` output into `wwwroot/` of the final image.
+The Dockerfile publishes `Frigorino.Web` (solution-wide restore, web-only publish) and builds the SPA in parallel stages, then copies the SPA `build/` output into `wwwroot/` of the final image.
 
 ## Configuration
 
@@ -69,9 +69,9 @@ The dev-auth bypass is **opt-in, not a committed default**. Manual `dotnet run` 
 - **Real Firebase + your DB** (default): `dotnet run --project Application/Frigorino.Web` + `npm run dev`. Uses your user-secrets.
 - **Bypass + local Postgres** (agents / fresh-clone): `powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1` (down: same with `dev-down.ps1`). Activated by the `LocalDb` launch profile (sets `DevAuth__Enabled=true` + local conn string) and `$env:VITE_DEV_AUTH=true` set by the script before spawning vite. Identity on both sides: `dev-user` / `dev@frigorino.local`.
 
-Bypass implementation: `DevAuthHandler` (`Frigorino.Infrastructure/Auth/DevAuthHandler.cs`, gated on `Development` env + `DevAuth:Enabled`) and `authProvider.ts` (gated on `VITE_DEV_AUTH`). Scripts log to `.dev/*.log` (gitignored); per-worktree port-based kill — ports are scanned above the user's 5001/44375/5432/8080 and recorded in .dev/stack.json, so parallel worktrees coexist and the user's fixed env is untouched; handles Windows' missing process-group cascade. `/readyz` returns 503 in bypass mode (cosmetic — `/healthz` still 200).
+Bypass implementation: `DevAuthHandler` (`Frigorino.Infrastructure/Auth/DevAuthHandler.cs`, gated on `Development` env + `DevAuth:Enabled`) and `authProvider.ts` (gated on `VITE_DEV_AUTH`). `/readyz` returns 503 in bypass mode (cosmetic — `/healthz` still 200).
 
-Agent skills wrap the scripts: `/dev-up` is auto-invokable (description gates on actual UI verification need); `/dev-down` is manual-only. Pair with Playwright MCP `--isolated` (`~/.claude.json`) for ephemeral browser profiles.
+Agent skills wrap the scripts: `/dev-up` (auto-invokable, gated on actual UI-verification need) and `/dev-down` (manual-only) — see those `SKILL.md` files for the per-worktree port-scan (`.dev/stack.json`, scanned above the user's 5001/44375/5432/8080 so worktrees coexist), `.dev/*.log` logging, Windows-cascade teardown, and Playwright MCP `--isolated` pairing.
 
 ## Architecture notes
 
@@ -82,7 +82,7 @@ Authoritative shape: `knowledge/Vertical_Slices.md`. Trust it over older archite
 The whole API is vertical slices. Each slice = one file = one endpoint, with request DTO + response DTO + endpoint registration + handler colocated. Domain rules (validation, role policy, aggregate invariants) live in `Frigorino.Domain` — either in entity factories (`Entity.Create`) for construction or in aggregate methods (`aggregate.DoXxx`) for mutations. Domain methods return `FluentResults.Result<T>`; the slice handler dispatches by error type (`EntityNotFoundError` → 404, `AccessDeniedError` → 403, generic `Error` with `Property` metadata → `ValidationProblem`). Reads stay handler-only — inline EF projection into the response DTO (no mapping libraries).
 
 Canonical references:
-- Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-20` (rules-as-comments header overrides `Vertical_Slices.md` when they drift).
+- Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs` (rules-as-comments header at lines 1-20 — overrides `Vertical_Slices.md` when they drift; the factory write template itself is at lines 32-65).
 - Write-via-aggregate-method template: `Application/Frigorino.Features/Households/Members/AddMember.cs` (most complex — cross-aggregate user resolution + 3 internal branches).
 - Domain marker errors: `Application/Frigorino.Domain/Errors/DomainErrors.cs`.
 - Result→ValidationProblem helper: `Application/Frigorino.Features/Results/ResultExtensions.cs`.
@@ -93,7 +93,7 @@ All features are migrated to slices: Households, Members, Lists, ListItems, Inve
 Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync runs inside `JwtBearerEvents.OnTokenValidated` (`Frigorino.Infrastructure/Auth/FirebaseAuth.cs` → `UserSync.EnsureAsync`) — gated on the JWT's `auth_time` claim so it fires once per real Firebase login, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
 ### Multi-tenant household context
-- `ICurrentUserService` resolves the user from the Firebase JWT and lazily creates a `User` row on first login.
+- `ICurrentUserService` resolves the user identity (id/email/name) from the Firebase JWT claims — it deliberately injects no DbContext. The lazy `User`-row creation on first login happens in `UserSync` (see Request pipeline above), not here.
 - `ICurrentHouseholdService` keeps the active household ID in the **HTTP session** (`AddSession`, 30-min idle) and persists it to `User.LastActiveHouseholdId` as a durable fallback. Switching households mutates session state, not the JWT — this is why session middleware is mandatory.
 - All household-scoped slices should go through these interfaces rather than reading claims directly.
 - `UserHousehold` is the join entity carrying a `Role` (`HouseholdRole`: Owner/Admin/Member) — permission checks live in `Household` aggregate methods.
@@ -102,11 +102,11 @@ Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. 
 ### Background jobs (startup maintenance)
 Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). The only task today is `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items past 30 days). It re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — which is cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
 
-Request-triggered fire-and-forget work (e.g. future domain-event handlers) should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService`: it's event-driven, so it adds no idle polling and stays sleep-friendly. (Hangfire was trialled and reverted — its always-on `BackgroundJobServer` polls Postgres continuously, keeping the container awake and defeating Railway's serverless sleep.)
+Request-triggered fire-and-forget work should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService` (event-driven, no idle polling), **not** Hangfire — reverted because its always-on `BackgroundJobServer` polls Postgres continuously and defeats Railway's serverless sleep (see IDEAS.md). This queue is not built yet.
 
 ### API surface
-- The API is wired entirely as vertical slices in `Frigorino.Features`, registered in `Program.cs` via `app.MapGroup(prefix).RequireAuthorization().WithTags(...)` groups whose endpoints are added with per-slice extension methods (`households.MapCreateHousehold()`, `lists.MapCreateList()`, …). `MapControllers` remains only for the `Auth`/`Demo` scaffold. New endpoints are slices — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1` (replaces the old SwaggerUI).
-- `JsonStringEnumConverter` is registered globally — enums serialize as strings on the wire, and the frontend's generated client expects string enums.
+- The API is wired entirely as vertical slices in `Frigorino.Features`, registered in `Program.cs` via `app.MapGroup(prefix).RequireAuthorization().WithTags(...)` groups whose endpoints are added with per-slice extension methods (`households.MapCreateHousehold()`, `lists.MapCreateList()`, …). `MapControllers` remains only for the `Auth`/`Demo` scaffold. New endpoints are slices — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1`.
+- Enums serialize as **integers** on the wire (e.g. `HouseholdRole` is `type: integer` / TS `number`) — there is no `JsonStringEnumConverter`. An `IntegerSchemaTransformer` (`Frigorino.Web/OpenApi/IntegerSchemaTransformer.cs`, registered via `AddSchemaTransformer` in `AddOpenApi`) collapses int schemas to plain integers so the generated client emits `number`.
 - OpenAPI is generated via `Microsoft.AspNetCore.OpenApi` + `Microsoft.Extensions.ApiDescription.Server`. `dotnet build Frigorino.Web` writes `ClientApp/src/lib/openapi.json` (configured via `OpenApiDocumentsDirectory` + `OpenApiGenerateDocumentsOptions` in the csproj).
 - The build-time generator runs the app entry point with a mock server. Code paths that require real config (Firebase auth, EF migrations) are gated behind `var isBuildTimeOpenApi = Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"` in `Program.cs`.
 - The frontend client is generated by `npm run api` from `src/lib/openapi.json` via [`@hey-api/openapi-ts`](https://heyapi.dev) (config: `ClientApp/openapi-ts.config.ts`). The full workflow is one command from `ClientApp/`: change endpoints/DTOs → `npm run api` (rebuilds the backend, emits the spec, regenerates the TS client). No backend boot, no DB, no manual copy. Generated code under `src/lib/api/` is committed.
@@ -122,35 +122,14 @@ Request-triggered fire-and-forget work (e.g. future domain-event handlers) shoul
 
 ### API hook conventions
 
-Every TanStack Query hook in `features/<area>/use*.ts` follows this exact shape (no exceptions):
+Every TanStack Query hook in `features/<area>/use*.ts` follows one exact shape (no exceptions). Mirror the canonical files rather than copying snippets here: `features/lists/useList.ts` (query hook) and `features/lists/useDeleteList.ts` (mutation hook).
 
-**Query hook** — takes the IDs needed to build the URL, spreads `getXOptions`:
-```ts
-export const useList = (householdId: number, listId: number, enabled = true) =>
-    useQuery({
-        ...getListOptions({ path: { householdId, listId } }),
-        enabled: enabled && listId > 0 && householdId > 0,
-        staleTime: 1000 * 60 * 2,
-    });
-```
-
-**Mutation hook** — no path/id args; the caller passes the full `{ path, body }` to `mutate`. Invalidation reads from `variables.path.*` in `onSuccess`/`onSettled`:
-```ts
-export const useDeleteList = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        ...deleteListMutation(),
-        onSuccess: (_data, variables) => {
-            queryClient.removeQueries({ queryKey: getListQueryKey({ path: { ... } }) });
-            queryClient.invalidateQueries({ queryKey: getListsQueryKey({ path: { householdId: variables.path.householdId } }) });
-        },
-    });
-};
-```
+- **Query hook** — takes the IDs needed to build the URL, spreads `getXOptions({ path: {...} })` into `useQuery`, guards `enabled` on each path id being `> 0`, sets a `staleTime`.
+- **Mutation hook** — arg-less; the caller passes the full `{ path, body }` to `mutate`/`mutateAsync`. Spread `xMutation()`; invalidation reads `variables.path.*` in `onSuccess`/`onSettled` and builds keys via `getXQueryKey({ path: {...} })`.
 
 **Rules:**
 - Never write `queryFn`, `mutationFn`, or manual `queryKey` arrays. Spread `getXOptions` / `xMutation` / `getXQueryKey()`.
-- Never reintroduce `*Keys.ts` files — auto-generated keys (with `tags`) cover both point and tag-based invalidation. For broad invalidation across a domain, use `queryClient.invalidateQueries({ predicate: q => (q.queryKey[0] as { tags?: string[] })?.tags?.includes('Households') })`.
+- Never reintroduce `*Keys.ts` files — auto-generated keys carry `tags` for both point and tag-based invalidation. Tag-predicate invalidation isn't used anywhere today, but the keys support it if you ever need broad cross-domain invalidation: `queryClient.invalidateQueries({ predicate: q => (q.queryKey[0] as { tags?: string[] })?.tags?.includes('Households') })`.
 - Mutation hooks are arg-less; callers pass `{ path: {...}, body: ... }` to `mutate` / `mutateAsync`.
 - Optimistic update hooks (toggle/reorder/create/update items) keep their `onMutate`/`onError`/`onSettled` callbacks — those are the substance the codegen doesn't replace. Read/write queryKeys via `getXQueryKey({ path: {...} })`, not literal arrays.
 - The error from a mutation may be widened to `unknown` when the OpenAPI error response is `unknown` (e.g. 404 bodies). When rendering in JSX, type the local as `unknown` and use `error instanceof Error ? error.message : t("common.errorOccurred")`.
