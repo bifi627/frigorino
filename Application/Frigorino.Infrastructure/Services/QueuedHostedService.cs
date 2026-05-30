@@ -33,6 +33,12 @@ namespace Frigorino.Infrastructure.Services
                         using var scope = _scopeFactory.CreateScope();
                         await work(scope.ServiceProvider, stoppingToken);
                     }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        // The item was cancelled by host shutdown — not a fault. Rethrow so the outer
+                        // handler stops the loop cleanly instead of logging it as a work-item error.
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         // One bad item must never take down the consumer or starve the queue.
@@ -42,7 +48,8 @@ namespace Frigorino.Infrastructure.Services
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
-                // Normal shutdown — ReadAllAsync observed the stopping token; stop draining.
+                // Normal shutdown — the stopping token fired (from ReadAllAsync, or rethrown above);
+                // stop draining and abandon whatever is still queued (lossy by design).
             }
         }
     }
