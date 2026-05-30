@@ -32,6 +32,7 @@ namespace Frigorino.Features.Lists.Items
             UpdateItemRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
+            IProductClassificationTrigger classificationTrigger,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
@@ -60,6 +61,12 @@ namespace Frigorino.Features.Lists.Items
             }
 
             await db.SaveChangesAsync(ct);
+
+            if (request.Text is not null)
+            {
+                classificationTrigger.OnProductReferenced(householdId, request.Text);
+            }
+
             return TypedResults.Ok(ListItemResponse.From(result.Value));
         }
     }

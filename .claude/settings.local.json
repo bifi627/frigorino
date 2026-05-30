@@ -48,7 +48,8 @@
       "WebFetch(domain:claude.com)",
       "WebFetch(domain:platform.openai.com)",
       "WebFetch(domain:railway.com)",
-      "WebFetch(domain:community.bitdefender.com)"
+      "WebFetch(domain:community.bitdefender.com)",
+      "WebFetch(domain:developers.openai.com)"
     ],
     "deny": [],
     "ask": []

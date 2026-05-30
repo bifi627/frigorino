@@ -1,8 +1,10 @@
+using Frigorino.Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Frigorino.IntegrationTests.Infrastructure;
@@ -25,6 +27,8 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:Database", ConnectionString);
+        builder.UseSetting("Classifier:Enabled", "true");
+        builder.UseSetting("Classifier:ApiKey", "integration-test-stub-key");
 
         var webRoot = SpaBuildHelper.FindWebProjectRoot();
         builder.UseContentRoot(webRoot);
@@ -48,6 +52,12 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // Disable HTTPS redirect — Kestrel has no HTTPS endpoint in tests
             services.Configure<HttpsRedirectionOptions>(opts => opts.HttpsPort = null);
+
+            // Replace the real OpenAI classifier with a deterministic, network-free stub. The
+            // QueueingProductClassificationTrigger is registered (Classifier:Enabled=true above), so
+            // the full slice→trigger→queue→job→DB path runs without any network call.
+            services.RemoveAll<IItemClassifier>();
+            services.AddScoped<IItemClassifier, StubItemClassifier>();
         });
     }
 }

@@ -57,6 +57,7 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
     }
 }
 builder.Services.AddBackgroundTaskQueue();
+builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddMaintenanceServices();
 
 if (!isBuildTimeOpenApi)
