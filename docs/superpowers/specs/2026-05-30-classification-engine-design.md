@@ -65,10 +65,14 @@ and the full test suite run with zero AI config).
    nullable columns on `Product`. Sidesteps EF nullable-complex-type limits; matches the flat-schema
    preference.
 
-4. **`ProductClassification` is a composite result, not a bare `ExpiryProfile`.** The port returns a
-   record wrapping the profile (one field today, `Expiry`) so future facets are additive — one enum +
-   one column + one record field + one schema line, nothing existing rewritten. Multi-facet stays
-   **typed columns per facet** (not EAV, not a plugin registry).
+4. **`ProductClassification` is a composite result with two orthogonal facets: `Category` and
+   `Expiry`.** *What kind of thing it is* (`ProductCategory`: `Food` / `HouseholdSupply` / `Other`) is
+   kept distinct from *how it expires* (`ExpiryProfile`) — overloading one field with both would be a
+   dirty invariant. `Other` (= `0`, the safe default) covers non-stockable entries a user puts on a
+   list (a task like "call dentist", a one-off object), so Cycle 3 can skip them for inventory
+   promotion; the row is still cached/tagged, not dropped. Facets stay additive — one enum + one column
+   + one record field + one schema line, nothing existing rewritten; **typed columns per facet** (not
+   EAV, not a plugin registry).
 
 5. **One slim abstraction: `IItemClassifier` (domain port). The OpenAI SDK is used directly behind
    it — no `IChatClient`/Microsoft.Extensions.AI layer.** (User decision: don't over-build layered
@@ -96,9 +100,16 @@ and the full test suite run with zero AI config).
 9. **OpenAI specifics.** Model `gpt-4.1-nano` (cheapest nano tier with native Structured Outputs;
    ~$1–10/year at expected volume — re-verify the exact model string at implementation, OpenAI
    renames). **Strict Structured Outputs**, not JSON mode: invalid/off-schema output is impossible at
-   sampling time, so no retry-on-parse path. Refusal (`message.refusal`) → treat as `NonPerishable` +
-   log. Transient/API error → `Result.Fail` (the job drops it — lossy by design, re-triggered on the
-   next reference). A `Version` constant stamps `Product.ClassifierVersion`.
+   sampling time, so no retry-on-parse path. Refusal (`message.refusal`)/off-schema → treat as
+   `Other` + `NonPerishable` + log. Transient/API error → `Result.Fail` (the job drops it — lossy by
+   design, re-triggered on the next reference). A `Version` constant stamps `Product.ClassifierVersion`
+   (currently `1`; nothing classified yet, so the category facet did **not** need a version bump).
+
+11b. **Reasoning field (diagnostic only).** The schema asks the model for a `reasoning` string as the
+   **first** property — in strict outputs fields generate in order, so this doubles as cheap
+   chain-of-thought that can improve borderline classifications. It is **logged** (`ILogger`) at the
+   adapter boundary and never persisted nor returned across `IItemClassifier` — it is an explanation of
+   one classification event, not product metadata, so it stays out of the domain record.
 
 10. **Normalization v1.** Lowercase + trim + collapse internal whitespace. **No** stemming /
     plural-stripping / article-stripping (language-dependent, bilingual en/de). One source of truth
@@ -123,19 +134,23 @@ and the full test suite run with zero AI config).
   - `static ExpiryProfile NonPerishable` convenience.
   - `SuggestedExpiry(DateOnly today) → DateOnly?` = `today.AddDays(ShelfLifeDays.Value)` only for
     `AiRecommendsShelfLife`; otherwise `null`.
-- **`ProductClassification` record:** `ProductClassification(ExpiryProfile Expiry)` — composite seam.
+- **`ProductCategory` enum:** `Other = 0`, `Food`, `HouseholdSupply`. `Other` is the safe default
+  (`default(ProductCategory)` and the refusal/uncertain fallback).
+- **`ProductClassification` record:** `ProductClassification(ProductCategory Category, ExpiryProfile Expiry)`
+  — composite seam, two facets.
 - **`ProductName` static:** `Normalize(string raw) → string` (lowercase, trim, collapse whitespace).
 - **`Product` aggregate (`Frigorino.Domain/Entities/Product.cs`):**
   - `int Id`, `int HouseholdId`, `string NormalizedName` (`const int NormalizedNameMaxLength = 200`),
-    AI-layer columns `ExpiryHandling ClassificationExpiryHandling` + `int? ClassificationShelfLifeDays`,
-    `int ClassifierVersion`, `DateTime CreatedAt`, `DateTime UpdatedAt`.
+    AI-layer columns `ProductCategory ClassificationProductCategory` + `ExpiryHandling ClassificationExpiryHandling`
+    + `int? ClassificationShelfLifeDays`, `int ClassifierVersion`, `DateTime CreatedAt`, `DateTime UpdatedAt`.
   - `static Create(householdId, normalizedName, ProductClassification, version) → Result<Product>`
     (validates household id, non-empty/length-bounded normalized name).
   - `ApplyClassification(ProductClassification, version)` — overwrites the AI layer wholesale +
     re-stamps `ClassifierVersion` (mostly assignment; `UpdatedAt` auto-stamped by the context).
-  - `EffectiveExpiry` (read) — reconstructs `ExpiryProfile` from the AI columns. **Minimal now**
-    (returns the Classification profile); becomes `OverrideExpiry ?? ClassificationExpiry` when override
-    columns land. No override columns this cycle.
+  - `EffectiveCategory` / `EffectiveExpiry` (reads) — the former returns the category column, the
+    latter reconstructs `ExpiryProfile` from the AI columns. **Minimal now** (return the Classification
+    layer); each becomes `Override ?? Classification` when override columns land. No override columns
+    this cycle.
 
 ## Ports (`Frigorino.Domain/Interfaces`)
 
@@ -149,12 +164,14 @@ and the full test suite run with zero AI config).
 ## Infrastructure (`Frigorino.Infrastructure`)
 
 - **`OpenAiItemClassifier : IItemClassifier`** — uses the official `OpenAI` .NET SDK directly. Builds a
-  strict JSON-schema response format (`expiryHandling` enum + nullable `defaultShelfLifeDays` 1–365,
-  `additionalProperties:false`, strict). System prompt defines the 3 categories with 2–3 **bilingual**
-  (en + de) examples each (~150 tokens); user message is the normalized name. Maps the response →
-  `ProductClassification(ExpiryProfile.Create(...).Value)`. Refusal/off-schema → `NonPerishable` + log
-  warning; transient/exception → `Result.Fail`. Logs latency/outcome via `ILogger` (richer OTel
-  deferred). `Version` is a constant (start at `1`).
+  strict JSON-schema response format with four required properties — `reasoning` (string, first, for
+  chain-of-thought), `productCategory` enum, `expiryHandling` enum, nullable `defaultShelfLifeDays`
+  1–365 — `additionalProperties:false`, strict; the enum members and bounds are interpolated from the
+  domain types so the schema can't drift. System prompt defines both facets with **bilingual** (en +
+  de) examples each; user message is the normalized name. Maps the response →
+  `ProductClassification(productCategory, ExpiryProfile.Create(...).Value)` and logs the model's
+  `reasoning` (`ILogger`, not persisted). Refusal/off-schema → `Other` + `NonPerishable` + log warning;
+  transient/exception → `Result.Fail`. `Version` is a constant (currently `1`).
 - **`ClassifyProductJob : IClassifyProductJob`** (scoped). Flow:
   1. `normalized = ProductName.Normalize(rawName)`; empty → return.
   2. Look up `Product` by `(HouseholdId, NormalizedName)`.
