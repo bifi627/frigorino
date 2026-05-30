@@ -31,6 +31,27 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
+        public void Create_UserEntersFromPackage_WithNullShelfLife_Succeeds()
+        {
+            var result = ExpiryProfile.Create(ExpiryHandling.UserEntersFromPackage, null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(ExpiryHandling.UserEntersFromPackage, result.Value.Handling);
+            Assert.Null(result.Value.ShelfLifeDays);
+        }
+
+        [Fact]
+        public void Create_Failure_CarriesShelfLifeDaysPropertyMetadata()
+        {
+            var result = ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, 366);
+
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors,
+                e => e.Metadata.TryGetValue("Property", out var p)
+                    && (string)p == nameof(ExpiryProfile.ShelfLifeDays));
+        }
+
+        [Fact]
         public void Create_AiRecommends_WithNullShelfLife_Fails()
         {
             var result = ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, null);
