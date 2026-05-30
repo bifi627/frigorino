@@ -18,6 +18,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<ListItem> ListItems { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<Product> Products { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -84,6 +85,12 @@ namespace Frigorino.Infrastructure.EntityFramework
                         inventoryItem.CreatedAt = now;
                         inventoryItem.UpdatedAt = now;
                     }
+
+                    if (entry.Entity is Product product && product.CreatedAt == default)
+                    {
+                        product.CreatedAt = now;
+                        product.UpdatedAt = now;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
@@ -110,6 +117,11 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is InventoryItem inventoryItem)
                     {
                         inventoryItem.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is Product product)
+                    {
+                        product.UpdatedAt = now;
                     }
                 }
             }
