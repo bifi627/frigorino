@@ -16,12 +16,22 @@ namespace Frigorino.Infrastructure.Services
         public int Version => 1;
 
         // The strict Structured Outputs schema. Enum values and the shelf-life bounds are
-        // interpolated from the domain types so they can't silently drift from ExpiryHandling /
-        // ExpiryProfile — only the JSON skeleton is hand-written.
+        // interpolated from the domain types so they can't silently drift from ProductCategory /
+        // ExpiryHandling / ExpiryProfile — only the JSON skeleton is hand-written.
+        // "reasoning" is listed FIRST deliberately: strict outputs generate fields in schema order,
+        // so the model writes its rationale before committing to the labels (cheap chain-of-thought).
+        // It is a diagnostic only — logged, never persisted nor returned across IItemClassifier.
         private static readonly BinaryData Schema = BinaryData.FromString($$"""
             {
                 "type": "object",
                 "properties": {
+                    "reasoning": {
+                        "type": "string"
+                    },
+                    "productCategory": {
+                        "type": "string",
+                        "enum": [{{string.Join(", ", Enum.GetNames<ProductCategory>().Select(n => $"\"{n}\""))}}]
+                    },
                     "expiryHandling": {
                         "type": "string",
                         "enum": [{{string.Join(", ", Enum.GetNames<ExpiryHandling>().Select(n => $"\"{n}\""))}}]
@@ -32,16 +42,23 @@ namespace Frigorino.Infrastructure.Services
                         "maximum": {{ExpiryProfile.ShelfLifeDaysMax}}
                     }
                 },
-                "required": ["expiryHandling", "defaultShelfLifeDays"],
+                "required": ["reasoning", "productCategory", "expiryHandling", "defaultShelfLifeDays"],
                 "additionalProperties": false
             }
             """);
 
         private static readonly string SystemPrompt =
-            "You classify how a grocery/household product expires. Choose exactly one expiryHandling:\n" +
+            "You classify a single item a user wrote on a household list. Items are usually groceries or household supplies, but may be anything (e.g. a reminder, or a non-consumable object).\n" +
+            "In 'reasoning', briefly justify your choice in one short sentence.\n" +
+            "Set 'productCategory' to exactly one of:\n" +
+            "- Food: edible/drinkable groceries (e.g. milk/Milch, bananas/Bananen, bread/Brot).\n" +
+            "- HouseholdSupply: non-food consumables you restock (e.g. dish soap/Spülmittel, batteries/Batterien, paper towels/Küchenrolle).\n" +
+            "- Other: anything not stocked as a food/household consumable (e.g. a task like 'call dentist'/'Zahnarzt anrufen', or a one-off object).\n" +
+            "Set 'expiryHandling' to exactly one of:\n" +
             "- NonPerishable: effectively never expires (e.g. salt/Salz, sugar/Zucker, dish soap/Spülmittel). defaultShelfLifeDays = null.\n" +
             "- UserEntersFromPackage: perishable with a printed date the user should read (e.g. yogurt/Joghurt, packaged meat/abgepacktes Fleisch). defaultShelfLifeDays = null.\n" +
             $"- AiRecommendsShelfLife: perishable with a predictable typical shelf life you can estimate in days (e.g. fresh milk/Frischmilch ~7, bananas/Bananen ~5, lettuce/Salat ~4). defaultShelfLifeDays = that estimate, {ExpiryProfile.ShelfLifeDaysMin}..{ExpiryProfile.ShelfLifeDaysMax}.\n" +
+            "For Other items, use NonPerishable with defaultShelfLifeDays = null.\n" +
             "Respond only via the provided JSON schema.";
 
         // Per-request config is invariant (same schema + system prompt every call), so build once.
@@ -60,8 +77,10 @@ namespace Frigorino.Infrastructure.Services
             Converters = { new JsonStringEnumConverter() },
         };
 
-        // The schema mirrors this shape exactly; STJ maps the string enum and nullable int directly.
-        private sealed record ClassifierResponse(ExpiryHandling ExpiryHandling, int? DefaultShelfLifeDays);
+        // The schema mirrors this shape exactly; STJ maps the string enums and nullable int directly.
+        // Reasoning is diagnostic only — logged below, never persisted nor returned across the port.
+        private sealed record ClassifierResponse(
+            string Reasoning, ProductCategory ProductCategory, ExpiryHandling ExpiryHandling, int? DefaultShelfLifeDays);
 
         private readonly ChatClient _client;
         private readonly ILogger<OpenAiItemClassifier> _logger;
@@ -80,14 +99,14 @@ namespace Frigorino.Infrastructure.Services
             {
                 var completion = await _client.CompleteChatAsync(messages, Options, ct);
 
-                // Refusal or empty content → treat as non-perishable rather than failing the job.
+                // Refusal or empty content → treat as Other/non-perishable rather than failing the job.
                 if (completion.Value.Content.Count == 0
                     || string.IsNullOrWhiteSpace(completion.Value.Content[0].Text))
                 {
                     _logger.LogWarning(
-                        "Classifier returned no usable content for '{Name}'; defaulting to non-perishable.",
+                        "Classifier returned no usable content for '{Name}'; defaulting to Other/non-perishable.",
                         normalizedName);
-                    return Result.Ok(new ProductClassification(ExpiryProfile.NonPerishable));
+                    return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
                 }
 
                 var dto = JsonSerializer.Deserialize<ClassifierResponse>(completion.Value.Content[0].Text, JsonOptions);
@@ -95,13 +114,18 @@ namespace Frigorino.Infrastructure.Services
                 var profile = dto is null
                     ? Result.Fail<ExpiryProfile>("Empty classifier payload.")
                     : ExpiryProfile.Create(dto.ExpiryHandling, dto.DefaultShelfLifeDays);
-                if (profile.IsFailed)
+                if (dto is null || profile.IsFailed)
                 {
                     // Model produced a schema-valid-but-semantically-inconsistent combination; be safe.
-                    return Result.Ok(new ProductClassification(ExpiryProfile.NonPerishable));
+                    return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
                 }
 
-                return Result.Ok(new ProductClassification(profile.Value));
+                // Log the model's reasoning as a diagnostic — it does not leave this method.
+                _logger.LogInformation(
+                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning}",
+                    normalizedName, dto.ProductCategory, dto.ExpiryHandling, dto.DefaultShelfLifeDays, dto.Reasoning);
+
+                return Result.Ok(new ProductClassification(dto.ProductCategory, profile.Value));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

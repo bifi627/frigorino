@@ -8,7 +8,7 @@ namespace Frigorino.Test.Domain
         private const int HouseholdId = 42;
 
         private static ProductClassification AiClassification(int days) =>
-            new(ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value);
+            new(ProductCategory.Food, ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value);
 
         [Fact]
         public void Create_Valid_SetsColumnsAndVersion()
@@ -19,6 +19,7 @@ namespace Frigorino.Test.Domain
             var product = result.Value;
             Assert.Equal(HouseholdId, product.HouseholdId);
             Assert.Equal("milk", product.NormalizedName);
+            Assert.Equal(ProductCategory.Food, product.ClassificationProductCategory);
             Assert.Equal(ExpiryHandling.AiRecommendsShelfLife, product.ClassificationExpiryHandling);
             Assert.Equal(7, product.ClassificationShelfLifeDays);
             Assert.Equal(1, product.ClassifierVersion);
@@ -45,8 +46,11 @@ namespace Frigorino.Test.Domain
         {
             var product = Product.Create(HouseholdId, "milk", AiClassification(7), 1).Value;
 
-            product.ApplyClassification(new ProductClassification(ExpiryProfile.NonPerishable), classifierVersion: 2);
+            product.ApplyClassification(
+                new ProductClassification(ProductCategory.HouseholdSupply, ExpiryProfile.NonPerishable),
+                classifierVersion: 2);
 
+            Assert.Equal(ProductCategory.HouseholdSupply, product.ClassificationProductCategory);
             Assert.Equal(ExpiryHandling.NonPerishable, product.ClassificationExpiryHandling);
             Assert.Null(product.ClassificationShelfLifeDays);
             Assert.Equal(2, product.ClassifierVersion);

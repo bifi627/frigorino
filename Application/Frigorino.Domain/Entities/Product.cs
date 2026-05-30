@@ -15,6 +15,7 @@ namespace Frigorino.Domain.Entities
         public string NormalizedName { get; set; } = string.Empty;
 
         // AI Classification layer (overwritten wholesale on (re)classification).
+        public ProductCategory ClassificationProductCategory { get; set; }
         public ExpiryHandling ClassificationExpiryHandling { get; set; }
         public int? ClassificationShelfLifeDays { get; set; }
         public int ClassifierVersion { get; set; }
@@ -63,10 +64,15 @@ namespace Frigorino.Domain.Entities
         // by ApplicationDbContext.SaveChangesAsync.
         public void ApplyClassification(ProductClassification classification, int classifierVersion)
         {
+            ClassificationProductCategory = classification.Category;
             ClassificationExpiryHandling = classification.Expiry.Handling;
             ClassificationShelfLifeDays = classification.Expiry.ShelfLifeDays;
             ClassifierVersion = classifierVersion;
         }
+
+        // Effective category the rest of the app reads. Minimal today (Classification only); becomes
+        // Override ?? Classification when override columns land.
+        public ProductCategory EffectiveCategory => ClassificationProductCategory;
 
         // Effective expiry the rest of the app reads. Minimal today (Classification only); becomes
         // Override ?? Classification when override columns land. Safe .Value — columns are written

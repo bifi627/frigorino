@@ -34,6 +34,14 @@ public class ClassificationApiSteps(ScenarioContextHolder ctx, TestApiClient api
         Assert.Equal(ExpiryHandling.NonPerishable, product!.ClassificationExpiryHandling);
     }
 
+    [Then("the product {string} is categorized as {string}")]
+    public async Task ThenProductIsCategorizedAs(string normalizedName, string category)
+    {
+        var product = await PollForProductAsync(normalizedName);
+        Assert.NotNull(product);
+        Assert.Equal(Enum.Parse<ProductCategory>(category), product!.ClassificationProductCategory);
+    }
+
     // Classification is fire-and-forget; poll the catalog (real Postgres) until the row appears.
     private async Task<Product?> PollForProductAsync(string normalizedName)
     {

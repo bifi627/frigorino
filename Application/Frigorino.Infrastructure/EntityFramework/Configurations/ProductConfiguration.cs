@@ -20,6 +20,9 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .HasMaxLength(Product.NormalizedNameMaxLength)
                 .IsRequired();
 
+            builder.Property(p => p.ClassificationProductCategory)
+                .IsRequired();
+
             builder.Property(p => p.ClassificationExpiryHandling)
                 .IsRequired();
 

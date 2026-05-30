@@ -21,7 +21,7 @@ namespace Frigorino.Test.Infrastructure
         {
             using var db = NewContext();
             var classification = new ProductClassification(
-                ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, 7).Value);
+                ProductCategory.Food, ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, 7).Value);
             var product = Product.Create(42, "milk", classification, 1).Value;
 
             db.Products.Add(product);

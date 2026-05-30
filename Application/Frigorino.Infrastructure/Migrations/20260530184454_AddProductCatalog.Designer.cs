@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Frigorino.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260530180628_AddProductCatalog")]
+    [Migration("20260530184454_AddProductCatalog")]
     partial class AddProductCatalog
     {
         /// <inheritdoc />
@@ -310,6 +310,9 @@ namespace Frigorino.Infrastructure.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ClassificationExpiryHandling")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClassificationProductCategory")
                         .HasColumnType("integer");
 
                     b.Property<int?>("ClassificationShelfLifeDays")

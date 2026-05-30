@@ -20,6 +20,7 @@ namespace Frigorino.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     HouseholdId = table.Column<int>(type: "integer", nullable: false),
                     NormalizedName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ClassificationProductCategory = table.Column<int>(type: "integer", nullable: false),
                     ClassificationExpiryHandling = table.Column<int>(type: "integer", nullable: false),
                     ClassificationShelfLifeDays = table.Column<int>(type: "integer", nullable: true),
                     ClassifierVersion = table.Column<int>(type: "integer", nullable: false),

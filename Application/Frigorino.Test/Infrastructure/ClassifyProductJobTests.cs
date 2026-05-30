@@ -44,7 +44,7 @@ namespace Frigorino.Test.Infrastructure
 
         private static Result<ProductClassification> AiResult(int days) =>
             Result.Ok(new ProductClassification(
-                ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value));
+                ProductCategory.Food, ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value));
 
         [Fact]
         public async Task Run_NewName_ClassifiesAndInserts()
@@ -60,6 +60,7 @@ namespace Frigorino.Test.Infrastructure
             using var verify = NewContext(dbName);
             var product = await verify.Products.SingleAsync();
             Assert.Equal("milk", product.NormalizedName);
+            Assert.Equal(ProductCategory.Food, product.ClassificationProductCategory);
             Assert.Equal(ExpiryHandling.AiRecommendsShelfLife, product.ClassificationExpiryHandling);
             Assert.Equal(7, product.ClassificationShelfLifeDays);
             Assert.Equal(1, product.ClassifierVersion);
@@ -97,7 +98,7 @@ namespace Frigorino.Test.Infrastructure
             }
 
             var classifier = new FakeClassifier(
-                Result.Ok(new ProductClassification(ExpiryProfile.NonPerishable)), version: 2);
+                Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable)), version: 2);
             using (var db = NewContext(dbName))
             {
                 var job = new ClassifyProductJob(db, classifier, NullLogger<ClassifyProductJob>.Instance);
@@ -106,6 +107,7 @@ namespace Frigorino.Test.Infrastructure
 
             using var verify = NewContext(dbName);
             var product = await verify.Products.SingleAsync();
+            Assert.Equal(ProductCategory.Other, product.ClassificationProductCategory);
             Assert.Equal(ExpiryHandling.NonPerishable, product.ClassificationExpiryHandling);
             Assert.Equal(2, product.ClassifierVersion);
             Assert.Equal(1, classifier.Calls);

@@ -309,6 +309,9 @@ namespace Frigorino.Infrastructure.Migrations
                     b.Property<int>("ClassificationExpiryHandling")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ClassificationProductCategory")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ClassificationShelfLifeDays")
                         .HasColumnType("integer");
 
