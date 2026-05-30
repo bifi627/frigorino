@@ -49,16 +49,18 @@ namespace Frigorino.Infrastructure.Services
 
         private static readonly string SystemPrompt =
             "You classify a single item a user wrote on a household list. Items are usually groceries or household supplies, but may be anything (e.g. a reminder, or a non-consumable object).\n" +
-            "In 'reasoning', briefly justify your choice in one short sentence.\n" +
+            "In 'reasoning', briefly justify your choice in one short sentence always in english not matter the input language.\n" +
             "Set 'productCategory' to exactly one of:\n" +
+            "- Unknown: anything you do not recognize as an item (e. g. nonsense text, placeholders, invalid characters, emotes)\n" +
             "- Food: edible/drinkable groceries (e.g. milk/Milch, bananas/Bananen, bread/Brot).\n" +
             "- HouseholdSupply: non-food consumables you restock (e.g. dish soap/Spülmittel, batteries/Batterien, paper towels/Küchenrolle).\n" +
             "- Other: anything not stocked as a food/household consumable (e.g. a task like 'call dentist'/'Zahnarzt anrufen', or a one-off object).\n" +
             "Set 'expiryHandling' to exactly one of:\n" +
+            "- Unknown: anything you do not recognize as an item (e. g. nonsense text, placeholders, invalid characters, emotes)\n" +
             "- NonPerishable: effectively never expires (e.g. salt/Salz, sugar/Zucker, dish soap/Spülmittel). defaultShelfLifeDays = null.\n" +
             "- UserEntersFromPackage: perishable with a printed date the user should read (e.g. yogurt/Joghurt, packaged meat/abgepacktes Fleisch). defaultShelfLifeDays = null.\n" +
             $"- AiRecommendsShelfLife: perishable with a predictable typical shelf life you can estimate in days (e.g. fresh milk/Frischmilch ~7, bananas/Bananen ~5, lettuce/Salat ~4). defaultShelfLifeDays = that estimate, {ExpiryProfile.ShelfLifeDaysMin}..{ExpiryProfile.ShelfLifeDaysMax}.\n" +
-            "For Other items, use NonPerishable with defaultShelfLifeDays = null.\n" +
+            "For Other items, use Unknown with defaultShelfLifeDays = null.\n" +
             "Respond only via the provided JSON schema.";
 
         // Per-request config is invariant (same schema + system prompt every call), so build once.

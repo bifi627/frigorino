@@ -2,8 +2,9 @@ namespace Frigorino.Domain.Products
 {
     public enum ExpiryHandling
     {
-        NonPerishable = 0,
-        UserEntersFromPackage = 1,
-        AiRecommendsShelfLife = 2,
+        Unknown = 0,
+        NonPerishable = 1,
+        UserEntersFromPackage = 2,
+        AiRecommendsShelfLife = 3,
     }
 }

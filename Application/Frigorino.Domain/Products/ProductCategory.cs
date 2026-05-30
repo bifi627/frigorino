@@ -5,8 +5,9 @@ namespace Frigorino.Domain.Products
     // (default(ProductCategory) and the refusal/uncertain fallback): unknown things are not promoted.
     public enum ProductCategory
     {
-        Other = 0,
-        Food = 1,
-        HouseholdSupply = 2,
+        Unknown = 0,
+        Other = 1,
+        Food = 2,
+        HouseholdSupply = 3,
     }
 }
