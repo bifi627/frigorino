@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentResults;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
@@ -14,31 +15,53 @@ namespace Frigorino.Infrastructure.Services
         // Bump when the prompt or schema changes to force re-classification on the next reference.
         public int Version => 1;
 
-        private static readonly BinaryData Schema = BinaryData.FromBytes("""
+        // The strict Structured Outputs schema. Enum values and the shelf-life bounds are
+        // interpolated from the domain types so they can't silently drift from ExpiryHandling /
+        // ExpiryProfile — only the JSON skeleton is hand-written.
+        private static readonly BinaryData Schema = BinaryData.FromString($$"""
             {
                 "type": "object",
                 "properties": {
                     "expiryHandling": {
                         "type": "string",
-                        "enum": ["NonPerishable", "UserEntersFromPackage", "AiRecommendsShelfLife"]
+                        "enum": [{{string.Join(", ", Enum.GetNames<ExpiryHandling>().Select(n => $"\"{n}\""))}}]
                     },
                     "defaultShelfLifeDays": {
                         "type": ["integer", "null"],
-                        "minimum": 1,
-                        "maximum": 365
+                        "minimum": {{ExpiryProfile.ShelfLifeDaysMin}},
+                        "maximum": {{ExpiryProfile.ShelfLifeDaysMax}}
                     }
                 },
                 "required": ["expiryHandling", "defaultShelfLifeDays"],
                 "additionalProperties": false
             }
-            """u8.ToArray());
+            """);
 
-        private const string SystemPrompt =
+        private static readonly string SystemPrompt =
             "You classify how a grocery/household product expires. Choose exactly one expiryHandling:\n" +
             "- NonPerishable: effectively never expires (e.g. salt/Salz, sugar/Zucker, dish soap/Spülmittel). defaultShelfLifeDays = null.\n" +
             "- UserEntersFromPackage: perishable with a printed date the user should read (e.g. yogurt/Joghurt, packaged meat/abgepacktes Fleisch). defaultShelfLifeDays = null.\n" +
-            "- AiRecommendsShelfLife: perishable with a predictable typical shelf life you can estimate in days (e.g. fresh milk/Frischmilch ~7, bananas/Bananen ~5, lettuce/Salat ~4). defaultShelfLifeDays = that estimate, 1..365.\n" +
+            $"- AiRecommendsShelfLife: perishable with a predictable typical shelf life you can estimate in days (e.g. fresh milk/Frischmilch ~7, bananas/Bananen ~5, lettuce/Salat ~4). defaultShelfLifeDays = that estimate, {ExpiryProfile.ShelfLifeDaysMin}..{ExpiryProfile.ShelfLifeDaysMax}.\n" +
             "Respond only via the provided JSON schema.";
+
+        // Per-request config is invariant (same schema + system prompt every call), so build once.
+        private static readonly SystemChatMessage SystemMessage = new(SystemPrompt);
+
+        private static readonly ChatCompletionOptions Options = new()
+        {
+            ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
+                jsonSchemaFormatName: "product_classification",
+                jsonSchema: Schema,
+                jsonSchemaIsStrict: true),
+        };
+
+        private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+        {
+            Converters = { new JsonStringEnumConverter() },
+        };
+
+        // The schema mirrors this shape exactly; STJ maps the string enum and nullable int directly.
+        private sealed record ClassifierResponse(ExpiryHandling ExpiryHandling, int? DefaultShelfLifeDays);
 
         private readonly ChatClient _client;
         private readonly ILogger<OpenAiItemClassifier> _logger;
@@ -51,23 +74,11 @@ namespace Frigorino.Infrastructure.Services
 
         public async Task<Result<ProductClassification>> ClassifyAsync(string normalizedName, CancellationToken ct)
         {
-            var options = new ChatCompletionOptions
-            {
-                ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
-                    jsonSchemaFormatName: "product_classification",
-                    jsonSchema: Schema,
-                    jsonSchemaIsStrict: true),
-            };
-
-            var messages = new ChatMessage[]
-            {
-                new SystemChatMessage(SystemPrompt),
-                new UserChatMessage(normalizedName),
-            };
+            var messages = new ChatMessage[] { SystemMessage, new UserChatMessage(normalizedName) };
 
             try
             {
-                var completion = await _client.CompleteChatAsync(messages, options, ct);
+                var completion = await _client.CompleteChatAsync(messages, Options, ct);
 
                 // Refusal or empty content → treat as non-perishable rather than failing the job.
                 if (completion.Value.Content.Count == 0
@@ -79,15 +90,11 @@ namespace Frigorino.Infrastructure.Services
                     return Result.Ok(new ProductClassification(ExpiryProfile.NonPerishable));
                 }
 
-                using var json = JsonDocument.Parse(completion.Value.Content[0].Text);
-                var root = json.RootElement;
+                var dto = JsonSerializer.Deserialize<ClassifierResponse>(completion.Value.Content[0].Text, JsonOptions);
 
-                var handling = Enum.Parse<ExpiryHandling>(root.GetProperty("expiryHandling").GetString()!);
-                int? days = root.GetProperty("defaultShelfLifeDays").ValueKind == JsonValueKind.Null
-                    ? null
-                    : root.GetProperty("defaultShelfLifeDays").GetInt32();
-
-                var profile = ExpiryProfile.Create(handling, days);
+                var profile = dto is null
+                    ? Result.Fail<ExpiryProfile>("Empty classifier payload.")
+                    : ExpiryProfile.Create(dto.ExpiryHandling, dto.DefaultShelfLifeDays);
                 if (profile.IsFailed)
                 {
                     // Model produced a schema-valid-but-semantically-inconsistent combination; be safe.
