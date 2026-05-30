@@ -22,8 +22,9 @@ namespace Frigorino.Infrastructure.Services
                     // One consumer, many producers — lets the channel optimize.
                     SingleReader = true,
                     SingleWriter = false,
-                    // FullMode defaults to Wait, so TryWrite returns false when full
-                    // (we never call WriteAsync, so it never actually blocks).
+                    // FullMode defaults to Wait — but we only ever call TryWrite, which
+                    // returns false immediately on a full channel regardless of FullMode
+                    // (FullMode only governs the blocking WriteAsync path, which we never use).
                 });
         }
 
