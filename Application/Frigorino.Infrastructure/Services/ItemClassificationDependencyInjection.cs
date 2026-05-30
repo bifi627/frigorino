@@ -10,10 +10,6 @@ namespace Frigorino.Infrastructure.Services
         public static IServiceCollection AddItemClassification(
             this IServiceCollection services, IConfiguration configuration)
         {
-            // The job is always registered — it is resolved only when something is enqueued, which
-            // only the enabled (queueing) trigger does.
-            services.AddScoped<IClassifyProductJob, ClassifyProductJob>();
-
             var enabled = configuration.GetValue<bool>("Classifier:Enabled");
             var apiKey = configuration["Classifier:ApiKey"];
             var model = configuration["Classifier:Model"];
@@ -26,6 +22,10 @@ namespace Frigorino.Infrastructure.Services
             {
                 services.AddSingleton(new ChatClient(model: model, apiKey: apiKey));
                 services.AddScoped<IItemClassifier, OpenAiItemClassifier>();
+                // The job depends on IItemClassifier, so it is registered only on the enabled path —
+                // and only the enabled (queueing) trigger ever enqueues it. Registering it
+                // unconditionally would fail ValidateOnBuild when no classifier is wired.
+                services.AddScoped<IClassifyProductJob, ClassifyProductJob>();
                 services.AddScoped<IProductClassificationTrigger, QueueingProductClassificationTrigger>();
             }
             else
