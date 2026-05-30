@@ -90,6 +90,15 @@
           "Npgsql": "10.0.3"
         }
       },
+      "OpenAI": {
+        "type": "Direct",
+        "requested": "[2.8.0, )",
+        "resolved": "2.8.0",
+        "contentHash": "KcYpZ9IhuxFD2hGAJlL5vABtkr00CjeJU0SY8CjZQyzvzkzLop8jhdX3iDvteVJg6e3y4TEiY+Kti4gDJAagnA==",
+        "dependencies": {
+          "System.ClientModel": "1.8.1"
+        }
+      },
       "FluentResults": {
         "type": "Transitive",
         "resolved": "4.0.0",
@@ -346,6 +355,15 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
       },
+      "System.ClientModel": {
+        "type": "Transitive",
+        "resolved": "1.8.1",
+        "contentHash": "4oUQgw/vaO4FBOk3YsH40hbrjxRED1l95rRLvTMtHXfQxapXya9IfPpm/KgwValFFtYTfYGFOs/qzGmGyexicQ==",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
+          "System.Memory.Data": "8.0.1"
+        }
+      },
       "System.CodeDom": {
         "type": "Transitive",
         "resolved": "7.0.0",
@@ -415,6 +433,11 @@
         "dependencies": {
           "System.CodeDom": "7.0.0"
         }
+      },
+      "System.Memory.Data": {
+        "type": "Transitive",
+        "resolved": "8.0.1",
+        "contentHash": "BVYuec3jV23EMRDeR7Dr1/qhx7369dZzJ9IWy2xylvb4YfXsrUxspWc4UWYid/tj4zZK58uGZqn2WQiaDMhmAg=="
       },
       "frigorino.domain": {
         "type": "Project",
