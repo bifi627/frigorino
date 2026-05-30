@@ -56,6 +56,7 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
         builder.Services.AddFirebaseAuth(builder.Configuration);
     }
 }
+builder.Services.AddBackgroundTaskQueue();
 builder.Services.AddMaintenanceServices();
 
 if (!isBuildTimeOpenApi)
