@@ -1,4 +1,5 @@
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -47,7 +48,9 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.AddItem(request.Text);
+            var analysis = ItemTextRouter.Analyze(request.Text);
+
+            var result = list.AddItem(analysis.CleanName, analysis.Quantity);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();
@@ -55,7 +58,7 @@ namespace Frigorino.Features.Lists.Items
 
             await db.SaveChangesAsync(ct);
 
-            quantityTrigger.OnItemEntered(householdId, listId, result.Value.Id, request.Text);
+            quantityTrigger.OnItemRouted(householdId, listId, result.Value.Id, analysis);
 
             var response = ListItemResponse.From(result.Value);
             return TypedResults.Created(

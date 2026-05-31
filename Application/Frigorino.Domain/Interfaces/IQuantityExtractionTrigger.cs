@@ -1,11 +1,13 @@
+using Frigorino.Domain.Quantities;
+
 namespace Frigorino.Domain.Interfaces
 {
-    // Called by the list-item slices after an item's text is entered or changed. The enabled
-    // implementation digit-gates and enqueues the extract job (which chains to classification on
-    // the clean name); the disabled implementation skips extraction and classifies the raw text.
-    // This is the single front door the slices call — classification hangs off of it.
+    // Single front door the list-item slices call after computing an ItemTextAnalysis. The enabled
+    // implementation enqueues the extract job for NeedsExtraction (chaining to classification on the
+    // clean name) and classifies directly for Resolved/ClassifyOnly; the disabled implementation
+    // classifies the clean name for every non-skip route. SkipAi does nothing on either.
     public interface IQuantityExtractionTrigger
     {
-        void OnItemEntered(int householdId, int listId, int itemId, string rawText);
+        void OnItemRouted(int householdId, int listId, int itemId, ItemTextAnalysis analysis);
     }
 }
