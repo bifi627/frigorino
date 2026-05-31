@@ -33,8 +33,9 @@ export const useCreateListItem = () => {
                     ?.filter((i) => !i.status)
                     .reduce((max, i) => Math.max(max, i.sortOrder), 0) ?? 0;
 
+            const tempId = Date.now();
             const optimisticItem: ListItemResponse = {
-                id: Date.now(),
+                id: tempId,
                 text: variables.body.text,
                 quantity: null,
                 status: false,
@@ -48,7 +49,7 @@ export const useCreateListItem = () => {
                 old ? [...old, optimisticItem] : [optimisticItem],
             );
 
-            return { previousItems };
+            return { previousItems, tempId };
         },
         onError: (_data, variables, context) => {
             if (context?.previousItems) {
@@ -63,15 +64,25 @@ export const useCreateListItem = () => {
                 );
             }
         },
-        onSuccess: (_data, variables) => {
-            debouncedInvalidate(
-                getItemsQueryKey({
-                    path: {
-                        householdId: variables.path.householdId,
-                        listId: variables.path.listId,
-                    },
-                }),
-            );
+        onSuccess: (data, variables, context) => {
+            const queryKey = getItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                },
+            });
+            // Swap the temp-id optimistic row for the real server item immediately, so
+            // anything keyed on the real id (e.g. the extraction-poll row highlight) matches
+            // right away instead of waiting for the debounced refetch ~1s later.
+            if (context?.tempId !== undefined) {
+                queryClient.setQueryData<ListItemResponse[]>(
+                    queryKey,
+                    (old) =>
+                        old?.map((i) => (i.id === context.tempId ? data : i)) ??
+                        old,
+                );
+            }
+            debouncedInvalidate(queryKey);
         },
     });
 };

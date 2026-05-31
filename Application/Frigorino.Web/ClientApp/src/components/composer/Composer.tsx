@@ -25,6 +25,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     disabled = false,
     editing,
     initialDraft,
+    initialOpenId,
     suggestions,
     duplicate,
 }: ComposerProps<F>) {
@@ -45,7 +46,11 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         inputRef,
         focusInput,
         reset,
-    } = useComposerState({ features: featureList, initialDraft });
+    } = useComposerState({
+        features: featureList,
+        initialDraft,
+        initialOpenId,
+    });
 
     const isEditing = editing?.active ?? false;
     const trimmed = text.trim();

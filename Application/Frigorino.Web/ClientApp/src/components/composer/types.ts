@@ -107,6 +107,8 @@ export interface ComposerProps<F extends readonly AnyFeature[]> {
     disabled?: boolean;
     editing?: EditingConfig;
     initialDraft?: { text?: string; values?: Partial<ModifierValues<F>> };
+    /** Id of a modifier feature whose panel should start expanded (e.g. opened via its chip). */
+    initialOpenId?: string;
     suggestions?: SuggestionsConfig;
     duplicate?: DuplicateConfig;
 }

@@ -1,32 +1,18 @@
-import {
-    Box,
-    Chip,
-    CircularProgress,
-    Link,
-    ListItemText,
-    Typography,
-} from "@mui/material";
-import { useState } from "react";
+import { Box, Chip, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../../../hooks/useLongPress";
-import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
+import type { ListItemResponse } from "../../../../lib/api";
 import { formatQuantity } from "../quantityFormat";
-import { QuantityEditPopover } from "./QuantityEditPopover";
 
 interface Props {
     item: ListItemResponse;
-    isExtracting?: boolean;
-    onQuantityChange?: (q: QuantityDto) => void;
+    // Tapping the quantity chip opens the item in edit mode with the quantity panel open.
+    onEditQuantity?: () => void;
 }
 
-export function ListItemContent({
-    item,
-    isExtracting,
-    onQuantityChange,
-}: Props) {
+export function ListItemContent({ item, onEditQuantity }: Props) {
     const { t } = useTranslation();
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const events = useLongPress({
         shouldPreventDefault: true,
         onLongPress: () => {
@@ -52,20 +38,21 @@ export function ListItemContent({
                 </Typography>
             }
             secondary={
-                <Box
-                    sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                    }}
-                >
-                    {item.quantity ? (
+                item.quantity ? (
+                    <Box
+                        component="span"
+                        sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                        }}
+                    >
                         <Chip
                             size="small"
                             variant="outlined"
                             data-testid={`list-item-quantity-${item.text}`}
                             label={formatQuantity(t, item.quantity)}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
+                            onClick={onEditQuantity}
                             sx={{
                                 height: 20,
                                 textDecoration: item.status
@@ -73,29 +60,8 @@ export function ListItemContent({
                                     : "none",
                             }}
                         />
-                    ) : isExtracting ? (
-                        <CircularProgress
-                            size={12}
-                            data-testid={`list-item-quantity-loading-${item.text}`}
-                        />
-                    ) : (
-                        <Chip
-                            size="small"
-                            variant="outlined"
-                            label={t("common.quantity")}
-                            onClick={(e) => setAnchorEl(e.currentTarget)}
-                            sx={{ height: 20, opacity: 0.5 }}
-                        />
-                    )}
-                    {onQuantityChange && (
-                        <QuantityEditPopover
-                            anchorEl={anchorEl}
-                            current={item.quantity}
-                            onClose={() => setAnchorEl(null)}
-                            onSave={onQuantityChange}
-                        />
-                    )}
-                </Box>
+                    </Box>
+                ) : null
             }
         />
     );

@@ -21,6 +21,8 @@ export interface SortableListItemProps<T extends SortableItemInterface> {
     onDelete: (itemId: number) => void;
     isDragging?: boolean;
     isEditing?: boolean;
+    /** Background async work is happening on this row — shows a pulsing accent border. */
+    isProcessing?: boolean;
     showDragHandles?: boolean;
     showCheckbox?: boolean;
     renderContent: (item: T) => React.ReactNode;
@@ -33,6 +35,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
     onDelete,
     isDragging = false,
     isEditing = false,
+    isProcessing = false,
     showDragHandles = false,
     showCheckbox = false,
     renderContent,
@@ -90,10 +93,15 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                 mb: 0.5, // Reduced margin bottom for denser layout
                 bgcolor: isEditing ? "warning.50" : "background.paper",
                 border: "1px solid", // Reduced border width
-                borderColor: isEditing ? "warning.main" : "divider",
+                borderColor: isEditing
+                    ? "warning.main"
+                    : isProcessing
+                      ? "primary.main"
+                      : "divider",
                 boxShadow: isDragging ? 3 : isEditing ? 2 : 0, // Reduced shadow for cleaner look
                 opacity: item.status ? 0.7 : 1,
                 transition: "all 0.2s ease",
+                // Editing wins over processing (you can't edit a row mid-extraction).
                 ...(isEditing && {
                     animation: "pulse 2s ease-in-out infinite",
                     "@keyframes pulse": {
@@ -108,6 +116,21 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                         },
                     },
                 }),
+                ...(!isEditing &&
+                    isProcessing && {
+                        animation: "processingPulse 1.4s ease-in-out infinite",
+                        "@keyframes processingPulse": {
+                            "0%": {
+                                boxShadow: "0 0 0 0 rgba(25, 118, 210, 0.4)",
+                            },
+                            "70%": {
+                                boxShadow: "0 0 0 8px rgba(25, 118, 210, 0)",
+                            },
+                            "100%": {
+                                boxShadow: "0 0 0 0 rgba(25, 118, 210, 0)",
+                            },
+                        },
+                    }),
             }}
         >
             <ListItem sx={{ px: 0, py: 0 }} disablePadding>

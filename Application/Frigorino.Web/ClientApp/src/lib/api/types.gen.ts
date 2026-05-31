@@ -159,6 +159,7 @@ export type UpdateInventoryRequest = {
 export type UpdateItemRequest = {
     text: null | string;
     quantity: null | QuantityDto;
+    clearQuantity: null | boolean;
     status: null | boolean;
 };
 

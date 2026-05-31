@@ -14,7 +14,7 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
-import type { ListItemResponse } from "../../../lib/api";
+import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListContainer } from "../items/components/ListContainer";
 import { ListFooter } from "../items/components/ListFooter";
@@ -33,6 +33,9 @@ export const ListViewPage = () => {
         null,
     );
     const [showDragHandles, setShowDragHandles] = useState(false);
+    // True when edit mode was opened via the quantity chip — the composer then starts
+    // with the quantity panel expanded.
+    const [editOpenQuantity, setEditOpenQuantity] = useState(false);
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
         hadDigit: boolean;
@@ -111,7 +114,7 @@ export const ListViewPage = () => {
     );
 
     const handleUpdateItem = useCallback(
-        (data: string) => {
+        (data: string, quantity: QuantityDto | null) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
@@ -119,15 +122,37 @@ export const ListViewPage = () => {
                         listId: listIdNum,
                         itemId: editingItem.id,
                     },
-                    body: { text: data, quantity: null, status: null },
+                    // The edit composer is authoritative for quantity: a non-null value sets it,
+                    // an empty one clears it (clearQuantity). Text is always sent, so this never
+                    // collides with the domain's null=preserve semantics for the other fields.
+                    body: {
+                        text: data,
+                        quantity,
+                        clearQuantity: quantity === null,
+                        status: null,
+                    },
                 });
+                setEditOpenQuantity(false);
                 setEditingItem(null);
             }
         },
         [editingItem?.id, updateMutation, householdId, listIdNum],
     );
 
-    const handleCancelEdit = useCallback(() => setEditingItem(null), []);
+    const handleEditItem = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(false);
+        setEditingItem(item);
+    }, []);
+
+    const handleEditQuantity = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(true);
+        setEditingItem(item);
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditOpenQuantity(false);
+        setEditingItem(null);
+    }, []);
 
     const handleUncheckExisting = useCallback(
         (itemId: number) => {
@@ -208,7 +233,8 @@ export const ListViewPage = () => {
                 householdId={householdId}
                 listId={listIdNum}
                 editingItem={editingItem}
-                onEdit={setEditingItem}
+                onEdit={handleEditItem}
+                onEditQuantity={handleEditQuantity}
                 showDragHandles={showDragHandles}
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
@@ -223,6 +249,7 @@ export const ListViewPage = () => {
                 onUncheckExisting={handleUncheckExisting}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
+                openQuantityPanel={editOpenQuantity}
             />
         </Box>
     );

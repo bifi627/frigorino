@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     getItemOptions,
     getItemsQueryKey,
@@ -20,12 +20,20 @@ export const useExtractionPoll = (
 ) => {
     const queryClient = useQueryClient();
     const startedAtRef = useRef<number>(0);
+    // The extraction window stays "active" from the moment a pollable item arrives until
+    // the quantity lands or the deadline passes — this drives the row indicator, so it must
+    // not flicker with the brief in-flight (`isFetching`) moments of each poll.
+    const [active, setActive] = useState(false);
 
-    // Track the poll start time when a new itemId arrives
     useEffect(() => {
-        if (enabled && (itemId ?? 0) > 0) {
-            startedAtRef.current = Date.now();
+        if (!(enabled && (itemId ?? 0) > 0)) {
+            setActive(false);
+            return;
         }
+        startedAtRef.current = Date.now();
+        setActive(true);
+        const timer = setTimeout(() => setActive(false), MAX_POLL_MS);
+        return () => clearTimeout(timer);
     }, [itemId, enabled]);
 
     const query = useQuery({
@@ -46,6 +54,7 @@ export const useExtractionPoll = (
     useEffect(() => {
         const item = query.data;
         if (!item?.quantity) return;
+        setActive(false); // quantity landed — close the window immediately
         queryClient.setQueryData<ListItemResponse[]>(
             getItemsQueryKey({ path: { householdId, listId } }),
             (old) =>
@@ -57,11 +66,7 @@ export const useExtractionPoll = (
         );
     }, [query.data, householdId, listId, queryClient]);
 
-    const isExtracting =
-        enabled &&
-        (itemId ?? 0) > 0 &&
-        !query.data?.quantity &&
-        query.isFetching;
+    const isExtracting = active && !query.data?.quantity;
 
     return { isExtracting, extractingItemId: itemId };
 };

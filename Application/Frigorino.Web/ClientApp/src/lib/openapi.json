@@ -2391,6 +2391,7 @@
         "required": [
           "text",
           "quantity",
+          "clearQuantity",
           "status"
         ],
         "type": "object",
@@ -2409,6 +2410,12 @@
               {
                 "$ref": "#/components/schemas/QuantityDto"
               }
+            ]
+          },
+          "clearQuantity": {
+            "type": [
+              "null",
+              "boolean"
             ]
           },
           "status": {

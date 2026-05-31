@@ -6,7 +6,6 @@ import { useDeleteListItem } from "../useDeleteListItem";
 import { useListItems } from "../useListItems";
 import { useReorderListItem } from "../useReorderListItem";
 import { useToggleListItemStatus } from "../useToggleListItemStatus";
-import { useUpdateListItem } from "../useUpdateListItem";
 import { ListItemContent } from "./ListItemContent";
 
 interface ListContainerProps {
@@ -14,6 +13,8 @@ interface ListContainerProps {
     listId: number;
     editingItem: ListItemResponse | null;
     onEdit: (item: ListItemResponse) => void;
+    /** Opens edit mode with the quantity panel expanded (triggered by the quantity chip). */
+    onEditQuantity: (item: ListItemResponse) => void;
     showDragHandles: boolean;
     isExtracting?: boolean;
     extractingItemId?: number | null;
@@ -26,6 +27,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
             listId,
             editingItem,
             onEdit,
+            onEditQuantity,
             showDragHandles,
             isExtracting,
             extractingItemId,
@@ -40,7 +42,6 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
         const deleteMutation = useDeleteListItem();
         const toggleMutation = useToggleListItemStatus();
         const reorderMutation = useReorderListItem();
-        const updateItem = useUpdateListItem();
 
         return (
             <Container
@@ -78,27 +79,13 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                     editingItem={editingItem}
                     showDragHandles={showDragHandles}
                     showCheckbox={true}
+                    isItemProcessing={(item) =>
+                        Boolean(isExtracting) && item.id === extractingItemId
+                    }
                     renderContent={(item) => (
                         <ListItemContent
                             item={item}
-                            isExtracting={
-                                Boolean(isExtracting) &&
-                                item.id === extractingItemId
-                            }
-                            onQuantityChange={(q) =>
-                                updateItem.mutate({
-                                    path: {
-                                        householdId,
-                                        listId,
-                                        itemId: item.id,
-                                    },
-                                    body: {
-                                        text: null,
-                                        quantity: q,
-                                        status: null,
-                                    },
-                                })
-                            }
+                            onEditQuantity={() => onEditQuantity(item)}
                         />
                     )}
                 />
