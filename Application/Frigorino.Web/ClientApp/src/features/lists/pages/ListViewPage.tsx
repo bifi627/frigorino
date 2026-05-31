@@ -22,6 +22,7 @@ import { useCreateListItem } from "../items/useCreateListItem";
 import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
+import { useExtractionPoll } from "../items/useExtractionPoll";
 import { useList } from "../useList";
 
 export const ListViewPage = () => {
@@ -32,6 +33,10 @@ export const ListViewPage = () => {
         null,
     );
     const [showDragHandles, setShowDragHandles] = useState(false);
+    const [pendingExtraction, setPendingExtraction] = useState<{
+        id: number;
+        hadDigit: boolean;
+    } | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
@@ -49,6 +54,13 @@ export const ListViewPage = () => {
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
+
+    const { isExtracting, extractingItemId } = useExtractionPoll(
+        householdId,
+        listIdNum,
+        pendingExtraction?.id ?? null,
+        pendingExtraction?.hadDigit ?? false,
+    );
 
     const scrollToLastUncheckedItem = useCallback(() => {
         if (scrollContainerRef.current) {
@@ -78,13 +90,13 @@ export const ListViewPage = () => {
     }, []);
 
     const handleAddItem = useCallback(
-        (data: string) => {
+        async (data: string) => {
             if (!householdId) return;
-            // TODO(Task 11): capture created item id + start extraction poll
-            createMutation.mutate({
+            const created = await createMutation.mutateAsync({
                 path: { householdId, listId: listIdNum },
                 body: { text: data },
             });
+            setPendingExtraction({ id: created.id, hadDigit: /\d/.test(data) });
         },
         [createMutation, householdId, listIdNum],
     );
@@ -189,6 +201,8 @@ export const ListViewPage = () => {
                 editingItem={editingItem}
                 onEdit={setEditingItem}
                 showDragHandles={showDragHandles}
+                isExtracting={isExtracting}
+                extractingItemId={extractingItemId}
             />
 
             <ListFooter

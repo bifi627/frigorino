@@ -15,10 +15,23 @@ interface ListContainerProps {
     editingItem: ListItemResponse | null;
     onEdit: (item: ListItemResponse) => void;
     showDragHandles: boolean;
+    isExtracting?: boolean;
+    extractingItemId?: number | null;
 }
 
 export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
-    ({ householdId, listId, editingItem, onEdit, showDragHandles }, ref) => {
+    (
+        {
+            householdId,
+            listId,
+            editingItem,
+            onEdit,
+            showDragHandles,
+            isExtracting,
+            extractingItemId,
+        },
+        ref,
+    ) => {
         const {
             data: items = [],
             isLoading,
@@ -68,6 +81,10 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                     renderContent={(item) => (
                         <ListItemContent
                             item={item}
+                            isExtracting={
+                                Boolean(isExtracting) &&
+                                item.id === extractingItemId
+                            }
                             onQuantityChange={(q) =>
                                 updateItem.mutate({
                                     path: {
