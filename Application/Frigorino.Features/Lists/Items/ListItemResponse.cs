@@ -7,7 +7,7 @@ namespace Frigorino.Features.Lists.Items
         int Id,
         int ListId,
         string Text,
-        string? Quantity,
+        QuantityDto? Quantity,
         bool Status,
         int SortOrder,
         DateTime CreatedAt,
@@ -19,7 +19,9 @@ namespace Frigorino.Features.Lists.Items
                 item.Id,
                 item.ListId,
                 item.Text,
-                item.Quantity,
+                item.QuantityValue == null
+                    ? null
+                    : new QuantityDto(item.QuantityValue.Value, item.QuantityUnit!.Value),
                 item.Status,
                 item.SortOrder,
                 item.CreatedAt,
@@ -32,7 +34,9 @@ namespace Frigorino.Features.Lists.Items
             i.Id,
             i.ListId,
             i.Text,
-            i.Quantity,
+            i.QuantityValue == null
+                ? null
+                : new QuantityDto(i.QuantityValue.Value, i.QuantityUnit!.Value),
             i.Status,
             i.SortOrder,
             i.CreatedAt,

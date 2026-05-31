@@ -1,5 +1,6 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record UpdateItemRequest(string? Text, string? Quantity, bool? Status);
+    public sealed record UpdateItemRequest(string? Text, QuantityDto? Quantity, bool? Status);
 
     public static class UpdateItemEndpoint
     {
@@ -49,7 +50,18 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.UpdateItem(itemId, request.Text, request.Quantity, request.Status);
+            Quantity? quantity = null;
+            if (request.Quantity is not null)
+            {
+                var parsed = Quantity.Create(request.Quantity.Value, request.Quantity.Unit);
+                if (parsed.IsFailed)
+                {
+                    return parsed.ToValidationProblem();
+                }
+                quantity = parsed.Value;
+            }
+
+            var result = list.UpdateItem(itemId, request.Text, quantity, request.Status);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];

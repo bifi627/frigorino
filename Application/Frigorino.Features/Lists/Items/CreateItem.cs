@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record CreateItemRequest(string Text, string? Quantity);
+    public sealed record CreateItemRequest(string Text);
 
     public static class CreateItemEndpoint
     {
@@ -47,7 +47,7 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.AddItem(request.Text, request.Quantity);
+            var result = list.AddItem(request.Text);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();

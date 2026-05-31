@@ -1,5 +1,6 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Test.Domain
 {
@@ -19,7 +20,7 @@ namespace Frigorino.Test.Domain
         {
             var list = NewList();
 
-            var result = list.AddItem("Milk", null);
+            var result = list.AddItem("Milk");
 
             Assert.True(result.IsSuccess);
             Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, result.Value.SortOrder);
@@ -32,10 +33,10 @@ namespace Frigorino.Test.Domain
         public void AddItem_AppendsBelowLastUnchecked()
         {
             var list = NewList();
-            list.AddItem("Milk", null);
-            list.AddItem("Eggs", "12");
+            list.AddItem("Milk");
+            list.AddItem("Eggs");
 
-            var third = list.AddItem("Bread", null);
+            var third = list.AddItem("Bread");
 
             Assert.True(third.IsSuccess);
             var expected = SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap * 3;
@@ -47,7 +48,7 @@ namespace Frigorino.Test.Domain
         {
             var list = NewList();
 
-            var result = list.AddItem("   ", null);
+            var result = list.AddItem("   ");
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(ListItem.Text), result.Errors[0].Metadata["Property"]);
@@ -59,45 +60,23 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var tooLong = new string('x', ListItem.TextMaxLength + 1);
 
-            var result = list.AddItem(tooLong, null);
+            var result = list.AddItem(tooLong);
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(ListItem.Text), result.Errors[0].Metadata["Property"]);
         }
 
         [Fact]
-        public void AddItem_QuantityTooLong_FailsKeyedOnQuantity()
-        {
-            var list = NewList();
-            var tooLong = new string('x', ListItem.QuantityMaxLength + 1);
-
-            var result = list.AddItem("Milk", tooLong);
-
-            Assert.True(result.IsFailed);
-            Assert.Equal(nameof(ListItem.Quantity), result.Errors[0].Metadata["Property"]);
-        }
-
-        [Fact]
-        public void AddItem_TrimsTextAndQuantity()
+        public void AddItem_TrimsText()
         {
             var list = NewList();
 
-            var result = list.AddItem("  Milk  ", "  2 L  ");
+            var result = list.AddItem("  Milk  ");
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Milk", result.Value.Text);
-            Assert.Equal("2 L", result.Value.Quantity);
-        }
-
-        [Fact]
-        public void AddItem_WhitespaceQuantity_NormalisedToNull()
-        {
-            var list = NewList();
-
-            var result = list.AddItem("Milk", "   ");
-
-            Assert.True(result.IsSuccess);
-            Assert.Null(result.Value.Quantity);
+            Assert.Null(result.Value.QuantityValue);
+            Assert.Null(result.Value.QuantityUnit);
         }
 
         // ------- ToggleItemStatus into a populated checked section -------
@@ -148,23 +127,36 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void UpdateItem_PartialUpdate_PreservesUnsetFields()
+        public void UpdateItem_PartialUpdate_PreservesUnsetQuantity()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", quantity: "1 L");
+            var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
 
             var result = list.UpdateItem(item.Id, text: "Soy milk", quantity: null, status: null);
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Soy milk", item.Text);
-            Assert.Equal("1 L", item.Quantity);
+            Assert.Equal(1m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Liter, item.QuantityUnit);
+        }
+
+        [Fact]
+        public void UpdateItem_SetsQuantity()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+            var result = list.UpdateItem(item.Id, text: null,
+                quantity: Quantity.Create(2, QuantityUnit.Bottle).Value, status: null);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Bottle, item.QuantityUnit);
         }
 
         [Fact]
         public void UpdateItem_AllNullFields_FailsAsValidationError()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", quantity: "1 L");
+            var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
             var before = item.UpdatedAt;
 
             var result = list.UpdateItem(item.Id, text: null, quantity: null, status: null);
@@ -249,6 +241,55 @@ namespace Frigorino.Test.Domain
 
             Assert.True(result.IsSuccess);
             Assert.True(item.UpdatedAt > before);
+        }
+
+        // ------- ApplyExtractedQuantity -------
+
+        [Fact]
+        public void ApplyExtractedQuantity_RewritesTextAndSetsQuantity()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "20 apples");
+            var result = list.ApplyExtractedQuantity(item.Id, "apples",
+                Quantity.Create(20, QuantityUnit.Piece).Value);
+            Assert.True(result.IsSuccess);
+            Assert.Equal("apples", item.Text);
+            Assert.Equal(20m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Piece, item.QuantityUnit);
+        }
+
+        [Fact]
+        public void ApplyExtractedQuantity_OverwritesExistingQuantity()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "1l milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
+            var result = list.ApplyExtractedQuantity(item.Id, "milk",
+                Quantity.Create(20, QuantityUnit.Piece).Value);
+            Assert.True(result.IsSuccess);
+            Assert.Equal("milk", item.Text);
+            Assert.Equal(20m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Piece, item.QuantityUnit);
+        }
+
+        [Fact]
+        public void ApplyExtractedQuantity_NoQuantity_RewritesTextLeavesQuantityNull()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "milk");
+            var result = list.ApplyExtractedQuantity(item.Id, "milk", quantity: null);
+            Assert.True(result.IsSuccess);
+            Assert.Equal("milk", item.Text);
+            Assert.Null(item.QuantityValue);
+            Assert.Null(item.QuantityUnit);
+        }
+
+        [Fact]
+        public void ApplyExtractedQuantity_ItemNotFound_ReturnsEntityNotFound()
+        {
+            var list = NewList();
+            var result = list.ApplyExtractedQuantity(itemId: 999, cleanName: "apples", quantity: null);
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
         }
 
         // ------- RemoveItem -------
@@ -535,14 +576,15 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private ListItem AddSeed(List list, string text, string? quantity = null, bool status = false, int? sortOrder = null)
+        private ListItem AddSeed(List list, string text, Quantity? quantity = null, bool status = false, int? sortOrder = null)
         {
             var item = new ListItem
             {
                 Id = ++_nextItemId,
                 ListId = list.Id,
                 Text = text,
-                Quantity = quantity,
+                QuantityValue = quantity?.Value,
+                QuantityUnit = quantity?.Unit,
                 Status = status,
                 SortOrder = sortOrder ?? (status
                     ? SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap
