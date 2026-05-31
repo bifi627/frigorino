@@ -135,7 +135,7 @@ namespace Frigorino.Domain.Entities
         // reorder / delete / compact, matching the collaborative grocery-list UX. The handler
         // enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<ListItem> AddItem(string text)
+        public Result<ListItem> AddItem(string text, Quantity? quantity = null)
         {
             var errors = ValidateItemText(text, requireText: true);
             if (errors.Count > 0)
@@ -148,8 +148,8 @@ namespace Frigorino.Domain.Entities
             {
                 ListId = Id,
                 Text = text.Trim(),
-                QuantityValue = null,
-                QuantityUnit = null,
+                QuantityValue = quantity?.Value,
+                QuantityUnit = quantity?.Unit,
                 Status = false,
                 SortOrder = ComputeAppendSortOrder(targetStatus: false),
                 CreatedAt = now,
