@@ -302,10 +302,12 @@ namespace Frigorino.Test.Domain
         public void Analyze_NonResolvedRoute_KeepsRawTextAsCleanName()
         {
             // The trigger keys off CleanName for every route; non-Resolved must echo raw text.
-            var result = ItemTextRouter.Analyze("20 apples mid 3 string");
+            // ("milk 2" is a trailing bare integer that TryParse rejects — leading bare integers
+            // like "20 apples..." would instead Resolve, so they must not be used here.)
+            var result = ItemTextRouter.Analyze("milk 2");
 
             Assert.Equal(ItemTextRoute.NeedsExtraction, result.Route);
-            Assert.Equal("20 apples mid 3 string", result.CleanName);
+            Assert.Equal("milk 2", result.CleanName);
         }
     }
 }
