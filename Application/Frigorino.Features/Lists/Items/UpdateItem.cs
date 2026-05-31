@@ -61,7 +61,28 @@ namespace Frigorino.Features.Lists.Items
                 quantity = parsed.Value;
             }
 
-            var result = list.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.Status);
+            // Run the deterministic router ONLY on a text change with no explicit quantity intent —
+            // same condition as the legacy re-extraction guard (the edit composer always sends a
+            // quantity or ClearQuantity, making the user authoritative). On a Resolved parse we write
+            // the stripped name + quantity in this same save; SkipAi/NeedsExtraction/ClassifyOnly
+            // leave the user's text as-typed and the existing quantity untouched.
+            var textChangedWithoutQuantityIntent =
+                request.Text is not null && request.Quantity is null && request.ClearQuantity != true;
+
+            ItemTextAnalysis? analysis = null;
+            if (textChangedWithoutQuantityIntent)
+            {
+                analysis = ItemTextRouter.Analyze(request.Text);
+            }
+
+            var textToWrite = request.Text;
+            if (analysis is { Route: ItemTextRoute.Resolved } resolved)
+            {
+                textToWrite = resolved.CleanName;
+                quantity = resolved.Quantity;
+            }
+
+            var result = list.UpdateItem(itemId, textToWrite, quantity, request.ClearQuantity ?? false, request.Status);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];
@@ -74,13 +95,9 @@ namespace Frigorino.Features.Lists.Items
 
             await db.SaveChangesAsync(ct);
 
-            // Re-extract on a text change ONLY when the caller expressed no explicit quantity
-            // intent. The edit composer always sends a quantity (or ClearQuantity = true), making
-            // the user authoritative — re-extraction would race ExtractQuantityJob and silently
-            // clobber the value they just set.
-            if (request.Text is not null && request.Quantity is null && request.ClearQuantity != true)
+            if (analysis is ItemTextAnalysis routed)
             {
-                quantityTrigger.OnItemEntered(householdId, listId, itemId, request.Text);
+                quantityTrigger.OnItemRouted(householdId, listId, itemId, routed);
             }
 
             return TypedResults.Ok(ListItemResponse.From(result.Value));

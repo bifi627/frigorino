@@ -1,5 +1,6 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Test.Domain
 {
@@ -262,6 +263,34 @@ namespace Frigorino.Test.Domain
 
             Assert.True(result.IsSuccess);
             Assert.True(list.UpdatedAt > before);
+        }
+
+        // ------- AddItem -------
+
+        [Fact]
+        public void AddItem_WithQuantity_SetsBothQuantityColumns()
+        {
+            var list = List.Create("Groceries", null, HouseholdId, "user-1").Value;
+            var quantity = Quantity.Create(2m, QuantityUnit.Kilogram).Value;
+
+            var result = list.AddItem("flour", quantity);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("flour", result.Value.Text);
+            Assert.Equal(2m, result.Value.QuantityValue);
+            Assert.Equal(QuantityUnit.Kilogram, result.Value.QuantityUnit);
+        }
+
+        [Fact]
+        public void AddItem_WithoutQuantity_LeavesQuantityNull()
+        {
+            var list = List.Create("Groceries", null, HouseholdId, "user-1").Value;
+
+            var result = list.AddItem("milk");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.QuantityValue);
+            Assert.Null(result.Value.QuantityUnit);
         }
 
         // ------- Helpers -------

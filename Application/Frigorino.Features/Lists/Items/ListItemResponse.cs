@@ -11,7 +11,11 @@ namespace Frigorino.Features.Lists.Items
         bool Status,
         int SortOrder,
         DateTime CreatedAt,
-        DateTime UpdatedAt)
+        DateTime UpdatedAt,
+        // True only on the create response when the router enqueued LLM extraction for this item
+        // (route NeedsExtraction). The client drives its extraction poll off this single signal
+        // instead of re-deriving a digit gate; read/projection paths always leave it false.
+        bool ExtractionPending = false)
     {
         public static ListItemResponse From(ListItem item)
         {
@@ -40,6 +44,7 @@ namespace Frigorino.Features.Lists.Items
             i.Status,
             i.SortOrder,
             i.CreatedAt,
-            i.UpdatedAt);
+            i.UpdatedAt,
+            false);
     }
 }

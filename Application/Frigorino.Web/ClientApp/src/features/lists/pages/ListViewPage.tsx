@@ -38,7 +38,7 @@ export const ListViewPage = () => {
     const [editOpenQuantity, setEditOpenQuantity] = useState(false);
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
-        hadDigit: boolean;
+        extractionPending: boolean;
     } | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +62,7 @@ export const ListViewPage = () => {
         householdId,
         listIdNum,
         pendingExtraction?.id ?? null,
-        pendingExtraction?.hadDigit ?? false,
+        pendingExtraction?.extractionPending ?? false,
     );
 
     const scrollToLastUncheckedItem = useCallback(() => {
@@ -102,9 +102,11 @@ export const ListViewPage = () => {
                 });
                 // Only the latest add is polled for extraction; rapid successive adds
                 // replace this, so just the last item shows the extracting spinner (v1).
+                // The server's create response is the single authority on whether an async
+                // extraction was enqueued — no client-side digit gate to drift from it.
                 setPendingExtraction({
                     id: created.id,
-                    hadDigit: /\d/.test(data),
+                    extractionPending: created.extractionPending,
                 });
             } catch {
                 // createMutation.onError rolls back the optimistic item; nothing to do here.

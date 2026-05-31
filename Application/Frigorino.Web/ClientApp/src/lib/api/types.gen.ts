@@ -108,6 +108,7 @@ export type ListItemResponse = {
     sortOrder: number;
     createdAt: string;
     updatedAt: string;
+    extractionPending: boolean;
 };
 
 export type ListResponse = {

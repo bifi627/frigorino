@@ -43,6 +43,9 @@ export const useCreateListItem = () => {
                 listId: variables.path.listId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                // Placeholder only — the real create response (with the authoritative value)
+                // replaces this row in onSuccess; no per-row UI reads it.
+                extractionPending: false,
             };
 
             queryClient.setQueryData<ListItemResponse[]>(queryKey, (old) =>

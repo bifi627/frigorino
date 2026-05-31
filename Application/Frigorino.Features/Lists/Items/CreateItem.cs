@@ -1,4 +1,5 @@
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -47,7 +48,9 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.AddItem(request.Text);
+            var analysis = ItemTextRouter.Analyze(request.Text);
+
+            var result = list.AddItem(analysis.CleanName, analysis.Quantity);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();
@@ -55,9 +58,14 @@ namespace Frigorino.Features.Lists.Items
 
             await db.SaveChangesAsync(ct);
 
-            quantityTrigger.OnItemEntered(householdId, listId, result.Value.Id, request.Text);
+            quantityTrigger.OnItemRouted(householdId, listId, result.Value.Id, analysis);
 
-            var response = ListItemResponse.From(result.Value);
+            // Tell the client whether an async extraction was enqueued (the only route that does is
+            // NeedsExtraction) so its poll keys off this single signal rather than re-deriving a digit gate.
+            var response = ListItemResponse.From(result.Value) with
+            {
+                ExtractionPending = analysis.Route == ItemTextRoute.NeedsExtraction,
+            };
             return TypedResults.Created(
                 $"/api/household/{householdId}/lists/{listId}/items/{result.Value.Id}",
                 response);

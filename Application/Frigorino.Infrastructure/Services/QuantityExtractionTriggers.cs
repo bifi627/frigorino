@@ -1,16 +1,14 @@
-using System.Text.RegularExpressions;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Frigorino.Infrastructure.Services
 {
-    // Enabled path. Digit-gate: only digit-bearing text pays the LLM. Digit present -> enqueue
-    // extraction (which chains to classification on the clean name). No digit -> classify the raw
-    // text directly (Cycle 2 behavior; nothing to extract).
+    // Enabled path. Resolved/ClassifyOnly classify the clean name directly (no LLM). NeedsExtraction
+    // enqueues the extract job, which re-extracts from the raw text and chains classification on its
+    // own clean name. SkipAi (URL/junk) does nothing — no extraction, no classification.
     public class QueueingQuantityExtractionTrigger : IQuantityExtractionTrigger
     {
-        private static readonly Regex Digit = new(@"\d", RegexOptions.Compiled);
-
         private readonly IBackgroundTaskQueue _queue;
         private readonly IProductClassificationTrigger _classificationTrigger;
 
@@ -21,21 +19,28 @@ namespace Frigorino.Infrastructure.Services
             _classificationTrigger = classificationTrigger;
         }
 
-        public void OnItemEntered(int householdId, int listId, int itemId, string rawText)
+        public void OnItemRouted(int householdId, int listId, int itemId, ItemTextAnalysis analysis)
         {
-            if (Digit.IsMatch(rawText))
+            switch (analysis.Route)
             {
-                _queue.TryEnqueue((sp, ct) =>
-                    sp.GetRequiredService<IExtractQuantityJob>().Run(householdId, listId, itemId, rawText, ct));
-            }
-            else
-            {
-                _classificationTrigger.OnProductReferenced(householdId, rawText);
+                case ItemTextRoute.NeedsExtraction:
+                    _queue.TryEnqueue((sp, ct) =>
+                        sp.GetRequiredService<IExtractQuantityJob>()
+                          .Run(householdId, listId, itemId, analysis.CleanName, ct));
+                    break;
+                case ItemTextRoute.Resolved:
+                case ItemTextRoute.ClassifyOnly:
+                    _classificationTrigger.OnProductReferenced(householdId, analysis.CleanName);
+                    break;
+                case ItemTextRoute.SkipAi:
+                default:
+                    break;
             }
         }
     }
 
-    // Disabled path: extraction is off. Classification still runs on the raw text.
+    // Disabled path: extraction is off. Every non-skip route classifies the clean name (for
+    // NeedsExtraction the clean name equals the raw text — nothing was stripped). SkipAi does nothing.
     public class NullQuantityExtractionTrigger : IQuantityExtractionTrigger
     {
         private readonly IProductClassificationTrigger _classificationTrigger;
@@ -45,9 +50,12 @@ namespace Frigorino.Infrastructure.Services
             _classificationTrigger = classificationTrigger;
         }
 
-        public void OnItemEntered(int householdId, int listId, int itemId, string rawText)
+        public void OnItemRouted(int householdId, int listId, int itemId, ItemTextAnalysis analysis)
         {
-            _classificationTrigger.OnProductReferenced(householdId, rawText);
+            if (analysis.Route != ItemTextRoute.SkipAi)
+            {
+                _classificationTrigger.OnProductReferenced(householdId, analysis.CleanName);
+            }
         }
     }
 }
