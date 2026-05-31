@@ -116,16 +116,18 @@ namespace Frigorino.Infrastructure.Services
                 var profile = dto is null
                     ? Result.Fail<ExpiryProfile>("Empty classifier payload.")
                     : ExpiryProfile.Create(dto.ExpiryHandling, dto.DefaultShelfLifeDays);
+
+                // Log the model's reasoning as a diagnostic — it does not leave this method.
+                _logger.LogInformation(
+                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning} ({Total} Total Tokens used, {Reasoning} Reasoning Token used)",
+                    normalizedName, dto?.ProductCategory, dto?.ExpiryHandling, dto?.DefaultShelfLifeDays, dto?.Reasoning, completion.Value.Usage.TotalTokenCount, completion.Value.Usage.OutputTokenDetails.ReasoningTokenCount);
+
                 if (dto is null || profile.IsFailed)
                 {
                     // Model produced a schema-valid-but-semantically-inconsistent combination; be safe.
                     return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
                 }
 
-                // Log the model's reasoning as a diagnostic — it does not leave this method.
-                _logger.LogInformation(
-                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning}",
-                    normalizedName, dto.ProductCategory, dto.ExpiryHandling, dto.DefaultShelfLifeDays, dto.Reasoning);
 
                 return Result.Ok(new ProductClassification(dto.ProductCategory, profile.Value));
             }
