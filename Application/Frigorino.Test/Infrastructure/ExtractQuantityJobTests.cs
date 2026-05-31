@@ -20,11 +20,18 @@ namespace Frigorino.Test.Infrastructure
         private sealed class FakeExtractor : IQuantityExtractor
         {
             private readonly Result<QuantityExtraction> _result;
+            private readonly Action? _onCall;
             public int Calls { get; private set; }
-            public FakeExtractor(Result<QuantityExtraction> result) => _result = result;
+            public FakeExtractor(Result<QuantityExtraction> result, Action? onCall = null)
+            {
+                _result = result;
+                _onCall = onCall;
+            }
             public Task<Result<QuantityExtraction>> ExtractAsync(string rawText, CancellationToken ct)
             {
                 Calls++;
+                // Simulates work happening concurrently while the extractor call is in flight.
+                _onCall?.Invoke();
                 return Task.FromResult(_result);
             }
         }
@@ -114,6 +121,58 @@ namespace Frigorino.Test.Infrastructure
             var item = await verify.ListItems.SingleAsync();
             Assert.Equal("20 apples", item.Text);
             Assert.Null(item.QuantityValue);
+            A.CallTo(() => classification.OnProductReferenced(A<int>._, A<string>._)).MustNotHaveHappened();
+        }
+
+        [Fact]
+        public async Task Run_ItemEditedDuringExtraction_SkipsWriteBackAndClassification()
+        {
+            var dbName = Guid.NewGuid().ToString();
+            await SeedListWithItem(dbName, "20 apples");
+            var classification = A.Fake<IProductClassificationTrigger>();
+            // The user renames the item + sets a quantity by hand while the extractor call runs.
+            var extractor = new FakeExtractor(
+                Result.Ok(new QuantityExtraction("apples", Quantity.Create(20, QuantityUnit.Piece).Value)),
+                onCall: () =>
+                {
+                    using var edit = NewContext(dbName);
+                    var i = edit.ListItems.Single();
+                    i.Text = "green apples";
+                    i.QuantityValue = 5m;
+                    i.QuantityUnit = QuantityUnit.Kilogram;
+                    edit.SaveChanges();
+                });
+
+            using (var db = NewContext(dbName))
+            {
+                var job = new ExtractQuantityJob(db, extractor, classification, NullLogger<ExtractQuantityJob>.Instance);
+                await job.Run(HouseholdId, ListId, ItemId, "20 apples", CancellationToken.None);
+            }
+
+            using var verify = NewContext(dbName);
+            var item = await verify.ListItems.SingleAsync();
+            Assert.Equal("green apples", item.Text);
+            Assert.Equal(5m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Kilogram, item.QuantityUnit);
+            A.CallTo(() => classification.OnProductReferenced(A<int>._, A<string>._)).MustNotHaveHappened();
+        }
+
+        [Fact]
+        public async Task Run_ItemEditedBeforePickup_SkipsExtractorEntirely()
+        {
+            var dbName = Guid.NewGuid().ToString();
+            await SeedListWithItem(dbName, "renamed by user");
+            var extractor = new FakeExtractor(Result.Ok(new QuantityExtraction("apples", null)));
+            var classification = A.Fake<IProductClassificationTrigger>();
+
+            using (var db = NewContext(dbName))
+            {
+                var job = new ExtractQuantityJob(db, extractor, classification, NullLogger<ExtractQuantityJob>.Instance);
+                // Queued for the original "20 apples" text, but the item already says something else.
+                await job.Run(HouseholdId, ListId, ItemId, "20 apples", CancellationToken.None);
+            }
+
+            Assert.Equal(0, extractor.Calls);
             A.CallTo(() => classification.OnProductReferenced(A<int>._, A<string>._)).MustNotHaveHappened();
         }
 

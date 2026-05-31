@@ -40,12 +40,32 @@ namespace Frigorino.Infrastructure.Services
                 return;
             }
 
+            // The user may edit this item by hand between enqueue and run; their edit is
+            // authoritative, so a stale extraction must never clobber it. Cheap pre-check: if the
+            // item already diverged from the queued text, skip before paying for an LLM call.
+            var expectedText = rawText.Trim();
+            if (!string.Equals(item.Text, expectedText, StringComparison.Ordinal))
+            {
+                return;
+            }
+
             var result = await _extractor.ExtractAsync(rawText, ct);
             if (result.IsFailed)
             {
                 _logger.LogWarning(
                     "Quantity extraction failed for item {ItemId} (household {HouseholdId}); dropping.",
                     itemId, householdId);
+                return;
+            }
+
+            // Re-read the current text: an edit (or delete) can land while the extractor call is in
+            // flight. If it diverged, skip the now-stale write-back AND the chained classification.
+            var currentText = await _db.ListItems
+                .Where(i => i.Id == itemId && i.IsActive)
+                .Select(i => i.Text)
+                .FirstOrDefaultAsync(ct);
+            if (currentText is null || !string.Equals(currentText, expectedText, StringComparison.Ordinal))
+            {
                 return;
             }
 
