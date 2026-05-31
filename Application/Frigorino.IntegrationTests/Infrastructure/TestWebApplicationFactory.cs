@@ -27,8 +27,9 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:Database", ConnectionString);
-        builder.UseSetting("Classifier:Enabled", "true");
-        builder.UseSetting("Classifier:ApiKey", "integration-test-stub-key");
+        builder.UseSetting("Ai:Classifier:Enabled", "true");
+        builder.UseSetting("Ai:QuantityExtractor:Enabled", "true");
+        builder.UseSetting("Ai:ApiKey", "integration-test-stub-key");
 
         var webRoot = SpaBuildHelper.FindWebProjectRoot();
         builder.UseContentRoot(webRoot);
@@ -54,10 +55,16 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.Configure<HttpsRedirectionOptions>(opts => opts.HttpsPort = null);
 
             // Replace the real OpenAI classifier with a deterministic, network-free stub. The
-            // QueueingProductClassificationTrigger is registered (Classifier:Enabled=true above), so
+            // QueueingProductClassificationTrigger is registered (Ai:Classifier:Enabled=true above), so
             // the full slice→trigger→queue→job→DB path runs without any network call.
             services.RemoveAll<IItemClassifier>();
             services.AddScoped<IItemClassifier, StubItemClassifier>();
+
+            // Replace the real OpenAI extractor with a deterministic, network-free stub. The
+            // QueueingQuantityExtractionTrigger is registered (Ai:QuantityExtractor:Enabled=true above),
+            // so the full slice→trigger→queue→job→DB path runs without any network call.
+            services.RemoveAll<IQuantityExtractor>();
+            services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
         });
     }
 }

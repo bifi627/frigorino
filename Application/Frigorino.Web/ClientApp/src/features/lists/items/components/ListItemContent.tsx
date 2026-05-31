@@ -1,14 +1,17 @@
-import { Box, Link, ListItemText, Typography } from "@mui/material";
+import { Box, Chip, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { ListItemResponse } from "../../../../lib/api";
+import { formatQuantity } from "../quantityFormat";
 
 interface Props {
     item: ListItemResponse;
+    // Tapping the quantity chip opens the item in edit mode with the quantity panel open.
+    onEditQuantity?: () => void;
 }
 
-export function ListItemContent({ item }: Props) {
+export function ListItemContent({ item, onEditQuantity }: Props) {
     const { t } = useTranslation();
     const events = useLongPress({
         shouldPreventDefault: true,
@@ -35,22 +38,30 @@ export function ListItemContent({ item }: Props) {
                 </Typography>
             }
             secondary={
-                item.quantity && (
-                    <Typography
-                        variant="caption"
-                        data-testid={`list-item-quantity-${item.text}`}
+                item.quantity ? (
+                    <Box
+                        component="span"
                         sx={{
-                            color: item.status
-                                ? "text.disabled"
-                                : "text.secondary",
-                            textDecoration: item.status
-                                ? "line-through"
-                                : "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
                         }}
                     >
-                        {item.quantity}
-                    </Typography>
-                )
+                        <Chip
+                            size="small"
+                            variant="outlined"
+                            data-testid={`list-item-quantity-${item.text}`}
+                            label={formatQuantity(t, item.quantity)}
+                            onClick={onEditQuantity}
+                            sx={{
+                                height: 20,
+                                textDecoration: item.status
+                                    ? "line-through"
+                                    : "none",
+                            }}
+                        />
+                    </Box>
+                ) : null
             }
         />
     );

@@ -1895,19 +1895,12 @@
       },
       "CreateItemRequest": {
         "required": [
-          "text",
-          "quantity"
+          "text"
         ],
         "type": "object",
         "properties": {
           "text": {
             "type": "string"
-          },
-          "quantity": {
-            "type": [
-              "null",
-              "string"
-            ]
           }
         }
       },
@@ -2194,9 +2187,13 @@
             "type": "string"
           },
           "quantity": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
             ]
           },
           "status": {
@@ -2296,6 +2293,29 @@
           }
         }
       },
+      "QuantityDto": {
+        "required": [
+          "value",
+          "unit"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/QuantityUnit"
+          }
+        }
+      },
+      "QuantityUnit": {
+        "type": "integer"
+      },
       "ReorderItemRequest": {
         "required": [
           "afterId"
@@ -2371,6 +2391,7 @@
         "required": [
           "text",
           "quantity",
+          "clearQuantity",
           "status"
         ],
         "type": "object",
@@ -2382,9 +2403,19 @@
             ]
           },
           "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "clearQuantity": {
             "type": [
               "null",
-              "string"
+              "boolean"
             ]
           },
           "status": {

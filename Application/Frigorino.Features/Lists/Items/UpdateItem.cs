@@ -1,5 +1,6 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record UpdateItemRequest(string? Text, string? Quantity, bool? Status);
+    public sealed record UpdateItemRequest(string? Text, QuantityDto? Quantity, bool? ClearQuantity, bool? Status);
 
     public static class UpdateItemEndpoint
     {
@@ -32,7 +33,7 @@ namespace Frigorino.Features.Lists.Items
             UpdateItemRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
-            IProductClassificationTrigger classificationTrigger,
+            IQuantityExtractionTrigger quantityTrigger,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
@@ -49,7 +50,18 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.UpdateItem(itemId, request.Text, request.Quantity, request.Status);
+            Quantity? quantity = null;
+            if (request.Quantity is not null)
+            {
+                var parsed = Quantity.Create(request.Quantity.Value, request.Quantity.Unit);
+                if (parsed.IsFailed)
+                {
+                    return parsed.ToValidationProblem();
+                }
+                quantity = parsed.Value;
+            }
+
+            var result = list.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.Status);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];
@@ -62,9 +74,13 @@ namespace Frigorino.Features.Lists.Items
 
             await db.SaveChangesAsync(ct);
 
-            if (request.Text is not null)
+            // Re-extract on a text change ONLY when the caller expressed no explicit quantity
+            // intent. The edit composer always sends a quantity (or ClearQuantity = true), making
+            // the user authoritative — re-extraction would race ExtractQuantityJob and silently
+            // clobber the value they just set.
+            if (request.Text is not null && request.Quantity is null && request.ClearQuantity != true)
             {
-                classificationTrigger.OnProductReferenced(householdId, request.Text);
+                quantityTrigger.OnItemEntered(householdId, listId, itemId, request.Text);
             }
 
             return TypedResults.Ok(ListItemResponse.From(result.Value));

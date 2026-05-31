@@ -1,5 +1,6 @@
 using FluentResults;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
 {
@@ -134,9 +135,9 @@ namespace Frigorino.Domain.Entities
         // reorder / delete / compact, matching the collaborative grocery-list UX. The handler
         // enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<ListItem> AddItem(string text, string? quantity)
+        public Result<ListItem> AddItem(string text)
         {
-            var errors = ValidateItemFields(text, quantity, requireText: true);
+            var errors = ValidateItemText(text, requireText: true);
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -147,7 +148,8 @@ namespace Frigorino.Domain.Entities
             {
                 ListId = Id,
                 Text = text.Trim(),
-                Quantity = NormaliseQuantity(quantity),
+                QuantityValue = null,
+                QuantityUnit = null,
                 Status = false,
                 SortOrder = ComputeAppendSortOrder(targetStatus: false),
                 CreatedAt = now,
@@ -158,7 +160,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        public Result<ListItem> UpdateItem(int itemId, string? text, string? quantity, bool? status)
+        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
@@ -167,19 +169,17 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError($"List item {itemId} not found."));
             }
 
-            // All three fields are "preserve on null", so an all-null payload is a guaranteed
-            // no-op — reject it as a malformed request rather than returning 200 OK on garbage.
-            if (text is null && quantity is null && status is null)
+            // text/quantity/status are "preserve on null"; clearQuantity is the explicit "remove
+            // the quantity" intent. With none of them set the payload is a guaranteed no-op —
+            // reject it rather than returning 200 OK on garbage.
+            if (text is null && quantity is null && !clearQuantity && status is null)
             {
                 return Result.Fail<ListItem>(
                     new Error("Update request must set at least one field.")
                         .WithMetadata("Property", string.Empty));
             }
 
-            // Text is required only when the caller actually supplies a value — null means
-            // "preserve existing". Empty/whitespace, on the other hand, is a real attempt at
-            // a blank text and is rejected.
-            var errors = ValidateItemFields(text, quantity, requireText: text is not null);
+            var errors = ValidateItemText(text, requireText: text is not null);
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -195,11 +195,44 @@ namespace Frigorino.Domain.Entities
             {
                 item.Text = text.Trim();
             }
-            if (quantity is not null)
+            // clearQuantity removes it; otherwise quantity == null means "preserve" and a non-null
+            // quantity writes both columns. (clearQuantity wins over a stray quantity value.)
+            if (clearQuantity)
             {
-                item.Quantity = NormaliseQuantity(quantity);
+                item.QuantityValue = null;
+                item.QuantityUnit = null;
+            }
+            else if (quantity is not null)
+            {
+                var q = quantity.Value;
+                item.QuantityValue = q.Value;
+                item.QuantityUnit = q.Unit;
             }
 
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
+        // Applied by the quantity-extraction job: overwrite the item's text with the extracted
+        // clean name and set (or clear) the structured quantity authoritatively.
+        public Result<ListItem> ApplyExtractedQuantity(int itemId, string cleanName, Quantity? quantity)
+        {
+            var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<ListItem>(
+                    new EntityNotFoundError($"List item {itemId} not found."));
+            }
+
+            var errors = ValidateItemText(cleanName, requireText: true);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<ListItem>(errors);
+            }
+
+            item.Text = cleanName.Trim();
+            item.QuantityValue = quantity?.Value;
+            item.QuantityUnit = quantity?.Unit;
             item.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(item);
         }
@@ -340,7 +373,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
-        private static List<IError> ValidateItemFields(string? text, string? quantity, bool requireText)
+        private static List<IError> ValidateItemText(string? text, bool requireText)
         {
             var errors = new System.Collections.Generic.List<IError>();
             if (requireText)
@@ -356,17 +389,7 @@ namespace Frigorino.Domain.Entities
                         .WithMetadata("Property", nameof(ListItem.Text)));
                 }
             }
-            if (quantity is not null && quantity.Trim().Length > ListItem.QuantityMaxLength)
-            {
-                errors.Add(new Error($"Item quantity must be {ListItem.QuantityMaxLength} characters or fewer.")
-                    .WithMetadata("Property", nameof(ListItem.Quantity)));
-            }
             return errors;
-        }
-
-        private static string? NormaliseQuantity(string? quantity)
-        {
-            return string.IsNullOrWhiteSpace(quantity) ? null : quantity.Trim();
         }
 
         // Returns the sort order for a freshly placed item in `targetStatus`'s section:

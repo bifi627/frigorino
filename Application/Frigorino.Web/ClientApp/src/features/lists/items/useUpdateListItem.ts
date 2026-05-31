@@ -35,8 +35,12 @@ export const useUpdateListItem = () => {
                             ? {
                                   ...item,
                                   text: variables.body.text ?? item.text,
-                                  quantity:
-                                      variables.body.quantity ?? item.quantity,
+                                  // clearQuantity removes it; otherwise null = preserve
+                                  // (mirrors the domain's UpdateItem).
+                                  quantity: variables.body.clearQuantity
+                                      ? null
+                                      : (variables.body.quantity ??
+                                        item.quantity),
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -57,7 +61,9 @@ export const useUpdateListItem = () => {
                 queryClient.setQueryData<ListItemResponse>(detailKey, {
                     ...currentItem,
                     text: variables.body.text ?? currentItem.text,
-                    quantity: variables.body.quantity ?? currentItem.quantity,
+                    quantity: variables.body.clearQuantity
+                        ? null
+                        : (variables.body.quantity ?? currentItem.quantity),
                     updatedAt: new Date().toISOString(),
                 });
             }

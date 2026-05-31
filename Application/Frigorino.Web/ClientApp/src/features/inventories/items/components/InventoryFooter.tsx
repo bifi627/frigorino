@@ -62,10 +62,16 @@ export const InventoryFooter = memo(
             [t],
         );
 
+        const getSecondaryLabel = useCallback(
+            (item: InventoryItemResponse) => item.quantity ?? undefined,
+            [],
+        );
+
         const { suggestions, duplicate } = useItemComposer({
             editingItem,
             existingItems,
             getBadge,
+            getSecondaryLabel,
             onDuplicate,
         });
 

@@ -14,7 +14,7 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
-import type { ListItemResponse } from "../../../lib/api";
+import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListContainer } from "../items/components/ListContainer";
 import { ListFooter } from "../items/components/ListFooter";
@@ -22,6 +22,7 @@ import { useCreateListItem } from "../items/useCreateListItem";
 import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
+import { useExtractionPoll } from "../items/useExtractionPoll";
 import { useList } from "../useList";
 
 export const ListViewPage = () => {
@@ -32,6 +33,13 @@ export const ListViewPage = () => {
         null,
     );
     const [showDragHandles, setShowDragHandles] = useState(false);
+    // True when edit mode was opened via the quantity chip — the composer then starts
+    // with the quantity panel expanded.
+    const [editOpenQuantity, setEditOpenQuantity] = useState(false);
+    const [pendingExtraction, setPendingExtraction] = useState<{
+        id: number;
+        hadDigit: boolean;
+    } | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
@@ -49,6 +57,13 @@ export const ListViewPage = () => {
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
+
+    const { isExtracting, extractingItemId } = useExtractionPoll(
+        householdId,
+        listIdNum,
+        pendingExtraction?.id ?? null,
+        pendingExtraction?.hadDigit ?? false,
+    );
 
     const scrollToLastUncheckedItem = useCallback(() => {
         if (scrollContainerRef.current) {
@@ -78,18 +93,28 @@ export const ListViewPage = () => {
     }, []);
 
     const handleAddItem = useCallback(
-        (data: string, quantity?: string) => {
+        async (data: string) => {
             if (!householdId) return;
-            createMutation.mutate({
-                path: { householdId, listId: listIdNum },
-                body: { text: data, quantity: quantity ?? null },
-            });
+            try {
+                const created = await createMutation.mutateAsync({
+                    path: { householdId, listId: listIdNum },
+                    body: { text: data },
+                });
+                // Only the latest add is polled for extraction; rapid successive adds
+                // replace this, so just the last item shows the extracting spinner (v1).
+                setPendingExtraction({
+                    id: created.id,
+                    hadDigit: /\d/.test(data),
+                });
+            } catch {
+                // createMutation.onError rolls back the optimistic item; nothing to do here.
+            }
         },
         [createMutation, householdId, listIdNum],
     );
 
     const handleUpdateItem = useCallback(
-        (data: string, quantity?: string) => {
+        (data: string, quantity: QuantityDto | null) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
@@ -97,19 +122,37 @@ export const ListViewPage = () => {
                         listId: listIdNum,
                         itemId: editingItem.id,
                     },
+                    // The edit composer is authoritative for quantity: a non-null value sets it,
+                    // an empty one clears it (clearQuantity). Text is always sent, so this never
+                    // collides with the domain's null=preserve semantics for the other fields.
                     body: {
                         text: data,
-                        quantity: quantity ?? null,
+                        quantity,
+                        clearQuantity: quantity === null,
                         status: null,
                     },
                 });
+                setEditOpenQuantity(false);
                 setEditingItem(null);
             }
         },
         [editingItem?.id, updateMutation, householdId, listIdNum],
     );
 
-    const handleCancelEdit = useCallback(() => setEditingItem(null), []);
+    const handleEditItem = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(false);
+        setEditingItem(item);
+    }, []);
+
+    const handleEditQuantity = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(true);
+        setEditingItem(item);
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditOpenQuantity(false);
+        setEditingItem(null);
+    }, []);
 
     const handleUncheckExisting = useCallback(
         (itemId: number) => {
@@ -190,8 +233,11 @@ export const ListViewPage = () => {
                 householdId={householdId}
                 listId={listIdNum}
                 editingItem={editingItem}
-                onEdit={setEditingItem}
+                onEdit={handleEditItem}
+                onEditQuantity={handleEditQuantity}
                 showDragHandles={showDragHandles}
+                isExtracting={isExtracting}
+                extractingItemId={extractingItemId}
             />
 
             <ListFooter
@@ -203,6 +249,7 @@ export const ListViewPage = () => {
                 onUncheckExisting={handleUncheckExisting}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
+                openQuantityPanel={editOpenQuantity}
             />
         </Box>
     );

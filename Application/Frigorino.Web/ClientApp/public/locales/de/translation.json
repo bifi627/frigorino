@@ -202,7 +202,8 @@
         "noListsYet": "Noch keine Listen",
         "createFirstShoppingList": "Erstellen Sie Ihre erste Einkaufsliste, um zu beginnen",
         "createYourFirstList": "Erstellen Sie Ihre erste Liste",
-        "quantity": "Menge"
+        "quantity": "Menge",
+        "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen"
     },
     "navigation": {
         "home": "Startseite",
@@ -212,6 +213,17 @@
         "settings": "Einstellungen",
         "about": "Über",
         "profile": "Profil"
+    },
+    "quantityUnits": {
+        "0": "g",
+        "1": "kg",
+        "2": "ml",
+        "3": "l",
+        "4": "Stk",
+        "5": "Pack",
+        "6": "Dose",
+        "7": "Flasche",
+        "8": "Beutel"
     },
     "dashboard": {
         "items": "Artikel",

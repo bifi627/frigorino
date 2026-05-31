@@ -11,6 +11,7 @@ interface InitialDraft {
 interface UseComposerStateArgs {
     features: readonly AnyFeature[];
     initialDraft?: InitialDraft;
+    initialOpenId?: string;
 }
 
 const onlyModifiers = (features: readonly AnyFeature[]): AnyModifierFeature[] =>
@@ -29,6 +30,7 @@ export const isModifierValueEmpty = (
 export function useComposerState({
     features,
     initialDraft,
+    initialOpenId,
 }: UseComposerStateArgs) {
     const modifiers = useMemo(() => onlyModifiers(features), [features]);
 
@@ -43,7 +45,7 @@ export function useComposerState({
 
     const [text, setText] = useState<string>(() => initialDraft?.text ?? "");
     const [values, setValues] = useState<ValuesMap>(seedValues);
-    const [openId, setOpenId] = useState<string | null>(null);
+    const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const setValue = useCallback((id: string, value: unknown) => {

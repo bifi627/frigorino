@@ -25,6 +25,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     disabled = false,
     editing,
     initialDraft,
+    initialOpenId,
     suggestions,
     duplicate,
 }: ComposerProps<F>) {
@@ -45,7 +46,11 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         inputRef,
         focusInput,
         reset,
-    } = useComposerState({ features: featureList, initialDraft });
+    } = useComposerState({
+        features: featureList,
+        initialDraft,
+        initialOpenId,
+    });
 
     const isEditing = editing?.active ?? false;
     const trimmed = text.trim();
@@ -56,8 +61,16 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     );
     const blocked = Boolean(dup?.block);
 
+    const modifiersValid = useMemo(
+        () =>
+            featureList
+                .filter((f): f is AnyModifierFeature => f.kind === "modifier")
+                .every((f) => f.isValid?.(values[f.id]) ?? true),
+        [featureList, values],
+    );
+
     const completeText = useCallback(() => {
-        if (!trimmed) {
+        if (!trimmed || !modifiersValid) {
             return;
         }
         if (dup) {
@@ -80,7 +93,16 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         onComplete(completion);
         reset();
         requestAnimationFrame(focusInput);
-    }, [trimmed, dup, isEditing, values, onComplete, reset, focusInput]);
+    }, [
+        trimmed,
+        modifiersValid,
+        dup,
+        isEditing,
+        values,
+        onComplete,
+        reset,
+        focusInput,
+    ]);
 
     const completeAction = useCallback(
         (id: string, payload: Record<string, unknown>) => {
@@ -273,7 +295,9 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
 
                 <SendButton
                     onClick={completeText}
-                    disabled={!trimmed || disabled || blocked}
+                    disabled={
+                        !trimmed || disabled || blocked || !modifiersValid
+                    }
                     editing={isEditing}
                     duplicate={Boolean(dup)}
                 />

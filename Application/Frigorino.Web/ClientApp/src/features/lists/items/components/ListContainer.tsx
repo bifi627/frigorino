@@ -13,11 +13,27 @@ interface ListContainerProps {
     listId: number;
     editingItem: ListItemResponse | null;
     onEdit: (item: ListItemResponse) => void;
+    /** Opens edit mode with the quantity panel expanded (triggered by the quantity chip). */
+    onEditQuantity: (item: ListItemResponse) => void;
     showDragHandles: boolean;
+    isExtracting?: boolean;
+    extractingItemId?: number | null;
 }
 
 export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
-    ({ householdId, listId, editingItem, onEdit, showDragHandles }, ref) => {
+    (
+        {
+            householdId,
+            listId,
+            editingItem,
+            onEdit,
+            onEditQuantity,
+            showDragHandles,
+            isExtracting,
+            extractingItemId,
+        },
+        ref,
+    ) => {
         const {
             data: items = [],
             isLoading,
@@ -63,7 +79,15 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                     editingItem={editingItem}
                     showDragHandles={showDragHandles}
                     showCheckbox={true}
-                    renderContent={(item) => <ListItemContent item={item} />}
+                    isItemProcessing={(item) =>
+                        Boolean(isExtracting) && item.id === extractingItemId
+                    }
+                    renderContent={(item) => (
+                        <ListItemContent
+                            item={item}
+                            onEditQuantity={() => onEditQuantity(item)}
+                        />
+                    )}
                 />
             </Container>
         );

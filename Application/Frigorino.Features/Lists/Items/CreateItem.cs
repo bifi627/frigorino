@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record CreateItemRequest(string Text, string? Quantity);
+    public sealed record CreateItemRequest(string Text);
 
     public static class CreateItemEndpoint
     {
@@ -30,7 +30,7 @@ namespace Frigorino.Features.Lists.Items
             CreateItemRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
-            IProductClassificationTrigger classificationTrigger,
+            IQuantityExtractionTrigger quantityTrigger,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
@@ -47,7 +47,7 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var result = list.AddItem(request.Text, request.Quantity);
+            var result = list.AddItem(request.Text);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();
@@ -55,7 +55,7 @@ namespace Frigorino.Features.Lists.Items
 
             await db.SaveChangesAsync(ct);
 
-            classificationTrigger.OnProductReferenced(householdId, request.Text);
+            quantityTrigger.OnItemEntered(householdId, listId, result.Value.Id, request.Text);
 
             var response = ListItemResponse.From(result.Value);
             return TypedResults.Created(

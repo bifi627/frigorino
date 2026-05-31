@@ -62,6 +62,8 @@ export interface SortableListProps<T extends SortableItemInterface> {
     showDragHandles?: boolean;
     showCheckbox?: boolean;
     renderContent: (item: T) => React.ReactNode;
+    /** Optional per-item flag for background work in progress (pulsing accent border). */
+    isItemProcessing?: (item: T) => boolean;
 
     // Sorting props
     sortMode?: "custom" | "expiryDateAsc" | "expiryDateDesc";
@@ -80,6 +82,7 @@ export const SortableList = <T extends SortableItemInterface>({
     showDragHandles = false,
     showCheckbox = false,
     renderContent,
+    isItemProcessing,
     sortMode = "custom",
     skipInternalSort = false,
 }: SortableListProps<T>) => {
@@ -336,6 +339,9 @@ export const SortableList = <T extends SortableItemInterface>({
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
+                                    isProcessing={
+                                        isItemProcessing?.(item) ?? false
+                                    }
                                     showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
                                     renderContent={renderContent}
@@ -375,6 +381,9 @@ export const SortableList = <T extends SortableItemInterface>({
                                     onDelete={handleDeleteItem}
                                     isEditing={
                                         externalEditingItem?.id === item.id
+                                    }
+                                    isProcessing={
+                                        isItemProcessing?.(item) ?? false
                                     }
                                     showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}

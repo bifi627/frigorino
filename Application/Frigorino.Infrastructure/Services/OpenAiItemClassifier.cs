@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FluentResults;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
@@ -87,7 +88,9 @@ namespace Frigorino.Infrastructure.Services
         private readonly ChatClient _client;
         private readonly ILogger<OpenAiItemClassifier> _logger;
 
-        public OpenAiItemClassifier(ChatClient client, ILogger<OpenAiItemClassifier> logger)
+        public OpenAiItemClassifier(
+            [FromKeyedServices(AiKeys.Classifier)] ChatClient client,
+            ILogger<OpenAiItemClassifier> logger)
         {
             _client = client;
             _logger = logger;
@@ -116,16 +119,18 @@ namespace Frigorino.Infrastructure.Services
                 var profile = dto is null
                     ? Result.Fail<ExpiryProfile>("Empty classifier payload.")
                     : ExpiryProfile.Create(dto.ExpiryHandling, dto.DefaultShelfLifeDays);
+
+                // Log the model's reasoning as a diagnostic — it does not leave this method.
+                _logger.LogInformation(
+                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning} ({Total} Total Tokens used, {ReasoningTokens} Reasoning Token used)",
+                    normalizedName, dto?.ProductCategory, dto?.ExpiryHandling, dto?.DefaultShelfLifeDays, dto?.Reasoning, completion.Value.Usage.TotalTokenCount, completion.Value.Usage.OutputTokenDetails.ReasoningTokenCount);
+
                 if (dto is null || profile.IsFailed)
                 {
                     // Model produced a schema-valid-but-semantically-inconsistent combination; be safe.
                     return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
                 }
 
-                // Log the model's reasoning as a diagnostic — it does not leave this method.
-                _logger.LogInformation(
-                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning}",
-                    normalizedName, dto.ProductCategory, dto.ExpiryHandling, dto.DefaultShelfLifeDays, dto.Reasoning);
 
                 return Result.Ok(new ProductClassification(dto.ProductCategory, profile.Value));
             }

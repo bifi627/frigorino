@@ -202,7 +202,8 @@
         "noListsYet": "No lists yet",
         "createFirstShoppingList": "Create your first shopping list to get started",
         "createYourFirstList": "Create Your First List",
-        "quantity": "Quantity"
+        "quantity": "Quantity",
+        "invalidQuantity": "Enter a positive number, or leave empty to clear"
     },
     "navigation": {
         "home": "Home",
@@ -212,6 +213,17 @@
         "settings": "Settings",
         "about": "About",
         "profile": "Profile"
+    },
+    "quantityUnits": {
+        "0": "g",
+        "1": "kg",
+        "2": "ml",
+        "3": "l",
+        "4": "pc",
+        "5": "pack",
+        "6": "can",
+        "7": "bottle",
+        "8": "bag"
     },
     "dashboard": {
         "items": "Items",

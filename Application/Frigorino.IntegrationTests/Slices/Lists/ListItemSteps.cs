@@ -12,15 +12,6 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.SetListItemId(listName, itemText, itemId);
     }
 
-    [Given("there is a list named {string} with item {string} and quantity {string}")]
-    public async Task GivenThereIsAListNamedWithItemAndQuantity(string listName, string itemText, string quantity)
-    {
-        var listId = await api.CreateListAsync(listName);
-        ctx.ListIds[listName] = listId;
-        var itemId = await api.CreateListItemAsync(listId, itemText, quantity);
-        ctx.SetListItemId(listName, itemText, itemId);
-    }
-
     [Given("the list {string} also has item {string}")]
     public async Task GivenTheListAlsoHasItem(string listName, string itemText)
     {
@@ -131,22 +122,6 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         await ctx.Page.Locator("[data-section='unchecked-items']")
             .GetByText(itemText).WaitForAsync();
-    }
-
-    [Then("the list item {string} shows quantity {string}")]
-    public async Task ThenTheListItemShowsQuantity(string itemText, string quantity)
-    {
-        // The quantity is user-entered data (not translated UI text), so asserting its value
-        // is fine. ToHaveTextAsync retries until the row re-renders post server-confirm.
-        await Assertions.Expect(ctx.Page.GetByTestId($"list-item-quantity-{itemText}"))
-            .ToHaveTextAsync(quantity);
-    }
-
-    [Then("the list item {string} shows no quantity")]
-    public async Task ThenTheListItemShowsNoQuantity(string itemText)
-    {
-        await Assertions.Expect(ctx.Page.GetByTestId($"list-item-quantity-{itemText}"))
-            .Not.ToBeVisibleAsync();
     }
 
     [Then("{string} is shown as checked")]
