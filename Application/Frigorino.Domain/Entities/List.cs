@@ -160,7 +160,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool? status)
+        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
@@ -169,9 +169,10 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError($"List item {itemId} not found."));
             }
 
-            // All three fields are "preserve on null", so an all-null payload is a guaranteed
-            // no-op — reject it rather than returning 200 OK on garbage.
-            if (text is null && quantity is null && status is null)
+            // text/quantity/status are "preserve on null"; clearQuantity is the explicit "remove
+            // the quantity" intent. With none of them set the payload is a guaranteed no-op —
+            // reject it rather than returning 200 OK on garbage.
+            if (text is null && quantity is null && !clearQuantity && status is null)
             {
                 return Result.Fail<ListItem>(
                     new Error("Update request must set at least one field.")
@@ -194,8 +195,14 @@ namespace Frigorino.Domain.Entities
             {
                 item.Text = text.Trim();
             }
-            // quantity == null means "preserve"; setting it writes both columns. (No clear in v1.)
-            if (quantity is not null)
+            // clearQuantity removes it; otherwise quantity == null means "preserve" and a non-null
+            // quantity writes both columns. (clearQuantity wins over a stray quantity value.)
+            if (clearQuantity)
+            {
+                item.QuantityValue = null;
+                item.QuantityUnit = null;
+            }
+            else if (quantity is not null)
             {
                 var q = quantity.Value;
                 item.QuantityValue = q.Value;

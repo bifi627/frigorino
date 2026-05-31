@@ -107,7 +107,7 @@ namespace Frigorino.Test.Domain
         {
             var list = NewList();
 
-            var result = list.UpdateItem(itemId: 999, text: "x", quantity: null, status: null);
+            var result = list.UpdateItem(itemId: 999, text: "x", quantity: null, clearQuantity: false, status: null);
 
             Assert.True(result.IsFailed);
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
@@ -120,7 +120,7 @@ namespace Frigorino.Test.Domain
             var item = AddSeed(list, "Milk");
             item.IsActive = false;
 
-            var result = list.UpdateItem(item.Id, "Soy milk", null, null);
+            var result = list.UpdateItem(item.Id, "Soy milk", null, false, null);
 
             Assert.True(result.IsFailed);
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
@@ -132,7 +132,7 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
 
-            var result = list.UpdateItem(item.Id, text: "Soy milk", quantity: null, status: null);
+            var result = list.UpdateItem(item.Id, text: "Soy milk", quantity: null, clearQuantity: false, status: null);
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Soy milk", item.Text);
@@ -146,10 +146,37 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk");
             var result = list.UpdateItem(item.Id, text: null,
-                quantity: Quantity.Create(2, QuantityUnit.Bottle).Value, status: null);
+                quantity: Quantity.Create(2, QuantityUnit.Bottle).Value, clearQuantity: false, status: null);
             Assert.True(result.IsSuccess);
             Assert.Equal(2m, item.QuantityValue);
             Assert.Equal(QuantityUnit.Bottle, item.QuantityUnit);
+        }
+
+        [Fact]
+        public void UpdateItem_ClearQuantity_RemovesQuantity()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: true, status: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.QuantityValue);
+            Assert.Null(item.QuantityUnit);
+        }
+
+        [Fact]
+        public void UpdateItem_ClearQuantity_WinsOverProvidedQuantity()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
+
+            var result = list.UpdateItem(item.Id, text: null,
+                quantity: Quantity.Create(5, QuantityUnit.Piece).Value, clearQuantity: true, status: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.QuantityValue);
+            Assert.Null(item.QuantityUnit);
         }
 
         [Fact]
@@ -159,7 +186,7 @@ namespace Frigorino.Test.Domain
             var item = AddSeed(list, "Milk", quantity: Quantity.Create(1, QuantityUnit.Liter).Value);
             var before = item.UpdatedAt;
 
-            var result = list.UpdateItem(item.Id, text: null, quantity: null, status: null);
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null);
 
             Assert.True(result.IsFailed);
             Assert.IsNotType<EntityNotFoundError>(result.Errors[0]);
@@ -172,7 +199,7 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk");
 
-            var result = list.UpdateItem(item.Id, text: null, quantity: null, status: true);
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: true);
 
             Assert.True(result.IsSuccess);
             Assert.True(item.Status);
@@ -185,7 +212,7 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk", status: true, sortOrder: SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap);
 
-            var result = list.UpdateItem(item.Id, text: null, quantity: null, status: false);
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: false);
 
             Assert.True(result.IsSuccess);
             Assert.False(item.Status);
@@ -198,7 +225,7 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk", sortOrder: 1_234_567);
 
-            var result = list.UpdateItem(item.Id, "Renamed", null, status: false);
+            var result = list.UpdateItem(item.Id, "Renamed", null, clearQuantity: false, status: false);
 
             Assert.True(result.IsSuccess);
             Assert.Equal(1_234_567, item.SortOrder);
@@ -210,7 +237,7 @@ namespace Frigorino.Test.Domain
             var list = NewList();
             var item = AddSeed(list, "Milk");
 
-            var result = list.UpdateItem(item.Id, "  ", null, null);
+            var result = list.UpdateItem(item.Id, "  ", null, false, null);
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(ListItem.Text), result.Errors[0].Metadata["Property"]);
@@ -223,7 +250,7 @@ namespace Frigorino.Test.Domain
             var item = AddSeed(list, "Milk");
             var tooLong = new string('x', ListItem.TextMaxLength + 1);
 
-            var result = list.UpdateItem(item.Id, tooLong, null, null);
+            var result = list.UpdateItem(item.Id, tooLong, null, false, null);
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(ListItem.Text), result.Errors[0].Metadata["Property"]);
@@ -237,7 +264,7 @@ namespace Frigorino.Test.Domain
             item.UpdatedAt = DateTime.UtcNow.AddMinutes(-5);
             var before = item.UpdatedAt;
 
-            var result = list.UpdateItem(item.Id, "Soy milk", null, null);
+            var result = list.UpdateItem(item.Id, "Soy milk", null, false, null);
 
             Assert.True(result.IsSuccess);
             Assert.True(item.UpdatedAt > before);
