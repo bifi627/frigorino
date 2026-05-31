@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using FluentResults;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 
@@ -87,7 +88,9 @@ namespace Frigorino.Infrastructure.Services
         private readonly ChatClient _client;
         private readonly ILogger<OpenAiItemClassifier> _logger;
 
-        public OpenAiItemClassifier(ChatClient client, ILogger<OpenAiItemClassifier> logger)
+        public OpenAiItemClassifier(
+            [FromKeyedServices(AiKeys.Classifier)] ChatClient client,
+            ILogger<OpenAiItemClassifier> logger)
         {
             _client = client;
             _logger = logger;

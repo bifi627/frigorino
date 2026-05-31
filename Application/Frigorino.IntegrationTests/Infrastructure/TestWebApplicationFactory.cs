@@ -27,8 +27,8 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:Database", ConnectionString);
-        builder.UseSetting("Classifier:Enabled", "true");
-        builder.UseSetting("Classifier:ApiKey", "integration-test-stub-key");
+        builder.UseSetting("Ai:Classifier:Enabled", "true");
+        builder.UseSetting("Ai:ApiKey", "integration-test-stub-key");
 
         var webRoot = SpaBuildHelper.FindWebProjectRoot();
         builder.UseContentRoot(webRoot);
