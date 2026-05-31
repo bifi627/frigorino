@@ -3,20 +3,19 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
-    quantityFeature,
     type Completion,
     type DuplicateResult,
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse } from "../../../../lib/api";
 
-const features = [quantityFeature] as const;
+const features = [] as const;
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
     existingItems: ListItemResponse[];
-    onAddItem: (data: string, quantity?: string) => void;
-    onUpdateItem: (data: string, quantity?: string) => void;
+    onAddItem: (data: string) => void;
+    onUpdateItem: (data: string) => void;
     onCancelEdit: () => void;
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
@@ -74,22 +73,16 @@ export const ListFooter = memo(
         });
 
         const initialDraft = useMemo(
-            () =>
-                editingItem
-                    ? {
-                          text: editingItem.text,
-                          values: { quantity: editingItem.quantity ?? "" },
-                      }
-                    : undefined,
+            () => (editingItem ? { text: editingItem.text } : undefined),
             [editingItem],
         );
 
         const handleComplete = useCallback(
             (r: Completion<typeof features>) => {
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, r.quantity);
+                    onUpdateItem(r.text);
                 } else {
-                    onAddItem(r.text, r.quantity);
+                    onAddItem(r.text);
                     onScrollToLastUnchecked();
                 }
             },

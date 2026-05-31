@@ -78,18 +78,19 @@ export const ListViewPage = () => {
     }, []);
 
     const handleAddItem = useCallback(
-        (data: string, quantity?: string) => {
+        (data: string) => {
             if (!householdId) return;
+            // TODO(Task 11): capture created item id + start extraction poll
             createMutation.mutate({
                 path: { householdId, listId: listIdNum },
-                body: { text: data, quantity: quantity ?? null },
+                body: { text: data },
             });
         },
         [createMutation, householdId, listIdNum],
     );
 
     const handleUpdateItem = useCallback(
-        (data: string, quantity?: string) => {
+        (data: string) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
@@ -97,11 +98,7 @@ export const ListViewPage = () => {
                         listId: listIdNum,
                         itemId: editingItem.id,
                     },
-                    body: {
-                        text: data,
-                        quantity: quantity ?? null,
-                        status: null,
-                    },
+                    body: { text: data, quantity: null, status: null },
                 });
                 setEditingItem(null);
             }
