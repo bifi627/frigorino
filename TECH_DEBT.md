@@ -26,12 +26,6 @@ Format per item:
 
 ---
 
-## - **Hybrid deterministic-then-LLM quantity extraction** — parse the easy cases for free, reserve the nano model for genuinely ambiguous input.
-- **Where:** `Application/Frigorino.Infrastructure/Services/QuantityExtractionTriggers.cs` (the digit-gate front door), `OpenAiQuantityExtractor.cs`, `Application/Frigorino.Domain/Quantities/Quantity.cs`. Surfaced in the 6-hat review (Green hat) of `feat/quantity-inline-extraction`.
-- **Why deferred:** v1 ships LLM-only extraction to keep one code path and land the feature. The "LLM vs parser" decision was left open in the AI roadmap ([[project_quantity_cycle_next]] / IDEAS.md "Quantity as a domain value object").
-- **Plan:** add a deterministic `Quantity.TryParse` (leading/trailing "2kg", "500 ml", "1,5 l", bare "3" + clean-name strip). Run it **synchronously in the create slice** before enqueuing: on a confident parse, write the quantity immediately (no async, no poll, no LLM spend) and only enqueue `ExtractQuantityJob` for the ambiguous remainder (mid-string quantities, brand-digit disambiguation like "7up"). Keeps the LLM as the fallback the hard cases need. Two code paths to reason about; the clean-name substring strip is the fiddly part the LLM currently does well.
-- **Risk if left:** every digit-bearing add pays an LLM round-trip + the 4s poll window even for trivial "2 milk"; ongoing token cost and a slower perceived UX than necessary.
-
 ## - **List-level extraction poll instead of single-item poll** — removes the temp-id reconciliation and the "only the last add polls" gap in one move.
 - **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/items/useExtractionPoll.ts`, `useCreateListItem.ts` (the `tempId = Date.now()` → real-id swap in `onSuccess`), `features/lists/pages/ListViewPage.tsx` (`pendingExtraction` is a single slot; rapid successive adds overwrite it so earlier rows show stale raw text until a debounced refetch). Surfaced in the 6-hat review (Black + Green hats).
 - **Why deferred:** the single-item poll + optimistic temp-id reconciliation works correctly for the common one-at-a-time add; the multi-add gap is acknowledged "v1" behavior, not a regression.
@@ -51,7 +45,7 @@ Format per item:
 - **Risk if left:** if `theme.ts` primary changes, the pulse glow and the solid border drift to different blues.
 
 ## - **Digit-gate logic duplicated on client and server.**
-- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/pages/ListViewPage.tsx` (`hadDigit: /\d/.test(data)`) vs `Application/Frigorino.Infrastructure/Services/QuantityExtractionTriggers.cs` (`@"\d"` enqueue gate). Surfaced in the 6-hat review (Black minor).
+- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/pages/ListViewPage.tsx` (`hadDigit: /\d/.test(data)`) vs `Application/Frigorino.Domain/Quantities/ItemTextRouter.cs` (the `Digit` gate in Phase B that routes to `NeedsExtraction`). Surfaced in the 6-hat review (Black minor). Note: with deterministic `Quantity.TryParse`, some digit-bearing adds now resolve synchronously (quantity in the create response, no extraction enqueued) — so the client's `hadDigit` poll over-polls those rows until the debounced refetch.
 - **Why deferred:** the two regexes agree today, so the indicator and the actual enqueue stay in sync.
 - **Plan:** make the decision single-sourced — e.g. have the create response signal whether extraction was enqueued, and drive the poll off that instead of re-deriving `hadDigit` in the page. (Pairs naturally with the list-poll rework above.)
 - **Risk if left:** if the backend gate ever changes (e.g. spelled-out "two apples"), the UI silently stops polling for items that do get a quantity, so the chip only appears after the debounced refetch.
