@@ -213,6 +213,17 @@
         "about": "About",
         "profile": "Profile"
     },
+    "quantityUnits": {
+        "0": "g",
+        "1": "kg",
+        "2": "ml",
+        "3": "l",
+        "4": "pc",
+        "5": "pack",
+        "6": "can",
+        "7": "bottle",
+        "8": "bag"
+    },
     "dashboard": {
         "items": "Items",
         "articles": "Articles",

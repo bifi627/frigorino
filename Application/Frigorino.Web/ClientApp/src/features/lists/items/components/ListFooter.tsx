@@ -8,6 +8,7 @@ import {
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse } from "../../../../lib/api";
+import { formatQuantity } from "../quantityFormat";
 
 const features = [] as const;
 
@@ -65,10 +66,17 @@ export const ListFooter = memo(
             [editingItem, onUncheckExisting, t],
         );
 
+        const getSecondaryLabel = useCallback(
+            (item: ListItemResponse) =>
+                item.quantity ? formatQuantity(t, item.quantity) : undefined,
+            [t],
+        );
+
         const { suggestions, duplicate } = useItemComposer({
             editingItem,
             existingItems,
             getBadge,
+            getSecondaryLabel,
             onDuplicate,
         });
 

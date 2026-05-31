@@ -10,7 +10,6 @@ import type {
 export interface ComposerItem {
     id: number;
     text: string;
-    quantity?: string | null;
 }
 
 interface UseItemComposerArgs<TItem extends ComposerItem> {
@@ -18,6 +17,8 @@ interface UseItemComposerArgs<TItem extends ComposerItem> {
     existingItems: TItem[];
     /** Optional trailing badge for a suggestion row. */
     getBadge?: (item: TItem) => ReactNode;
+    /** Optional secondary label shown in suggestion rows (e.g. formatted quantity). */
+    getSecondaryLabel?: (item: TItem) => string | undefined;
     /** Builds the inline message/action when an exact-name match is found. */
     onDuplicate: (match: TItem) => DuplicateResult;
 }
@@ -31,6 +32,7 @@ export function useItemComposer<TItem extends ComposerItem>({
     editingItem,
     existingItems,
     getBadge,
+    getSecondaryLabel,
     onDuplicate,
 }: UseItemComposerArgs<TItem>): {
     suggestions: SuggestionsConfig;
@@ -52,13 +54,13 @@ export function useItemComposer<TItem extends ComposerItem>({
                         (item): Suggestion => ({
                             id: item.id,
                             label: item.text,
-                            secondaryLabel: item.quantity ?? undefined,
+                            secondaryLabel: getSecondaryLabel?.(item),
                             badge: getBadge?.(item),
                         }),
                     );
             },
         }),
-        [existingItems, editingId, getBadge],
+        [existingItems, editingId, getBadge, getSecondaryLabel],
     );
 
     const duplicate = useMemo<DuplicateConfig>(
