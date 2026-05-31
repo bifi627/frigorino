@@ -33,7 +33,7 @@ namespace Frigorino.Features.Lists.Items
             UpdateItemRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
-            IProductClassificationTrigger classificationTrigger,
+            IQuantityExtractionTrigger quantityTrigger,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
@@ -76,7 +76,7 @@ namespace Frigorino.Features.Lists.Items
 
             if (request.Text is not null)
             {
-                classificationTrigger.OnProductReferenced(householdId, request.Text);
+                quantityTrigger.OnItemEntered(householdId, listId, itemId, request.Text);
             }
 
             return TypedResults.Ok(ListItemResponse.From(result.Value));
