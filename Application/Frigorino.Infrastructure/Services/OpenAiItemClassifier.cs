@@ -122,7 +122,7 @@ namespace Frigorino.Infrastructure.Services
 
                 // Log the model's reasoning as a diagnostic — it does not leave this method.
                 _logger.LogInformation(
-                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning} ({Total} Total Tokens used, {Reasoning} Reasoning Token used)",
+                    "Classified '{Name}' as {Category}/{Handling} (shelf life {Days}): {Reasoning} ({Total} Total Tokens used, {ReasoningTokens} Reasoning Token used)",
                     normalizedName, dto?.ProductCategory, dto?.ExpiryHandling, dto?.DefaultShelfLifeDays, dto?.Reasoning, completion.Value.Usage.TotalTokenCount, completion.Value.Usage.OutputTokenDetails.ReasoningTokenCount);
 
                 if (dto is null || profile.IsFailed)
