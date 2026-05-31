@@ -34,7 +34,7 @@ namespace Frigorino.Domain.Quantities
         private static readonly Regex Digit = new(@"\d", RegexOptions.Compiled);
         private static readonly char[] WordSeparators = { ' ', '\t', '\n', '\r' };
 
-        public static ItemTextAnalysis Analyze(string rawText)
+        public static ItemTextAnalysis Analyze(string? rawText)
         {
             var text = (rawText ?? string.Empty).Trim();
 
