@@ -32,12 +32,6 @@ Format per item:
 - **Plan:** drop the per-item `getItem` poll; instead `refetchInterval` the existing `getItems` list query for a bounded window after any digit-bearing add, comparing each row's `quantity` to detect arrival. The indicator is already rendered per-row from list data. This makes `pendingExtraction` a set (or just "poll the list while any add is in flight"), and deletes the `tempId` swap entirely. Trade-off: refetches the whole (small) list vs one item.
 - **Risk if left:** after rapid multi-item adds, earlier extracted quantities don't reflect until the ~1s debounced invalidation (which keeps resetting if the user keeps typing); the temp-id `Date.now()` is also a latent duplicate-key risk on same-millisecond adds.
 
-## - **Generalize `useExtractionPoll` into a reusable bounded async-enrichment poll.**
-- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/items/useExtractionPoll.ts`. Surfaced in the 6-hat review (Green hat).
-- **Why deferred:** only one consumer (quantity) exists today; abstracting before a second consumer would be speculative.
-- **Plan:** parameterize the "done" predicate (currently hardcoded `data.quantity`) and the cache-patch into `useEnrichmentPoll(query, isDone, patch, { maxMs, intervalMs })`. Reuse for classifier results (Cycle 2 has no UI feedback today) and future receipt-OCR. Keep the `active`-vs-`isFetching` decoupling (the anti-flicker substance).
-- **Risk if left:** the next async-enrichment feature copy-pastes the poll, including its three-clock timing logic, and the two diverge.
-
 ## - **Quantity processing-pulse color hardcoded instead of theme-sourced.**
 - **Where:** `Application/Frigorino.Web/ClientApp/src/components/sortables/SortableListItem.tsx` (`processingPulse` keyframe uses literal `rgba(25, 118, 210, …)` while the static border uses `borderColor: "primary.main"`). Surfaced in the 6-hat review (Black/Red minor).
 - **Why deferred:** cosmetic; matches the existing orange edit-pulse which also hardcodes its color, so it's consistent with current code.
