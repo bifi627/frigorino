@@ -45,19 +45,22 @@ namespace Frigorino.Domain.Quantities
                 || text.Length > MaxProductChars
                 || text.Split(WordSeparators, System.StringSplitOptions.RemoveEmptyEntries).Length > MaxProductWords)
             {
-                return new ItemTextAnalysis(ItemTextRoute.SkipAi, rawText ?? string.Empty, null);
+                return new ItemTextAnalysis(ItemTextRoute.SkipAi, text, null);
             }
 
             // Phase A: deterministic facet extraction (quantity is the only facet today).
-            if (Quantity.TryParse(rawText!, out var cleanName, out var quantity))
+            if (Quantity.TryParse(text, out var cleanName, out var quantity))
             {
                 return new ItemTextAnalysis(ItemTextRoute.Resolved, cleanName, quantity);
             }
 
             // Phase B: disposition of the ambiguous remainder.
-            return Digit.IsMatch(rawText!)
-                ? new ItemTextAnalysis(ItemTextRoute.NeedsExtraction, rawText!, null)
-                : new ItemTextAnalysis(ItemTextRoute.ClassifyOnly, rawText!, null);
+            if (Digit.IsMatch(text))
+            {
+                return new ItemTextAnalysis(ItemTextRoute.NeedsExtraction, text, null);
+            }
+
+            return new ItemTextAnalysis(ItemTextRoute.ClassifyOnly, text, null);
         }
     }
 }

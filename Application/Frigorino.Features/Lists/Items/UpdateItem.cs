@@ -66,10 +66,11 @@ namespace Frigorino.Features.Lists.Items
             // quantity or ClearQuantity, making the user authoritative). On a Resolved parse we write
             // the stripped name + quantity in this same save; SkipAi/NeedsExtraction/ClassifyOnly
             // leave the user's text as-typed and the existing quantity untouched.
-            ItemTextAnalysis? analysis =
-                request.Text is not null && request.Quantity is null && request.ClearQuantity != true
-                    ? ItemTextRouter.Analyze(request.Text)
-                    : null;
+            ItemTextAnalysis? analysis = null;
+            if (request.Text is not null && request.Quantity is null && request.ClearQuantity != true)
+            {
+                analysis = ItemTextRouter.Analyze(request.Text);
+            }
 
             var textToWrite = request.Text;
             if (analysis is { Route: ItemTextRoute.Resolved } resolved)
