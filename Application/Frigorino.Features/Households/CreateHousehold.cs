@@ -17,7 +17,7 @@
 //  8. `CancellationToken` is always passed and threaded into `SaveChangesAsync(ct)`.
 //  9. Use `TypedResults` (not `Results`). Endpoint return type is `Results<TSuccess, ValidationProblem>` (or other unions).
 // 10. `RequireAuthorization()` on protected endpoints.
-// 11. Wire format: enums serialize as integers (no JsonStringEnumConverter); an IntegerSchemaTransformer in Program.cs keeps OpenAPI int schemas plain so the generated TS client emits `number`.
+// 11. Wire format: enums serialize as their string names (JsonStringEnumConverter in Program.cs) so OpenAPI emits string `enum:[...]` and the generated TS client gets string union types. DB stays int (EF default).
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Results;

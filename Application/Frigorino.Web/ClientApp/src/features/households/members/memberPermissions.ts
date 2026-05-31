@@ -1,8 +1,8 @@
 import type { HouseholdRole, MemberResponse } from "../../../lib/api";
-import { HouseholdRoleValue } from "../householdRole";
+import { HouseholdRoleValue, roleRank } from "../householdRole";
 
 export const canManageMembers = (currentUserRole: HouseholdRole): boolean =>
-    currentUserRole >= HouseholdRoleValue.Admin;
+    roleRank[currentUserRole] >= roleRank[HouseholdRoleValue.Admin];
 
 export const canManageMember = (
     member: MemberResponse,

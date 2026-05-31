@@ -215,15 +215,15 @@
         "profile": "Profile"
     },
     "quantityUnits": {
-        "0": "g",
-        "1": "kg",
-        "2": "ml",
-        "3": "l",
-        "4": "pc",
-        "5": "pack",
-        "6": "can",
-        "7": "bottle",
-        "8": "bag"
+        "Gram": "g",
+        "Kilogram": "kg",
+        "Milliliter": "ml",
+        "Liter": "l",
+        "Piece": "pc",
+        "Pack": "pack",
+        "Can": "can",
+        "Bottle": "bottle",
+        "Bag": "bag"
     },
     "dashboard": {
         "items": "Items",

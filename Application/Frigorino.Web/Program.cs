@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Features.Households.Members;
@@ -32,7 +33,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+// Enums serialize as their string names on the wire (not ints). Minimal-API slices read
+// their JSON options from ConfigureHttpJsonOptions; this also drives the OpenAPI enum schema
+// so the generated TS client emits string union types instead of `number`.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
 builder.Services.AddOpenApi(options =>
 {
     options.AddSchemaTransformer<Frigorino.Web.OpenApi.IntegerSchemaTransformer>();

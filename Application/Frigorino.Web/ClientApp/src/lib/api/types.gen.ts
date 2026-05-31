@@ -50,7 +50,7 @@ export type HouseholdResponse = {
     currentUserRole: HouseholdRole;
 };
 
-export type HouseholdRole = number;
+export type HouseholdRole = 'Member' | 'Admin' | 'Owner';
 
 export type HttpValidationProblemDetails = {
     type?: null | string;
@@ -136,7 +136,7 @@ export type QuantityDto = {
     unit: QuantityUnit;
 };
 
-export type QuantityUnit = number;
+export type QuantityUnit = 'Gram' | 'Kilogram' | 'Milliliter' | 'Liter' | 'Piece' | 'Pack' | 'Can' | 'Bottle' | 'Bag';
 
 export type ReorderItemRequest = {
     afterId: number;
