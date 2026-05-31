@@ -60,7 +60,12 @@ namespace Frigorino.Features.Lists.Items
 
             quantityTrigger.OnItemRouted(householdId, listId, result.Value.Id, analysis);
 
-            var response = ListItemResponse.From(result.Value);
+            // Tell the client whether an async extraction was enqueued (the only route that does is
+            // NeedsExtraction) so its poll keys off this single signal rather than re-deriving a digit gate.
+            var response = ListItemResponse.From(result.Value) with
+            {
+                ExtractionPending = analysis.Route == ItemTextRoute.NeedsExtraction,
+            };
             return TypedResults.Created(
                 $"/api/household/{householdId}/lists/{listId}/items/{result.Value.Id}",
                 response);

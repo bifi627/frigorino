@@ -33,13 +33,7 @@ Format per item:
 - **Risk if left:** after rapid multi-item adds, earlier extracted quantities don't reflect until the ~1s debounced invalidation (which keeps resetting if the user keeps typing); the temp-id `Date.now()` is also a latent duplicate-key risk on same-millisecond adds.
 
 ## - **Quantity processing-pulse color hardcoded instead of theme-sourced.**
-- **Where:** `Application/Frigorino.Web/ClientApp/src/components/sortables/SortableListItem.tsx` (`processingPulse` keyframe uses literal `rgba(25, 118, 210, …)` while the static border uses `borderColor: "primary.main"`). Surfaced in the 6-hat review (Black/Red minor).
+- **Where:** `Application/Frigorino.Web/ClientApp/src/components/sortables/SortableListItem.tsx` (`processingPulse` keyframe uses literal `rgba(25, 118, 210, …)` while the static border uses `borderColor: "primary.main"`). Surfaced in the 6-hat review (Black/Red minor). Also consider general theming and styling approachs in the app, how can we improve?
 - **Why deferred:** cosmetic; matches the existing orange edit-pulse which also hardcodes its color, so it's consistent with current code.
 - **Plan:** read the primary color from the theme (e.g. `alpha(theme.palette.primary.main, x)` in an `sx` callback) for both the border and the pulse so a theme palette change can't make them diverge. Aligns with `knowledge/Frontend_Styling.md` "theme owns the palette."
 - **Risk if left:** if `theme.ts` primary changes, the pulse glow and the solid border drift to different blues.
-
-## - **Digit-gate logic duplicated on client and server.**
-- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/pages/ListViewPage.tsx` (`hadDigit: /\d/.test(data)`) vs `Application/Frigorino.Domain/Quantities/ItemTextRouter.cs` (the `Digit` gate in Phase B that routes to `NeedsExtraction`). Surfaced in the 6-hat review (Black minor). Note: with deterministic `Quantity.TryParse`, some digit-bearing adds now resolve synchronously (quantity in the create response, no extraction enqueued) — so the client's `hadDigit` poll over-polls those rows until the debounced refetch.
-- **Why deferred:** the two regexes agree today, so the indicator and the actual enqueue stay in sync.
-- **Plan:** make the decision single-sourced — e.g. have the create response signal whether extraction was enqueued, and drive the poll off that instead of re-deriving `hadDigit` in the page. (Pairs naturally with the list-poll rework above.)
-- **Risk if left:** if the backend gate ever changes (e.g. spelled-out "two apples"), the UI silently stops polling for items that do get a quantity, so the chip only appears after the debounced refetch.

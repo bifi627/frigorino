@@ -10,8 +10,8 @@ const MAX_POLL_MS = 4000;
 const INTERVAL_MS = 600;
 
 // Polls a single just-created item until its quantity arrives (extraction completed) or the
-// deadline passes, then patches the items-list cache. `enabled` should be set only when the
-// entered text contained a digit (otherwise no extraction runs).
+// deadline passes, then patches the items-list cache. `enabled` should mirror the create
+// response's `extractionPending` — true only when the server enqueued an async extraction.
 //
 // Timing has ONE authority: the `active` window. A single deadline timer flips it off after
 // MAX_POLL_MS; the query polls only while `active` (so the same flip stops the poll), and the

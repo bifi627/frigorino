@@ -2171,7 +2171,8 @@
           "status",
           "sortOrder",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "extractionPending"
         ],
         "type": "object",
         "properties": {
@@ -2210,6 +2211,10 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "extractionPending": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
