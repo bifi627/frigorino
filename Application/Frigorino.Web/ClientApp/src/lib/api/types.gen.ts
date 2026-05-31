@@ -33,7 +33,6 @@ export type CreateInventoryRequest = {
 
 export type CreateItemRequest = {
     text: string;
-    quantity: null | string;
 };
 
 export type CreateListRequest = {
@@ -104,7 +103,7 @@ export type ListItemResponse = {
     id: number;
     listId: number;
     text: string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     status: boolean;
     sortOrder: number;
     createdAt: string;
@@ -131,6 +130,13 @@ export type MemberResponse = {
     joinedAt: string;
 };
 
+export type QuantityDto = {
+    value: number | string;
+    unit: QuantityUnit;
+};
+
+export type QuantityUnit = number;
+
 export type ReorderItemRequest = {
     afterId: number;
 };
@@ -152,7 +158,7 @@ export type UpdateInventoryRequest = {
 
 export type UpdateItemRequest = {
     text: null | string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     status: null | boolean;
 };
 
