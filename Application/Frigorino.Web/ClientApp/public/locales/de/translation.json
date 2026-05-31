@@ -202,7 +202,8 @@
         "noListsYet": "Noch keine Listen",
         "createFirstShoppingList": "Erstellen Sie Ihre erste Einkaufsliste, um zu beginnen",
         "createYourFirstList": "Erstellen Sie Ihre erste Liste",
-        "quantity": "Menge"
+        "quantity": "Menge",
+        "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen"
     },
     "navigation": {
         "home": "Startseite",

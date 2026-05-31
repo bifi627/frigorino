@@ -36,6 +36,17 @@ export const draftToQuantity = (d: QuantityDraft): QuantityDto | null => {
         : null;
 };
 
+// A draft is valid when the field is empty (= "clear the quantity") or holds a positive number.
+// A non-empty, non-positive/unparseable value is invalid — the composer blocks send rather than
+// silently treating it as a clear, which would wipe an existing quantity.
+export const isDraftValid = (d: QuantityDraft): boolean => {
+    if (d.value.trim() === "") {
+        return true;
+    }
+    const numeric = Number(d.value.replace(",", "."));
+    return Number.isFinite(numeric) && numeric > 0;
+};
+
 const draftLabel = (t: TFunction, d: QuantityDraft): string =>
     `${d.value.trim()} ${unitLabel(t, d.unit)}`;
 
@@ -81,9 +92,10 @@ const QuantityPanel = ({
     disabled,
 }: FeatureSlot<QuantityDraft>) => {
     const { t } = useTranslation();
+    const invalid = !isDraftValid(value);
     return (
         <Box
-            sx={{ display: "flex", gap: 1, alignItems: "center", p: 1 }}
+            sx={{ display: "flex", gap: 1, alignItems: "flex-start", p: 1 }}
             onClick={(e) => e.stopPropagation()}
         >
             <TextField
@@ -94,6 +106,8 @@ const QuantityPanel = ({
                 value={value.value}
                 onChange={(e) => setValue({ ...value, value: e.target.value })}
                 disabled={disabled}
+                error={invalid}
+                helperText={invalid ? t("lists.invalidQuantity") : undefined}
                 size="small"
                 sx={{ width: 110 }}
             />
@@ -130,6 +144,7 @@ export const quantityComposerFeature = defineModifier({
     id: "quantity",
     initial: EMPTY_QUANTITY_DRAFT,
     isEmpty: (value) => value.value.trim() === "",
+    isValid: isDraftValid,
     renderToggle: (slot) => <QuantityToggle {...slot} />,
     renderPanel: (slot) => <QuantityPanel {...slot} />,
     renderChip: (slot) => <QuantityChip {...slot} />,

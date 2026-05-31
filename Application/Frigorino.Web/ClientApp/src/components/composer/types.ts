@@ -16,6 +16,8 @@ export interface ModifierFeature<Id extends string, V> {
     initial: V;
     /** Optional emptiness test; used to decide whether a value renders a chip. */
     isEmpty?: (value: V) => boolean;
+    /** Optional validity test; when it returns false, send is disabled and completion blocked. */
+    isValid?: (value: V) => boolean;
     renderToggle?: (slot: FeatureSlot<V>) => ReactNode;
     renderPanel?: (slot: FeatureSlot<V>) => ReactNode;
     /** Optional chip shown above the field when the value is non-empty; tapping it opens the panel. */

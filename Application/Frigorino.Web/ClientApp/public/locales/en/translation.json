@@ -202,7 +202,8 @@
         "noListsYet": "No lists yet",
         "createFirstShoppingList": "Create your first shopping list to get started",
         "createYourFirstList": "Create Your First List",
-        "quantity": "Quantity"
+        "quantity": "Quantity",
+        "invalidQuantity": "Enter a positive number, or leave empty to clear"
     },
     "navigation": {
         "home": "Home",
