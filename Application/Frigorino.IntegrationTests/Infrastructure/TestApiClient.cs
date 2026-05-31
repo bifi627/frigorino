@@ -111,9 +111,9 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public async Task<int> CreateListItemAsync(int listId, string text, string? quantity = null)
+    public async Task<int> CreateListItemAsync(int listId, string text)
     {
-        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/items", new { text, quantity });
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/lists/{listId}/items", new { text });
         return json.GetProperty("id").GetInt32();
     }
 
