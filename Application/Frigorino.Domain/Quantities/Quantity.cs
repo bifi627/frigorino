@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using FluentResults;
 
 namespace Frigorino.Domain.Quantities
@@ -47,5 +49,82 @@ namespace Frigorino.Domain.Quantities
 
             return Result.Ok(new Quantity(normalized, unit));
         }
+
+        // Deterministic, conservative parse of the unambiguous quantity shapes (Option A): a number
+        // is a quantity ONLY when it is a standalone token glued to / followed by a known metric
+        // unit, or the leading bare integer count. Everything else (brand-digits like "7up"/"WD-40",
+        // trailing bare integers, mid-string, container words) returns false and is left to the LLM.
+        // Patterns are tried in order; first confident match wins.
+        private static readonly Regex LeadingUnit = new(
+            @"^\s*(?<num>\d+(?:[.,]\d+)?)\s*(?<unit>kg|g|ml|l)\b\s*(?<name>.+?)\s*$",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex TrailingUnit = new(
+            @"^\s*(?<name>.+?)\s+(?<num>\d+(?:[.,]\d+)?)\s*(?<unit>kg|g|ml|l)\s*$",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex LeadingBare = new(
+            @"^\s*(?<num>\d+)\s+(?<name>.+?)\s*$",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex UnitOnly = new(
+            @"^(kg|g|ml|l)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        public static bool TryParse(string text, out string cleanName, out Quantity quantity)
+        {
+            cleanName = string.Empty;
+            quantity = default;
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            foreach (var (regex, isBare) in new[]
+                     {
+                         (LeadingUnit, false),
+                         (TrailingUnit, false),
+                         (LeadingBare, true),
+                     })
+            {
+                var match = regex.Match(text);
+                if (!match.Success)
+                {
+                    continue;
+                }
+
+                var name = match.Groups["name"].Value.Trim();
+                // Number-only-no-product: "2kg" (empty name) or "2 kg" (name is just a unit token).
+                if (name.Length == 0 || (isBare && UnitOnly.IsMatch(name)))
+                {
+                    continue;
+                }
+
+                var numText = match.Groups["num"].Value.Replace(',', '.');
+                if (!decimal.TryParse(numText, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+                {
+                    continue;
+                }
+
+                var unit = isBare ? QuantityUnit.Piece : MapUnit(match.Groups["unit"].Value);
+                var created = Quantity.Create(value, unit);
+                if (created.IsFailed)
+                {
+                    continue;
+                }
+
+                cleanName = name;
+                quantity = created.Value;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static QuantityUnit MapUnit(string unit) => unit.ToLowerInvariant() switch
+        {
+            "g" => QuantityUnit.Gram,
+            "kg" => QuantityUnit.Kilogram,
+            "ml" => QuantityUnit.Milliliter,
+            "l" => QuantityUnit.Liter,
+            _ => QuantityUnit.Piece,
+        };
     }
 }
