@@ -35,6 +35,7 @@ export const useUpdateListItem = () => {
                             ? {
                                   ...item,
                                   text: variables.body.text ?? item.text,
+                                  // null means "preserve" (mirrors the domain's UpdateItem)
                                   quantity:
                                       variables.body.quantity ?? item.quantity,
                                   updatedAt: new Date().toISOString(),

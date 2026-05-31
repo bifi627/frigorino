@@ -3,6 +3,7 @@ import type { QuantityDto } from "../../../lib/api";
 
 // QuantityUnit is emitted as `number` by the generated client. These mirror the backend enum
 // order (Gram=0 .. Bag=8). The label text comes from i18n (quantityUnits.<n>).
+// Update this list (and the quantityUnits i18n keys) after `npm run api` if units change.
 export const QUANTITY_UNIT_VALUES = [0, 1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export const unitLabel = (t: TFunction, unit: number): string =>

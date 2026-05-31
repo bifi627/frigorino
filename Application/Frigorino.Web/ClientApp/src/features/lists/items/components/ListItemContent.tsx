@@ -10,8 +10,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useLongPress } from "../../../../hooks/useLongPress";
-import type { QuantityDto } from "../../../../lib/api";
-import type { ListItemResponse } from "../../../../lib/api";
+import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
 import { formatQuantity } from "../quantityFormat";
 import { QuantityEditPopover } from "./QuantityEditPopover";
 

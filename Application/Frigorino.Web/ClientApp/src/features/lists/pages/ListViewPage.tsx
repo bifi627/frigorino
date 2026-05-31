@@ -92,11 +92,20 @@ export const ListViewPage = () => {
     const handleAddItem = useCallback(
         async (data: string) => {
             if (!householdId) return;
-            const created = await createMutation.mutateAsync({
-                path: { householdId, listId: listIdNum },
-                body: { text: data },
-            });
-            setPendingExtraction({ id: created.id, hadDigit: /\d/.test(data) });
+            try {
+                const created = await createMutation.mutateAsync({
+                    path: { householdId, listId: listIdNum },
+                    body: { text: data },
+                });
+                // Only the latest add is polled for extraction; rapid successive adds
+                // replace this, so just the last item shows the extracting spinner (v1).
+                setPendingExtraction({
+                    id: created.id,
+                    hadDigit: /\d/.test(data),
+                });
+            } catch {
+                // createMutation.onError rolls back the optimistic item; nothing to do here.
+            }
         },
         [createMutation, householdId, listIdNum],
     );
