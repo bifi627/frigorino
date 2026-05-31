@@ -215,15 +215,15 @@
         "profile": "Profil"
     },
     "quantityUnits": {
-        "0": "g",
-        "1": "kg",
-        "2": "ml",
-        "3": "l",
-        "4": "Stk",
-        "5": "Pack",
-        "6": "Dose",
-        "7": "Flasche",
-        "8": "Beutel"
+        "Gram": "g",
+        "Kilogram": "kg",
+        "Milliliter": "ml",
+        "Liter": "l",
+        "Piece": "Stk",
+        "Pack": "Pack",
+        "Can": "Dose",
+        "Bottle": "Flasche",
+        "Bag": "Beutel"
     },
     "dashboard": {
         "items": "Artikel",

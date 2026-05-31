@@ -6,7 +6,7 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { defineModifier } from "../../../components/composer/defineFeature";
 import type { FeatureSlot } from "../../../components/composer/types";
-import type { QuantityDto } from "../../../lib/api";
+import type { QuantityDto, QuantityUnit } from "../../../lib/api";
 import { QUANTITY_UNIT_VALUES, unitLabel } from "./quantityFormat";
 
 // The composer keeps the in-progress quantity as a draft (free-text value + unit) rather than a
@@ -14,10 +14,10 @@ import { QUANTITY_UNIT_VALUES, unitLabel } from "./quantityFormat";
 // number. `draftToQuantity` converts on send; an empty/invalid value yields null (= "preserve").
 export interface QuantityDraft {
     value: string;
-    unit: number;
+    unit: QuantityUnit;
 }
 
-const PIECE_UNIT = 4; // QuantityUnit.Piece — the default for a bare count
+const PIECE_UNIT: QuantityUnit = "Piece"; // the default for a bare count
 
 export const EMPTY_QUANTITY_DRAFT: QuantityDraft = {
     value: "",
@@ -116,7 +116,7 @@ const QuantityPanel = ({
                 size="small"
                 value={value.unit}
                 onChange={(e) =>
-                    setValue({ ...value, unit: Number(e.target.value) })
+                    setValue({ ...value, unit: e.target.value as QuantityUnit })
                 }
                 disabled={disabled}
                 sx={{ flex: 1, minWidth: 120 }}

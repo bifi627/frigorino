@@ -10,28 +10,6 @@ Format per item:
 
 ---
 
-## Strongly-typed IDs (Vogen)
-
-- **Why:** Today `Household.Id` is `int` and `User.ExternalId` is `string`, which means slice handlers can swap `householdId` and `userId` parameters and the compiler won't notice. As the surface grows (Lists/Inventories will add `ListId`, `ListItemId`, `InventoryId`, `InventoryItemId` — all currently `int`), the parameter-swap bug surface multiplies. Modern .NET community has converged on source-generated value objects to eliminate this primitive obsession, with **Vogen** as the de facto choice (more capable than the ID-only `StronglyTypedId` library: validation, code analyzer, broader value-object generation). Source-gen means zero runtime overhead.
-- **Sketch:**
-  - Add `Vogen` package reference to `Frigorino.Domain` (pin exact version per the dependency rule).
-  - Define ID structs in `Frigorino.Domain/Identifiers/` (or co-located with their entities — TBD):
-    ```csharp
-    [ValueObject<int>]
-    public readonly partial struct HouseholdId;
-
-    [ValueObject<string>]
-    public readonly partial struct ExternalUserId;
-    ```
-  - Update entity properties to typed IDs (`Household.Id` becomes `HouseholdId`, `User.ExternalId` becomes `ExternalUserId`, `UserHousehold.UserId`/`HouseholdId` follow).
-  - Configure EF Core value converters (one line per ID type) in `ApplicationDbContext.OnModelCreating`. Vogen has docs for this pattern; can also use `Vogen.EntityFrameworkCoreConverters` package if it exists at the time.
-  - Update slice route bindings — minimal-API parameter binding via `ITryParse` should work for typed IDs out of the box.
-  - Apply during the Lists/Inventories migration as a unifying step (introduces `ListId`, `InventoryId`, etc. alongside the existing IDs) rather than a standalone retrofit. This keeps the diff focused and gives a real reason to touch every entity.
-  - **Open question:** what about user-facing IDs in URLs? Today `int` IDs leak DB sequence numbers (enumeration attacks, mild info disclosure). If we move to `Guid` IDs as part of this work, we get sequence-hiding for free. Counterargument: shorter URLs, simpler debugging. Decide before applying.
-- **Impact / cost:** one new package, plus ~1 EF converter + ~1 entity update per ID type. Source generator means no runtime cost. Builds catch parameter-swap bugs that today only manifest at runtime as 404s. Higher confidence at cost of one-time conversion effort.
-
----
-
 ## Domain event infrastructure (EF Core SaveChangesInterceptor)
 
 - **Why:** Today aggregate methods (`Household.AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`) succeed silently — there's no signal emitted. When audit log, in-app notifications, analytics events, or cross-aggregate side effects (e.g., "when a household is deleted, archive its Lists and Inventories") land, they will need to retrofit each aggregate method to do the publishing inline. Worse, that publishing usually wants to fire **after** the database transaction commits (otherwise an event for a never-saved row is a bug). The canonical .NET pattern for this is `SaveChangesInterceptor` capturing aggregate-emitted `IDomainEvent` lists and dispatching post-save. Wiring the infrastructure now (before there are subscribers) means future features just emit events from the aggregate without touching the slice handler or the persistence path.
@@ -45,16 +23,6 @@ Format per item:
   - **No subscribers initially** — the infra is "armed but unused". When the first feature wants to subscribe (e.g., audit log), it writes one `IDomainEventHandler<MemberAdded>` implementation; everything else stays untouched.
   - **Outbox upgrade path:** for cross-process / at-least-once delivery, swap the in-process dispatcher for one that writes events to an `Outbox` table inside the same transaction (move from `SavedChangesAsync` to `SavingChangesAsync` + a separate poller/worker). Out of scope for the initial introduction; document the upgrade as a follow-up if cross-process integration emerges.
 - **Impact / cost:** ~3 new files (`IDomainEvent`, `AggregateRoot`, `PublishDomainEventsInterceptor`), one DI registration, ~5 lines per aggregate method to raise events, ~half-day total. Zero subscribers = zero behavior change today. Future features avoid retrofitting.
-
----
-
-## Async fire-and-forget runner (in-process Channels)
-
-- **Status:** Supersedes a reverted Hangfire trial. Hangfire was implemented (commit `7fb8937`) then **reverted** — its always-on `BackgroundJobServer` polls Postgres continuously (schedule + queue + heartbeat), which keeps the container awake and defeats Railway's serverless sleep (services sleep only after ~10 min with no outbound requests; see `project_no_synthetic_uptime_checks`). Durable, dashboard-backed queueing isn't worth surrendering scale-to-zero on the free tier.
-- **Why (still valid):** future features want an async runner — classifying a list item via an LLM (~1s, would block list-add otherwise), OCR-ing receipt photos, sending invite emails. The `MaintenanceHostedService` startup batch covers *periodic* work but not request-triggered fire-and-forget.
-- **Direction:** in-process `System.Threading.Channels` queue drained by a single `BackgroundService`. An `IBackgroundTaskQueue` wraps a bounded `Channel<Func<CancellationToken, Task>>`; the consumer dequeues and runs each item in a fresh DI scope with try/catch logging (the canonical ASP.NET Core "queued background tasks" pattern). Event-driven — `WaitToReadAsync` parks at zero CPU when idle, so no polling and no conflict with sleep. Producers (slices / domain-event handlers) inject the queue and enqueue a work item; the item runs in the seconds after the request while the app is still awake.
-- **Accepted tradeoff:** in-memory, so work queued-but-not-yet-run is lost on restart/deploy/sleep-eviction. Fine for re-derivable enrichment (re-trigger on the next user action). If a feature genuinely needs durability later, revisit a DB-outbox table drained by the same consumer — not Hangfire.
-- **Impact / cost:** ~2-3 small files (queue abstraction + impl, consumer `BackgroundService`), zero new packages (BCL only), no schema. Each future job is ~1 file + an enqueue call.
 
 ---
 
@@ -146,16 +114,6 @@ Format per item:
   3. **Other flows (TBD):** re-invite / revoke a pending invite, invite expiry, role chosen at invite time, declining an invite, inviting someone already in the household.
 - **Open question — delivery:** how does the invitee actually receive the invite? Options to weigh later: email (needs an email sender — none wired today), shareable invite link/code, in-app notification for existing users. Keep vendor-neutral per [[Async fire-and-forget runner (in-process Channels)]] if email/push is involved (sender behind an interface).
 - **Impact / cost:** unknown until brainstormed — likely a new pending-invite entity, new slices (create/accept/revoke invite), and a delivery mechanism. Defer sizing to the planning conversation.
-
----
-
-## Quantity as a domain value object (value + unit)
-
-- **Spec:** fully designed — see [`docs/superpowers/specs/2026-05-27-quantity-value-object-design.md`](docs/superpowers/specs/2026-05-27-quantity-value-object-design.md). This entry is just the pointer; the spec is authoritative.
-- **Why:** `Quantity` is a free-text `string?` today on both `ListItem` and `InventoryItem` (`Frigorino.Domain/Entities/ListItem.cs:13`, `InventoryItem.cs:16`). A user types "2 kg" or "500ml" and it's opaque to the app — we can't sum, compare, convert, or reason about it. Modelling it as a proper value object (a numeric value + a unit) unlocks real features later: "you have 1.5kg, recipe needs 200g", merging duplicate inventory items, low-stock thresholds, shopping-list math.
-- **Sketch (headline decisions):** `Quantity` value object (`decimal Value` + fixed `QuantityUnit` enum: g/kg, ml/l, piece/pack/can/bottle/bag) as a **pure domain helper, not an EF owned/complex type**. Two flat nullable columns per item (`QuantityValue` + `QuantityUnit`, both-or-null), replacing the string column — aligns with [[feedback_flat_db_schema]]. **Strictly value+unit going forward** (no free-text escape hatch); a redesigned structured picker (grouped unit chips, suggestion-ready row) produces clean data at entry time. A reusable `Quantity.TryParse` powers the migration backfill; **unparseable legacy values are dropped** (accepted data-loss tradeoff, incl. stage/prod).
-- **Scope / sequencing:** v1 = data model + migration + DTOs + picker + formatted display. **Planning deferred** — sequence **after the classifier** ([[Promote checked list items into inventory (classifier-driven)]]) so the picker can offer item-aware unit suggestions and inline text understanding ("2 apples", "milk 500ml") lands with a real consumer. Conversions / duplicate-merge / low-stock thresholds are explicit follow-ups.
-- **Impact / cost:** one value object + parser + EF migration/backfill, two flat columns per item, touches both item aggregates and their create/update slices + responses, plus the composer `quantityFeature` rework + display. Medium. Mostly enabling work — payoff features are separate follow-ups once the data is structured.
 
 ---
 

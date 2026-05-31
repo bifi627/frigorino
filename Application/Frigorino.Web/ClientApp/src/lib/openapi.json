@@ -1964,7 +1964,11 @@
         }
       },
       "HouseholdRole": {
-        "type": "integer"
+        "enum": [
+          "Member",
+          "Admin",
+          "Owner"
+        ]
       },
       "HttpValidationProblemDetails": {
         "required": [
@@ -2319,7 +2323,17 @@
         }
       },
       "QuantityUnit": {
-        "type": "integer"
+        "enum": [
+          "Gram",
+          "Kilogram",
+          "Milliliter",
+          "Liter",
+          "Piece",
+          "Pack",
+          "Can",
+          "Bottle",
+          "Bag"
+        ]
       },
       "ReorderItemRequest": {
         "required": [
