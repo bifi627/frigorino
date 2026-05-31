@@ -28,5 +28,33 @@ namespace Frigorino.Test.Domain
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(Quantity.Value), result.Errors[0].Metadata["Property"]);
         }
+
+        [Fact]
+        public void Create_ExceedingPersistedMax_FailsKeyedOnValue()
+        {
+            var result = Quantity.Create(Quantity.MaxValue + 1m, QuantityUnit.Gram);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal(nameof(Quantity.Value), result.Errors[0].Metadata["Property"]);
+        }
+
+        [Fact]
+        public void Create_RoundsToPersistedScale()
+        {
+            // numeric(12,3): more than 3 decimals are rounded so the VO matches stored precision.
+            var result = Quantity.Create(1.5005m, QuantityUnit.Kilogram);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(1.501m, result.Value.Value);
+        }
+
+        [Fact]
+        public void Create_ValueRoundingToZero_FailsAsNonPositive()
+        {
+            var result = Quantity.Create(0.0004m, QuantityUnit.Kilogram);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal(nameof(Quantity.Value), result.Errors[0].Metadata["Property"]);
+        }
     }
 }
