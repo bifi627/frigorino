@@ -301,6 +301,95 @@
         }
       }
     },
+    "/api/household/{householdId}/settings": {
+      "get": {
+        "tags": [
+          "HouseholdSettings"
+        ],
+        "operationId": "GetHouseholdSettings",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdSettingsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "HouseholdSettings"
+        ],
+        "operationId": "UpdateHouseholdSettings",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHouseholdSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdSettingsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/lists": {
       "post": {
         "tags": [
@@ -1613,6 +1702,113 @@
         }
       }
     },
+    "/api/household/{householdId}/inventories/{inventoryId}/settings": {
+      "get": {
+        "tags": [
+          "InventorySettings"
+        ],
+        "operationId": "GetInventorySettings",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "inventoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySettingsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "InventorySettings"
+        ],
+        "operationId": "UpdateInventorySettings",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "inventoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventorySettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySettingsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/me/active-household": {
       "get": {
         "tags": [
@@ -1663,6 +1859,64 @@
           },
           "403": {
             "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/me/settings": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "GetUserSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "UpdateUserSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1791,7 +2045,10 @@
         "type": "object",
         "properties": {
           "householdId": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           },
           "role": {
@@ -1982,6 +2239,18 @@
           "Owner"
         ]
       },
+      "HouseholdSettingsResponse": {
+        "required": [
+          "checkedItemRetentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "checkedItemRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "HttpValidationProblemDetails": {
         "required": [
           "errors"
@@ -2001,7 +2270,10 @@
             ]
           },
           "status": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           },
           "detail": {
@@ -2156,6 +2428,21 @@
           },
           "expiringItems": {
             "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InventorySettingsResponse": {
+        "required": [
+          "expiryLeadDays"
+        ],
+        "type": "object",
+        "properties": {
+          "expiryLeadDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         }
@@ -2404,6 +2691,18 @@
           }
         }
       },
+      "UpdateHouseholdSettingsRequest": {
+        "required": [
+          "checkedItemRetentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "checkedItemRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "UpdateInventoryItemRequest": {
         "required": [
           "text",
@@ -2459,6 +2758,21 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "UpdateInventorySettingsRequest": {
+        "required": [
+          "expiryLeadDays"
+        ],
+        "type": "object",
+        "properties": {
+          "expiryLeadDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -2541,6 +2855,34 @@
           }
         }
       },
+      "UpdateUserSettingsRequest": {
+        "required": [
+          "language"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "UserSettingsResponse": {
+        "required": [
+          "language"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "WeatherForecast": {
         "required": [
           "date",
@@ -2579,6 +2921,9 @@
       "name": "Members"
     },
     {
+      "name": "HouseholdSettings"
+    },
+    {
       "name": "Lists"
     },
     {
@@ -2589,6 +2934,9 @@
     },
     {
       "name": "InventoryItems"
+    },
+    {
+      "name": "InventorySettings"
     },
     {
       "name": "Me"

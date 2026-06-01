@@ -3,11 +3,14 @@ using System.Text.Json.Serialization;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Features.Households.Members;
+using Frigorino.Features.Households.Settings;
 using Frigorino.Features.Inventories;
 using Frigorino.Features.Inventories.Items;
+using Frigorino.Features.Inventories.Settings;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
+using Frigorino.Features.Me.Settings;
 using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -290,6 +293,12 @@ members.MapAddMember();
 members.MapRemoveMember();
 members.MapUpdateMemberRole();
 
+var householdSettings = app.MapGroup("/api/household/{householdId:int}/settings")
+    .RequireAuthorization()
+    .WithTags("HouseholdSettings");
+householdSettings.MapGetHouseholdSettings();
+householdSettings.MapUpdateHouseholdSettings();
+
 var lists = app.MapGroup("/api/household/{householdId:int}/lists")
     .RequireAuthorization()
     .WithTags("Lists");
@@ -332,11 +341,19 @@ inventoryItems.MapRestoreInventoryItem();
 inventoryItems.MapReorderInventoryItem();
 inventoryItems.MapCompactInventoryItems();
 
+var inventorySettings = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/settings")
+    .RequireAuthorization()
+    .WithTags("InventorySettings");
+inventorySettings.MapGetInventorySettings();
+inventorySettings.MapUpdateInventorySettings();
+
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()
     .WithTags("Me");
 me.MapGetActiveHousehold();
 me.MapSetActiveHousehold();
+me.MapGetUserSettings();
+me.MapUpdateUserSettings();
 
 // SPA configuration
 app.UseSpa(spa =>

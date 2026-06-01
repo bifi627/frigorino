@@ -11,6 +11,12 @@ namespace Frigorino.Domain.Entities
             return role >= HouseholdRole.Admin;
         }
 
+        // Owner/Admin may edit household-wide settings; Members may only read them.
+        public static bool CanManageSettings(this HouseholdRole role)
+        {
+            return role >= HouseholdRole.Admin;
+        }
+
         // Can the caller's role grant `roleToGrant` to another member? Anchored to enum order
         // (Member=0, Admin=1, Owner=2) — a caller can grant any role at or below their own.
         // The previous gate `CanManageMembers` blocks Members entirely; this gate then blocks

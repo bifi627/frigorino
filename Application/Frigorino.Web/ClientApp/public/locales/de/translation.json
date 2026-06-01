@@ -250,5 +250,21 @@
         "recipes": "Rezepte",
         "comingSoon": "Demnächst verfügbar...",
         "recipeManagementLater": "Rezeptverwaltung wird später hinzugefügt"
+    },
+    "settings": {
+        "title": "Einstellungen",
+        "userSettings": "Benutzereinstellungen",
+        "language": "Sprache",
+        "languageHelp": "Wähle deine bevorzugte Sprache.",
+        "householdSettings": "Haushaltseinstellungen",
+        "checkedItemRetentionDays": "Erledigte Einträge behalten (Tage)",
+        "checkedItemRetentionHelp": "Tage, die erledigte Listeneinträge aufbewahrt werden, bevor sie entfernt werden.",
+        "inventorySettings": "Inventareinstellungen",
+        "expiryLeadOverride": "Vorlaufzeit für Ablauf-Erinnerung überschreiben",
+        "expiryLeadDays": "Vorlaufzeit (Tage)",
+        "expiryLeadHelp": "Tage vor Ablauf, ab denen für dieses Inventar erinnert wird.",
+        "saved": "Einstellungen gespeichert",
+        "saveFailed": "Einstellungen konnten nicht gespeichert werden",
+        "readOnlyHint": "Nur Eigentümer und Admins können dies ändern."
     }
 }

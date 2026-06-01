@@ -19,6 +19,9 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<HouseholdSettings> HouseholdSettings { get; set; }
+        public DbSet<InventorySettings> InventorySettings { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -91,6 +94,24 @@ namespace Frigorino.Infrastructure.EntityFramework
                         product.CreatedAt = now;
                         product.UpdatedAt = now;
                     }
+
+                    if (entry.Entity is UserSettings userSettings && userSettings.CreatedAt == default)
+                    {
+                        userSettings.CreatedAt = now;
+                        userSettings.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is HouseholdSettings householdSettings && householdSettings.CreatedAt == default)
+                    {
+                        householdSettings.CreatedAt = now;
+                        householdSettings.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is InventorySettings inventorySettings && inventorySettings.CreatedAt == default)
+                    {
+                        inventorySettings.CreatedAt = now;
+                        inventorySettings.UpdatedAt = now;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
@@ -122,6 +143,21 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is Product product)
                     {
                         product.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is UserSettings userSettings)
+                    {
+                        userSettings.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is HouseholdSettings householdSettings)
+                    {
+                        householdSettings.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is InventorySettings inventorySettings)
+                    {
+                        inventorySettings.UpdatedAt = now;
                     }
                 }
             }
