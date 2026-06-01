@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Frigorino.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260601173127_AddExpiryNotificationPreferences")]
+    [Migration("20260601175023_AddExpiryNotificationPreferences")]
     partial class AddExpiryNotificationPreferences
     {
         /// <inheritdoc />
@@ -230,7 +230,6 @@ namespace Frigorino.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.Property<bool>("ExpiryNotificationsEnabled")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
@@ -484,12 +483,10 @@ namespace Frigorino.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ExpiryLeadDays")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(3);
 
                     b.Property<bool>("ExpiryNotificationsEnabled")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
