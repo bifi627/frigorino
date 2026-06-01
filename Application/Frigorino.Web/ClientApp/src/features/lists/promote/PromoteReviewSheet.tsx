@@ -83,6 +83,10 @@ export const PromoteReviewSheet = ({
         (e) => seeded[e.itemId]?.selected,
     ).length;
 
+    const hasRowMissingDate = entries.some(
+        (e) => seeded[e.itemId]?.selected && !seeded[e.itemId]?.expiry,
+    );
+
     const handleOmit = (itemId: number) => {
         remove(itemId);
         setDrafts((d) => {
@@ -202,7 +206,7 @@ export const PromoteReviewSheet = ({
                 <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
                     <Button
                         fullWidth
-                        color="inherit"
+                        color="error"
                         onClick={handleClearAll}
                         data-testid="promote-clear-all"
                     >
@@ -214,7 +218,8 @@ export const PromoteReviewSheet = ({
                         disabled={
                             selectedCount === 0 ||
                             !targetId ||
-                            createItem.isPending
+                            createItem.isPending ||
+                            hasRowMissingDate
                         }
                         onClick={handleAdd}
                         data-testid="promote-add-button"
@@ -247,6 +252,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
     const info = draft.expiry
         ? getExpiryInfo(draft.expiry, translateKey)
         : null;
+    const expiryMissing = draft.selected && !draft.expiry;
 
     return (
         <Box
@@ -296,8 +302,18 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     label={t("promote.expiry")}
                     value={draft.expiry}
                     onChange={(e) => onChange({ expiry: e.target.value })}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                    helperText={info?.humanReadable || " "}
+                    error={expiryMissing}
+                    helperText={
+                        expiryMissing
+                            ? t("promote.expiryRequired")
+                            : info?.humanReadable || " "
+                    }
+                    slotProps={{
+                        inputLabel: { shrink: true },
+                        htmlInput: {
+                            "data-testid": `promote-row-expiry-${entry.name}`,
+                        },
+                    }}
                     sx={{ flex: 1 }}
                 />
             </Stack>

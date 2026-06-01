@@ -73,4 +73,17 @@ public class PromoteSteps(ScenarioContextHolder ctx, TestApiClient api)
         await Assertions.Expect(ctx.Page.GetByTestId("promote-bar"))
             .Not.ToBeVisibleAsync();
     }
+
+    [Then("the promote sheet is not visible")]
+    public async Task ThenThePromoteSheetIsNotVisible()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("promote-sheet"))
+            .Not.ToBeVisibleAsync();
+    }
+
+    [When("I clear the expiry date for {string}")]
+    public async Task WhenIClearTheExpiryDateFor(string itemText)
+    {
+        await ctx.Page.GetByTestId($"promote-row-expiry-{itemText}").FillAsync("");
+    }
 }

@@ -1,6 +1,6 @@
 import { Inventory2Outlined } from "@mui/icons-material";
 import { Button, Paper, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePromotableForList } from "./promotableStore";
 import { PromoteReviewSheet } from "./PromoteReviewSheet";
@@ -16,6 +16,12 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
     const { t } = useTranslation();
     const entries = usePromotableForList(listId);
     const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        if (entries.length === 0) {
+            setOpen(false);
+        }
+    }, [entries.length]);
 
     if (entries.length === 0) {
         return null;
