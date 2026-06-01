@@ -75,12 +75,20 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(inventory);
         }
 
+        // Edit permission for the inventory and anything owned by it (settings, items metadata):
+        // the creator, or an Admin+. Single home for the policy so Update/SoftDelete and the
+        // settings slice share one gate.
+        public bool CanBeManagedBy(string callerUserId, HouseholdRole callerRole)
+        {
+            return CreatedByUserId == callerUserId || callerRole >= HouseholdRole.Admin;
+        }
+
         // Aggregate-internal mutation. Edit permission is creator-OR-Admin+ — the legacy rule
         // preserved from InventoryService. Caller's role is passed in because it lives on
         // UserHousehold (a different aggregate) and the handler resolves it once.
         public Result Update(string callerUserId, HouseholdRole callerRole, string name, string? description)
         {
-            if (CreatedByUserId != callerUserId && callerRole < HouseholdRole.Admin)
+            if (!CanBeManagedBy(callerUserId, callerRole))
             {
                 return Result.Fail(
                     new AccessDeniedError("Only the inventory creator or an admin can edit this inventory."));
@@ -116,7 +124,7 @@ namespace Frigorino.Domain.Entities
         // Aggregate-internal mutation. Same role policy as Update — creator OR Admin+.
         public Result SoftDelete(string callerUserId, HouseholdRole callerRole)
         {
-            if (CreatedByUserId != callerUserId && callerRole < HouseholdRole.Admin)
+            if (!CanBeManagedBy(callerUserId, callerRole))
             {
                 return Result.Fail(
                     new AccessDeniedError("Only the inventory creator or an admin can delete this inventory."));
