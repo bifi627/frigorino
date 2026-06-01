@@ -219,7 +219,9 @@
         "omit": "Remove from list",
         "clearAll": "Clear all",
         "addCount_one": "Add {{count}} to {{inventory}}",
-        "addCount_other": "Add {{count}} to {{inventory}}"
+        "addCount_other": "Add {{count}} to {{inventory}}",
+        "added_one": "Added {{count}} item to {{inventory}}",
+        "added_other": "Added {{count}} items to {{inventory}}"
     },
     "navigation": {
         "home": "Home",

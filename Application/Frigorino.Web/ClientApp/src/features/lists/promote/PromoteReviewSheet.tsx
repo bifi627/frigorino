@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { formatQuantity } from "../../../components/composer";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
 import { useCreateInventoryItem } from "../../inventories/items/useCreateInventoryItem";
@@ -104,6 +105,7 @@ export const PromoteReviewSheet = ({
     const handleAdd = async () => {
         if (!targetId) return;
         const toAdd = entries.filter((e) => seeded[e.itemId]?.selected);
+        let addedCount = 0;
         for (const entry of toAdd) {
             const draft = seeded[entry.itemId];
             try {
@@ -116,9 +118,18 @@ export const PromoteReviewSheet = ({
                     },
                 });
                 remove(entry.itemId);
+                addedCount++;
             } catch {
                 // Leave the entry in the batch on failure; the user can retry.
             }
+        }
+        if (addedCount > 0) {
+            toast.success(
+                t("promote.added", {
+                    count: addedCount,
+                    inventory: targetName,
+                }),
+            );
         }
         // Close once nothing is left for this list.
         if (

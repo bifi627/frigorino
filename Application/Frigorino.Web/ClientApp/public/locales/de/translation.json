@@ -219,7 +219,9 @@
         "omit": "Von der Liste entfernen",
         "clearAll": "Alle entfernen",
         "addCount_one": "{{count}} zu {{inventory}} hinzufügen",
-        "addCount_other": "{{count}} zu {{inventory}} hinzufügen"
+        "addCount_other": "{{count}} zu {{inventory}} hinzufügen",
+        "added_one": "{{count}} Artikel zu {{inventory}} hinzugefügt",
+        "added_other": "{{count}} Artikel zu {{inventory}} hinzugefügt"
     },
     "navigation": {
         "home": "Startseite",
