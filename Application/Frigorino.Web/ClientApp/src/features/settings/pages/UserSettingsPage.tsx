@@ -46,14 +46,24 @@ export function UserSettingsPage() {
                         select
                         fullWidth
                         size="small"
+                        data-testid="settings-language-select"
                         label={t("settings.language")}
                         helperText={t("settings.languageHelp")}
                         value={currentLanguage}
                         disabled={isLoading || updateSettings.isPending}
                         onChange={(e) => handleLanguageChange(e.target.value)}
+                        slotProps={{
+                            htmlInput: {
+                                "data-testid": "settings-language-value",
+                            },
+                        }}
                     >
                         {LANGUAGES.map((lang) => (
-                            <MenuItem key={lang.code} value={lang.code}>
+                            <MenuItem
+                                key={lang.code}
+                                value={lang.code}
+                                data-testid={`settings-language-option-${lang.code}`}
+                            >
                                 {lang.label}
                             </MenuItem>
                         ))}

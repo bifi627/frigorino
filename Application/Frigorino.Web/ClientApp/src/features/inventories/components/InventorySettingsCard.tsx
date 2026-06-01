@@ -75,6 +75,7 @@ export function InventorySettingsCard({
                 <FormControlLabel
                     control={
                         <Switch
+                            data-testid="inventory-expiry-override-switch"
                             checked={override}
                             disabled={!canManage || updateSettings.isPending}
                             onChange={(e) => handleToggle(e.target.checked)}
@@ -94,7 +95,13 @@ export function InventorySettingsCard({
                         disabled={!canManage || updateSettings.isPending}
                         onChange={(e) => setValue(e.target.value)}
                         onBlur={handleBlur}
-                        slotProps={{ htmlInput: { min: 0, max: 365 } }}
+                        slotProps={{
+                            htmlInput: {
+                                min: 0,
+                                max: 365,
+                                "data-testid": "inventory-expiry-lead-input",
+                            },
+                        }}
                     />
                 )}
             </CardContent>

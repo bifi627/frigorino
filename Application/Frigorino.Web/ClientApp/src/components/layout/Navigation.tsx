@@ -52,6 +52,7 @@ export const Navigation: React.FC = () => {
                     {isAuthenticated ? (
                         <>
                             <IconButton
+                                data-testid="user-menu-toggle"
                                 onClick={handleMenuClick}
                                 size="small"
                                 sx={{ color: "inherit" }}
@@ -95,6 +96,7 @@ export const Navigation: React.FC = () => {
                                 }}
                             >
                                 <MenuItem
+                                    data-testid="user-menu-settings"
                                     component={Link}
                                     to="/settings"
                                     onClick={handleMenuClose}

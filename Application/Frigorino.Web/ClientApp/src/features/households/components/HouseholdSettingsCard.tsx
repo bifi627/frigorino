@@ -61,7 +61,13 @@ export function HouseholdSettingsCard({ householdId, canManage }: Props) {
                     disabled={!canManage || updateSettings.isPending}
                     onChange={(e) => setValue(e.target.value)}
                     onBlur={commit}
-                    slotProps={{ htmlInput: { min: 1, max: 365 } }}
+                    slotProps={{
+                        htmlInput: {
+                            min: 1,
+                            max: 365,
+                            "data-testid": "household-retention-input",
+                        },
+                    }}
                 />
             </CardContent>
         </Card>
