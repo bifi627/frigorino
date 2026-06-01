@@ -43,6 +43,37 @@ async function swRegistration(): Promise<
     return navigator.serviceWorker.ready;
 }
 
+// Foreground messages: surface a lightweight in-app notification. Registered once
+// (the guard prevents stacking duplicate handlers when push is toggled or on re-init).
+function registerForegroundHandler(
+    messaging: ReturnType<typeof getMessaging>,
+): void {
+    if (foregroundHandlerRegistered) {
+        return;
+    }
+    foregroundHandlerRegistered = true;
+    onMessage(messaging, (payload) => {
+        const title = payload.data?.title;
+        const body = payload.data?.body;
+        if (title) {
+            new Notification(title, { body });
+        }
+    });
+}
+
+// Called once at app boot: if push is supported and the user has already granted
+// permission, wire the foreground handler so digests show even when they didn't
+// re-toggle the switch this session.
+export async function initForegroundPush(): Promise<void> {
+    if (!VAPID_KEY || !(await pushSupported())) {
+        return;
+    }
+    if (Notification.permission !== "granted") {
+        return;
+    }
+    registerForegroundHandler(getMessaging(firebaseApp));
+}
+
 // Requests permission, mints an FCM token, registers it with the backend.
 // Returns true on success; false if denied/unsupported/misconfigured.
 export async function enablePush(): Promise<boolean> {
@@ -67,25 +98,14 @@ export async function enablePush(): Promise<boolean> {
 
     await registerFcmToken({ body: { token } });
 
-    // Foreground messages: surface a lightweight in-app notification. Register once —
-    // re-registering on every enablePush() would stack duplicate handlers.
-    if (!foregroundHandlerRegistered) {
-        foregroundHandlerRegistered = true;
-        onMessage(messaging, (payload) => {
-            const title = payload.data?.title;
-            const body = payload.data?.body;
-            if (title) {
-                new Notification(title, { body });
-            }
-        });
-    }
+    registerForegroundHandler(messaging);
 
     return true;
 }
 
 // Deletes the local token + unregisters it server-side.
 export async function disablePush(): Promise<void> {
-    if (!(await pushSupported())) {
+    if (!VAPID_KEY || !(await pushSupported())) {
         return;
     }
     const messaging = getMessaging(firebaseApp);
