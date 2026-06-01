@@ -45,5 +45,33 @@ namespace Frigorino.Test.Infrastructure
 
             Assert.False(loaded.ExpiryNotificationsEnabled);
         }
+
+        [Fact]
+        public async Task FcmToken_SaveChanges_StampsTimestamps()
+        {
+            using var db = NewContext();
+            var token = FcmToken.Create("user-1", "tok-1");
+            db.FcmTokens.Add(token);
+            await db.SaveChangesAsync();
+
+            Assert.NotEqual(default, token.CreatedAt);
+            Assert.NotEqual(default, token.LastSeenAt);
+        }
+
+        [Fact]
+        public async Task NotificationDispatch_Roundtrips()
+        {
+            using var db = NewContext();
+            var dispatch = NotificationDispatch.Create("user-1", 7, new DateOnly(2026, 6, 1));
+            db.NotificationDispatches.Add(dispatch);
+            await db.SaveChangesAsync();
+
+            db.ChangeTracker.Clear();
+            var loaded = await db.NotificationDispatches.SingleAsync();
+
+            Assert.Equal("user-1", loaded.UserId);
+            Assert.Equal(7, loaded.HouseholdId);
+            Assert.Equal(new DateOnly(2026, 6, 1), loaded.SentOn);
+        }
     }
 }
