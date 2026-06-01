@@ -65,5 +65,25 @@ namespace Frigorino.Test.Domain
 
             Assert.Equal(expected, inventory.CanBeManagedBy(callerId, role));
         }
+
+        [Fact]
+        public void Create_DefaultsNotificationsEnabledTrue()
+        {
+            var settings = InventorySettings.Create(InventoryId);
+
+            Assert.True(settings.ExpiryNotificationsEnabled);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void SetExpiryNotificationsEnabled_Toggles(bool enabled)
+        {
+            var settings = InventorySettings.Create(InventoryId);
+
+            settings.SetExpiryNotificationsEnabled(enabled);
+
+            Assert.Equal(enabled, settings.ExpiryNotificationsEnabled);
+        }
     }
 }

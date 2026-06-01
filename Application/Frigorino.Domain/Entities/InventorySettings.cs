@@ -12,6 +12,10 @@ namespace Frigorino.Domain.Entities
         // null = inherit the user-level default (resolved by the notification feature).
         public int? ExpiryLeadDays { get; set; }
 
+        // Per-inventory enable. Default true so a newly-tracked inventory is discoverable
+        // (a user can mute a noisy one without losing alerts elsewhere).
+        public bool ExpiryNotificationsEnabled { get; set; } = true;
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -33,6 +37,11 @@ namespace Frigorino.Domain.Entities
 
             ExpiryLeadDays = days;
             return Result.Ok();
+        }
+
+        public void SetExpiryNotificationsEnabled(bool enabled)
+        {
+            ExpiryNotificationsEnabled = enabled;
         }
     }
 }
