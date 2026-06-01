@@ -1,9 +1,9 @@
 import { Box, Chip, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatQuantity } from "../../../../components/composer";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { ListItemResponse } from "../../../../lib/api";
-import { formatQuantity } from "../quantityFormat";
 
 interface Props {
     item: ListItemResponse;

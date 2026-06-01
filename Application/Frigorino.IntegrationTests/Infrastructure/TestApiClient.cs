@@ -227,11 +227,20 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    // Quantity is a structured QuantityDto on the wire ({ value, unit }). The seed helper takes a
+    // plain number string (e.g. "5") and sends it as that many Pieces; null = no quantity.
     public async Task<int> CreateInventoryItemAsync(int inventoryId, string text, string? quantity = null)
     {
+        object? quantityDto = string.IsNullOrWhiteSpace(quantity)
+            ? null
+            : new
+            {
+                value = decimal.Parse(quantity, System.Globalization.CultureInfo.InvariantCulture),
+                unit = "Piece",
+            };
         var json = await PostAsync(
             $"/api/household/{ctx.HouseholdId}/inventories/{inventoryId}/items",
-            new { text, quantity });
+            new { text, quantity = quantityDto });
         return json.GetProperty("id").GetInt32();
     }
 

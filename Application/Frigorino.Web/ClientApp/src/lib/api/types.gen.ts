@@ -22,7 +22,7 @@ export type CreateHouseholdRequest = {
 
 export type CreateInventoryItemRequest = {
     text: string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     expiryDate: null | string;
 };
 
@@ -75,7 +75,7 @@ export type InventoryItemResponse = {
     id: number;
     inventoryId: number;
     text: string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     expiryDate: null | string;
     sortOrder: number;
     createdAt: string;
@@ -156,7 +156,8 @@ export type SetActiveHouseholdRequest = {
 
 export type UpdateInventoryItemRequest = {
     text: null | string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
+    clearQuantity: null | boolean;
     expiryDate: null | string;
 };
 

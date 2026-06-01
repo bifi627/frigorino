@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Frigorino.Domain.Entities;
+using Frigorino.Features.Quantities;
 
 namespace Frigorino.Features.Lists.Items
 {

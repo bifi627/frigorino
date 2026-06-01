@@ -17,7 +17,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .HasMaxLength(InventoryItem.TextMaxLength)
                 .IsRequired();
 
-            builder.Property(ii => ii.Quantity);
+            builder.Property(ii => ii.QuantityValue)
+                .HasColumnType("numeric(12,3)");
+
+            // QuantityUnit is a nullable enum — EF maps it to a nullable integer column.
+            builder.Property(ii => ii.QuantityUnit);
 
             builder.Property(ii => ii.SortOrder)
                 .IsRequired();

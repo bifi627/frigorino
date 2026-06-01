@@ -1861,9 +1861,13 @@
             "type": "string"
           },
           "quantity": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
             ]
           },
           "expiryDate": {
@@ -2071,9 +2075,13 @@
             "type": "string"
           },
           "quantity": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
             ]
           },
           "expiryDate": {
@@ -2400,6 +2408,7 @@
         "required": [
           "text",
           "quantity",
+          "clearQuantity",
           "expiryDate"
         ],
         "type": "object",
@@ -2411,9 +2420,19 @@
             ]
           },
           "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "clearQuantity": {
             "type": [
               "null",
-              "string"
+              "boolean"
             ]
           },
           "expiryDate": {

@@ -222,14 +222,18 @@ export const InventoryViewPage = () => {
                 onAddItem={(text, quantity, expiryDate) =>
                     handleAddItem({
                         text,
-                        quantity: quantity ?? null,
+                        quantity,
                         expiryDate: expiryDate ?? null,
                     })
                 }
                 onUpdateItem={(text, quantity, expiryDate) =>
+                    // The edit composer is authoritative for quantity: a non-null value sets it,
+                    // an empty one clears it (clearQuantity). Text is always sent, so this never
+                    // collides with the domain's null=preserve semantics for the other fields.
                     handleUpdateItem({
                         text,
-                        quantity: quantity ?? null,
+                        quantity,
+                        clearQuantity: quantity === null,
                         expiryDate: expiryDate ?? null,
                     })
                 }

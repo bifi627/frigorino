@@ -3,17 +3,15 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
+    draftToQuantity,
+    formatQuantity,
+    quantityComposerFeature,
+    quantityToDraft,
     type Completion,
     type DuplicateResult,
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
-import { formatQuantity } from "../quantityFormat";
-import {
-    draftToQuantity,
-    quantityComposerFeature,
-    quantityToDraft,
-} from "../quantityComposerFeature";
 
 // Lists add via free-text (extraction fills the quantity), so the add composer is text-only.
 // Manual quantity entry/correction happens in edit mode — hence the feature is edit-only.

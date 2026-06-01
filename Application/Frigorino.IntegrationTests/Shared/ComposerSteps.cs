@@ -20,18 +20,18 @@ public class ComposerSteps(ScenarioContextHolder ctx)
             .ToBeVisibleAsync();
     }
 
+    // The structured quantity panel renders a numeric value field next to a unit Select; target
+    // the value field by its testid so the locator stays unambiguous.
     [When("I set the quantity to {string}")]
     public async Task WhenISetTheQuantityTo(string quantity)
     {
-        await ctx.Page.Locator("[data-testid='composer-panel-quantity'] input")
-            .FillAsync(quantity);
+        await ctx.Page.GetByTestId("composer-quantity-value").FillAsync(quantity);
     }
 
     [When("I clear the quantity")]
     public async Task WhenIClearTheQuantity()
     {
-        await ctx.Page.Locator("[data-testid='composer-panel-quantity'] input")
-            .FillAsync("");
+        await ctx.Page.GetByTestId("composer-quantity-value").FillAsync("");
     }
 
     [When("I set the expiry date to {string}")]

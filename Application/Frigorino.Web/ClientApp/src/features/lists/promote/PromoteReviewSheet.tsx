@@ -1,4 +1,4 @@
-import { Close } from "@mui/icons-material";
+import { Close, ShoppingBag } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -13,9 +13,9 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatQuantity } from "../../../components/composer";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
 import { useCreateInventoryItem } from "../../inventories/items/useCreateInventoryItem";
-import { formatQuantity } from "../items/quantityFormat";
 import { getExpiryInfo } from "../../../utils/dateUtils";
 import {
     usePromotableForList,
@@ -30,10 +30,10 @@ interface PromoteReviewSheetProps {
     listId: number;
 }
 
-// Per-row editable draft (quantity as the inventory's free-text string; expiry as YYYY-MM-DD).
+// Per-row editable draft. Quantity is carried straight through from the source list item
+// (a structured QuantityDto), so only selection and expiry (YYYY-MM-DD) are editable here.
 interface RowDraft {
     selected: boolean;
-    quantity: string;
     expiry: string;
 }
 
@@ -66,12 +66,11 @@ export const PromoteReviewSheet = ({
         for (const e of entries) {
             next[e.itemId] = drafts[e.itemId] ?? {
                 selected: true,
-                quantity: e.quantity ? formatQuantity(t, e.quantity) : "",
                 expiry: e.suggestedExpiry ?? "",
             };
         }
         return next;
-    }, [entries, t, drafts]);
+    }, [entries, drafts]);
 
     const updateDraft = (itemId: number, patch: Partial<RowDraft>) =>
         setDrafts((d) => ({
@@ -112,7 +111,7 @@ export const PromoteReviewSheet = ({
                     path: { householdId, inventoryId: targetId },
                     body: {
                         text: entry.name,
-                        quantity: draft.quantity || null,
+                        quantity: entry.quantity,
                         expiryDate: draft.expiry || null,
                     },
                 });
@@ -288,14 +287,20 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     <Close fontSize="small" />
                 </IconButton>
             </Stack>
-            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                <TextField
-                    size="small"
-                    label={t("promote.quantity")}
-                    value={draft.quantity}
-                    onChange={(e) => onChange({ quantity: e.target.value })}
-                    sx={{ width: 110 }}
-                />
+            <Stack
+                direction="row"
+                spacing={1}
+                sx={{ mt: 1, alignItems: "center" }}
+            >
+                {entry.quantity && (
+                    <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<ShoppingBag fontSize="small" />}
+                        label={formatQuantity(t, entry.quantity)}
+                        data-testid={`promote-row-quantity-${entry.name}`}
+                    />
+                )}
                 <TextField
                     size="small"
                     type="date"
