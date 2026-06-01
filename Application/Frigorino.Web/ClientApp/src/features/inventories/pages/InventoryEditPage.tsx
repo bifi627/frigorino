@@ -16,10 +16,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../../common/authProvider";
 import { pageContainerSx } from "../../../theme";
-import {
-    HouseholdRoleValue,
-    roleRank,
-} from "../../households/householdRole";
+import { HouseholdRoleValue, roleRank } from "../../households/householdRole";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteInventoryConfirmDialog } from "../components/DeleteInventoryConfirmDialog";
 import { EditInventoryForm } from "../components/EditInventoryForm";
