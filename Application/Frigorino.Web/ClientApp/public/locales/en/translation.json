@@ -265,6 +265,13 @@
         "expiryLeadHelp": "Days before expiry to start reminders for this inventory.",
         "saved": "Settings saved",
         "saveFailed": "Could not save settings",
-        "readOnlyHint": "Only owners and admins can change these."
+        "readOnlyHint": "Only owners and admins can change these.",
+        "notifications": "Notifications",
+        "notificationsEnable": "Expiry reminders",
+        "notificationsLeadDays": "Default lead time (days)",
+        "notificationsLeadHelp": "Days before expiry to notify, unless an inventory overrides it.",
+        "notificationsPermissionDenied": "Notification permission was denied.",
+        "notificationsIosHint": "Add Frigorino to your Home Screen to enable notifications on iOS.",
+        "inventoryNotificationsEnable": "Expiry reminders for this inventory"
     }
 }
