@@ -10,21 +10,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Me.Settings
 {
-    public sealed record UpdateUserSettingsRequest(string? Language);
+    public sealed record UpdateUserNotificationSettingsRequest(
+        bool ExpiryNotificationsEnabled,
+        int ExpiryLeadDays);
 
-    public static class UpdateUserSettingsEndpoint
+    public static class UpdateUserNotificationSettingsEndpoint
     {
-        public static IEndpointRouteBuilder MapUpdateUserSettings(this IEndpointRouteBuilder app)
+        public static IEndpointRouteBuilder MapUpdateUserNotificationSettings(this IEndpointRouteBuilder app)
         {
-            app.MapPut("/settings", Handle)
-               .WithName("UpdateUserSettings")
+            app.MapPut("/settings/notifications", Handle)
+               .WithName("UpdateUserNotificationSettings")
                .Produces<UserSettingsResponse>()
                .ProducesValidationProblem();
             return app;
         }
 
         private static async Task<Results<Ok<UserSettingsResponse>, ValidationProblem>> Handle(
-            UpdateUserSettingsRequest request,
+            UpdateUserNotificationSettingsRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
             CancellationToken ct)
@@ -38,7 +40,8 @@ namespace Frigorino.Features.Me.Settings
                 db.UserSettings.Add(settings);
             }
 
-            var result = settings.SetLanguage(request.Language);
+            var result = settings.SetExpiryNotifications(
+                request.ExpiryNotificationsEnabled, request.ExpiryLeadDays);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();

@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -25,10 +26,12 @@ namespace Frigorino.Features.Me.Settings
         {
             var response = await db.UserSettings
                 .Where(s => s.UserId == currentUser.UserId)
-                .Select(s => new UserSettingsResponse(s.Language))
+                .Select(s => new UserSettingsResponse(
+                    s.Language, s.ExpiryNotificationsEnabled, s.ExpiryLeadDays))
                 .FirstOrDefaultAsync(ct);
 
-            return TypedResults.Ok(response ?? new UserSettingsResponse(null));
+            return TypedResults.Ok(response
+                ?? new UserSettingsResponse(null, false, UserSettings.DefaultExpiryLeadDays));
         }
     }
 }
