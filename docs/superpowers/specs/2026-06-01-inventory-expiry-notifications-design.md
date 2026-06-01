@@ -71,10 +71,22 @@ permission grant and renders the digest through a push handler in the **already-
    a keep-alive.
 
 2. **Trigger mechanism: secured internal endpoint + external scheduler (MVP).** `POST /internal/expiry-scan`
-   guarded by a shared-secret bearer header (its own secret, **not** the user JWT / Firebase auth), hit by a
-   scheduled **GitHub Actions** cron (~07:00 Europe). *Rationale: keeps the single-deployable shape, is
+   hit by a scheduled **GitHub Actions** cron (~07:00 Europe). *Rationale: keeps the single-deployable shape, is
    host-portable ("something hits this URL daily"), and is observable in Actions. Railway native cron is the
    alternative but is host-locked and may need a separate container entrypoint — rejected for MVP.*
+
+   **Security — the endpoint must be locked down (it is internet-reachable and triggers work).** Auth is a
+   **simple API key**: a single shared secret sent in a header (e.g. `X-Maintenance-Key`), compared in
+   **constant time** against `MaintenanceSettings:TriggerToken` (config/secret, supplied per the standard
+   secret mechanism — never committed). It is **separate from** the user JWT / Firebase auth and grants nothing
+   but the trigger. The GitHub Actions workflow holds the key in Actions secrets. *Rationale: this is a
+   machine-to-machine internal endpoint with one caller and one action; a static API key is proportionate —
+   OAuth/JWT would be over-engineering. Defence in depth, cheaply:* (a) return `404` (not `401`) when the key is
+   missing/wrong so the endpoint is non-discoverable; (b) the per-`(user, household, day)` **`NotificationDispatch`
+   ledger makes the scan idempotent**, so even a leaked key cannot be used to *spam users* — repeated calls in a
+   day send **zero** extra notifications, only redundant DB reads; (c) optionally a coarse per-IP/route rate-limit
+   to blunt DB-load abuse. The ledger is the key anti-abuse property: the worst a stolen key buys an attacker is
+   wasted compute, never user-visible spam.
 
 3. **Daily digest per household, not per item.** At most one notification per user per household per scan,
    aggregating that household's expiring items ("3 items expire soon — …"), deep-linking into the inventory.
@@ -134,8 +146,10 @@ permission grant and renders the digest through a push handler in the **already-
 - DI: register the scan + sender + EF mappings.
 
 ### Web (`Frigorino.Web`)
-- **`POST /internal/expiry-scan`** — minimal endpoint, **not** under the user-auth group; guarded by a
-  shared-secret bearer header (new config/secret, e.g. `MaintenanceSettings:TriggerToken`). Invokes the scan.
+- **`POST /internal/expiry-scan`** — minimal endpoint, **not** under the user-auth group; guarded by a simple
+  **API key** header (`X-Maintenance-Key`) compared constant-time against `MaintenanceSettings:TriggerToken`,
+  returning `404` on missing/wrong key (non-discoverable). Invokes the scan. See Key decision 2 for the full
+  security rationale (idempotent ledger as the anti-spam backstop).
 - **Token-registration slice** (under the authenticated group): `POST /api/notifications/token` (store/refresh
   an `FcmToken` for the current user), `DELETE` to unregister.
 
