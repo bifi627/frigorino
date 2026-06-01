@@ -1,0 +1,27 @@
+name: Daily expiry scan
+
+on:
+  schedule:
+    # 05:00 UTC ≈ 07:00 Europe (summer). Adjust if DST handling matters.
+    - cron: "0 5 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /internal/expiry-scan
+        env:
+          SCAN_URL: ${{ vars.EXPIRY_SCAN_URL }}
+          TRIGGER_TOKEN: ${{ secrets.MAINTENANCE_TRIGGER_TOKEN }}
+        run: |
+          if [ -z "$SCAN_URL" ] || [ -z "$TRIGGER_TOKEN" ]; then
+            echo "EXPIRY_SCAN_URL var or MAINTENANCE_TRIGGER_TOKEN secret not set." >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            -X POST "$SCAN_URL" \
+            -H "X-Maintenance-Key: $TRIGGER_TOKEN"
