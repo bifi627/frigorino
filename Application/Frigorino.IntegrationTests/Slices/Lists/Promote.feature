@@ -24,3 +24,13 @@ Feature: Promote checked items to inventory (SPA)
     And I open the promote review sheet
     And I omit "Milk" from the promote sheet
     Then the promote bar is not visible
+
+  Scenario: Deselecting the only batch row disables the add action
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    And there is an inventory named "Fridge"
+    And the product "milk" is in the catalog
+    When I open the list "Weekly Groceries"
+    And I toggle "Milk" as done
+    And I open the promote review sheet
+    And I deselect "Milk" in the promote sheet
+    Then the promote add button is disabled

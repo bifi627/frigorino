@@ -53,6 +53,20 @@ public class PromoteSteps(ScenarioContextHolder ctx, TestApiClient api)
         Assert.Contains(itemText, texts);
     }
 
+    [When("I deselect {string} in the promote sheet")]
+    public async Task WhenIDeselectInThePromoteSheet(string itemText)
+    {
+        // The row checkbox is selected by default; clicking it deselects the row.
+        await ctx.Page.GetByTestId($"promote-row-select-{itemText}").ClickAsync();
+    }
+
+    [Then("the promote add button is disabled")]
+    public async Task ThenThePromoteAddButtonIsDisabled()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("promote-add-button"))
+            .ToBeDisabledAsync();
+    }
+
     [Then("the promote bar is not visible")]
     public async Task ThenThePromoteBarIsNotVisible()
     {
