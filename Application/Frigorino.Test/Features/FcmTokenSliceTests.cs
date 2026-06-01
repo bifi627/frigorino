@@ -71,5 +71,23 @@ namespace Frigorino.Test.Features
 
             Assert.Empty(db.FcmTokens);
         }
+
+        [Fact]
+        public async Task Unregister_DoesNotDeleteAnotherUsersToken()
+        {
+            using var db = NewContext();
+            db.Users.Add(new User { ExternalId = "u1", Name = "U1", Email = "u1@example.com" });
+            db.Users.Add(new User { ExternalId = "u2", Name = "U2", Email = "u2@example.com" });
+            db.FcmTokens.Add(FcmToken.Create("u1", "shared-tok"));
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+
+            await UnregisterFcmTokenEndpoint.Handle(
+                new UnregisterFcmTokenRequest("shared-tok"), UserNamed("u2"), db, CancellationToken.None);
+
+            // u2's unregister must NOT delete a token owned by u1 (scoped to current user).
+            var token = await db.FcmTokens.SingleAsync();
+            Assert.Equal("u1", token.UserId);
+        }
     }
 }

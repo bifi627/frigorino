@@ -16,8 +16,7 @@ namespace Frigorino.Features.Notifications
         public static IEndpointRouteBuilder MapRegisterFcmToken(this IEndpointRouteBuilder app)
         {
             app.MapPost("/token", Handle)
-               .WithName("RegisterFcmToken")
-               .Produces(StatusCodes.Status200OK);
+               .WithName("RegisterFcmToken");
             return app;
         }
 
