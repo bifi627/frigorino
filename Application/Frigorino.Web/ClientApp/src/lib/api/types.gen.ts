@@ -40,6 +40,8 @@ export type CreateListRequest = {
     description: null | string;
 };
 
+export type ExpiryHandling = 'Unknown' | 'NonPerishable' | 'UserEntersFromPackage' | 'AiRecommendsShelfLife';
+
 export type HouseholdResponse = {
     id: number;
     name: string;
@@ -109,6 +111,7 @@ export type ListItemResponse = {
     createdAt: string;
     updatedAt: string;
     extractionPending: boolean;
+    promote?: null | PromoteSuggestion;
 };
 
 export type ListResponse = {
@@ -129,6 +132,11 @@ export type MemberResponse = {
     email: string;
     role: HouseholdRole;
     joinedAt: string;
+};
+
+export type PromoteSuggestion = {
+    expiryHandling: ExpiryHandling;
+    suggestedExpiry: null | string;
 };
 
 export type QuantityDto = {

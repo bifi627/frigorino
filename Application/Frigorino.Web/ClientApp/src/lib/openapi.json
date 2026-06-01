@@ -1922,6 +1922,14 @@
           }
         }
       },
+      "ExpiryHandling": {
+        "enum": [
+          "Unknown",
+          "NonPerishable",
+          "UserEntersFromPackage",
+          "AiRecommendsShelfLife"
+        ]
+      },
       "HouseholdResponse": {
         "required": [
           "id",
@@ -2219,6 +2227,16 @@
           "extractionPending": {
             "type": "boolean",
             "default": false
+          },
+          "promote": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PromoteSuggestion"
+              }
+            ]
           }
         }
       },
@@ -2299,6 +2317,25 @@
           "joinedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PromoteSuggestion": {
+        "required": [
+          "expiryHandling",
+          "suggestedExpiry"
+        ],
+        "type": "object",
+        "properties": {
+          "expiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "suggestedExpiry": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
