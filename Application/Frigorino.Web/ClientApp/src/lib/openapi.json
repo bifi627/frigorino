@@ -1921,6 +1921,90 @@
         }
       }
     },
+    "/api/me/settings/notifications": {
+      "put": {
+        "tags": [
+          "Me"
+        ],
+        "operationId": "UpdateUserNotificationSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserNotificationSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/token": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "RegisterFcmToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterFcmTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "UnregisterFcmToken",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/WeatherForecast": {
       "get": {
         "tags": [
@@ -2434,10 +2518,14 @@
       },
       "InventorySettingsResponse": {
         "required": [
+          "expiryNotificationsEnabled",
           "expiryLeadDays"
         ],
         "type": "object",
         "properties": {
+          "expiryNotificationsEnabled": {
+            "type": "boolean"
+          },
           "expiryLeadDays": {
             "type": [
               "null",
@@ -2667,6 +2755,17 @@
           "Bag"
         ]
       },
+      "RegisterFcmTokenRequest": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
       "ReorderItemRequest": {
         "required": [
           "afterId"
@@ -2763,10 +2862,14 @@
       },
       "UpdateInventorySettingsRequest": {
         "required": [
+          "expiryNotificationsEnabled",
           "expiryLeadDays"
         ],
         "type": "object",
         "properties": {
+          "expiryNotificationsEnabled": {
+            "type": "boolean"
+          },
           "expiryLeadDays": {
             "type": [
               "null",
@@ -2855,6 +2958,22 @@
           }
         }
       },
+      "UpdateUserNotificationSettingsRequest": {
+        "required": [
+          "expiryNotificationsEnabled",
+          "expiryLeadDays"
+        ],
+        "type": "object",
+        "properties": {
+          "expiryNotificationsEnabled": {
+            "type": "boolean"
+          },
+          "expiryLeadDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "UpdateUserSettingsRequest": {
         "required": [
           "language"
@@ -2871,7 +2990,9 @@
       },
       "UserSettingsResponse": {
         "required": [
-          "language"
+          "language",
+          "expiryNotificationsEnabled",
+          "expiryLeadDays"
         ],
         "type": "object",
         "properties": {
@@ -2880,6 +3001,13 @@
               "null",
               "string"
             ]
+          },
+          "expiryNotificationsEnabled": {
+            "type": "boolean"
+          },
+          "expiryLeadDays": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -2940,6 +3068,9 @@
     },
     {
       "name": "Me"
+    },
+    {
+      "name": "Notifications"
     },
     {
       "name": "WeatherForecast"

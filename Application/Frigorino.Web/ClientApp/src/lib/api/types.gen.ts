@@ -100,6 +100,7 @@ export type InventoryResponse = {
 };
 
 export type InventorySettingsResponse = {
+    expiryNotificationsEnabled: boolean;
     expiryLeadDays: null | number;
 };
 
@@ -154,6 +155,10 @@ export type QuantityDto = {
 
 export type QuantityUnit = 'Gram' | 'Kilogram' | 'Milliliter' | 'Liter' | 'Piece' | 'Pack' | 'Can' | 'Bottle' | 'Bag';
 
+export type RegisterFcmTokenRequest = {
+    token: string;
+};
+
 export type ReorderItemRequest = {
     afterId: number;
 };
@@ -179,6 +184,7 @@ export type UpdateInventoryRequest = {
 };
 
 export type UpdateInventorySettingsRequest = {
+    expiryNotificationsEnabled: boolean;
     expiryLeadDays: null | number;
 };
 
@@ -202,12 +208,19 @@ export type UpdateProfileRequest = {
     name: string;
 };
 
+export type UpdateUserNotificationSettingsRequest = {
+    expiryNotificationsEnabled: boolean;
+    expiryLeadDays: number;
+};
+
 export type UpdateUserSettingsRequest = {
     language: null | string;
 };
 
 export type UserSettingsResponse = {
     language: null | string;
+    expiryNotificationsEnabled: boolean;
+    expiryLeadDays: number;
 };
 
 export type WeatherForecast = {
@@ -1373,6 +1386,63 @@ export type UpdateUserSettingsResponses = {
 };
 
 export type UpdateUserSettingsResponse = UpdateUserSettingsResponses[keyof UpdateUserSettingsResponses];
+
+export type UpdateUserNotificationSettingsData = {
+    body: UpdateUserNotificationSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/me/settings/notifications';
+};
+
+export type UpdateUserNotificationSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+};
+
+export type UpdateUserNotificationSettingsError = UpdateUserNotificationSettingsErrors[keyof UpdateUserNotificationSettingsErrors];
+
+export type UpdateUserNotificationSettingsResponses = {
+    /**
+     * OK
+     */
+    200: UserSettingsResponse;
+};
+
+export type UpdateUserNotificationSettingsResponse = UpdateUserNotificationSettingsResponses[keyof UpdateUserNotificationSettingsResponses];
+
+export type UnregisterFcmTokenData = {
+    body?: never;
+    path?: never;
+    query: {
+        token: string;
+    };
+    url: '/api/notifications/token';
+};
+
+export type UnregisterFcmTokenResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UnregisterFcmTokenResponse = UnregisterFcmTokenResponses[keyof UnregisterFcmTokenResponses];
+
+export type RegisterFcmTokenData = {
+    body: RegisterFcmTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/api/notifications/token';
+};
+
+export type RegisterFcmTokenResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetWeatherForecastData = {
     body?: never;

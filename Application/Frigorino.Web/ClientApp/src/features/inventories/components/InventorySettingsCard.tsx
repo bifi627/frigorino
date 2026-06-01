@@ -38,11 +38,14 @@ export function InventorySettingsCard({
         }
     }, [data]);
 
-    const save = async (leadDays: number | null) => {
+    const save = async (
+        expiryNotificationsEnabled: boolean,
+        leadDays: number | null,
+    ) => {
         try {
             await updateSettings.mutateAsync({
                 path: { householdId, inventoryId },
-                body: { expiryLeadDays: leadDays },
+                body: { expiryNotificationsEnabled, expiryLeadDays: leadDays },
             });
             toast.success(t("settings.saved"));
         } catch {
@@ -52,7 +55,8 @@ export function InventorySettingsCard({
 
     const handleToggle = async (checked: boolean) => {
         setOverride(checked);
-        await save(checked ? Number(value) : null);
+        const enabled = data?.expiryNotificationsEnabled ?? true;
+        await save(enabled, checked ? Number(value) : null);
     };
 
     const handleBlur = async () => {
@@ -63,7 +67,8 @@ export function InventorySettingsCard({
         if (data && data.expiryLeadDays === days) {
             return;
         }
-        await save(days);
+        const enabled = data?.expiryNotificationsEnabled ?? true;
+        await save(enabled, days);
     };
 
     return (
