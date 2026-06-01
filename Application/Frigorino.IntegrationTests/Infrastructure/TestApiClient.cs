@@ -299,4 +299,64 @@ public class TestApiClient(ScenarioContextHolder ctx)
                 Headers = AuthHeaders,
             });
     }
+
+    // ---- Settings ----
+
+    public Task<IAPIResponse> TryGetUserSettingsAsync()
+    {
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            "/api/me/settings",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryUpdateUserSettingsAsync(string? language)
+    {
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            "/api/me/settings",
+            new APIRequestContextOptions
+            {
+                DataObject = new { language },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryGetHouseholdSettingsAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/settings",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryUpdateHouseholdSettingsAsync(int retentionDays, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/settings",
+            new APIRequestContextOptions
+            {
+                DataObject = new { checkedItemRetentionDays = retentionDays },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryGetInventorySettingsAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/settings",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryUpdateInventorySettingsAsync(int inventoryId, int? expiryLeadDays, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/settings",
+            new APIRequestContextOptions
+            {
+                DataObject = new { expiryLeadDays },
+                Headers = AuthHeaders,
+            });
+    }
 }
