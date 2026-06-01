@@ -136,8 +136,10 @@ namespace Frigorino.Test.Infrastructure
         }
 
         [Fact]
-        public async Task WritesNoLedger_WhenEnqueueRejected()
+        public async Task WritesLedger_EvenWhenEnqueueRejected_BecauseSlotClaimedFirst()
         {
+            // Claim-slot-first: the ledger row is committed BEFORE the enqueue attempt, so a rejected
+            // enqueue still leaves a dispatch row (the accepted trade-off — the send is dropped).
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 2);
@@ -146,7 +148,7 @@ namespace Frigorino.Test.Infrastructure
             await NewScan(db, queue).RunAsync(today, CancellationToken.None);
 
             Assert.Equal(1, queue.Attempts);
-            Assert.Empty(await db.NotificationDispatches.ToListAsync());
+            Assert.Equal(1, await db.NotificationDispatches.CountAsync(d => d.UserId == "u1" && d.HouseholdId == 10 && d.SentOn == today));
         }
     }
 }
