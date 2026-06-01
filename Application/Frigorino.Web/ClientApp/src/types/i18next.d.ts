@@ -14,6 +14,7 @@ declare module "i18next" {
                 dashboard: Record<string, string>;
                 onboarding: Record<string, string>;
                 quantityUnits: Record<string, string>;
+                promote: Record<string, string>;
             };
         };
     }

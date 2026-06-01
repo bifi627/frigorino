@@ -24,6 +24,7 @@ import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
 import { useExtractionPoll } from "../items/useExtractionPoll";
 import { useList } from "../useList";
+import { PromoteBar } from "../promote/PromoteBar";
 
 export const ListViewPage = () => {
     const router = useRouter();
@@ -229,6 +230,8 @@ export const ListViewPage = () => {
                 directActions={directActions}
                 menuActions={menuActions}
             />
+
+            <PromoteBar householdId={householdId} listId={listIdNum} />
 
             <ListContainer
                 ref={scrollContainerRef}
