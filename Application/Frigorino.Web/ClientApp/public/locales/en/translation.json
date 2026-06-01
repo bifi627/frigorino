@@ -205,6 +205,23 @@
         "quantity": "Quantity",
         "invalidQuantity": "Enter a positive number, or leave empty to clear"
     },
+    "promote": {
+        "barReady_one": "{{count}} item ready for inventory",
+        "barReady_other": "{{count}} items ready for inventory",
+        "review": "Review",
+        "sheetTitle": "Add to inventory",
+        "sheetSubtitle": "Select items and a target. Add the rest to another inventory after.",
+        "target": "To",
+        "tagRecommended": "Recommended",
+        "tagEnterDate": "Enter date",
+        "quantity": "Quantity",
+        "expiry": "Expiry date",
+        "expiryPlaceholder": "tap to set",
+        "omit": "Remove from list",
+        "clearAll": "Clear all",
+        "addCount_one": "Add {{count}} to {{inventory}}",
+        "addCount_other": "Add {{count}} to {{inventory}}"
+    },
     "navigation": {
         "home": "Home",
         "lists": "Lists",

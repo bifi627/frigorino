@@ -205,6 +205,23 @@
         "quantity": "Menge",
         "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen"
     },
+    "promote": {
+        "barReady_one": "{{count}} Artikel bereit fürs Inventar",
+        "barReady_other": "{{count}} Artikel bereit fürs Inventar",
+        "review": "Überprüfen",
+        "sheetTitle": "Zum Inventar hinzufügen",
+        "sheetSubtitle": "Artikel und Ziel auswählen. Den Rest danach zu einem anderen Inventar hinzufügen.",
+        "target": "Nach",
+        "tagRecommended": "Empfohlen",
+        "tagEnterDate": "Datum eingeben",
+        "quantity": "Menge",
+        "expiry": "Ablaufdatum",
+        "expiryPlaceholder": "zum Festlegen tippen",
+        "omit": "Von der Liste entfernen",
+        "clearAll": "Alle entfernen",
+        "addCount_one": "{{count}} zu {{inventory}} hinzufügen",
+        "addCount_other": "{{count}} zu {{inventory}} hinzufügen"
+    },
     "navigation": {
         "home": "Startseite",
         "lists": "Listen",
