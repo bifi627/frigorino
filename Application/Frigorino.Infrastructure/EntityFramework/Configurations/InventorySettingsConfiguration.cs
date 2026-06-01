@@ -12,6 +12,9 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
 
             builder.Property(s => s.ExpiryLeadDays);
 
+            builder.Property(s => s.ExpiryNotificationsEnabled)
+                .HasDefaultValue(true);
+
             builder.Property(s => s.CreatedAt).IsRequired();
             builder.Property(s => s.UpdatedAt).IsRequired();
 

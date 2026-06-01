@@ -17,6 +17,12 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(s => s.Language)
                 .HasMaxLength(8);
 
+            builder.Property(s => s.ExpiryNotificationsEnabled)
+                .HasDefaultValue(false);
+
+            builder.Property(s => s.ExpiryLeadDays)
+                .HasDefaultValue(UserSettings.DefaultExpiryLeadDays);
+
             builder.Property(s => s.CreatedAt).IsRequired();
             builder.Property(s => s.UpdatedAt).IsRequired();
 
