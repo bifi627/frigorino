@@ -10,6 +10,10 @@ import { registerFcmToken, unregisterFcmToken } from "../lib/api/sdk.gen";
 
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY as string | undefined;
 
+// Guards against stacking duplicate foreground handlers when push is toggled off/on
+// repeatedly — onMessage adds a new observer each call and we discard its unsubscribe.
+let foregroundHandlerRegistered = false;
+
 // True only where web push can actually work (Chrome/Edge/Firefox; iOS only as an
 // installed Home-Screen PWA). Used to gate the toggle + show the iOS hint.
 export async function pushSupported(): Promise<boolean> {
@@ -63,14 +67,18 @@ export async function enablePush(): Promise<boolean> {
 
     await registerFcmToken({ body: { token } });
 
-    // Foreground messages: surface a lightweight in-app notification.
-    onMessage(messaging, (payload) => {
-        const title = payload.data?.title;
-        const body = payload.data?.body;
-        if (title) {
-            new Notification(title, { body });
-        }
-    });
+    // Foreground messages: surface a lightweight in-app notification. Register once —
+    // re-registering on every enablePush() would stack duplicate handlers.
+    if (!foregroundHandlerRegistered) {
+        foregroundHandlerRegistered = true;
+        onMessage(messaging, (payload) => {
+            const title = payload.data?.title;
+            const body = payload.data?.body;
+            if (title) {
+                new Notification(title, { body });
+            }
+        });
+    }
 
     return true;
 }
