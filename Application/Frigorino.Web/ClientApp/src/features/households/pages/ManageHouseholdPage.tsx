@@ -17,8 +17,9 @@ import { useTranslation } from "react-i18next";
 import { pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteHouseholdDialog } from "../components/DeleteHouseholdDialog";
+import { HouseholdSettingsCard } from "../components/HouseholdSettingsCard";
 import { HouseholdSummaryCard } from "../components/HouseholdSummaryCard";
-import { HouseholdRoleValue } from "../householdRole";
+import { HouseholdRoleValue, roleRank } from "../householdRole";
 import { MembersPanel } from "../members/components/MembersPanel";
 import { useHouseholdMembers } from "../members/useHouseholdMembers";
 
@@ -81,6 +82,9 @@ export function ManageHouseholdPage() {
         currentHouseholdDetails?.name || t("household.household");
     const userRole = currentHousehold.role || HouseholdRoleValue.Member;
     const isOwner = userRole === HouseholdRoleValue.Owner;
+    const role = currentHousehold.role;
+    const canManageSettings =
+        !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
 
     return (
         <Container maxWidth="md" sx={pageContainerSx}>
@@ -132,6 +136,11 @@ export function ManageHouseholdPage() {
             <MembersPanel
                 householdId={currentHousehold.householdId}
                 currentUserRole={userRole}
+            />
+
+            <HouseholdSettingsCard
+                householdId={currentHousehold.householdId}
+                canManage={canManageSettings}
             />
 
             <Menu
