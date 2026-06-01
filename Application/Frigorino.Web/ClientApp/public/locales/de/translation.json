@@ -256,7 +256,6 @@
         "userSettings": "Benutzereinstellungen",
         "language": "Sprache",
         "languageHelp": "Wähle deine bevorzugte Sprache.",
-        "languageSystemDefault": "Gerätesprache verwenden",
         "householdSettings": "Haushaltseinstellungen",
         "checkedItemRetentionDays": "Erledigte Einträge behalten (Tage)",
         "checkedItemRetentionHelp": "Tage, die erledigte Listeneinträge aufbewahrt werden, bevor sie entfernt werden.",

@@ -256,7 +256,6 @@
         "userSettings": "User Settings",
         "language": "Language",
         "languageHelp": "Choose your preferred language.",
-        "languageSystemDefault": "Use device language",
         "householdSettings": "Household Settings",
         "checkedItemRetentionDays": "Keep checked items (days)",
         "checkedItemRetentionHelp": "Days to keep checked-off list items before they are removed.",
