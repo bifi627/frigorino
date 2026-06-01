@@ -276,7 +276,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                 <IconButton
                     size="small"
                     onClick={onOmit}
-                    aria-label="omit"
+                    aria-label={t("promote.omit")}
                     data-testid={`promote-row-omit-${entry.name}`}
                 >
                     <Close fontSize="small" />

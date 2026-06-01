@@ -216,7 +216,6 @@
         "tagEnterDate": "Datum eingeben",
         "quantity": "Menge",
         "expiry": "Ablaufdatum",
-        "expiryPlaceholder": "zum Festlegen tippen",
         "omit": "Von der Liste entfernen",
         "clearAll": "Alle entfernen",
         "addCount_one": "{{count}} zu {{inventory}} hinzufügen",

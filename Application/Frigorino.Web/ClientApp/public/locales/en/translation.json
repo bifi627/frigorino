@@ -216,7 +216,6 @@
         "tagEnterDate": "Enter date",
         "quantity": "Quantity",
         "expiry": "Expiry date",
-        "expiryPlaceholder": "tap to set",
         "omit": "Remove from list",
         "clearAll": "Clear all",
         "addCount_one": "Add {{count}} to {{inventory}}",
