@@ -20,7 +20,8 @@ namespace Frigorino.Infrastructure.Notifications
             IReadOnlyDictionary<int, InventoryNotificationSetting> inventorySettings,
             IReadOnlyCollection<DigestRecipient> recipients,
             HashSet<(string UserId, int HouseholdId)> alreadyDispatched,
-            DateOnly today)
+            DateOnly today,
+            int overdueGraceDays)
         {
             var plans = new List<DigestPlan>();
 
@@ -48,7 +49,9 @@ namespace Frigorino.Infrastructure.Notifications
 
                     var effectiveLeadDays = (hasSetting ? setting!.LeadDays : null) ?? recipient.UserLeadDays;
                     var daysUntil = candidate.ExpiryDate.DayNumber - today.DayNumber;
-                    if (daysUntil <= effectiveLeadDays)
+                    // Upper bound: within the lead window. Lower bound: not more than the grace days overdue,
+                    // so a permanently-overdue item eventually drops off instead of recurring forever.
+                    if (daysUntil <= effectiveLeadDays && daysUntil >= -overdueGraceDays)
                     {
                         lines.Add(new DigestLine(candidate.Text, candidate.ExpiryDate, daysUntil));
                     }

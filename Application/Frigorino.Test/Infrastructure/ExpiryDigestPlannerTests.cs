@@ -21,7 +21,7 @@ namespace Frigorino.Test.Infrastructure
             var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
 
             var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                alreadyDispatched: new HashSet<(string, int)>(), Today);
+                alreadyDispatched: new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             var plan = Assert.Single(plans);
             Assert.Equal("u1", plan.UserId);
@@ -41,7 +41,7 @@ namespace Frigorino.Test.Infrastructure
             var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
 
             var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             Assert.Single(Assert.Single(plans).Lines);
         }
@@ -57,22 +57,37 @@ namespace Frigorino.Test.Infrastructure
             var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
 
             var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             Assert.Empty(plans);
         }
 
         [Fact]
-        public void OverdueItemsAreIncluded()
+        public void OverdueItemWithinGraceIsIncluded()
         {
-            var candidates = new[] { Item(1, 10, "Yogurt", -2) };
+            // Expired yesterday (daysUntil -1), grace 1 ⇒ within the floor (-1 >= -1) ⇒ include.
+            var candidates = new[] { Item(1, 10, "Yogurt", -1) };
             var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
                 new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
-            Assert.Equal(-2, Assert.Single(Assert.Single(plans).Lines).DaysUntil);
+            Assert.Equal(-1, Assert.Single(Assert.Single(plans).Lines).DaysUntil);
+        }
+
+        [Fact]
+        public void OverdueItemBeyondGraceIsExcluded()
+        {
+            // Expired 5 days ago (daysUntil -5), grace 1 ⇒ below the floor (-5 < -1) ⇒ drop off.
+            var candidates = new[] { Item(1, 10, "Yogurt", -5) };
+            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
+
+            var plans = ExpiryDigestPlanner.Plan(candidates,
+                new Dictionary<int, InventoryNotificationSetting>(), recipients,
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
+
+            Assert.Empty(plans);
         }
 
         [Fact]
@@ -83,7 +98,7 @@ namespace Frigorino.Test.Infrastructure
             var dispatched = new HashSet<(string, int)> { ("u1", 10) };
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients, dispatched, Today);
+                new Dictionary<int, InventoryNotificationSetting>(), recipients, dispatched, Today, overdueGraceDays: 1);
 
             Assert.Empty(plans);
         }
@@ -96,7 +111,7 @@ namespace Frigorino.Test.Infrastructure
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
                 new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             Assert.Empty(plans);
         }
@@ -113,7 +128,7 @@ namespace Frigorino.Test.Infrastructure
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
                 new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             var lines = Assert.Single(plans).Lines;
             Assert.Equal("Sooner", lines[0].Text);
@@ -132,7 +147,7 @@ namespace Frigorino.Test.Infrastructure
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
                 new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             var lines = Assert.Single(plans).Lines;
             Assert.Equal("Apples", lines[0].Text);
@@ -150,7 +165,7 @@ namespace Frigorino.Test.Infrastructure
             var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
 
             var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             Assert.Empty(plans);
         }
@@ -171,7 +186,7 @@ namespace Frigorino.Test.Infrastructure
 
             var plans = ExpiryDigestPlanner.Plan(candidates,
                 new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today);
+                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
             var plan10 = Assert.Single(plans, p => p.UserId == "u1");
             Assert.Equal("House10 Milk", Assert.Single(plan10.Lines).Text);
