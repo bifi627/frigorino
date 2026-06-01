@@ -56,5 +56,11 @@ namespace Frigorino.Domain.Products
                 ? today.AddDays(ShelfLifeDays!.Value)
                 : null;
         }
+
+        // Perishable handlings are the ones worth tracking in inventory (a date matters):
+        // AI shelf life (we can suggest a date) or user-entered package date. NonPerishable /
+        // Unknown do not surface a promote suggestion.
+        public bool SuggestsInventoryTracking =>
+            Handling is ExpiryHandling.AiRecommendsShelfLife or ExpiryHandling.UserEntersFromPackage;
     }
 }

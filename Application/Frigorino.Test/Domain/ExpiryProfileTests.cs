@@ -95,5 +95,18 @@ namespace Frigorino.Test.Domain
         {
             Assert.Null(ExpiryProfile.NonPerishable.SuggestedExpiry(new DateOnly(2026, 1, 1)));
         }
+
+        [Theory]
+        [InlineData(ExpiryHandling.AiRecommendsShelfLife, 7, true)]
+        [InlineData(ExpiryHandling.UserEntersFromPackage, null, true)]
+        [InlineData(ExpiryHandling.NonPerishable, null, false)]
+        [InlineData(ExpiryHandling.Unknown, null, false)]
+        public void SuggestsInventoryTracking_is_true_only_for_perishable_handlings(
+            ExpiryHandling handling, int? shelfLifeDays, bool expected)
+        {
+            var profile = ExpiryProfile.Create(handling, shelfLifeDays).Value;
+
+            Assert.Equal(expected, profile.SuggestsInventoryTracking);
+        }
     }
 }
