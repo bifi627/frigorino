@@ -8,6 +8,7 @@ using Frigorino.Features.Inventories.Items;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
+using Frigorino.Features.Me.Settings;
 using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -337,6 +338,8 @@ var me = app.MapGroup("/api/me")
     .WithTags("Me");
 me.MapGetActiveHousehold();
 me.MapSetActiveHousehold();
+me.MapGetUserSettings();
+me.MapUpdateUserSettings();
 
 // SPA configuration
 app.UseSpa(spa =>
