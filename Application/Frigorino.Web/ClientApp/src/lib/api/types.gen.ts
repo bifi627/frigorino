@@ -5,7 +5,7 @@ export type ClientOptions = {
 };
 
 export type ActiveHouseholdResponse = {
-    householdId: number;
+    householdId: null | number;
     role: null | HouseholdRole;
     hasActiveHousehold: boolean;
 };
@@ -61,7 +61,7 @@ export type HouseholdSettingsResponse = {
 export type HttpValidationProblemDetails = {
     type?: null | string;
     title?: null | string;
-    status?: number;
+    status?: null | number;
     detail?: null | string;
     instance?: null | string;
     errors: {
@@ -100,7 +100,7 @@ export type InventoryResponse = {
 };
 
 export type InventorySettingsResponse = {
-    expiryLeadDays: number;
+    expiryLeadDays: null | number;
 };
 
 export type ListCreatorResponse = {
@@ -179,7 +179,7 @@ export type UpdateInventoryRequest = {
 };
 
 export type UpdateInventorySettingsRequest = {
-    expiryLeadDays: number;
+    expiryLeadDays: null | number;
 };
 
 export type UpdateItemRequest = {

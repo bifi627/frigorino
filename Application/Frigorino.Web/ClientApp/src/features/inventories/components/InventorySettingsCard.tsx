@@ -42,11 +42,7 @@ export function InventorySettingsCard({
         try {
             await updateSettings.mutateAsync({
                 path: { householdId, inventoryId },
-                // Backend `ExpiryLeadDays` is `int?` (null clears the override),
-                // but .NET's OpenAPI generator emits the value type without
-                // `nullable: true`, so the generated body type drops `| null`.
-                // The runtime contract accepts null, so cast at this boundary.
-                body: { expiryLeadDays: leadDays as number },
+                body: { expiryLeadDays: leadDays },
             });
             toast.success(t("settings.saved"));
         } catch {

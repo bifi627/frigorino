@@ -2045,7 +2045,10 @@
         "type": "object",
         "properties": {
           "householdId": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           },
           "role": {
@@ -2267,7 +2270,10 @@
             ]
           },
           "status": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           },
           "detail": {
@@ -2433,7 +2439,10 @@
         "type": "object",
         "properties": {
           "expiryLeadDays": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         }
@@ -2759,7 +2768,10 @@
         "type": "object",
         "properties": {
           "expiryLeadDays": {
-            "type": "integer",
+            "type": [
+              "null",
+              "integer"
+            ],
             "format": "int32"
           }
         }

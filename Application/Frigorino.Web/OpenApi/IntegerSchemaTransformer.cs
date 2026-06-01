@@ -18,6 +18,7 @@ namespace Frigorino.Web.OpenApi
             CancellationToken cancellationToken)
         {
             var type = context.JsonTypeInfo.Type;
+            var isNullable = Nullable.GetUnderlyingType(type) is not null;
             var actualType = Nullable.GetUnderlyingType(type) ?? type;
 
             if (actualType == typeof(int) || actualType == typeof(long)
@@ -25,7 +26,12 @@ namespace Frigorino.Web.OpenApi
                 || actualType == typeof(uint) || actualType == typeof(ulong)
                 || actualType == typeof(ushort) || actualType == typeof(sbyte))
             {
-                schema.Type = JsonSchemaType.Integer;
+                // Collapse the multi-type integer schema to a plain integer, but keep the null
+                // flag for nullable value types (e.g. int?) so codegen produces `number | null`
+                // rather than a lying `number`.
+                schema.Type = isNullable
+                    ? JsonSchemaType.Integer | JsonSchemaType.Null
+                    : JsonSchemaType.Integer;
                 schema.Pattern = null;
             }
 
