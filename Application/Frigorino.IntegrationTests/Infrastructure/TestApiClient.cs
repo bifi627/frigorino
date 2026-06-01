@@ -340,6 +340,20 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    // ---- Notifications / maintenance ----
+
+    // The machine-to-machine /internal/expiry-scan endpoint is key-guarded (X-Maintenance-Key) and
+    // anonymous, so no test-user auth headers are sent — only the maintenance key.
+    public Task<IAPIResponse> TryTriggerExpiryScanAsync(string maintenanceKey)
+    {
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            "/internal/expiry-scan",
+            new APIRequestContextOptions
+            {
+                Headers = new Dictionary<string, string> { ["X-Maintenance-Key"] = maintenanceKey },
+            });
+    }
+
     public Task<IAPIResponse> TryGetInventorySettingsAsync(int inventoryId, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;

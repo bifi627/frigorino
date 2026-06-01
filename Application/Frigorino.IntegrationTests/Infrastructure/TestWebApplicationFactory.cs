@@ -30,6 +30,9 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Ai:Classifier:Enabled", "true");
         builder.UseSetting("Ai:QuantityExtractor:Enabled", "true");
         builder.UseSetting("Ai:ApiKey", "integration-test-stub-key");
+        // Non-empty trigger key for the /internal/expiry-scan machine endpoint (an empty configured
+        // token rejects everything with 404). The Notifications.Api.feature uses this same value.
+        builder.UseSetting("MaintenanceSettings:TriggerToken", "integration-test-maintenance-key");
 
         var webRoot = SpaBuildHelper.FindWebProjectRoot();
         builder.UseContentRoot(webRoot);
