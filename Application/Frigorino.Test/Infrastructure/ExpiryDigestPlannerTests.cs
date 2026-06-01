@@ -119,5 +119,65 @@ namespace Frigorino.Test.Infrastructure
             Assert.Equal("Sooner", lines[0].Text);
             Assert.Equal("Later", lines[1].Text);
         }
+
+        [Fact]
+        public void LinesWithSameExpiry_AreSortedByText()
+        {
+            var candidates = new[]
+            {
+                Item(1, 10, "Zucchini", 2),
+                Item(1, 10, "Apples", 2),
+            };
+            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
+
+            var plans = ExpiryDigestPlanner.Plan(candidates,
+                new Dictionary<int, InventoryNotificationSetting>(), recipients,
+                new HashSet<(string, int)>(), Today);
+
+            var lines = Assert.Single(plans).Lines;
+            Assert.Equal("Apples", lines[0].Text);
+            Assert.Equal("Zucchini", lines[1].Text);
+        }
+
+        [Fact]
+        public void InventoryOverrideNarrowsWindow()
+        {
+            var candidates = new[] { Item(1, 10, "Milk", 2) }; // within user default 3...
+            var inventories = new Dictionary<int, InventoryNotificationSetting>
+            {
+                [1] = new InventoryNotificationSetting(Enabled: true, LeadDays: 1), // ...but inventory narrows to 1
+            };
+            var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
+
+            var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
+                new HashSet<(string, int)>(), Today);
+
+            Assert.Empty(plans);
+        }
+
+        [Fact]
+        public void CandidatesAreScopedToRecipientHousehold()
+        {
+            var candidates = new[]
+            {
+                Item(1, 10, "House10 Milk", 1),
+                Item(2, 20, "House20 Eggs", 1),
+            };
+            var recipients = new[]
+            {
+                new DigestRecipient("u1", 10, 3, "en"),
+                new DigestRecipient("u2", 20, 3, "en"),
+            };
+
+            var plans = ExpiryDigestPlanner.Plan(candidates,
+                new Dictionary<int, InventoryNotificationSetting>(), recipients,
+                new HashSet<(string, int)>(), Today);
+
+            var plan10 = Assert.Single(plans, p => p.UserId == "u1");
+            Assert.Equal("House10 Milk", Assert.Single(plan10.Lines).Text);
+
+            var plan20 = Assert.Single(plans, p => p.UserId == "u2");
+            Assert.Equal("House20 Eggs", Assert.Single(plan20.Lines).Text);
+        }
     }
 }
