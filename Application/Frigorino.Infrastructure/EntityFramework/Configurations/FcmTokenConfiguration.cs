@@ -27,7 +27,7 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
-                .HasPrincipalKey(nameof(User.ExternalId))
+                .HasPrincipalKey(u => u.ExternalId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
