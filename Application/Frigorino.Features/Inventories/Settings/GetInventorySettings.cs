@@ -42,10 +42,11 @@ namespace Frigorino.Features.Inventories.Settings
 
             var response = await db.InventorySettings
                 .Where(s => s.InventoryId == inventoryId)
-                .Select(s => new InventorySettingsResponse(s.ExpiryLeadDays))
+                .Select(s => new InventorySettingsResponse(s.ExpiryNotificationsEnabled, s.ExpiryLeadDays))
                 .FirstOrDefaultAsync(ct);
 
-            return TypedResults.Ok(response ?? new InventorySettingsResponse(null));
+            // No row ⇒ enabled by default, inherit lead-days.
+            return TypedResults.Ok(response ?? new InventorySettingsResponse(true, null));
         }
     }
 }

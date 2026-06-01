@@ -11,7 +11,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Settings
 {
-    public sealed record UpdateInventorySettingsRequest(int? ExpiryLeadDays);
+    public sealed record UpdateInventorySettingsRequest(
+        bool ExpiryNotificationsEnabled,
+        int? ExpiryLeadDays);
 
     public static class UpdateInventorySettingsEndpoint
     {
@@ -61,6 +63,7 @@ namespace Frigorino.Features.Inventories.Settings
                 db.InventorySettings.Add(settings);
             }
 
+            settings.SetExpiryNotificationsEnabled(request.ExpiryNotificationsEnabled);
             var result = settings.SetExpiryLeadDays(request.ExpiryLeadDays);
             if (result.IsFailed)
             {
@@ -68,7 +71,8 @@ namespace Frigorino.Features.Inventories.Settings
             }
 
             await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(new InventorySettingsResponse(settings.ExpiryLeadDays));
+            return TypedResults.Ok(new InventorySettingsResponse(
+                settings.ExpiryNotificationsEnabled, settings.ExpiryLeadDays));
         }
     }
 }
