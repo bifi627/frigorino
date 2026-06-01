@@ -26,6 +26,7 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
     return (
         <ListItemText
             {...events}
+            slotProps={{ secondary: { component: "div" } }}
             primary={
                 <Typography
                     variant="body2"
@@ -40,7 +41,6 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
             secondary={
                 item.quantity ? (
                     <Box
-                        component="span"
                         sx={{
                             display: "inline-flex",
                             alignItems: "center",
