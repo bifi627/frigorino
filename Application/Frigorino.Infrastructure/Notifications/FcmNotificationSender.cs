@@ -51,13 +51,29 @@ namespace Frigorino.Infrastructure.Notifications
 
             var response = await _messaging.SendEachForMulticastAsync(message, ct);
 
+            var anyInvalidArgument = false;
             var outcomes = new List<FcmSendOutcome>(tokens.Count);
             for (var i = 0; i < response.Responses.Count; i++)
             {
                 var r = response.Responses[i];
-                var unregistered = r.Exception?.MessagingErrorCode
-                    is MessagingErrorCode.Unregistered or MessagingErrorCode.InvalidArgument;
-                outcomes.Add(new FcmSendOutcome(tokens[i], r.IsSuccess, unregistered));
+                var code = r.Exception?.MessagingErrorCode;
+                if (code is MessagingErrorCode.InvalidArgument)
+                {
+                    anyInvalidArgument = true;
+                }
+
+                var isDeadToken = FcmTokenPruning.IsPermanentlyDeadToken(code);
+                outcomes.Add(new FcmSendOutcome(tokens[i], r.IsSuccess, isDeadToken));
+            }
+
+            if (anyInvalidArgument)
+            {
+                // InvalidArgument is FCM's malformed-message error, not a per-token death. It fans out
+                // to every token when the payload is bad (e.g. data over the 4KB limit), so we prune
+                // nothing for it — wiping the device set would mask a payload bug as token churn.
+                _logger.LogWarning(
+                    "FCM reported InvalidArgument for user {UserId} — likely a malformed/oversized payload; not pruning any token.",
+                    userId);
             }
 
             var dead = FcmTokenPruning.SelectDeadTokens(outcomes);
