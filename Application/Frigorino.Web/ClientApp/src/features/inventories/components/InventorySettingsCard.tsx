@@ -26,11 +26,13 @@ export function InventorySettingsCard({
     const { t } = useTranslation();
     const { data } = useInventorySettings(householdId, inventoryId);
     const updateSettings = useUpdateInventorySettings();
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [override, setOverride] = useState(false);
     const [value, setValue] = useState("7");
 
     useEffect(() => {
         if (data) {
+            setNotificationsEnabled(data.expiryNotificationsEnabled);
             setOverride(data.expiryLeadDays !== null);
             if (data.expiryLeadDays !== null) {
                 setValue(String(data.expiryLeadDays));
@@ -53,10 +55,14 @@ export function InventorySettingsCard({
         }
     };
 
+    const handleNotificationsToggle = async (checked: boolean) => {
+        setNotificationsEnabled(checked);
+        await save(checked, override ? Number(value) : null);
+    };
+
     const handleToggle = async (checked: boolean) => {
         setOverride(checked);
-        const enabled = data?.expiryNotificationsEnabled ?? true;
-        await save(enabled, checked ? Number(value) : null);
+        await save(notificationsEnabled, checked ? Number(value) : null);
     };
 
     const handleBlur = async () => {
@@ -67,8 +73,7 @@ export function InventorySettingsCard({
         if (data && data.expiryLeadDays === days) {
             return;
         }
-        const enabled = data?.expiryNotificationsEnabled ?? true;
-        await save(enabled, days);
+        await save(notificationsEnabled, days);
     };
 
     return (
@@ -77,6 +82,19 @@ export function InventorySettingsCard({
                 <Typography variant="h6" sx={{ mb: 1 }}>
                     {t("settings.inventorySettings")}
                 </Typography>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            data-testid="inventory-notifications-switch"
+                            checked={notificationsEnabled}
+                            disabled={!canManage || updateSettings.isPending}
+                            onChange={(e) =>
+                                handleNotificationsToggle(e.target.checked)
+                            }
+                        />
+                    }
+                    label={t("settings.inventoryNotificationsEnable")}
+                />
                 <FormControlLabel
                     control={
                         <Switch
