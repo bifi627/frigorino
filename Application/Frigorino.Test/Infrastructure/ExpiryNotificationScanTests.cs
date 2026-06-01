@@ -52,6 +52,17 @@ namespace Frigorino.Test.Infrastructure
             db.ChangeTracker.Clear();
         }
 
+        // Simulates a full / rejecting queue: TryEnqueue declines every work item.
+        private sealed class RejectingQueue : IBackgroundTaskQueue
+        {
+            public int Attempts { get; private set; }
+            public bool TryEnqueue(Func<IServiceProvider, CancellationToken, Task> work)
+            {
+                Attempts++;
+                return false;
+            }
+        }
+
         private static ExpiryNotificationScan NewScan(ApplicationDbContext db, IBackgroundTaskQueue queue) =>
             new(db, queue, NullLogger<ExpiryNotificationScan>.Instance);
 
@@ -122,6 +133,20 @@ namespace Frigorino.Test.Infrastructure
             await NewScan(db, queue).RunAsync(today, CancellationToken.None);
 
             Assert.Empty(queue.Items);
+        }
+
+        [Fact]
+        public async Task WritesNoLedger_WhenEnqueueRejected()
+        {
+            var today = new DateOnly(2026, 6, 1);
+            using var db = NewContext();
+            await SeedAsync(db, today, daysUntil: 2);
+            var queue = new RejectingQueue();
+
+            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+
+            Assert.Equal(1, queue.Attempts);
+            Assert.Empty(await db.NotificationDispatches.ToListAsync());
         }
     }
 }

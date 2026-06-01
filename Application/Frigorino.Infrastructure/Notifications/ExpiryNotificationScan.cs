@@ -95,7 +95,11 @@ namespace Frigorino.Infrastructure.Notifications
                 }
             }
 
-            await _db.SaveChangesAsync(ct);
+            if (enqueued > 0)
+            {
+                await _db.SaveChangesAsync(ct);
+            }
+
             _logger.LogInformation("Expiry scan: enqueued {Count} digest(s).", enqueued);
         }
     }
