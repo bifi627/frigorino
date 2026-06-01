@@ -22,9 +22,17 @@ export default defineConfig(({ command }) => ({
             autoCodeSplitting: true,
         }),
         VitePWA({
+            strategies: "injectManifest",
+            srcDir: "src",
+            filename: "sw.ts",
             registerType: "autoUpdate",
+            injectManifest: {
+                // Firebase messaging SW imports push the bundle over the default 2 MiB limit.
+                maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+            },
             devOptions: {
                 enabled: true,
+                type: "module",
             },
             manifest: {
                 name: "Frigorino",
