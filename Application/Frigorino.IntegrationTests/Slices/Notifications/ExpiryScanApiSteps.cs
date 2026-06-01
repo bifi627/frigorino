@@ -67,6 +67,27 @@ public class ExpiryScanApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryTriggerExpiryScanAsync("wrong-key");
     }
 
+    // Fires two scans at once to exercise the real (UserId, HouseholdId, SentOn) unique index.
+    // The two requests may serialize (the second sees the first's ledger row via the in-memory
+    // pre-filter and skips) OR genuinely race (both pass the pre-filter, both INSERT, and the loser
+    // catches SQLSTATE 23505). Either way the invariant is the same: both respond 200 and exactly
+    // one dispatch row exists. This can only go red if the claim-slot-first fix regresses.
+    [When("I trigger the expiry scan twice concurrently")]
+    public async Task WhenITriggerTheExpiryScanTwiceConcurrently()
+    {
+        var post1 = api.TryTriggerExpiryScanAsync(ValidMaintenanceKey);
+        var post2 = api.TryTriggerExpiryScanAsync(ValidMaintenanceKey);
+        var responses = await Task.WhenAll(post1, post2);
+        ctx.ConcurrentApiResponses = responses;
+    }
+
+    [Then("both concurrent API responses have status {int}")]
+    public void ThenBothConcurrentApiResponsesHaveStatus(int expected)
+    {
+        Assert.NotNull(ctx.ConcurrentApiResponses);
+        Assert.All(ctx.ConcurrentApiResponses!, r => Assert.Equal(expected, r.Status));
+    }
+
     [Then("exactly {int} notification dispatch(es) exists for me today")]
     public async Task ThenExactlyNotificationDispatchesExistForMeToday(int expected)
     {
