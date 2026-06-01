@@ -71,13 +71,12 @@ export const PromoteReviewSheet = ({
             };
         }
         return next;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [entries, t]);
+    }, [entries, t, drafts]);
 
     const updateDraft = (itemId: number, patch: Partial<RowDraft>) =>
         setDrafts((d) => ({
             ...d,
-            [itemId]: { ...seeded[itemId], ...patch },
+            [itemId]: { ...(d[itemId] ?? seeded[itemId]), ...patch },
         }));
 
     const selectedCount = entries.filter(
@@ -212,7 +211,11 @@ export const PromoteReviewSheet = ({
                     <Button
                         fullWidth
                         variant="contained"
-                        disabled={selectedCount === 0 || !targetId}
+                        disabled={
+                            selectedCount === 0 ||
+                            !targetId ||
+                            createItem.isPending
+                        }
                         onClick={handleAdd}
                         data-testid="promote-add-button"
                     >
