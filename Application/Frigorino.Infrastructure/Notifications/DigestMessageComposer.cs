@@ -7,7 +7,7 @@ namespace Frigorino.Infrastructure.Notifications
         private const int MaxNamesInBody = 3;
         private const string DeepLinkPath = "/inventories";
 
-        public static ExpiryDigestNotification Compose(DigestPlan plan, DateOnly today)
+        public static ExpiryDigestNotification Compose(DigestPlan plan)
         {
             var german = string.Equals(plan.Language, "de", StringComparison.OrdinalIgnoreCase);
             var count = plan.Lines.Count;
@@ -20,7 +20,7 @@ namespace Frigorino.Infrastructure.Notifications
                 .Take(MaxNamesInBody)
                 .Select(l => $"{l.Text} {Phrase(l.DaysUntil, german)}");
 
-            var body = string.Join(german ? ", " : ", ", named);
+            var body = string.Join(", ", named);
 
             var remaining = count - MaxNamesInBody;
             if (remaining > 0)

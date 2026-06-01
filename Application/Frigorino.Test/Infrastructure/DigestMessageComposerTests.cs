@@ -17,7 +17,7 @@ namespace Frigorino.Test.Infrastructure
         {
             var plan = PlanWith("en", ("Milk", 1), ("Yogurt", 2));
 
-            var msg = DigestMessageComposer.Compose(plan, Today);
+            var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Contains("2", msg.Title);
             Assert.Contains("Milk", msg.Body);
@@ -30,7 +30,7 @@ namespace Frigorino.Test.Infrastructure
         {
             var plan = PlanWith("de", ("Milch", 0));
 
-            var msg = DigestMessageComposer.Compose(plan, Today);
+            var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Contains("Artikel", msg.Title); // German title template
             Assert.Contains("heute", msg.Body);    // 0 days ⇒ "heute"
@@ -41,7 +41,7 @@ namespace Frigorino.Test.Infrastructure
         {
             var plan = PlanWith(null, ("Milk", 1));
 
-            var msg = DigestMessageComposer.Compose(plan, Today);
+            var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Contains("tomorrow", msg.Body); // 1 day ⇒ "tomorrow"
         }
@@ -51,7 +51,7 @@ namespace Frigorino.Test.Infrastructure
         {
             var plan = PlanWith("en", ("Yogurt", -1));
 
-            var msg = DigestMessageComposer.Compose(plan, Today);
+            var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Contains("overdue", msg.Body);
         }
@@ -62,7 +62,7 @@ namespace Frigorino.Test.Infrastructure
             var plan = PlanWith("en",
                 ("A", 1), ("B", 1), ("C", 1), ("D", 1), ("E", 1));
 
-            var msg = DigestMessageComposer.Compose(plan, Today);
+            var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Contains("more", msg.Body); // "+N more"
         }
