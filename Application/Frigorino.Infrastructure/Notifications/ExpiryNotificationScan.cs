@@ -2,29 +2,34 @@ using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Frigorino.Infrastructure.Notifications
 {
     // Invoked by the secured /internal/expiry-scan endpoint. Claim-slot-first ordering: the
-    // NotificationDispatch ledger row is inserted and committed BEFORE the send is enqueued, so
+    // NotificationDispatch ledger row is inserted and committed BEFORE the digest is sent, so
     // concurrent/double fires are safe — only the run that wins the unique-index race on
-    // (UserId, HouseholdId, SentOn) enqueues. Trade-off: a slot may be claimed whose send is later
-    // dropped (acceptable for a daily digest — better to occasionally miss than double-notify).
+    // (UserId, HouseholdId, SentOn) sends. The send runs SYNCHRONOUSLY inside the request (the open
+    // HTTP request keeps Railway's serverless container awake) — no lossy queue. Trade-off: a slot
+    // may be claimed whose send then fails (rare, accepted for a daily digest — better to occasionally
+    // miss than double-notify, since the ledger already committed).
     public class ExpiryNotificationScan
     {
         private readonly ApplicationDbContext _db;
-        private readonly IBackgroundTaskQueue _queue;
+        private readonly INotificationSender _sender;
+        private readonly MaintenanceSettings _settings;
         private readonly ILogger<ExpiryNotificationScan> _logger;
 
         public ExpiryNotificationScan(
             ApplicationDbContext db,
-            IBackgroundTaskQueue queue,
+            INotificationSender sender,
+            IOptions<MaintenanceSettings> settings,
             ILogger<ExpiryNotificationScan> logger)
         {
             _db = db;
-            _queue = queue;
+            _sender = sender;
+            _settings = settings.Value;
             _logger = logger;
         }
 
@@ -79,17 +84,17 @@ namespace Frigorino.Infrastructure.Notifications
                 .Select(d => (d.UserId, d.HouseholdId))
                 .ToHashSet();
 
-            // 5. Plan + dispatch. Claim each slot (insert + commit the ledger row) BEFORE enqueuing,
-            // so a concurrent scan that lost the unique-index race never enqueues a duplicate send.
-            var plans = ExpiryDigestPlanner.Plan(candidates, inventorySettings, recipients, alreadyDispatched, today);
-            var claimed = 0;
+            // 5. Plan + dispatch. Claim each slot (insert + commit the ledger row) BEFORE sending,
+            // so a concurrent scan that lost the unique-index race never sends a duplicate digest.
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates, inventorySettings, recipients, alreadyDispatched, today, _settings.OverdueGraceDays);
+            var sent = 0;
             foreach (var plan in plans)
             {
                 var notification = DigestMessageComposer.Compose(plan);
-                var userId = plan.UserId;
 
                 // Claim the slot first. The unique index on (UserId, HouseholdId, SentOn) lets only one
-                // concurrent scan win; the loser hits DbUpdateException and skips enqueuing.
+                // concurrent scan win; the loser hits DbUpdateException and skips sending.
                 var dispatch = NotificationDispatch.Create(plan.UserId, plan.HouseholdId, today);
                 _db.NotificationDispatches.Add(dispatch);
                 try
@@ -100,30 +105,34 @@ namespace Frigorino.Infrastructure.Notifications
                 {
                     // A concurrent scan already claimed this (user, household, day): the unique index on
                     // (UserId, HouseholdId, SentOn) rejected our insert with SQLSTATE 23505. Detach so the
-                    // failed row is not re-attempted on the next iteration's save, then skip the enqueue.
+                    // failed row is not re-attempted on the next iteration's save, then skip the send.
                     // Any other DbUpdateException (transient connection fault / deadlock / timeout) is NOT
                     // caught here — it propagates so genuine faults stay visible.
                     _db.Entry(dispatch).State = EntityState.Detached;
                     _logger.LogInformation(
-                        "Expiry scan: slot already claimed for user {UserId} household {HouseholdId}; skipping enqueue.",
+                        "Expiry scan: slot already claimed for user {UserId} household {HouseholdId}; skipping send.",
                         plan.UserId, plan.HouseholdId);
                     continue;
                 }
 
-                // Slot is claimed. Enqueue the send — a rejected enqueue just drops the send (the
-                // accepted trade-off); the ledger row already prevents a re-fire.
-                var enqueued = _queue.TryEnqueue((sp, token) =>
-                    sp.GetRequiredService<INotificationSender>().SendDigestAsync(userId, notification, token));
-                if (!enqueued)
+                // Slot is claimed. Send synchronously inside the request. A failed send is the accepted,
+                // now-rare lossy-tolerant case — the ledger row already committed, so we log and move on
+                // rather than retry (the daily cron will not re-fire this slot today).
+                try
                 {
-                    _logger.LogWarning(
-                        "Expiry scan: send dropped (queue rejected) for user {UserId} household {HouseholdId} after slot claimed.",
-                        plan.UserId, plan.HouseholdId);
+                    await _sender.SendDigestAsync(plan.UserId, notification, ct);
+                    sent++;
                 }
-                claimed++;
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Expiry scan: digest send failed for user {UserId} household {HouseholdId} after slot claimed.",
+                        plan.UserId, plan.HouseholdId);
+                    continue;
+                }
             }
 
-            _logger.LogInformation("Expiry scan: claimed {Count} digest slot(s).", claimed);
+            _logger.LogInformation("Expiry scan: sent {Count} digest(s).", sent);
         }
     }
 }

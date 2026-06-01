@@ -1,23 +1,36 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Notifications;
 using Frigorino.Infrastructure.EntityFramework;
 using Frigorino.Infrastructure.Notifications;
 using Frigorino.Test.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Frigorino.Test.Infrastructure
 {
     public class ExpiryNotificationScanTests
     {
-        // Captures enqueued work items so the test can assert how many sends were scheduled.
-        private sealed class CapturingQueue : IBackgroundTaskQueue
+        // Captures each SendDigestAsync call so the test can assert how many digests were sent.
+        private sealed class CapturingSender : INotificationSender
         {
-            public List<Func<IServiceProvider, CancellationToken, Task>> Items { get; } = new();
-            public bool TryEnqueue(Func<IServiceProvider, CancellationToken, Task> work)
+            public List<(string UserId, ExpiryDigestNotification Notification)> Calls { get; } = new();
+            public Task SendDigestAsync(string userId, ExpiryDigestNotification notification, CancellationToken ct)
             {
-                Items.Add(work);
-                return true;
+                Calls.Add((userId, notification));
+                return Task.CompletedTask;
+            }
+        }
+
+        // Simulates a send that fails (e.g. FCM transport error): SendDigestAsync throws every time.
+        private sealed class ThrowingSender : INotificationSender
+        {
+            public int Attempts { get; private set; }
+            public Task SendDigestAsync(string userId, ExpiryDigestNotification notification, CancellationToken ct)
+            {
+                Attempts++;
+                throw new InvalidOperationException("send failed");
             }
         }
 
@@ -52,31 +65,21 @@ namespace Frigorino.Test.Infrastructure
             db.ChangeTracker.Clear();
         }
 
-        // Simulates a full / rejecting queue: TryEnqueue declines every work item.
-        private sealed class RejectingQueue : IBackgroundTaskQueue
-        {
-            public int Attempts { get; private set; }
-            public bool TryEnqueue(Func<IServiceProvider, CancellationToken, Task> work)
-            {
-                Attempts++;
-                return false;
-            }
-        }
-
-        private static ExpiryNotificationScan NewScan(ApplicationDbContext db, IBackgroundTaskQueue queue) =>
-            new(db, queue, NullLogger<ExpiryNotificationScan>.Instance);
+        private static ExpiryNotificationScan NewScan(ApplicationDbContext db, INotificationSender sender) =>
+            new(db, sender, Options.Create(new MaintenanceSettings()), NullLogger<ExpiryNotificationScan>.Instance);
 
         [Fact]
-        public async Task EnqueuesOneSend_AndWritesLedger_ForEligibleRecipient()
+        public async Task SendsOneDigest_AndWritesLedger_ForEligibleRecipient()
         {
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 2);
-            var queue = new CapturingQueue();
+            var sender = new CapturingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Single(queue.Items);
+            var call = Assert.Single(sender.Calls);
+            Assert.Equal("u1", call.UserId);
             Assert.Equal(1, await db.NotificationDispatches.CountAsync(d => d.UserId == "u1" && d.HouseholdId == 10 && d.SentOn == today));
         }
 
@@ -89,11 +92,11 @@ namespace Frigorino.Test.Infrastructure
             db.NotificationDispatches.Add(NotificationDispatch.Create("u1", 10, today));
             await db.SaveChangesAsync();
             db.ChangeTracker.Clear();
-            var queue = new CapturingQueue();
+            var sender = new CapturingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Empty(queue.Items);
+            Assert.Empty(sender.Calls);
         }
 
         [Fact]
@@ -102,11 +105,11 @@ namespace Frigorino.Test.Infrastructure
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 2, userEnabled: false);
-            var queue = new CapturingQueue();
+            var sender = new CapturingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Empty(queue.Items);
+            Assert.Empty(sender.Calls);
         }
 
         [Fact]
@@ -115,11 +118,11 @@ namespace Frigorino.Test.Infrastructure
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 2, hasToken: false);
-            var queue = new CapturingQueue();
+            var sender = new CapturingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Empty(queue.Items);
+            Assert.Empty(sender.Calls);
         }
 
         [Fact]
@@ -128,26 +131,26 @@ namespace Frigorino.Test.Infrastructure
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 30);
-            var queue = new CapturingQueue();
+            var sender = new CapturingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Empty(queue.Items);
+            Assert.Empty(sender.Calls);
         }
 
         [Fact]
-        public async Task WritesLedger_EvenWhenEnqueueRejected_BecauseSlotClaimedFirst()
+        public async Task WritesLedger_EvenWhenSendThrows_BecauseSlotClaimedFirst()
         {
-            // Claim-slot-first: the ledger row is committed BEFORE the enqueue attempt, so a rejected
-            // enqueue still leaves a dispatch row (the accepted trade-off — the send is dropped).
+            // Claim-slot-first: the ledger row is committed BEFORE the send, so a send that throws still
+            // leaves a dispatch row (the accepted trade-off — the send is lost, not retried today).
             var today = new DateOnly(2026, 6, 1);
             using var db = NewContext();
             await SeedAsync(db, today, daysUntil: 2);
-            var queue = new RejectingQueue();
+            var sender = new ThrowingSender();
 
-            await NewScan(db, queue).RunAsync(today, CancellationToken.None);
+            await NewScan(db, sender).RunAsync(today, CancellationToken.None);
 
-            Assert.Equal(1, queue.Attempts);
+            Assert.Equal(1, sender.Attempts);
             Assert.Equal(1, await db.NotificationDispatches.CountAsync(d => d.UserId == "u1" && d.HouseholdId == 10 && d.SentOn == today));
         }
     }
