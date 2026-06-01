@@ -22,6 +22,7 @@ namespace Frigorino.Infrastructure.Auth
             });
 
             services.AddSingleton(FirebaseAdmin.Auth.FirebaseAuth.DefaultInstance);
+            services.AddSingleton(FirebaseAdmin.Messaging.FirebaseMessaging.DefaultInstance);
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

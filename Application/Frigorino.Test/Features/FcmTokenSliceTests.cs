@@ -67,7 +67,7 @@ namespace Frigorino.Test.Features
             db.ChangeTracker.Clear();
 
             await UnregisterFcmTokenEndpoint.Handle(
-                new UnregisterFcmTokenRequest("tok-1"), UserNamed("u1"), db, CancellationToken.None);
+                "tok-1", UserNamed("u1"), db, CancellationToken.None);
 
             Assert.Empty(db.FcmTokens);
         }
@@ -83,7 +83,7 @@ namespace Frigorino.Test.Features
             db.ChangeTracker.Clear();
 
             await UnregisterFcmTokenEndpoint.Handle(
-                new UnregisterFcmTokenRequest("shared-tok"), UserNamed("u2"), db, CancellationToken.None);
+                "shared-tok", UserNamed("u2"), db, CancellationToken.None);
 
             // u2's unregister must NOT delete a token owned by u1 (scoped to current user).
             var token = await db.FcmTokens.SingleAsync();
