@@ -96,10 +96,13 @@ namespace Frigorino.Infrastructure.Notifications
                 {
                     await _db.SaveChangesAsync(ct);
                 }
-                catch (DbUpdateException)
+                catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation })
                 {
-                    // A concurrent scan already claimed this (user, household, day). Detach so the failed
-                    // row is not re-attempted on the next iteration's save, then skip the enqueue.
+                    // A concurrent scan already claimed this (user, household, day): the unique index on
+                    // (UserId, HouseholdId, SentOn) rejected our insert with SQLSTATE 23505. Detach so the
+                    // failed row is not re-attempted on the next iteration's save, then skip the enqueue.
+                    // Any other DbUpdateException (transient connection fault / deadlock / timeout) is NOT
+                    // caught here — it propagates so genuine faults stay visible.
                     _db.Entry(dispatch).State = EntityState.Detached;
                     _logger.LogInformation(
                         "Expiry scan: slot already claimed for user {UserId} household {HouseholdId}; skipping enqueue.",
@@ -109,8 +112,14 @@ namespace Frigorino.Infrastructure.Notifications
 
                 // Slot is claimed. Enqueue the send — a rejected enqueue just drops the send (the
                 // accepted trade-off); the ledger row already prevents a re-fire.
-                _queue.TryEnqueue((sp, token) =>
+                var enqueued = _queue.TryEnqueue((sp, token) =>
                     sp.GetRequiredService<INotificationSender>().SendDigestAsync(userId, notification, token));
+                if (!enqueued)
+                {
+                    _logger.LogWarning(
+                        "Expiry scan: send dropped (queue rejected) for user {UserId} household {HouseholdId} after slot claimed.",
+                        plan.UserId, plan.HouseholdId);
+                }
                 claimed++;
             }
 
