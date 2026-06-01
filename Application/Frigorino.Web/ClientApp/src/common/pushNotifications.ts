@@ -52,11 +52,17 @@ function registerForegroundHandler(
         return;
     }
     foregroundHandlerRegistered = true;
-    onMessage(messaging, (payload) => {
+    onMessage(messaging, async (payload) => {
         const title = payload.data?.title;
         const body = payload.data?.body;
         if (title) {
-            new Notification(title, { body });
+            const registration = await swRegistration();
+            if (registration) {
+                registration.showNotification(title, {
+                    body,
+                    icon: "/192.png",
+                });
+            }
         }
     });
 }
@@ -108,10 +114,14 @@ export async function disablePush(): Promise<void> {
     if (!VAPID_KEY || !(await pushSupported())) {
         return;
     }
+    const registration = await swRegistration();
     const messaging = getMessaging(firebaseApp);
     let token: string | null;
     try {
-        token = await getToken(messaging, { vapidKey: VAPID_KEY });
+        token = await getToken(messaging, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: registration,
+        });
     } catch {
         token = null;
     }
