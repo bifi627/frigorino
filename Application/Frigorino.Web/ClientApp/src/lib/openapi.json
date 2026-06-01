@@ -1861,9 +1861,13 @@
             "type": "string"
           },
           "quantity": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
             ]
           },
           "expiryDate": {
@@ -1921,6 +1925,14 @@
             ]
           }
         }
+      },
+      "ExpiryHandling": {
+        "enum": [
+          "Unknown",
+          "NonPerishable",
+          "UserEntersFromPackage",
+          "AiRecommendsShelfLife"
+        ]
       },
       "HouseholdResponse": {
         "required": [
@@ -2063,9 +2075,13 @@
             "type": "string"
           },
           "quantity": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
             ]
           },
           "expiryDate": {
@@ -2219,6 +2235,16 @@
           "extractionPending": {
             "type": "boolean",
             "default": false
+          },
+          "promote": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PromoteSuggestion"
+              }
+            ]
           }
         }
       },
@@ -2302,6 +2328,25 @@
           }
         }
       },
+      "PromoteSuggestion": {
+        "required": [
+          "expiryHandling",
+          "suggestedExpiry"
+        ],
+        "type": "object",
+        "properties": {
+          "expiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "suggestedExpiry": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "QuantityDto": {
         "required": [
           "value",
@@ -2363,6 +2408,7 @@
         "required": [
           "text",
           "quantity",
+          "clearQuantity",
           "expiryDate"
         ],
         "type": "object",
@@ -2374,9 +2420,19 @@
             ]
           },
           "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "clearQuantity": {
             "type": [
               "null",
-              "string"
+              "boolean"
             ]
           },
           "expiryDate": {

@@ -4,14 +4,15 @@ import { Clear, ShoppingBag } from "@mui/icons-material";
 import { Box, Chip, IconButton, MenuItem, TextField } from "@mui/material";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { defineModifier } from "../../../components/composer/defineFeature";
-import type { FeatureSlot } from "../../../components/composer/types";
 import type { QuantityDto, QuantityUnit } from "../../../lib/api";
+import { defineModifier } from "../defineFeature";
+import type { FeatureSlot } from "../types";
 import { QUANTITY_UNIT_VALUES, unitLabel } from "./quantityFormat";
 
 // The composer keeps the in-progress quantity as a draft (free-text value + unit) rather than a
 // committed QuantityDto, so a half-typed value ("1.", "") doesn't have to round-trip through a
 // number. `draftToQuantity` converts on send; an empty/invalid value yields null (= "preserve").
+// Shared by the Lists and Inventories item composers.
 export interface QuantityDraft {
     value: string;
     unit: QuantityUnit;
@@ -101,14 +102,19 @@ const QuantityPanel = ({
             <TextField
                 variant="outlined"
                 type="text"
-                inputMode="decimal"
                 placeholder={t("common.quantity")}
                 value={value.value}
                 onChange={(e) => setValue({ ...value, value: e.target.value })}
                 disabled={disabled}
                 error={invalid}
-                helperText={invalid ? t("lists.invalidQuantity") : undefined}
+                helperText={invalid ? t("common.invalidQuantity") : undefined}
                 size="small"
+                slotProps={{
+                    htmlInput: {
+                        inputMode: "decimal",
+                        "data-testid": "composer-quantity-value",
+                    },
+                }}
                 sx={{ width: 110 }}
             />
             <TextField

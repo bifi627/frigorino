@@ -1,5 +1,6 @@
 using FluentResults;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
 {
@@ -134,9 +135,9 @@ namespace Frigorino.Domain.Entities
         // add / update / reorder / delete / compact, matching the legacy InventoryItemService
         // behaviour. The handler enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<InventoryItem> AddItem(string text, string? quantity, DateOnly? expiryDate)
+        public Result<InventoryItem> AddItem(string text, Quantity? quantity, DateOnly? expiryDate)
         {
-            var errors = ValidateItemFields(text, quantity, requireText: true);
+            var errors = ValidateItemText(text, requireText: true);
             if (errors.Count > 0)
             {
                 return Result.Fail<InventoryItem>(errors);
@@ -147,7 +148,8 @@ namespace Frigorino.Domain.Entities
             {
                 InventoryId = Id,
                 Text = text.Trim(),
-                Quantity = NormaliseQuantity(quantity),
+                QuantityValue = quantity?.Value,
+                QuantityUnit = quantity?.Unit,
                 ExpiryDate = expiryDate,
                 SortOrder = ComputeAppendSortOrder(),
                 CreatedAt = now,
@@ -158,11 +160,12 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        // Text/Quantity preserve on null (caller intent: "leave existing value"). ExpiryDate is
-        // intentionally write-through — null means "clear the value", because ExpiryDate is a
-        // first-class field the user explicitly sets/unsets via a date picker, and the legacy
-        // mapping extension assigned it unconditionally. Comments out the asymmetry deliberately.
-        public Result<InventoryItem> UpdateItem(int itemId, string? text, string? quantity, DateOnly? expiryDate)
+        // Text preserves on null (caller intent: "leave existing value"). Quantity is tri-state:
+        // clearQuantity removes it; a non-null quantity writes both columns; null means "preserve".
+        // ExpiryDate is intentionally write-through — null means "clear the value", because it is a
+        // first-class field the user explicitly sets/unsets via a date picker. The asymmetry is
+        // deliberate.
+        public Result<InventoryItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, DateOnly? expiryDate)
         {
             var item = InventoryItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
@@ -174,7 +177,7 @@ namespace Frigorino.Domain.Entities
             // Text is required only when the caller actually supplies a value — null means
             // "preserve existing". Empty/whitespace, on the other hand, is a real attempt at
             // a blank text and is rejected.
-            var errors = ValidateItemFields(text, quantity, requireText: text is not null);
+            var errors = ValidateItemText(text, requireText: text is not null);
             if (errors.Count > 0)
             {
                 return Result.Fail<InventoryItem>(errors);
@@ -184,9 +187,18 @@ namespace Frigorino.Domain.Entities
             {
                 item.Text = text.Trim();
             }
-            if (quantity is not null)
+            // clearQuantity removes it; otherwise quantity == null means "preserve" and a non-null
+            // quantity writes both columns. (clearQuantity wins over a stray quantity value.)
+            if (clearQuantity)
             {
-                item.Quantity = NormaliseQuantity(quantity);
+                item.QuantityValue = null;
+                item.QuantityUnit = null;
+            }
+            else if (quantity is not null)
+            {
+                var q = quantity.Value;
+                item.QuantityValue = q.Value;
+                item.QuantityUnit = q.Unit;
             }
             item.ExpiryDate = expiryDate;
 
@@ -303,7 +315,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
-        private static List<IError> ValidateItemFields(string? text, string? quantity, bool requireText)
+        private static List<IError> ValidateItemText(string? text, bool requireText)
         {
             var errors = new System.Collections.Generic.List<IError>();
             if (requireText)
@@ -319,17 +331,7 @@ namespace Frigorino.Domain.Entities
                         .WithMetadata("Property", nameof(InventoryItem.Text)));
                 }
             }
-            if (quantity is not null && quantity.Trim().Length > InventoryItem.QuantityMaxLength)
-            {
-                errors.Add(new Error($"Item quantity must be {InventoryItem.QuantityMaxLength} characters or fewer.")
-                    .WithMetadata("Property", nameof(InventoryItem.Quantity)));
-            }
             return errors;
-        }
-
-        private static string? NormaliseQuantity(string? quantity)
-        {
-            return string.IsNullOrWhiteSpace(quantity) ? null : quantity.Trim();
         }
 
         // Returns the sort order for a freshly placed item: single section in the unchecked

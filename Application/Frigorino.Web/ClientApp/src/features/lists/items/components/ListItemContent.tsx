@@ -1,9 +1,9 @@
 import { Box, Chip, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatQuantity } from "../../../../components/composer";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { ListItemResponse } from "../../../../lib/api";
-import { formatQuantity } from "../quantityFormat";
 
 interface Props {
     item: ListItemResponse;
@@ -26,6 +26,7 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
     return (
         <ListItemText
             {...events}
+            slotProps={{ secondary: { component: "div" } }}
             primary={
                 <Typography
                     variant="body2"
@@ -40,7 +41,6 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
             secondary={
                 item.quantity ? (
                     <Box
-                        component="span"
                         sx={{
                             display: "inline-flex",
                             alignItems: "center",

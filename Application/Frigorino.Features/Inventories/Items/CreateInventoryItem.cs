@@ -1,5 +1,7 @@
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -10,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Items
 {
-    public sealed record CreateInventoryItemRequest(string Text, string? Quantity, DateOnly? ExpiryDate);
+    public sealed record CreateInventoryItemRequest(string Text, QuantityDto? Quantity, DateOnly? ExpiryDate);
 
     public static class CreateInventoryItemEndpoint
     {
@@ -46,7 +48,18 @@ namespace Frigorino.Features.Inventories.Items
                 return TypedResults.NotFound();
             }
 
-            var result = inventory.AddItem(request.Text, request.Quantity, request.ExpiryDate);
+            Quantity? quantity = null;
+            if (request.Quantity is not null)
+            {
+                var parsed = Quantity.Create(request.Quantity.Value, request.Quantity.Unit);
+                if (parsed.IsFailed)
+                {
+                    return parsed.ToValidationProblem();
+                }
+                quantity = parsed.Value;
+            }
+
+            var result = inventory.AddItem(request.Text, quantity, request.ExpiryDate);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();

@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Frigorino.Domain.Entities;
+using Frigorino.Features.Quantities;
 
 namespace Frigorino.Features.Inventories.Items
 {
@@ -7,7 +8,7 @@ namespace Frigorino.Features.Inventories.Items
         int Id,
         int InventoryId,
         string Text,
-        string? Quantity,
+        QuantityDto? Quantity,
         DateOnly? ExpiryDate,
         int SortOrder,
         DateTime CreatedAt,
@@ -20,7 +21,9 @@ namespace Frigorino.Features.Inventories.Items
                 item.Id,
                 item.InventoryId,
                 item.Text,
-                item.Quantity,
+                item.QuantityValue == null
+                    ? null
+                    : new QuantityDto(item.QuantityValue.Value, item.QuantityUnit!.Value),
                 item.ExpiryDate,
                 item.SortOrder,
                 item.CreatedAt,
@@ -34,7 +37,9 @@ namespace Frigorino.Features.Inventories.Items
             i.Id,
             i.InventoryId,
             i.Text,
-            i.Quantity,
+            i.QuantityValue == null
+                ? null
+                : new QuantityDto(i.QuantityValue.Value, i.QuantityUnit!.Value),
             i.ExpiryDate,
             i.SortOrder,
             i.CreatedAt,

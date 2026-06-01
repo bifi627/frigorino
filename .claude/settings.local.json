@@ -49,7 +49,8 @@
       "WebFetch(domain:platform.openai.com)",
       "WebFetch(domain:railway.com)",
       "WebFetch(domain:community.bitdefender.com)",
-      "WebFetch(domain:developers.openai.com)"
+      "WebFetch(domain:developers.openai.com)",
+      "Bash(bash scripts/start-server.sh --project-dir \"C:/Repositories/frigorino\")"
     ],
     "deny": [],
     "ask": []

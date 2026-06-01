@@ -3,23 +3,30 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
+    draftToQuantity,
     expiryFeature,
-    quantityFeature,
+    formatQuantity,
+    quantityComposerFeature,
+    quantityToDraft,
     type Completion,
     type DuplicateResult,
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
-import type { InventoryItemResponse } from "../../../../lib/api";
+import type { InventoryItemResponse, QuantityDto } from "../../../../lib/api";
 
-const features = [quantityFeature, expiryFeature] as const;
+const features = [quantityComposerFeature, expiryFeature] as const;
 
 interface InventoryFooterProps {
     editingItem: InventoryItemResponse | null;
     existingItems: InventoryItemResponse[];
-    onAddItem: (data: string, quantity?: string, expiryDate?: string) => void;
+    onAddItem: (
+        data: string,
+        quantity: QuantityDto | null,
+        expiryDate?: string,
+    ) => void;
     onUpdateItem: (
         data: string,
-        quantity?: string,
+        quantity: QuantityDto | null,
         expiryDate?: string,
     ) => void;
     onCancelEdit: () => void;
@@ -63,8 +70,9 @@ export const InventoryFooter = memo(
         );
 
         const getSecondaryLabel = useCallback(
-            (item: InventoryItemResponse) => item.quantity ?? undefined,
-            [],
+            (item: InventoryItemResponse) =>
+                item.quantity ? formatQuantity(t, item.quantity) : undefined,
+            [t],
         );
 
         const { suggestions, duplicate } = useItemComposer({
@@ -81,7 +89,7 @@ export const InventoryFooter = memo(
                     ? {
                           text: editingItem.text,
                           values: {
-                              quantity: editingItem.quantity ?? "",
+                              quantity: quantityToDraft(editingItem.quantity),
                               expiry: editingItem.expiryDate ?? null,
                           },
                       }
@@ -91,10 +99,11 @@ export const InventoryFooter = memo(
 
         const handleComplete = useCallback(
             (r: Completion<typeof features>) => {
+                const quantity = draftToQuantity(r.quantity);
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, r.quantity, r.expiry ?? undefined);
+                    onUpdateItem(r.text, quantity, r.expiry ?? undefined);
                 } else {
-                    onAddItem(r.text, r.quantity, r.expiry ?? undefined);
+                    onAddItem(r.text, quantity, r.expiry ?? undefined);
                     onScrollToLastUnchecked();
                 }
             },

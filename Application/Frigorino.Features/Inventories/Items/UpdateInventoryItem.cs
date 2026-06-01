@@ -1,6 +1,8 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -11,9 +13,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Items
 {
-    // ExpiryDate is intentionally write-through (null clears the value); Text and Quantity
-    // preserve on null. See Inventory.UpdateItem for the rationale.
-    public sealed record UpdateInventoryItemRequest(string? Text, string? Quantity, DateOnly? ExpiryDate);
+    // ExpiryDate is intentionally write-through (null clears the value); Text and Quantity preserve
+    // on null. Quantity is tri-state: a non-null QuantityDto replaces, ClearQuantity removes it.
+    // See Inventory.UpdateItem for the rationale.
+    public sealed record UpdateInventoryItemRequest(string? Text, QuantityDto? Quantity, bool? ClearQuantity, DateOnly? ExpiryDate);
 
     public static class UpdateInventoryItemEndpoint
     {
@@ -50,7 +53,18 @@ namespace Frigorino.Features.Inventories.Items
                 return TypedResults.NotFound();
             }
 
-            var result = inventory.UpdateItem(itemId, request.Text, request.Quantity, request.ExpiryDate);
+            Quantity? quantity = null;
+            if (request.Quantity is not null)
+            {
+                var parsed = Quantity.Create(request.Quantity.Value, request.Quantity.Unit);
+                if (parsed.IsFailed)
+                {
+                    return parsed.ToValidationProblem();
+                }
+                quantity = parsed.Value;
+            }
+
+            var result = inventory.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.ExpiryDate);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];

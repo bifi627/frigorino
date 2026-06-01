@@ -1,12 +1,14 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Test.Domain
 {
     // Pure unit tests for the Inventory aggregate's InventoryItem coordination methods. No
     // DbContext. Covers the sort-order matrix (single section — no checked/unchecked split),
-    // partial-update + expiryDate write-through semantics, and the validation/not-found paths
-    // that route to ValidationProblem and NotFound at the slice handler layer.
+    // partial-update + expiryDate write-through semantics, the structured-quantity tri-state
+    // (set / preserve / clear), and the validation/not-found paths that route to ValidationProblem
+    // and NotFound at the slice handler layer.
     public class InventoryAggregateItemTests
     {
         private const string CreatorId = "user-creator";
@@ -32,7 +34,7 @@ namespace Frigorino.Test.Domain
         {
             var inventory = NewInventory();
             inventory.AddItem("Flour", null, null);
-            inventory.AddItem("Sugar", "1 kg", null);
+            inventory.AddItem("Sugar", Quantity.Create(1, QuantityUnit.Kilogram).Value, null);
 
             var third = inventory.AddItem("Salt", null, null);
 
@@ -65,38 +67,39 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void AddItem_QuantityTooLong_FailsKeyedOnQuantity()
+        public void AddItem_WithQuantity_SetsBothQuantityColumns()
         {
             var inventory = NewInventory();
-            var tooLong = new string('x', InventoryItem.QuantityMaxLength + 1);
+            var quantity = Quantity.Create(2, QuantityUnit.Kilogram).Value;
 
-            var result = inventory.AddItem("Flour", tooLong, null);
+            var result = inventory.AddItem("Flour", quantity, null);
 
-            Assert.True(result.IsFailed);
-            Assert.Equal(nameof(InventoryItem.Quantity), result.Errors[0].Metadata["Property"]);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2m, result.Value.QuantityValue);
+            Assert.Equal(QuantityUnit.Kilogram, result.Value.QuantityUnit);
         }
 
         [Fact]
-        public void AddItem_TrimsTextAndQuantity()
+        public void AddItem_TrimsText()
         {
             var inventory = NewInventory();
 
-            var result = inventory.AddItem("  Flour  ", "  2 kg  ", null);
+            var result = inventory.AddItem("  Flour  ", null, null);
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Flour", result.Value.Text);
-            Assert.Equal("2 kg", result.Value.Quantity);
         }
 
         [Fact]
-        public void AddItem_WhitespaceQuantity_NormalisedToNull()
+        public void AddItem_WithoutQuantity_LeavesQuantityNull()
         {
             var inventory = NewInventory();
 
-            var result = inventory.AddItem("Flour", "   ", null);
+            var result = inventory.AddItem("Flour", null, null);
 
             Assert.True(result.IsSuccess);
-            Assert.Null(result.Value.Quantity);
+            Assert.Null(result.Value.QuantityValue);
+            Assert.Null(result.Value.QuantityUnit);
         }
 
         [Fact]
@@ -118,7 +121,7 @@ namespace Frigorino.Test.Domain
         {
             var inventory = NewInventory();
 
-            var result = inventory.UpdateItem(itemId: 999, text: "x", quantity: null, expiryDate: null);
+            var result = inventory.UpdateItem(itemId: 999, text: "x", quantity: null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsFailed);
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
@@ -131,7 +134,7 @@ namespace Frigorino.Test.Domain
             var item = AddSeed(inventory, "Flour");
             item.IsActive = false;
 
-            var result = inventory.UpdateItem(item.Id, "Sugar", null, null);
+            var result = inventory.UpdateItem(item.Id, "Sugar", null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsFailed);
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
@@ -142,15 +145,57 @@ namespace Frigorino.Test.Domain
         {
             var inventory = NewInventory();
             var existingExpiry = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3);
-            var item = AddSeed(inventory, "Flour", quantity: "1 kg", expiryDate: existingExpiry);
+            var item = AddSeed(inventory, "Flour", quantity: Quantity.Create(1, QuantityUnit.Kilogram).Value, expiryDate: existingExpiry);
 
-            // Text/Quantity null = preserve. ExpiryDate null = clear (write-through).
-            var result = inventory.UpdateItem(item.Id, text: null, quantity: null, expiryDate: existingExpiry);
+            // Text/Quantity null = preserve. ExpiryDate echoed back to keep it.
+            var result = inventory.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, expiryDate: existingExpiry);
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Flour", item.Text);
-            Assert.Equal("1 kg", item.Quantity);
+            Assert.Equal(1m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Kilogram, item.QuantityUnit);
             Assert.Equal(existingExpiry, item.ExpiryDate);
+        }
+
+        [Fact]
+        public void UpdateItem_SetsQuantity()
+        {
+            var inventory = NewInventory();
+            var item = AddSeed(inventory, "Flour");
+
+            var result = inventory.UpdateItem(item.Id, text: null,
+                quantity: Quantity.Create(2, QuantityUnit.Bottle).Value, clearQuantity: false, expiryDate: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(2m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Bottle, item.QuantityUnit);
+        }
+
+        [Fact]
+        public void UpdateItem_ClearQuantity_RemovesQuantity()
+        {
+            var inventory = NewInventory();
+            var item = AddSeed(inventory, "Flour", quantity: Quantity.Create(1, QuantityUnit.Kilogram).Value);
+
+            var result = inventory.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: true, expiryDate: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.QuantityValue);
+            Assert.Null(item.QuantityUnit);
+        }
+
+        [Fact]
+        public void UpdateItem_ClearQuantity_WinsOverProvidedQuantity()
+        {
+            var inventory = NewInventory();
+            var item = AddSeed(inventory, "Flour", quantity: Quantity.Create(1, QuantityUnit.Kilogram).Value);
+
+            var result = inventory.UpdateItem(item.Id, text: null,
+                quantity: Quantity.Create(5, QuantityUnit.Piece).Value, clearQuantity: true, expiryDate: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.QuantityValue);
+            Assert.Null(item.QuantityUnit);
         }
 
         [Fact]
@@ -161,7 +206,7 @@ namespace Frigorino.Test.Domain
             var inventory = NewInventory();
             var item = AddSeed(inventory, "Milk", expiryDate: DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3));
 
-            var result = inventory.UpdateItem(item.Id, text: null, quantity: null, expiryDate: null);
+            var result = inventory.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsSuccess);
             Assert.Null(item.ExpiryDate);
@@ -171,14 +216,16 @@ namespace Frigorino.Test.Domain
         public void UpdateItem_ChangesAllFields()
         {
             var inventory = NewInventory();
-            var item = AddSeed(inventory, "Flour", quantity: "1 kg");
+            var item = AddSeed(inventory, "Flour", quantity: Quantity.Create(1, QuantityUnit.Kilogram).Value);
             var newExpiry = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10);
 
-            var result = inventory.UpdateItem(item.Id, "Sugar", "2 kg", newExpiry);
+            var result = inventory.UpdateItem(item.Id, "Sugar",
+                Quantity.Create(2, QuantityUnit.Kilogram).Value, clearQuantity: false, expiryDate: newExpiry);
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Sugar", item.Text);
-            Assert.Equal("2 kg", item.Quantity);
+            Assert.Equal(2m, item.QuantityValue);
+            Assert.Equal(QuantityUnit.Kilogram, item.QuantityUnit);
             Assert.Equal(newExpiry, item.ExpiryDate);
         }
 
@@ -188,7 +235,7 @@ namespace Frigorino.Test.Domain
             var inventory = NewInventory();
             var item = AddSeed(inventory, "Flour");
 
-            var result = inventory.UpdateItem(item.Id, "  ", null, null);
+            var result = inventory.UpdateItem(item.Id, "  ", null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(InventoryItem.Text), result.Errors[0].Metadata["Property"]);
@@ -201,7 +248,7 @@ namespace Frigorino.Test.Domain
             var item = AddSeed(inventory, "Flour");
             var tooLong = new string('x', InventoryItem.TextMaxLength + 1);
 
-            var result = inventory.UpdateItem(item.Id, tooLong, null, null);
+            var result = inventory.UpdateItem(item.Id, tooLong, null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(InventoryItem.Text), result.Errors[0].Metadata["Property"]);
@@ -215,7 +262,7 @@ namespace Frigorino.Test.Domain
             item.UpdatedAt = DateTime.UtcNow.AddMinutes(-5);
             var before = item.UpdatedAt;
 
-            var result = inventory.UpdateItem(item.Id, "Sugar", null, null);
+            var result = inventory.UpdateItem(item.Id, "Sugar", null, clearQuantity: false, expiryDate: null);
 
             Assert.True(result.IsSuccess);
             Assert.True(item.UpdatedAt > before);
@@ -473,14 +520,15 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private InventoryItem AddSeed(Inventory inventory, string text, string? quantity = null, DateOnly? expiryDate = null, int? sortOrder = null)
+        private InventoryItem AddSeed(Inventory inventory, string text, Quantity? quantity = null, DateOnly? expiryDate = null, int? sortOrder = null)
         {
             var item = new InventoryItem
             {
                 Id = ++_nextItemId,
                 InventoryId = inventory.Id,
                 Text = text,
-                Quantity = quantity,
+                QuantityValue = quantity?.Value,
+                QuantityUnit = quantity?.Unit,
                 ExpiryDate = expiryDate,
                 SortOrder = sortOrder ?? SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap,
                 CreatedAt = DateTime.UtcNow.AddMinutes(-1),

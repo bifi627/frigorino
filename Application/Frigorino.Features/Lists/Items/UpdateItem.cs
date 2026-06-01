@@ -2,6 +2,7 @@ using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;

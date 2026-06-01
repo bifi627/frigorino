@@ -25,8 +25,9 @@ export const useUpdateInventoryItem = () => {
             const previousItems =
                 queryClient.getQueryData<InventoryItemResponse[]>(listQueryKey);
 
-            // Text and quantity preserve on null (??); expiryDate is write-through (=),
-            // mirroring the server's UpdateItem asymmetry — null clears the value.
+            // Text preserves on null (??); clearQuantity removes the quantity, otherwise null =
+            // preserve (mirrors the domain's UpdateItem). ExpiryDate is write-through (=) — null
+            // clears the value.
             queryClient.setQueryData<InventoryItemResponse[]>(
                 listQueryKey,
                 (old) => {
@@ -36,8 +37,10 @@ export const useUpdateInventoryItem = () => {
                             ? {
                                   ...item,
                                   text: variables.body.text ?? item.text,
-                                  quantity:
-                                      variables.body.quantity ?? item.quantity,
+                                  quantity: variables.body.clearQuantity
+                                      ? null
+                                      : (variables.body.quantity ??
+                                        item.quantity),
                                   expiryDate: variables.body.expiryDate,
                                   updatedAt: new Date().toISOString(),
                               }

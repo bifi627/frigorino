@@ -1,5 +1,6 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
+using Frigorino.Domain.Products;
 using Frigorino.Features.Households;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -56,7 +57,24 @@ namespace Frigorino.Features.Lists.Items
             }
 
             await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(ListItemResponse.From(result.Value));
+
+            var response = ListItemResponse.From(result.Value);
+
+            // Only when the item is now checked DONE do we look up its product (one indexed point
+            // lookup on the unique (HouseholdId, NormalizedName)) and attach a promote suggestion.
+            // Un-checking, non-perishable, and not-yet-classified all yield Promote == null.
+            if (result.Value.Status)
+            {
+                var normalized = ProductName.Normalize(result.Value.Text);
+                var product = await db.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        p => p.HouseholdId == householdId && p.NormalizedName == normalized, ct);
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                response = response with { Promote = PromoteSuggestion.For(product, today) };
+            }
+
+            return TypedResults.Ok(response);
         }
     }
 }

@@ -9,6 +9,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { formatQuantity } from "../../../../components/composer";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { InventoryItemResponse } from "../../../../lib/api";
 import {
@@ -99,7 +100,7 @@ export function InventoryItemContent({ item }: Props) {
                                     }}
                                 >
                                     <ShoppingBag fontSize="small" />
-                                    {item.quantity}
+                                    {formatQuantity(t, item.quantity)}
                                 </Typography>
                             )}
                         </Box>

@@ -22,7 +22,7 @@ export type CreateHouseholdRequest = {
 
 export type CreateInventoryItemRequest = {
     text: string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     expiryDate: null | string;
 };
 
@@ -39,6 +39,8 @@ export type CreateListRequest = {
     name: string;
     description: null | string;
 };
+
+export type ExpiryHandling = 'Unknown' | 'NonPerishable' | 'UserEntersFromPackage' | 'AiRecommendsShelfLife';
 
 export type HouseholdResponse = {
     id: number;
@@ -73,7 +75,7 @@ export type InventoryItemResponse = {
     id: number;
     inventoryId: number;
     text: string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
     expiryDate: null | string;
     sortOrder: number;
     createdAt: string;
@@ -109,6 +111,7 @@ export type ListItemResponse = {
     createdAt: string;
     updatedAt: string;
     extractionPending: boolean;
+    promote?: null | PromoteSuggestion;
 };
 
 export type ListResponse = {
@@ -131,6 +134,11 @@ export type MemberResponse = {
     joinedAt: string;
 };
 
+export type PromoteSuggestion = {
+    expiryHandling: ExpiryHandling;
+    suggestedExpiry: null | string;
+};
+
 export type QuantityDto = {
     value: number | string;
     unit: QuantityUnit;
@@ -148,7 +156,8 @@ export type SetActiveHouseholdRequest = {
 
 export type UpdateInventoryItemRequest = {
     text: null | string;
-    quantity: null | string;
+    quantity: null | QuantityDto;
+    clearQuantity: null | boolean;
     expiryDate: null | string;
 };
 

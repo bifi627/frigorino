@@ -44,6 +44,7 @@
         "addItem": "Element hinzufügen",
         "itemName": "Elementname",
         "quantity": "Menge",
+        "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen",
         "confirmDelete": "Sind Sie sicher, dass Sie löschen möchten",
         "warningPermanentlyDelete": "⚠️ Warnung: Dies wird dauerhaft löschen:",
         "pleaseSelectHouseholdFirst": "Bitte wählen Sie zuerst einen Haushalt aus.",
@@ -202,8 +203,25 @@
         "noListsYet": "Noch keine Listen",
         "createFirstShoppingList": "Erstellen Sie Ihre erste Einkaufsliste, um zu beginnen",
         "createYourFirstList": "Erstellen Sie Ihre erste Liste",
-        "quantity": "Menge",
-        "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen"
+        "quantity": "Menge"
+    },
+    "promote": {
+        "barReady_one": "{{count}} Artikel bereit fürs Inventar",
+        "barReady_other": "{{count}} Artikel bereit fürs Inventar",
+        "review": "Überprüfen",
+        "sheetTitle": "Zum Inventar hinzufügen",
+        "sheetSubtitle": "Artikel und Ziel auswählen. Den Rest danach zu einem anderen Inventar hinzufügen.",
+        "target": "Nach",
+        "tagRecommended": "Empfohlen",
+        "tagEnterDate": "Datum eingeben",
+        "expiry": "Ablaufdatum",
+        "expiryRequired": "Datum zum Hinzufügen eingeben",
+        "omit": "Von der Liste entfernen",
+        "clearAll": "Alle entfernen",
+        "addCount_one": "{{count}} zu {{inventory}} hinzufügen",
+        "addCount_other": "{{count}} zu {{inventory}} hinzufügen",
+        "added_one": "{{count}} Artikel zu {{inventory}} hinzugefügt",
+        "added_other": "{{count}} Artikel zu {{inventory}} hinzugefügt"
     },
     "navigation": {
         "home": "Startseite",

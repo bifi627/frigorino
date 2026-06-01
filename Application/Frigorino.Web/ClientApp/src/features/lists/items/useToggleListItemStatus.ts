@@ -6,6 +6,7 @@ import {
     toggleItemStatusMutation,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import type { ListItemResponse } from "../../../lib/api/types.gen";
+import { usePromotableStore } from "../promote/promotableStore";
 
 export const useToggleListItemStatus = () => {
     const queryClient = useQueryClient();
@@ -61,6 +62,25 @@ export const useToggleListItemStatus = () => {
                     }),
                     context.previousItems,
                 );
+            }
+        },
+        onSuccess: (data) => {
+            // Store-only side effect — NOT a query invalidate (see the onSettled note below).
+            // The server attaches `promote` only when the item was checked DONE and its product
+            // is a perishable; un-check / non-perishable / unclassified come back without it,
+            // which retracts any pending entry for this item.
+            const store = usePromotableStore.getState();
+            if (data.promote) {
+                store.add({
+                    itemId: data.id,
+                    listId: data.listId,
+                    name: data.text,
+                    quantity: data.quantity ?? null,
+                    expiryHandling: data.promote.expiryHandling,
+                    suggestedExpiry: data.promote.suggestedExpiry ?? null,
+                });
+            } else {
+                store.remove(data.id);
             }
         },
         onSettled: (_data, _error, variables) => {

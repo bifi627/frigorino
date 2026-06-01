@@ -44,6 +44,7 @@
         "addItem": "Add Item",
         "itemName": "Item Name",
         "quantity": "Quantity",
+        "invalidQuantity": "Enter a positive number, or leave empty to clear",
         "confirmDelete": "Are you sure you want to delete",
         "warningPermanentlyDelete": "⚠️ Warning: This will permanently delete:",
         "pleaseSelectHouseholdFirst": "Please select a household first.",
@@ -202,8 +203,25 @@
         "noListsYet": "No lists yet",
         "createFirstShoppingList": "Create your first shopping list to get started",
         "createYourFirstList": "Create Your First List",
-        "quantity": "Quantity",
-        "invalidQuantity": "Enter a positive number, or leave empty to clear"
+        "quantity": "Quantity"
+    },
+    "promote": {
+        "barReady_one": "{{count}} item ready for inventory",
+        "barReady_other": "{{count}} items ready for inventory",
+        "review": "Review",
+        "sheetTitle": "Add to inventory",
+        "sheetSubtitle": "Select items and a target. Add the rest to another inventory after.",
+        "target": "To",
+        "tagRecommended": "Recommended",
+        "tagEnterDate": "Enter date",
+        "expiry": "Expiry date",
+        "expiryRequired": "Enter a date to add",
+        "omit": "Remove from list",
+        "clearAll": "Clear all",
+        "addCount_one": "Add {{count}} to {{inventory}}",
+        "addCount_other": "Add {{count}} to {{inventory}}",
+        "added_one": "Added {{count}} item to {{inventory}}",
+        "added_other": "Added {{count}} items to {{inventory}}"
     },
     "navigation": {
         "home": "Home",
