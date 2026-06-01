@@ -8,7 +8,7 @@ namespace Frigorino.IntegrationTests.Slices.Lists;
 [Binding]
 public class PromoteApiSteps(ScenarioContextHolder ctx, TestApiClient api)
 {
-    private JsonElement _lastToggle;
+    private JsonElement? _lastToggle;
 
     [Given("the product {string} is in the catalog")]
     public async Task GivenTheProductIsInTheCatalog(string normalizedName)
@@ -31,7 +31,7 @@ public class PromoteApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     }
 
     [When("I toggle item {string} in list {string} via the API")]
-    public async Task WhenIToggleItemViaTheApi(string itemText, string listName)
+    public async Task WhenIToggleItemInListViaTheApi(string itemText, string listName)
     {
         var listId = ctx.ListIds[listName];
         var itemId = ctx.GetListItemId(listName, itemText);
@@ -43,7 +43,9 @@ public class PromoteApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Then("the toggle response has a promote suggestion with handling {string}")]
     public void ThenToggleHasPromoteWithHandling(string handling)
     {
-        Assert.True(_lastToggle.TryGetProperty("promote", out var promote)
+        var toggle = _lastToggle ?? throw new InvalidOperationException(
+            "No toggle response captured — was the When step executed?");
+        Assert.True(toggle.TryGetProperty("promote", out var promote)
             && promote.ValueKind == JsonValueKind.Object);
         Assert.Equal(handling, promote.GetProperty("expiryHandling").GetString());
     }
@@ -51,15 +53,20 @@ public class PromoteApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     [Then("the promote suggestion has a non-null suggested expiry")]
     public void ThenPromoteHasNonNullExpiry()
     {
-        var promote = _lastToggle.GetProperty("promote");
+        var toggle = _lastToggle ?? throw new InvalidOperationException(
+            "No toggle response captured — was the When step executed?");
+        var promote = toggle.GetProperty("promote");
         Assert.Equal(JsonValueKind.String, promote.GetProperty("suggestedExpiry").ValueKind);
     }
 
     [Then("the toggle response has no promote suggestion")]
     public void ThenToggleHasNoPromote()
     {
-        var hasPromote = _lastToggle.TryGetProperty("promote", out var promote)
+        var toggle = _lastToggle ?? throw new InvalidOperationException(
+            "No toggle response captured — was the When step executed?");
+        // promote is either absent or serialized as null — both mean "no suggestion".
+        var promoteIsPopulated = toggle.TryGetProperty("promote", out var promote)
             && promote.ValueKind == JsonValueKind.Object;
-        Assert.False(hasPromote);
+        Assert.False(promoteIsPopulated, "Expected no promote suggestion (promote should be null or absent).");
     }
 }

@@ -14,7 +14,8 @@ Feature: Promote suggestion on toggle (API)
     Given there is a list named "Weekly Groceries" with item "Sugar"
     And the product "sugar" is in the catalog
     When I toggle item "Sugar" in list "Weekly Groceries" via the API
-    Then the toggle response has no promote suggestion
+    Then the product catalog eventually contains "sugar" as non-perishable
+    And the toggle response has no promote suggestion
 
   Scenario: Toggling an item back to unchecked returns no promote suggestion
     Given there is a list named "Weekly Groceries" with item "Milk"
