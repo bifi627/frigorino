@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getInventories, getInventory, getInventoryItems, getItem, getItems, getList, getLists, getMembers, getUserHouseholds, getWeatherForecast, type Options, putApiAuthProfile, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, toggleItemStatus, updateInventory, updateInventoryItem, updateItem, updateList, updateMemberRole } from '../sdk.gen';
-import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetItemData, GetItemResponse, GetItemsData, GetItemsResponse, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PutApiAuthProfileData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, ToggleItemStatusData, ToggleItemStatusResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse } from '../types.gen';
+import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItems, getList, getLists, getMembers, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, putApiAuthProfile, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, toggleItemStatus, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateUserSettings } from '../sdk.gen';
+import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemResponse, GetItemsData, GetItemsResponse, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PutApiAuthProfileData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, ToggleItemStatusData, ToggleItemStatusResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsError, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -129,6 +129,35 @@ export const updateMemberRoleMutation = (options?: Partial<Options<UpdateMemberR
     const mutationOptions: UseMutationOptions<UpdateMemberRoleResponse, UpdateMemberRoleError, Options<UpdateMemberRoleData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateMemberRole({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getHouseholdSettingsQueryKey = (options: Options<GetHouseholdSettingsData>) => createQueryKey('getHouseholdSettings', options, false, ['HouseholdSettings']);
+
+export const getHouseholdSettingsOptions = (options: Options<GetHouseholdSettingsData>) => queryOptions<GetHouseholdSettingsResponse, DefaultError, GetHouseholdSettingsResponse, ReturnType<typeof getHouseholdSettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getHouseholdSettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getHouseholdSettingsQueryKey(options)
+});
+
+export const updateHouseholdSettingsMutation = (options?: Partial<Options<UpdateHouseholdSettingsData>>): UseMutationOptions<UpdateHouseholdSettingsResponse, UpdateHouseholdSettingsError, Options<UpdateHouseholdSettingsData>> => {
+    const mutationOptions: UseMutationOptions<UpdateHouseholdSettingsResponse, UpdateHouseholdSettingsError, Options<UpdateHouseholdSettingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateHouseholdSettings({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -510,6 +539,35 @@ export const compactInventoryItemsMutation = (options?: Partial<Options<CompactI
     return mutationOptions;
 };
 
+export const getInventorySettingsQueryKey = (options: Options<GetInventorySettingsData>) => createQueryKey('getInventorySettings', options, false, ['InventorySettings']);
+
+export const getInventorySettingsOptions = (options: Options<GetInventorySettingsData>) => queryOptions<GetInventorySettingsResponse, DefaultError, GetInventorySettingsResponse, ReturnType<typeof getInventorySettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getInventorySettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getInventorySettingsQueryKey(options)
+});
+
+export const updateInventorySettingsMutation = (options?: Partial<Options<UpdateInventorySettingsData>>): UseMutationOptions<UpdateInventorySettingsResponse, UpdateInventorySettingsError, Options<UpdateInventorySettingsData>> => {
+    const mutationOptions: UseMutationOptions<UpdateInventorySettingsResponse, UpdateInventorySettingsError, Options<UpdateInventorySettingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateInventorySettings({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const getActiveHouseholdQueryKey = (options?: Options<GetActiveHouseholdData>) => createQueryKey('getActiveHousehold', options, false, ['Me']);
 
 export const getActiveHouseholdOptions = (options?: Options<GetActiveHouseholdData>) => queryOptions<GetActiveHouseholdResponse, DefaultError, GetActiveHouseholdResponse, ReturnType<typeof getActiveHouseholdQueryKey>>({
@@ -529,6 +587,35 @@ export const setActiveHouseholdMutation = (options?: Partial<Options<SetActiveHo
     const mutationOptions: UseMutationOptions<SetActiveHouseholdResponse, DefaultError, Options<SetActiveHouseholdData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await setActiveHousehold({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getUserSettingsQueryKey = (options?: Options<GetUserSettingsData>) => createQueryKey('getUserSettings', options, false, ['Me']);
+
+export const getUserSettingsOptions = (options?: Options<GetUserSettingsData>) => queryOptions<GetUserSettingsResponse, DefaultError, GetUserSettingsResponse, ReturnType<typeof getUserSettingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getUserSettings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getUserSettingsQueryKey(options)
+});
+
+export const updateUserSettingsMutation = (options?: Partial<Options<UpdateUserSettingsData>>): UseMutationOptions<UpdateUserSettingsResponse, UpdateUserSettingsError, Options<UpdateUserSettingsData>> => {
+    const mutationOptions: UseMutationOptions<UpdateUserSettingsResponse, UpdateUserSettingsError, Options<UpdateUserSettingsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateUserSettings({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddMemberData, AddMemberErrors, AddMemberResponses, CompactInventoryItemsData, CompactInventoryItemsErrors, CompactInventoryItemsResponses, CompactItemsData, CompactItemsErrors, CompactItemsResponses, CreateHouseholdData, CreateHouseholdErrors, CreateHouseholdResponses, CreateInventoryData, CreateInventoryErrors, CreateInventoryItemData, CreateInventoryItemErrors, CreateInventoryItemResponses, CreateInventoryResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateListData, CreateListErrors, CreateListResponses, DeleteHouseholdData, DeleteHouseholdErrors, DeleteHouseholdResponses, DeleteInventoryData, DeleteInventoryErrors, DeleteInventoryItemData, DeleteInventoryItemErrors, DeleteInventoryItemResponses, DeleteInventoryResponses, DeleteItemData, DeleteItemErrors, DeleteItemResponses, DeleteListData, DeleteListErrors, DeleteListResponses, GetActiveHouseholdData, GetActiveHouseholdErrors, GetActiveHouseholdResponses, GetApiAuthMeData, GetApiAuthMeResponses, GetApiDemoData, GetApiDemoResponses, GetInventoriesData, GetInventoriesErrors, GetInventoriesResponses, GetInventoryData, GetInventoryErrors, GetInventoryItemsData, GetInventoryItemsErrors, GetInventoryItemsResponses, GetInventoryResponses, GetItemData, GetItemErrors, GetItemResponses, GetItemsData, GetItemsErrors, GetItemsResponses, GetListData, GetListErrors, GetListResponses, GetListsData, GetListsErrors, GetListsResponses, GetMembersData, GetMembersErrors, GetMembersResponses, GetUserHouseholdsData, GetUserHouseholdsResponses, GetWeatherForecastData, GetWeatherForecastResponses, PutApiAuthProfileData, PutApiAuthProfileResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, ReorderInventoryItemData, ReorderInventoryItemErrors, ReorderInventoryItemResponses, ReorderItemData, ReorderItemErrors, ReorderItemResponses, RestoreInventoryItemData, RestoreInventoryItemErrors, RestoreInventoryItemResponses, RestoreItemData, RestoreItemErrors, RestoreItemResponses, SetActiveHouseholdData, SetActiveHouseholdErrors, SetActiveHouseholdResponses, ToggleItemStatusData, ToggleItemStatusErrors, ToggleItemStatusResponses, UpdateInventoryData, UpdateInventoryErrors, UpdateInventoryItemData, UpdateInventoryItemErrors, UpdateInventoryItemResponses, UpdateInventoryResponses, UpdateItemData, UpdateItemErrors, UpdateItemResponses, UpdateListData, UpdateListErrors, UpdateListResponses, UpdateMemberRoleData, UpdateMemberRoleErrors, UpdateMemberRoleResponses } from './types.gen';
+import type { AddMemberData, AddMemberErrors, AddMemberResponses, CompactInventoryItemsData, CompactInventoryItemsErrors, CompactInventoryItemsResponses, CompactItemsData, CompactItemsErrors, CompactItemsResponses, CreateHouseholdData, CreateHouseholdErrors, CreateHouseholdResponses, CreateInventoryData, CreateInventoryErrors, CreateInventoryItemData, CreateInventoryItemErrors, CreateInventoryItemResponses, CreateInventoryResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateListData, CreateListErrors, CreateListResponses, DeleteHouseholdData, DeleteHouseholdErrors, DeleteHouseholdResponses, DeleteInventoryData, DeleteInventoryErrors, DeleteInventoryItemData, DeleteInventoryItemErrors, DeleteInventoryItemResponses, DeleteInventoryResponses, DeleteItemData, DeleteItemErrors, DeleteItemResponses, DeleteListData, DeleteListErrors, DeleteListResponses, GetActiveHouseholdData, GetActiveHouseholdErrors, GetActiveHouseholdResponses, GetApiAuthMeData, GetApiAuthMeResponses, GetApiDemoData, GetApiDemoResponses, GetHouseholdSettingsData, GetHouseholdSettingsErrors, GetHouseholdSettingsResponses, GetInventoriesData, GetInventoriesErrors, GetInventoriesResponses, GetInventoryData, GetInventoryErrors, GetInventoryItemsData, GetInventoryItemsErrors, GetInventoryItemsResponses, GetInventoryResponses, GetInventorySettingsData, GetInventorySettingsErrors, GetInventorySettingsResponses, GetItemData, GetItemErrors, GetItemResponses, GetItemsData, GetItemsErrors, GetItemsResponses, GetListData, GetListErrors, GetListResponses, GetListsData, GetListsErrors, GetListsResponses, GetMembersData, GetMembersErrors, GetMembersResponses, GetUserHouseholdsData, GetUserHouseholdsResponses, GetUserSettingsData, GetUserSettingsResponses, GetWeatherForecastData, GetWeatherForecastResponses, PutApiAuthProfileData, PutApiAuthProfileResponses, RemoveMemberData, RemoveMemberErrors, RemoveMemberResponses, ReorderInventoryItemData, ReorderInventoryItemErrors, ReorderInventoryItemResponses, ReorderItemData, ReorderItemErrors, ReorderItemResponses, RestoreInventoryItemData, RestoreInventoryItemErrors, RestoreInventoryItemResponses, RestoreItemData, RestoreItemErrors, RestoreItemResponses, SetActiveHouseholdData, SetActiveHouseholdErrors, SetActiveHouseholdResponses, ToggleItemStatusData, ToggleItemStatusErrors, ToggleItemStatusResponses, UpdateHouseholdSettingsData, UpdateHouseholdSettingsErrors, UpdateHouseholdSettingsResponses, UpdateInventoryData, UpdateInventoryErrors, UpdateInventoryItemData, UpdateInventoryItemErrors, UpdateInventoryItemResponses, UpdateInventoryResponses, UpdateInventorySettingsData, UpdateInventorySettingsErrors, UpdateInventorySettingsResponses, UpdateItemData, UpdateItemErrors, UpdateItemResponses, UpdateListData, UpdateListErrors, UpdateListResponses, UpdateMemberRoleData, UpdateMemberRoleErrors, UpdateMemberRoleResponses, UpdateUserSettingsData, UpdateUserSettingsErrors, UpdateUserSettingsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -46,6 +46,17 @@ export const removeMember = <ThrowOnError extends boolean = false>(options: Opti
 
 export const updateMemberRole = <ThrowOnError extends boolean = false>(options: Options<UpdateMemberRoleData, ThrowOnError>) => (options.client ?? client).put<UpdateMemberRoleResponses, UpdateMemberRoleErrors, ThrowOnError>({
     url: '/api/household/{householdId}/members/{userId}/role',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getHouseholdSettings = <ThrowOnError extends boolean = false>(options: Options<GetHouseholdSettingsData, ThrowOnError>) => (options.client ?? client).get<GetHouseholdSettingsResponses, GetHouseholdSettingsErrors, ThrowOnError>({ url: '/api/household/{householdId}/settings', ...options });
+
+export const updateHouseholdSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateHouseholdSettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateHouseholdSettingsResponses, UpdateHouseholdSettingsErrors, ThrowOnError>({
+    url: '/api/household/{householdId}/settings',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -175,10 +186,32 @@ export const reorderInventoryItem = <ThrowOnError extends boolean = false>(optio
 
 export const compactInventoryItems = <ThrowOnError extends boolean = false>(options: Options<CompactInventoryItemsData, ThrowOnError>) => (options.client ?? client).post<CompactInventoryItemsResponses, CompactInventoryItemsErrors, ThrowOnError>({ url: '/api/household/{householdId}/inventories/{inventoryId}/items/compact', ...options });
 
+export const getInventorySettings = <ThrowOnError extends boolean = false>(options: Options<GetInventorySettingsData, ThrowOnError>) => (options.client ?? client).get<GetInventorySettingsResponses, GetInventorySettingsErrors, ThrowOnError>({ url: '/api/household/{householdId}/inventories/{inventoryId}/settings', ...options });
+
+export const updateInventorySettings = <ThrowOnError extends boolean = false>(options: Options<UpdateInventorySettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateInventorySettingsResponses, UpdateInventorySettingsErrors, ThrowOnError>({
+    url: '/api/household/{householdId}/inventories/{inventoryId}/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const getActiveHousehold = <ThrowOnError extends boolean = false>(options?: Options<GetActiveHouseholdData, ThrowOnError>) => (options?.client ?? client).get<GetActiveHouseholdResponses, GetActiveHouseholdErrors, ThrowOnError>({ url: '/api/me/active-household', ...options });
 
 export const setActiveHousehold = <ThrowOnError extends boolean = false>(options: Options<SetActiveHouseholdData, ThrowOnError>) => (options.client ?? client).put<SetActiveHouseholdResponses, SetActiveHouseholdErrors, ThrowOnError>({
     url: '/api/me/active-household',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getUserSettings = <ThrowOnError extends boolean = false>(options?: Options<GetUserSettingsData, ThrowOnError>) => (options?.client ?? client).get<GetUserSettingsResponses, unknown, ThrowOnError>({ url: '/api/me/settings', ...options });
+
+export const updateUserSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateUserSettingsData, ThrowOnError>) => (options.client ?? client).put<UpdateUserSettingsResponses, UpdateUserSettingsErrors, ThrowOnError>({
+    url: '/api/me/settings',
     ...options,
     headers: {
         'Content-Type': 'application/json',

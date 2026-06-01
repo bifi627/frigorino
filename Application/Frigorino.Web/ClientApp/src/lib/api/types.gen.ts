@@ -54,6 +54,10 @@ export type HouseholdResponse = {
 
 export type HouseholdRole = 'Member' | 'Admin' | 'Owner';
 
+export type HouseholdSettingsResponse = {
+    checkedItemRetentionDays: number;
+};
+
 export type HttpValidationProblemDetails = {
     type?: null | string;
     title?: null | string;
@@ -93,6 +97,10 @@ export type InventoryResponse = {
     createdByUser: InventoryCreatorResponse;
     totalItems: number;
     expiringItems: number;
+};
+
+export type InventorySettingsResponse = {
+    expiryLeadDays: number;
 };
 
 export type ListCreatorResponse = {
@@ -154,6 +162,10 @@ export type SetActiveHouseholdRequest = {
     householdId: number;
 };
 
+export type UpdateHouseholdSettingsRequest = {
+    checkedItemRetentionDays: number;
+};
+
 export type UpdateInventoryItemRequest = {
     text: null | string;
     quantity: null | QuantityDto;
@@ -164,6 +176,10 @@ export type UpdateInventoryItemRequest = {
 export type UpdateInventoryRequest = {
     name: string;
     description: null | string;
+};
+
+export type UpdateInventorySettingsRequest = {
+    expiryLeadDays: number;
 };
 
 export type UpdateItemRequest = {
@@ -184,6 +200,14 @@ export type UpdateMemberRoleRequest = {
 
 export type UpdateProfileRequest = {
     name: string;
+};
+
+export type UpdateUserSettingsRequest = {
+    language: null | string;
+};
+
+export type UserSettingsResponse = {
+    language: null | string;
 };
 
 export type WeatherForecast = {
@@ -394,6 +418,66 @@ export type UpdateMemberRoleResponses = {
 };
 
 export type UpdateMemberRoleResponse = UpdateMemberRoleResponses[keyof UpdateMemberRoleResponses];
+
+export type GetHouseholdSettingsData = {
+    body?: never;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/settings';
+};
+
+export type GetHouseholdSettingsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetHouseholdSettingsResponses = {
+    /**
+     * OK
+     */
+    200: HouseholdSettingsResponse;
+};
+
+export type GetHouseholdSettingsResponse = GetHouseholdSettingsResponses[keyof GetHouseholdSettingsResponses];
+
+export type UpdateHouseholdSettingsData = {
+    body: UpdateHouseholdSettingsRequest;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/settings';
+};
+
+export type UpdateHouseholdSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateHouseholdSettingsError = UpdateHouseholdSettingsErrors[keyof UpdateHouseholdSettingsErrors];
+
+export type UpdateHouseholdSettingsResponses = {
+    /**
+     * OK
+     */
+    200: HouseholdSettingsResponse;
+};
+
+export type UpdateHouseholdSettingsResponse = UpdateHouseholdSettingsResponses[keyof UpdateHouseholdSettingsResponses];
 
 export type GetListsData = {
     body?: never;
@@ -1141,6 +1225,68 @@ export type CompactInventoryItemsResponses = {
 
 export type CompactInventoryItemsResponse = CompactInventoryItemsResponses[keyof CompactInventoryItemsResponses];
 
+export type GetInventorySettingsData = {
+    body?: never;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/settings';
+};
+
+export type GetInventorySettingsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetInventorySettingsResponses = {
+    /**
+     * OK
+     */
+    200: InventorySettingsResponse;
+};
+
+export type GetInventorySettingsResponse = GetInventorySettingsResponses[keyof GetInventorySettingsResponses];
+
+export type UpdateInventorySettingsData = {
+    body: UpdateInventorySettingsRequest;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/settings';
+};
+
+export type UpdateInventorySettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateInventorySettingsError = UpdateInventorySettingsErrors[keyof UpdateInventorySettingsErrors];
+
+export type UpdateInventorySettingsResponses = {
+    /**
+     * OK
+     */
+    200: InventorySettingsResponse;
+};
+
+export type UpdateInventorySettingsResponse = UpdateInventorySettingsResponses[keyof UpdateInventorySettingsResponses];
+
 export type GetActiveHouseholdData = {
     body?: never;
     path?: never;
@@ -1186,6 +1332,47 @@ export type SetActiveHouseholdResponses = {
 };
 
 export type SetActiveHouseholdResponse = SetActiveHouseholdResponses[keyof SetActiveHouseholdResponses];
+
+export type GetUserSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/me/settings';
+};
+
+export type GetUserSettingsResponses = {
+    /**
+     * OK
+     */
+    200: UserSettingsResponse;
+};
+
+export type GetUserSettingsResponse = GetUserSettingsResponses[keyof GetUserSettingsResponses];
+
+export type UpdateUserSettingsData = {
+    body: UpdateUserSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/me/settings';
+};
+
+export type UpdateUserSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+};
+
+export type UpdateUserSettingsError = UpdateUserSettingsErrors[keyof UpdateUserSettingsErrors];
+
+export type UpdateUserSettingsResponses = {
+    /**
+     * OK
+     */
+    200: UserSettingsResponse;
+};
+
+export type UpdateUserSettingsResponse = UpdateUserSettingsResponses[keyof UpdateUserSettingsResponses];
 
 export type GetWeatherForecastData = {
     body?: never;
