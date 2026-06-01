@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
 import { Route as ListsCreateRouteImport } from './routes/lists/create'
@@ -37,6 +38,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListsIndexRoute = ListsIndexRouteImport.update({
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/lists/create': typeof ListsCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/lists/create': typeof ListsCreateRoute
   '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
+  '/settings': typeof SettingsIndexRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/lists/create': typeof ListsCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
+  '/settings/': typeof SettingsIndexRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/lists/create'
     | '/inventories/'
     | '/lists/'
+    | '/settings/'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/lists/create'
     | '/inventories'
     | '/lists'
+    | '/settings'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/lists/create'
     | '/inventories/'
     | '/lists/'
+    | '/settings/'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   ListsCreateRoute: typeof ListsCreateRoute
   InventoriesIndexRoute: typeof InventoriesIndexRoute
   ListsIndexRoute: typeof ListsIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
   InventoriesInventoryIdEditRoute: typeof InventoriesInventoryIdEditRoute
   InventoriesInventoryIdViewRoute: typeof InventoriesInventoryIdViewRoute
   ListsListIdEditRoute: typeof ListsListIdEditRoute
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/': {
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListsCreateRoute: ListsCreateRoute,
   InventoriesIndexRoute: InventoriesIndexRoute,
   ListsIndexRoute: ListsIndexRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
   InventoriesInventoryIdEditRoute: InventoriesInventoryIdEditRoute,
   InventoriesInventoryIdViewRoute: InventoriesInventoryIdViewRoute,
   ListsListIdEditRoute: ListsListIdEditRoute,

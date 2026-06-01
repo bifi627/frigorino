@@ -1,4 +1,4 @@
-import { AccountCircle, Logout } from "@mui/icons-material";
+import { AccountCircle, Logout, Settings } from "@mui/icons-material";
 import {
     AppBar,
     Avatar,
@@ -16,7 +16,6 @@ import { Link, useRouter } from "@tanstack/react-router";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
-import { LanguageSwitcher } from "../common/LanguageSwitcher";
 
 export const Navigation: React.FC = () => {
     const { t } = useTranslation();
@@ -50,7 +49,6 @@ export const Navigation: React.FC = () => {
                     </Link>
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <LanguageSwitcher />
                     {isAuthenticated ? (
                         <>
                             <IconButton
@@ -96,6 +94,18 @@ export const Navigation: React.FC = () => {
                                     },
                                 }}
                             >
+                                <MenuItem
+                                    component={Link}
+                                    to="/settings"
+                                    onClick={handleMenuClose}
+                                >
+                                    <ListItemIcon>
+                                        <Settings fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={t("settings.title")}
+                                    />
+                                </MenuItem>
                                 <MenuItem onClick={handleLogout}>
                                     <ListItemIcon>
                                         <Logout fontSize="small" />

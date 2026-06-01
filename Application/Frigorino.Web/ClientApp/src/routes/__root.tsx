@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { getAuth } from "firebase/auth";
 import { Navigation } from "../components/layout/Navigation";
+import { useApplyPersistedLanguage } from "../features/settings/useApplyPersistedLanguage";
 import { useAuth } from "../hooks/useAuth";
 
 export const Route = createRootRoute({
@@ -20,6 +21,7 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+    useApplyPersistedLanguage();
     const { isAuthenticated } = useAuth();
     const location = useLocation();
 
