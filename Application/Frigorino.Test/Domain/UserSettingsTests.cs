@@ -61,16 +61,17 @@ namespace Frigorino.Test.Domain
         }
 
         [Theory]
-        [InlineData(UserSettings.MinExpiryLeadDays)]
-        [InlineData(UserSettings.MaxExpiryLeadDays)]
-        public void SetExpiryNotifications_InBounds_Succeeds(int days)
+        [InlineData(UserSettings.MinExpiryLeadDays, true)]
+        [InlineData(UserSettings.MaxExpiryLeadDays, true)]
+        [InlineData(UserSettings.MinExpiryLeadDays, false)]
+        public void SetExpiryNotifications_InBounds_Succeeds(int days, bool enabled)
         {
             var settings = UserSettings.Create(UserId);
 
-            var result = settings.SetExpiryNotifications(enabled: true, leadDays: days);
+            var result = settings.SetExpiryNotifications(enabled: enabled, leadDays: days);
 
             Assert.True(result.IsSuccess);
-            Assert.True(settings.ExpiryNotificationsEnabled);
+            Assert.Equal(enabled, settings.ExpiryNotificationsEnabled);
             Assert.Equal(days, settings.ExpiryLeadDays);
         }
 
@@ -86,6 +87,8 @@ namespace Frigorino.Test.Domain
             Assert.True(result.IsFailed);
             Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p)
                 && (string?)p == nameof(UserSettings.ExpiryLeadDays));
+            Assert.False(settings.ExpiryNotificationsEnabled);
+            Assert.Equal(UserSettings.DefaultExpiryLeadDays, settings.ExpiryLeadDays);
         }
     }
 }
