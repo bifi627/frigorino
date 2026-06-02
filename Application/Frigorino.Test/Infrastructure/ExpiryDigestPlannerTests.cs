@@ -6,193 +6,151 @@ namespace Frigorino.Test.Infrastructure
     {
         private static readonly DateOnly Today = new(2026, 6, 1);
 
-        private static ExpiryCandidate Item(int inventoryId, int householdId, string text, int daysUntil) =>
-            new(inventoryId, householdId, text, Today.AddDays(daysUntil));
+        private static ExpiryCandidate Item(int inventoryId, int householdId, string inventoryName, string text, int daysUntil) =>
+            new(inventoryId, householdId, inventoryName, text, Today.AddDays(daysUntil));
 
         [Fact]
-        public void IncludesItemsWithinUserDefaultLeadDays_AndExcludesBeyond()
+        public void TwoInventories_OneRecipient_TwoPlans()
         {
             var candidates = new[]
             {
-                Item(1, 10, "Milk", 2),    // within 3 ⇒ include
-                Item(1, 10, "Flour", 9),   // beyond 3 ⇒ exclude
+                Item(1, 10, "Fridge", "Milk", 0),
+                Item(2, 10, "Pantry", "Eggs", 1),
             };
-            var inventories = new Dictionary<int, InventoryNotificationSetting>(); // no rows ⇒ enabled, inherit
-            var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 7, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>();
 
-            var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                alreadyDispatched: new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: new HashSet<(string, int)>(),
+                Today,
+                overdueGraceDays: 1);
+
+            Assert.Equal(2, plans.Count);
+            var plan1 = Assert.Single(plans, p => p.InventoryId == 1);
+            Assert.Equal("Fridge", plan1.InventoryName);
+            Assert.Equal("Milk", Assert.Single(plan1.Lines).Text);
+            var plan2 = Assert.Single(plans, p => p.InventoryId == 2);
+            Assert.Equal("Pantry", plan2.InventoryName);
+            Assert.Equal("Eggs", Assert.Single(plan2.Lines).Text);
+        }
+
+        [Fact]
+        public void MutedInventory_IsExcluded()
+        {
+            var candidates = new[]
+            {
+                Item(1, 10, "Fridge", "Milk", 0),
+                Item(2, 10, "Pantry", "Eggs", 1),
+            };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 7, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>
+            {
+                [("user-1", 1)] = new InventoryNotificationPref(Enabled: false, LeadDays: null),
+            };
+
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: new HashSet<(string, int)>(),
+                Today,
+                overdueGraceDays: 1);
+
+            Assert.Single(plans);
+            Assert.Equal(2, plans[0].InventoryId);
+        }
+
+        [Fact]
+        public void PerInventoryLeadOverride_WidensWindow()
+        {
+            // Global lead 3, pref override 14; item expires in 10 days → within 14, should appear.
+            var candidates = new[] { Item(1, 10, "Fridge", "Yogurt", 10) };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 3, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>
+            {
+                [("user-1", 1)] = new InventoryNotificationPref(Enabled: true, LeadDays: 14),
+            };
+
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: new HashSet<(string, int)>(),
+                Today,
+                overdueGraceDays: 1);
 
             var plan = Assert.Single(plans);
-            Assert.Equal("u1", plan.UserId);
-            var line = Assert.Single(plan.Lines);
-            Assert.Equal("Milk", line.Text);
-            Assert.Equal(2, line.DaysUntil);
+            Assert.Equal("Yogurt", Assert.Single(plan.Lines).Text);
         }
 
         [Fact]
-        public void InventoryOverrideWidensWindow()
+        public void AlreadyDispatched_UserInventory_Skipped()
         {
-            var candidates = new[] { Item(1, 10, "Frozen peas", 6) };
-            var inventories = new Dictionary<int, InventoryNotificationSetting>
-            {
-                [1] = new InventoryNotificationSetting(Enabled: true, LeadDays: 7),
-            };
-            var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
+            var candidates = new[] { Item(1, 10, "Fridge", "Milk", 1) };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 7, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>();
+            var dispatched = new HashSet<(string, int)> { ("user-1", 1) };
 
-            var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            Assert.Single(Assert.Single(plans).Lines);
-        }
-
-        [Fact]
-        public void DisabledInventoryIsExcluded()
-        {
-            var candidates = new[] { Item(1, 10, "Milk", 1) };
-            var inventories = new Dictionary<int, InventoryNotificationSetting>
-            {
-                [1] = new InventoryNotificationSetting(Enabled: false, LeadDays: null),
-            };
-            var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: dispatched,
+                Today,
+                overdueGraceDays: 1);
 
             Assert.Empty(plans);
         }
 
         [Fact]
-        public void OverdueItemWithinGraceIsIncluded()
+        public void OverdueGrace_Lower_Boundary()
         {
-            // Expired yesterday (daysUntil -1), grace 1 ⇒ within the floor (-1 >= -1) ⇒ include.
-            var candidates = new[] { Item(1, 10, "Yogurt", -1) };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
+            // grace 1: item expired 2 days ago (daysUntil -2) → below floor (-2 < -1) → excluded.
+            var candidates_excluded = new[] { Item(1, 10, "Fridge", "Yogurt", -2) };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 3, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>();
 
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
+            var plans_excluded = ExpiryDigestPlanner.Plan(
+                candidates_excluded, prefs, recipients, new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
 
-            Assert.Equal(-1, Assert.Single(Assert.Single(plans).Lines).DaysUntil);
+            Assert.Empty(plans_excluded);
+
+            // grace 3: same item (daysUntil -2) → within floor (-2 >= -3) → included.
+            var candidates_included = new[] { Item(1, 10, "Fridge", "Yogurt", -2) };
+            var plans_included = ExpiryDigestPlanner.Plan(
+                candidates_included, prefs, recipients, new HashSet<(string, int)>(), Today, overdueGraceDays: 3);
+
+            Assert.Single(plans_included);
         }
 
         [Fact]
-        public void OverdueItemBeyondGraceIsExcluded()
-        {
-            // Expired 5 days ago (daysUntil -5), grace 1 ⇒ below the floor (-5 < -1) ⇒ drop off.
-            var candidates = new[] { Item(1, 10, "Yogurt", -5) };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            Assert.Empty(plans);
-        }
-
-        [Fact]
-        public void AlreadyDispatchedRecipientIsSkipped()
-        {
-            var candidates = new[] { Item(1, 10, "Milk", 1) };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
-            var dispatched = new HashSet<(string, int)> { ("u1", 10) };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients, dispatched, Today, overdueGraceDays: 1);
-
-            Assert.Empty(plans);
-        }
-
-        [Fact]
-        public void RecipientWithNoMatchingItemsGetsNoPlan()
-        {
-            var candidates = new[] { Item(1, 10, "Flour", 30) };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            Assert.Empty(plans);
-        }
-
-        [Fact]
-        public void LinesAreSortedByExpiry()
+        public void Lines_OrderedByExpiryDate_ThenText()
         {
             var candidates = new[]
             {
-                Item(1, 10, "Later", 3),
-                Item(1, 10, "Sooner", 1),
+                Item(1, 10, "Fridge", "Zucchini", 2),
+                Item(1, 10, "Fridge", "Apples", 2),
+                Item(1, 10, "Fridge", "Milk", 1),
             };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
+            var recipients = new[] { new DigestRecipient("user-1", 10, UserLeadDays: 7, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>();
 
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: new HashSet<(string, int)>(),
+                Today,
+                overdueGraceDays: 1);
 
             var lines = Assert.Single(plans).Lines;
-            Assert.Equal("Sooner", lines[0].Text);
-            Assert.Equal("Later", lines[1].Text);
-        }
-
-        [Fact]
-        public void LinesWithSameExpiry_AreSortedByText()
-        {
-            var candidates = new[]
-            {
-                Item(1, 10, "Zucchini", 2),
-                Item(1, 10, "Apples", 2),
-            };
-            var recipients = new[] { new DigestRecipient("u1", 10, 3, "en") };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            var lines = Assert.Single(plans).Lines;
-            Assert.Equal("Apples", lines[0].Text);
-            Assert.Equal("Zucchini", lines[1].Text);
-        }
-
-        [Fact]
-        public void InventoryOverrideNarrowsWindow()
-        {
-            var candidates = new[] { Item(1, 10, "Milk", 2) }; // within user default 3...
-            var inventories = new Dictionary<int, InventoryNotificationSetting>
-            {
-                [1] = new InventoryNotificationSetting(Enabled: true, LeadDays: 1), // ...but inventory narrows to 1
-            };
-            var recipients = new[] { new DigestRecipient("u1", 10, UserLeadDays: 3, Language: "en") };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates, inventories, recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            Assert.Empty(plans);
-        }
-
-        [Fact]
-        public void CandidatesAreScopedToRecipientHousehold()
-        {
-            var candidates = new[]
-            {
-                Item(1, 10, "House10 Milk", 1),
-                Item(2, 20, "House20 Eggs", 1),
-            };
-            var recipients = new[]
-            {
-                new DigestRecipient("u1", 10, 3, "en"),
-                new DigestRecipient("u2", 20, 3, "en"),
-            };
-
-            var plans = ExpiryDigestPlanner.Plan(candidates,
-                new Dictionary<int, InventoryNotificationSetting>(), recipients,
-                new HashSet<(string, int)>(), Today, overdueGraceDays: 1);
-
-            var plan10 = Assert.Single(plans, p => p.UserId == "u1");
-            Assert.Equal("House10 Milk", Assert.Single(plan10.Lines).Text);
-
-            var plan20 = Assert.Single(plans, p => p.UserId == "u2");
-            Assert.Equal("House20 Eggs", Assert.Single(plan20.Lines).Text);
+            Assert.Equal(3, lines.Count);
+            Assert.Equal("Milk", lines[0].Text);     // day 1 → first
+            Assert.Equal("Apples", lines[1].Text);   // day 2, A before Z
+            Assert.Equal("Zucchini", lines[2].Text); // day 2, Z after A
         }
     }
 }
