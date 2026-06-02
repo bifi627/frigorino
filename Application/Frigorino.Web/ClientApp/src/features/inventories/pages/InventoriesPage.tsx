@@ -1,4 +1,4 @@
-import { Add, ArrowBack } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -7,7 +7,6 @@ import {
     CardContent,
     CircularProgress,
     Container,
-    IconButton,
     Stack,
     Typography,
 } from "@mui/material";
@@ -16,6 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { InventoryResponse } from "../../../lib/api";
 import { pageContainerSx } from "../../../theme";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { InventoryActionsMenu } from "../components/InventoryActionsMenu";
 import { InventorySummaryCard } from "../components/InventorySummaryCard";
@@ -86,43 +86,15 @@ export const InventoriesPage = () => {
     }
 
     return (
-        <Container maxWidth="sm" sx={pageContainerSx}>
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: { xs: 2, sm: 3 },
-                }}
-            >
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 1, sm: 2 },
-                    }}
-                >
-                    <IconButton onClick={handleBack}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Typography
-                        variant="h5"
-                        component="h1"
-                        sx={{ fontWeight: 600 }}
-                    >
-                        {t("inventory.inventories")}
-                    </Typography>
-                </Box>
-
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={handleCreateInventory}
-                    sx={{ fontWeight: 600 }}
-                >
-                    {t("common.create")}
-                </Button>
-            </Box>
+        <>
+            <PageHeadActionBar
+                title={t("inventory.inventories")}
+                directActions={[
+                    { icon: <Add />, onClick: handleCreateInventory },
+                ]}
+                menuActions={[]}
+            />
+            <Container maxWidth="sm" sx={pageContainerSx}>
             {isLoading && (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                     <CircularProgress />
@@ -178,6 +150,7 @@ export const InventoriesPage = () => {
                 onDelete={handleDeleteInventory}
                 isDeleting={deleteInventoryMutation.isPending}
             />
-        </Container>
+            </Container>
+        </>
     );
 };
