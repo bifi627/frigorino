@@ -95,61 +95,67 @@ export const InventoriesPage = () => {
                 menuActions={[]}
             />
             <Container maxWidth="sm" sx={pageContainerSx}>
-            {isLoading && (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-            {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                    {t("inventory.failedToLoadInventories")}
-                </Alert>
-            )}
-            {inventories && inventories.length === 0 && !isLoading && (
-                <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
-                    <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                            {t("inventory.noInventoriesYet")}
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: "text.secondary",
-                                mb: 3,
-                            }}
-                        >
-                            {t("inventory.createFirstInventory")}
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            startIcon={<Add />}
-                            onClick={handleCreateInventory}
-                            sx={{ fontWeight: 600 }}
-                        >
-                            {t("inventory.createYourFirstInventory")}
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-            {inventories && inventories.length > 0 && (
-                <Stack spacing={2}>
-                    {inventories.map((inventory) => (
-                        <InventorySummaryCard
-                            key={inventory.id}
-                            inventory={inventory}
-                            onClick={handleInventoryClick}
-                            onMenuOpen={handleMenuOpen}
-                            menuDisabled={deleteInventoryMutation.isPending}
-                        />
-                    ))}
-                </Stack>
-            )}
-            <InventoryActionsMenu
-                anchorEl={anchorEl}
-                onClose={handleMenuClose}
-                onDelete={handleDeleteInventory}
-                isDeleting={deleteInventoryMutation.isPending}
-            />
+                {isLoading && (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            py: 4,
+                        }}
+                    >
+                        <CircularProgress />
+                    </Box>
+                )}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3 }}>
+                        {t("inventory.failedToLoadInventories")}
+                    </Alert>
+                )}
+                {inventories && inventories.length === 0 && !isLoading && (
+                    <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
+                                {t("inventory.noInventoriesYet")}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: "text.secondary",
+                                    mb: 3,
+                                }}
+                            >
+                                {t("inventory.createFirstInventory")}
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={handleCreateInventory}
+                                sx={{ fontWeight: 600 }}
+                            >
+                                {t("inventory.createYourFirstInventory")}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+                {inventories && inventories.length > 0 && (
+                    <Stack spacing={2}>
+                        {inventories.map((inventory) => (
+                            <InventorySummaryCard
+                                key={inventory.id}
+                                inventory={inventory}
+                                onClick={handleInventoryClick}
+                                onMenuOpen={handleMenuOpen}
+                                menuDisabled={deleteInventoryMutation.isPending}
+                            />
+                        ))}
+                    </Stack>
+                )}
+                <InventoryActionsMenu
+                    anchorEl={anchorEl}
+                    onClose={handleMenuClose}
+                    onDelete={handleDeleteInventory}
+                    isDeleting={deleteInventoryMutation.isPending}
+                />
             </Container>
         </>
     );
