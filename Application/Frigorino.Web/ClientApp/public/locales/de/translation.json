@@ -247,6 +247,8 @@
         "items": "Artikel",
         "articles": "Artikel",
         "expiring": "läuft ab",
+        "open": "offen",
+        "itemsTotal": "Artikel gesamt",
         "recipes": "Rezepte",
         "comingSoon": "Demnächst verfügbar...",
         "recipeManagementLater": "Rezeptverwaltung wird später hinzugefügt"

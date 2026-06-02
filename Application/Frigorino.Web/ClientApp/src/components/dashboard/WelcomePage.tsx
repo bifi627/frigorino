@@ -133,10 +133,8 @@ export const WelcomePage = () => {
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
-                        count: `${list.checkedCount}/${list.uncheckedCount} ${t("dashboard.articles")}`,
-                        status: new Date(list.createdAt!).toLocaleDateString(
-                            "de-DE",
-                        ),
+                        count: `${list.uncheckedCount} ${t("dashboard.open")}`,
+                        status: `${list.uncheckedCount + list.checkedCount} ${t("dashboard.itemsTotal")}`,
                         id: list.id,
                     }))
                   : [
@@ -500,7 +498,7 @@ export const WelcomePage = () => {
                                                                 />
                                                             </Box>
                                                         }
-                                                        secondary={item.count}
+                                                        secondary={item.status}
                                                     />
                                                 </ListItem>
                                             );
