@@ -44,6 +44,7 @@
         "addItem": "Add Item",
         "itemName": "Item Name",
         "quantity": "Quantity",
+        "unit": "Unit",
         "invalidQuantity": "Enter a positive number, or leave empty to clear",
         "confirmDelete": "Are you sure you want to delete",
         "warningPermanentlyDelete": "⚠️ Warning: This will permanently delete:",

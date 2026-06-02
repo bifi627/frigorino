@@ -44,6 +44,7 @@
         "addItem": "Element hinzufügen",
         "itemName": "Elementname",
         "quantity": "Menge",
+        "unit": "Einheit",
         "invalidQuantity": "Positive Zahl eingeben oder leer lassen zum Entfernen",
         "confirmDelete": "Sind Sie sicher, dass Sie löschen möchten",
         "warningPermanentlyDelete": "⚠️ Warnung: Dies wird dauerhaft löschen:",

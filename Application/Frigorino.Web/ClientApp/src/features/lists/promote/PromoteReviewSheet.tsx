@@ -1,4 +1,4 @@
-import { Close, ShoppingBag } from "@mui/icons-material";
+import { Close } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -14,7 +14,15 @@ import {
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { formatQuantity } from "../../../components/composer";
+import {
+    draftToQuantity,
+    isDraftValid,
+    quantityToDraft,
+    QUANTITY_UNIT_VALUES,
+    unitLabel,
+    type QuantityDraft,
+} from "../../../components/composer";
+import type { QuantityUnit } from "../../../lib/api";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
 import { useCreateInventoryItem } from "../../inventories/items/useCreateInventoryItem";
 import { getExpiryInfo } from "../../../utils/dateUtils";
@@ -31,11 +39,13 @@ interface PromoteReviewSheetProps {
     listId: number;
 }
 
-// Per-row editable draft. Quantity is carried straight through from the source list item
-// (a structured QuantityDto), so only selection and expiry (YYYY-MM-DD) are editable here.
+// Per-row editable draft. Quantity is editable here (a QuantityDraft) so the inventory can
+// reflect what was actually bought — the store may have had fewer items, or you bought more
+// than the list requested. Expiry is YYYY-MM-DD.
 interface RowDraft {
     selected: boolean;
     expiry: string;
+    quantity: QuantityDraft;
 }
 
 export const PromoteReviewSheet = ({
@@ -68,6 +78,7 @@ export const PromoteReviewSheet = ({
             next[e.itemId] = drafts[e.itemId] ?? {
                 selected: true,
                 expiry: e.suggestedExpiry ?? "",
+                quantity: quantityToDraft(e.quantity),
             };
         }
         return next;
@@ -85,6 +96,12 @@ export const PromoteReviewSheet = ({
 
     const hasRowMissingDate = entries.some(
         (e) => seeded[e.itemId]?.selected && !seeded[e.itemId]?.expiry,
+    );
+
+    const hasRowInvalidQuantity = entries.some(
+        (e) =>
+            seeded[e.itemId]?.selected &&
+            !isDraftValid(seeded[e.itemId].quantity),
     );
 
     const handleOmit = (itemId: number) => {
@@ -113,7 +130,7 @@ export const PromoteReviewSheet = ({
                     path: { householdId, inventoryId: targetId },
                     body: {
                         text: entry.name,
-                        quantity: entry.quantity,
+                        quantity: draftToQuantity(draft.quantity),
                         expiryDate: draft.expiry || null,
                     },
                 });
@@ -229,7 +246,8 @@ export const PromoteReviewSheet = ({
                             selectedCount === 0 ||
                             !targetId ||
                             createItem.isPending ||
-                            hasRowMissingDate
+                            hasRowMissingDate ||
+                            hasRowInvalidQuantity
                         }
                         onClick={handleAdd}
                         data-testid="promote-add-button"
@@ -298,21 +316,63 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     <Close fontSize="small" />
                 </IconButton>
             </Stack>
-            <Stack
-                direction="row"
-                spacing={1}
-                sx={{ mt: 1, alignItems: "center" }}
-            >
+            <Stack spacing={1} sx={{ mt: 1 }}>
                 {entry.quantity && (
-                    <Chip
-                        size="small"
-                        variant="outlined"
-                        icon={<ShoppingBag fontSize="small" />}
-                        label={formatQuantity(t, entry.quantity)}
-                        data-testid={`promote-row-quantity-${entry.name}`}
-                    />
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: "center" }}
+                    >
+                        <TextField
+                            size="small"
+                            type="text"
+                            label={t("common.quantity")}
+                            value={draft.quantity.value}
+                            onChange={(e) =>
+                                onChange({
+                                    quantity: {
+                                        ...draft.quantity,
+                                        value: e.target.value,
+                                    },
+                                })
+                            }
+                            error={!isDraftValid(draft.quantity)}
+                            slotProps={{
+                                inputLabel: { shrink: true },
+                                htmlInput: {
+                                    inputMode: "decimal",
+                                    "data-testid": `promote-row-quantity-value-${entry.name}`,
+                                },
+                            }}
+                            sx={{ width: 90 }}
+                        />
+                        <TextField
+                            select
+                            size="small"
+                            label={t("common.unit")}
+                            value={draft.quantity.unit}
+                            onChange={(e) =>
+                                onChange({
+                                    quantity: {
+                                        ...draft.quantity,
+                                        unit: e.target.value as QuantityUnit,
+                                    },
+                                })
+                            }
+                            data-testid={`promote-row-quantity-unit-${entry.name}`}
+                            slotProps={{ inputLabel: { shrink: true } }}
+                            sx={{ flex: 1, minWidth: 120 }}
+                        >
+                            {QUANTITY_UNIT_VALUES.map((u) => (
+                                <MenuItem key={u} value={u}>
+                                    {unitLabel(t, u)}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </Stack>
                 )}
                 <TextField
+                    fullWidth
                     size="small"
                     type="date"
                     label={t("promote.expiry")}
@@ -330,7 +390,6 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                             "data-testid": `promote-row-expiry-${entry.name}`,
                         },
                     }}
-                    sx={{ flex: 1 }}
                 />
             </Stack>
         </Box>
