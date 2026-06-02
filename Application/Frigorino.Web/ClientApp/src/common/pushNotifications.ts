@@ -24,6 +24,30 @@ export async function pushSupported(): Promise<boolean> {
     }
 }
 
+// Current browser notification permission, guarded for environments where the
+// Notification API is absent. "denied" is the safe default — it disables the toggle.
+export function getNotificationPermission(): NotificationPermission {
+    if (typeof Notification === "undefined") {
+        return "denied";
+    }
+    return Notification.permission;
+}
+
+// Best-effort removal of THIS device's FCM token when its permission was revoked
+// externally. We can't always retrieve the token to unregister it server-side once
+// permission is blocked, but the server prunes dead tokens on the next failed send,
+// so dropping the local registration is enough to keep this device consistent.
+export async function cleanupLocalPushToken(): Promise<void> {
+    if (!VAPID_KEY || !(await pushSupported())) {
+        return;
+    }
+    try {
+        await deleteToken(getMessaging(firebaseApp));
+    } catch {
+        // Token may be unretrievable when permission is blocked — ignore.
+    }
+}
+
 // iOS Safari supports web push ONLY when launched from the Home Screen.
 export function isIosNeedingInstall(): boolean {
     const ua = navigator.userAgent;
@@ -83,15 +107,16 @@ export async function initForegroundPush(): Promise<void> {
     registerForegroundHandler(getMessaging(firebaseApp));
 }
 
-// Requests permission, mints an FCM token, registers it with the backend.
-// Returns true on success; false if denied/unsupported/misconfigured.
-export async function enablePush(): Promise<boolean> {
+// Mints (or refreshes) this device's FCM token and registers it server-side.
+// Assumes permission is already granted — callers gate on that. Idempotent: getToken
+// returns the existing token when present and registration upserts by token, so this
+// doubles as a re-arm after an external revoke→re-grant and keeps a rotated token
+// fresh. Returns true when a token was registered.
+export async function ensurePushRegistered(): Promise<boolean> {
     if (!VAPID_KEY || !(await pushSupported())) {
         return false;
     }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
+    if (getNotificationPermission() !== "granted") {
         return false;
     }
 
@@ -110,6 +135,21 @@ export async function enablePush(): Promise<boolean> {
     registerForegroundHandler(messaging);
 
     return true;
+}
+
+// Requests permission, then mints + registers the token.
+// Returns true on success; false if denied/unsupported/misconfigured.
+export async function enablePush(): Promise<boolean> {
+    if (!VAPID_KEY || !(await pushSupported())) {
+        return false;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        return false;
+    }
+
+    return ensurePushRegistered();
 }
 
 // Deletes the local token + unregisters it server-side.

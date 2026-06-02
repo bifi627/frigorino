@@ -15,8 +15,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
+    cleanupLocalPushToken,
     disablePush,
     enablePush,
+    ensurePushRegistered,
+    getNotificationPermission,
     isIosNeedingInstall,
     pushSupported,
 } from "../../../common/pushNotifications";
@@ -39,6 +42,11 @@ export function UserSettingsPage() {
     const [leadDays, setLeadDays] = useState("3");
     const [supported, setSupported] = useState(true);
     const [iosHint, setIosHint] = useState(false);
+    // Mirrors the live browser permission so the toggle reflects an external
+    // revoke/lapse, not just the stored DB flag.
+    const [permission, setPermission] = useState<NotificationPermission>(
+        getNotificationPermission(),
+    );
     // Covers the push enable/disable round-trip (permission prompt + token mint /
     // delete), which lives outside the mutation's isPending — so the switch shows a
     // spinner and stays disabled while it runs, and failures surface as a toast.
@@ -57,6 +65,36 @@ export function UserSettingsPage() {
         pushSupported().then(setSupported);
         setIosHint(isIosNeedingInstall());
     }, []);
+
+    // The browser permission can change while the app sits in the background (user
+    // revokes it in browser settings). Re-read it when the page regains focus so the
+    // toggle never claims "on" for a device that can no longer receive notifications.
+    useEffect(() => {
+        const syncPermission = () => setPermission(getNotificationPermission());
+        window.addEventListener("focus", syncPermission);
+        document.addEventListener("visibilitychange", syncPermission);
+        return () => {
+            window.removeEventListener("focus", syncPermission);
+            document.removeEventListener("visibilitychange", syncPermission);
+        };
+    }, []);
+
+    // Reconcile this device's FCM token with reality whenever intent or permission
+    // changes. When the user wants reminders and permission is granted, ensure a token
+    // is registered (re-arms after an external revoke→re-grant, keeps it fresh); when
+    // permission is gone, drop the stale local token. The per-user flag is never
+    // touched here, so the user's other (still-permitted) devices keep their digests.
+    const wantsReminders = !!data && data.expiryNotificationsEnabled;
+    useEffect(() => {
+        if (!supported || !wantsReminders) {
+            return;
+        }
+        if (permission === "granted") {
+            void ensurePushRegistered().catch(() => undefined);
+        } else {
+            void cleanupLocalPushToken();
+        }
+    }, [supported, wantsReminders, permission]);
 
     const handleLanguageChange = async (language: string) => {
         try {
@@ -105,6 +143,8 @@ export function UserSettingsPage() {
             // own errors, so anything reaching here is the push round-trip failing.
             toast.error(t("settings.notificationsToggleFailed"));
         } finally {
+            // Reflect whatever the prompt resolved the permission to (granted/denied).
+            setPermission(getNotificationPermission());
             setTogglingPush(false);
         }
     };
@@ -119,6 +159,12 @@ export function UserSettingsPage() {
         }
         await persistNotifications(enabled, days);
     };
+
+    // The switch reflects intent AND device capability: a stored "on" only shows as
+    // on while this browser still grants permission.
+    const permissionGranted = permission === "granted";
+    const permissionBlocked = permission === "denied";
+    const effectiveEnabled = enabled && permissionGranted;
 
     return (
         <Container maxWidth="sm" sx={pageContainerSx}>
@@ -173,14 +219,25 @@ export function UserSettingsPage() {
                         </Alert>
                     )}
 
+                    {supported && permissionBlocked && (
+                        <Alert
+                            severity="warning"
+                            sx={{ mb: 2 }}
+                            data-testid="settings-notifications-blocked-hint"
+                        >
+                            {t("settings.notificationsBlockedHint")}
+                        </Alert>
+                    )}
+
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <FormControlLabel
                             control={
                                 <Switch
                                     data-testid="settings-notifications-switch"
-                                    checked={enabled}
+                                    checked={effectiveEnabled}
                                     disabled={
                                         !supported ||
+                                        permissionBlocked ||
                                         togglingPush ||
                                         updateNotifications.isPending
                                     }
@@ -201,7 +258,7 @@ export function UserSettingsPage() {
                         )}
                     </Box>
 
-                    {enabled && (
+                    {effectiveEnabled && (
                         <TextField
                             type="number"
                             fullWidth

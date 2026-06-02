@@ -273,6 +273,7 @@
         "notificationsPermissionDenied": "Notification permission was denied.",
         "notificationsToggleFailed": "Could not update notifications. Check your browser's notification permission and try again.",
         "notificationsIosHint": "Add Frigorino to your Home Screen to enable notifications on iOS.",
+        "notificationsBlockedHint": "Notifications are blocked in your browser settings. Re-enable them for this site to receive expiry reminders.",
         "inventoryNotificationsEnable": "Notify me about this inventory",
         "inventoryNotificationsRequiresGlobal": "Expiry reminders are turned off in your User Settings — turn them on there to actually receive these."
     }
