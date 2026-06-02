@@ -239,10 +239,10 @@
         "Milliliter": "ml",
         "Liter": "l",
         "Piece": "pc",
-        "Pack": "pack",
-        "Can": "can",
-        "Bottle": "bottle",
-        "Bag": "bag"
+        "Pack": "packs",
+        "Can": "cans",
+        "Bottle": "bottles",
+        "Bag": "bags"
     },
     "dashboard": {
         "items": "Items",

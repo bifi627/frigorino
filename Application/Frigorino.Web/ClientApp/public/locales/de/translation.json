@@ -238,10 +238,10 @@
         "Kilogram": "kg",
         "Milliliter": "ml",
         "Liter": "l",
-        "Piece": "Stk",
-        "Pack": "Pack",
-        "Can": "Dose",
-        "Bottle": "Flasche",
+        "Piece": "Stück",
+        "Pack": "Packungen",
+        "Can": "Dosen",
+        "Bottle": "Flaschen",
         "Bag": "Beutel"
     },
     "dashboard": {
@@ -263,21 +263,21 @@
         "checkedItemRetentionDays": "Erledigte Einträge behalten (Tage)",
         "checkedItemRetentionHelp": "Tage, die erledigte Listeneinträge aufbewahrt werden, bevor sie entfernt werden.",
         "inventorySettings": "Inventareinstellungen",
-        "expiryLeadOverride": "Meine Vorlaufzeit überschreiben",
+        "expiryLeadOverride": "Meine Benachrichtigungszeitfenster überschreiben",
         "expiryLeadDays": "Vorlaufzeit (Tage)",
         "expiryLeadHelp": "Tage vor Ablauf, an denen ich für dieses Inventar erinnert werde.",
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Einstellungen konnten nicht gespeichert werden",
         "readOnlyHint": "Nur Eigentümer und Admins können dies ändern.",
         "notifications": "Benachrichtigungen",
-        "notificationsEnable": "Ablauf-Erinnerungen",
-        "notificationsLeadDays": "Standard-Vorlaufzeit (Tage)",
-        "notificationsLeadHelp": "Tage vor Ablauf benachrichtigen, sofern ein Inventar dies nicht überschreibt.",
+        "notificationsEnable": "Benachrichtigungen vor erreichen des Ablaufdatums",
+        "notificationsLeadDays": "Benachrichtigungs Zeitfenster",
+        "notificationsLeadHelp": "Tage vor Ablauf benachrichtigen.",
         "notificationsPermissionDenied": "Benachrichtigungsberechtigung wurde verweigert.",
         "notificationsToggleFailed": "Benachrichtigungen konnten nicht aktualisiert werden. Prüfe die Benachrichtigungsberechtigung deines Browsers und versuche es erneut.",
         "notificationsIosHint": "Füge Frigorino zum Startbildschirm hinzu, um Benachrichtigungen auf iOS zu aktivieren.",
-        "notificationsBlockedHint": "Benachrichtigungen sind in deinen Browser-Einstellungen blockiert. Aktiviere sie für diese Seite wieder, um Ablauf-Erinnerungen zu erhalten.",
+        "notificationsBlockedHint": "Benachrichtigungen sind in deinen Browser-Einstellungen blockiert. Aktiviere sie für diese Seite wieder, um Benachrichtigungen zu erhalten.",
         "inventoryNotificationsEnable": "Mich über dieses Inventar benachrichtigen",
-        "inventoryNotificationsRequiresGlobal": "Ablauf-Erinnerungen sind in deinen Benutzereinstellungen deaktiviert — aktiviere sie dort, um diese tatsächlich zu erhalten."
+        "inventoryNotificationsRequiresGlobal": "Benachrichtigungen sind in deinen Benutzereinstellungen deaktiviert — aktiviere sie dort, um diese tatsächlich zu erhalten."
     }
 }

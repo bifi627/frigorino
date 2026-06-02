@@ -1,4 +1,3 @@
-import { ShoppingBag } from "@mui/icons-material";
 import {
     Box,
     ListItemText,
@@ -9,7 +8,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { formatQuantity } from "../../../../components/composer";
+import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { InventoryItemResponse } from "../../../../lib/api";
 import {
@@ -90,18 +89,10 @@ export function InventoryItemContent({ item }: Props) {
                         {/* Left side - Quantity */}
                         <Box>
                             {item.quantity && (
-                                <Typography
-                                    variant="caption"
-                                    data-testid={`inventory-item-quantity-${item.text}`}
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 0.5,
-                                    }}
-                                >
-                                    <ShoppingBag fontSize="small" />
-                                    {formatQuantity(t, item.quantity)}
-                                </Typography>
+                                <ItemQuantityChip
+                                    quantity={item.quantity}
+                                    testId={`inventory-item-quantity-${item.text}`}
+                                />
                             )}
                         </Box>
 
