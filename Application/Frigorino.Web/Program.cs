@@ -6,6 +6,7 @@ using Frigorino.Features.Households.Members;
 using Frigorino.Features.Households.Settings;
 using Frigorino.Features.Inventories;
 using Frigorino.Features.Inventories.Items;
+using Frigorino.Features.Inventories.Notifications;
 using Frigorino.Features.Inventories.Settings;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
@@ -356,6 +357,12 @@ var inventorySettings = app.MapGroup("/api/household/{householdId:int}/inventori
     .WithTags("InventorySettings");
 inventorySettings.MapGetInventorySettings();
 inventorySettings.MapUpdateInventorySettings();
+
+var inventoryNotifications = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/notifications")
+    .RequireAuthorization()
+    .WithTags("Inventories");
+inventoryNotifications.MapGetMyInventoryNotification();
+inventoryNotifications.MapUpdateMyInventoryNotification();
 
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()

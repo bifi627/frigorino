@@ -152,5 +152,25 @@ namespace Frigorino.Test.Infrastructure
             Assert.Equal("Apples", lines[1].Text);   // day 2, A before Z
             Assert.Equal("Zucchini", lines[2].Text); // day 2, Z after A
         }
+
+        [Fact]
+        public void CrossHousehold_TenantBoundary_NoPlansProduced()
+        {
+            // Recipient is in household 10; the candidate inventory belongs to household 20.
+            // The planner must not cross the household boundary — no plan should be produced.
+            var candidates = new[] { Item(inventoryId: 5, householdId: 20, inventoryName: "Pantry", text: "Milk", daysUntil: 1) };
+            var recipients = new[] { new DigestRecipient("user-1", HouseholdId: 10, UserLeadDays: 7, Language: "en") };
+            var prefs = new Dictionary<(string, int), InventoryNotificationPref>();
+
+            var plans = ExpiryDigestPlanner.Plan(
+                candidates,
+                prefs,
+                recipients,
+                alreadyDispatched: new HashSet<(string, int)>(),
+                Today,
+                overdueGraceDays: 1);
+
+            Assert.Empty(plans);
+        }
     }
 }
