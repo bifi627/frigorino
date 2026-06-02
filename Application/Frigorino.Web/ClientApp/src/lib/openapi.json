@@ -2568,7 +2568,8 @@
           "updatedAt",
           "createdByUser",
           "totalItems",
-          "expiringItems"
+          "expiringItems",
+          "earliestExpiryDate"
         ],
         "type": "object",
         "properties": {
@@ -2607,6 +2608,13 @@
           "expiringItems": {
             "type": "integer",
             "format": "int32"
+          },
+          "earliestExpiryDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
           }
         }
       },
