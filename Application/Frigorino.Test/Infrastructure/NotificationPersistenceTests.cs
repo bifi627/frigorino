@@ -32,18 +32,18 @@ namespace Frigorino.Test.Infrastructure
         }
 
         [Fact]
-        public async Task InventorySettings_PersistsEnabledFlag()
+        public async Task InventorySettings_Create_Roundtrips()
         {
+            // InventorySettings is now an empty placeholder — only InventoryId is meaningful.
             using var db = NewContext();
             var settings = InventorySettings.Create(42);
-            settings.SetExpiryNotificationsEnabled(false);
             db.InventorySettings.Add(settings);
             await db.SaveChangesAsync();
 
             db.ChangeTracker.Clear();
             var loaded = await db.InventorySettings.SingleAsync(s => s.InventoryId == 42);
 
-            Assert.False(loaded.ExpiryNotificationsEnabled);
+            Assert.Equal(42, loaded.InventoryId);
         }
 
         [Fact]
@@ -62,7 +62,7 @@ namespace Frigorino.Test.Infrastructure
         public async Task NotificationDispatch_Roundtrips()
         {
             using var db = NewContext();
-            var dispatch = NotificationDispatch.Create("user-1", 7, new DateOnly(2026, 6, 1));
+            var dispatch = NotificationDispatch.Create("user-1", 99, new DateOnly(2026, 6, 1));
             db.NotificationDispatches.Add(dispatch);
             await db.SaveChangesAsync();
 
@@ -70,7 +70,7 @@ namespace Frigorino.Test.Infrastructure
             var loaded = await db.NotificationDispatches.SingleAsync();
 
             Assert.Equal("user-1", loaded.UserId);
-            Assert.Equal(7, loaded.HouseholdId);
+            Assert.Equal(99, loaded.InventoryId);
             Assert.Equal(new DateOnly(2026, 6, 1), loaded.SentOn);
         }
     }
