@@ -100,8 +100,7 @@ export type InventoryResponse = {
 };
 
 export type InventorySettingsResponse = {
-    expiryNotificationsEnabled: boolean;
-    expiryLeadDays: null | number;
+    [key: string]: unknown;
 };
 
 export type ListCreatorResponse = {
@@ -141,6 +140,11 @@ export type MemberResponse = {
     email: string;
     role: HouseholdRole;
     joinedAt: string;
+};
+
+export type MyInventoryNotificationResponse = {
+    enabled: boolean;
+    leadDays: null | number;
 };
 
 export type PromoteSuggestion = {
@@ -184,8 +188,7 @@ export type UpdateInventoryRequest = {
 };
 
 export type UpdateInventorySettingsRequest = {
-    expiryNotificationsEnabled: boolean;
-    expiryLeadDays: null | number;
+    [key: string]: unknown;
 };
 
 export type UpdateItemRequest = {
@@ -202,6 +205,11 @@ export type UpdateListRequest = {
 
 export type UpdateMemberRoleRequest = {
     role: HouseholdRole;
+};
+
+export type UpdateMyInventoryNotificationRequest = {
+    enabled: boolean;
+    leadDays: null | number;
 };
 
 export type UpdateProfileRequest = {
@@ -1276,10 +1284,6 @@ export type UpdateInventorySettingsData = {
 
 export type UpdateInventorySettingsErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpValidationProblemDetails;
-    /**
      * Forbidden
      */
     403: unknown;
@@ -1289,8 +1293,6 @@ export type UpdateInventorySettingsErrors = {
     404: unknown;
 };
 
-export type UpdateInventorySettingsError = UpdateInventorySettingsErrors[keyof UpdateInventorySettingsErrors];
-
 export type UpdateInventorySettingsResponses = {
     /**
      * OK
@@ -1299,6 +1301,64 @@ export type UpdateInventorySettingsResponses = {
 };
 
 export type UpdateInventorySettingsResponse = UpdateInventorySettingsResponses[keyof UpdateInventorySettingsResponses];
+
+export type GetMyInventoryNotificationData = {
+    body?: never;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/notifications';
+};
+
+export type GetMyInventoryNotificationErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetMyInventoryNotificationResponses = {
+    /**
+     * OK
+     */
+    200: MyInventoryNotificationResponse;
+};
+
+export type GetMyInventoryNotificationResponse = GetMyInventoryNotificationResponses[keyof GetMyInventoryNotificationResponses];
+
+export type UpdateMyInventoryNotificationData = {
+    body: UpdateMyInventoryNotificationRequest;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/notifications';
+};
+
+export type UpdateMyInventoryNotificationErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateMyInventoryNotificationError = UpdateMyInventoryNotificationErrors[keyof UpdateMyInventoryNotificationErrors];
+
+export type UpdateMyInventoryNotificationResponses = {
+    /**
+     * OK
+     */
+    200: MyInventoryNotificationResponse;
+};
+
+export type UpdateMyInventoryNotificationResponse = UpdateMyInventoryNotificationResponses[keyof UpdateMyInventoryNotificationResponses];
 
 export type GetActiveHouseholdData = {
     body?: never;
