@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Settings
 {
+    // Placeholder: notification prefs moved to per-user; retained for future household config.
     public static class GetInventorySettingsEndpoint
     {
         public static IEndpointRouteBuilder MapGetInventorySettings(this IEndpointRouteBuilder app)
@@ -40,12 +41,7 @@ namespace Frigorino.Features.Inventories.Settings
                 return TypedResults.NotFound();
             }
 
-            var response = await db.InventorySettings
-                .Where(s => s.InventoryId == inventoryId)
-                .Select(s => new InventorySettingsResponse(s.ExpiryLeadDays))
-                .FirstOrDefaultAsync(ct);
-
-            return TypedResults.Ok(response ?? new InventorySettingsResponse(null));
+            return TypedResults.Ok(new InventorySettingsResponse());
         }
     }
 }

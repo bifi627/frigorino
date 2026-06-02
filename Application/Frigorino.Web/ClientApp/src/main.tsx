@@ -15,6 +15,13 @@ import "./common/auth"; // Ensure Firebase is initialized
 import "./common/apiClient"; // Configure hey-api client with Firebase token resolver
 import "./i18n"; // Initialize i18n
 
+import { initForegroundPush } from "./common/pushNotifications";
+
+// Wire the foreground push handler for users who already granted permission, so a
+// digest arriving while the tab is open surfaces without re-toggling. No-op when
+// push is unsupported or permission isn't granted.
+void initForegroundPush();
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode, Suspense } from "react";

@@ -113,10 +113,10 @@ public class SettingsUiSteps(ScenarioContextHolder ctx)
     [When("I enable the inventory expiry override")]
     public async Task WhenIEnableTheInventoryExpiryOverride()
     {
-        // Toggling the switch on triggers a PUT with the lead value. Await the 200 before asserting
-        // the revealed input so the toggle's mutation has landed.
+        // Toggling the switch triggers a PUT to the per-user notification preferences endpoint.
+        // Await the 200 before asserting the revealed input so the toggle's mutation has landed.
         var responseTask = ctx.Page.WaitForResponseAsync(r =>
-            r.Url.Contains("/settings")
+            r.Url.Contains("/notifications")
             && r.Request.Method == "PUT"
             && r.Status == 200);
         await ctx.Page.GetByTestId("inventory-expiry-override-switch").ClickAsync();

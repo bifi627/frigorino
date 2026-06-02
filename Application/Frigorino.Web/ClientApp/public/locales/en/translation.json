@@ -260,11 +260,20 @@
         "checkedItemRetentionDays": "Keep checked items (days)",
         "checkedItemRetentionHelp": "Days to keep checked-off list items before they are removed.",
         "inventorySettings": "Inventory Settings",
-        "expiryLeadOverride": "Override expiry reminder lead time",
+        "expiryLeadOverride": "Override my reminder lead time",
         "expiryLeadDays": "Lead time (days)",
-        "expiryLeadHelp": "Days before expiry to start reminders for this inventory.",
+        "expiryLeadHelp": "Days before expiry to remind me for this inventory.",
         "saved": "Settings saved",
         "saveFailed": "Could not save settings",
-        "readOnlyHint": "Only owners and admins can change these."
+        "readOnlyHint": "Only owners and admins can change these.",
+        "notifications": "Notifications",
+        "notificationsEnable": "Expiry reminders",
+        "notificationsLeadDays": "Default lead time (days)",
+        "notificationsLeadHelp": "Days before expiry to notify, unless an inventory overrides it.",
+        "notificationsPermissionDenied": "Notification permission was denied.",
+        "notificationsToggleFailed": "Could not update notifications. Check your browser's notification permission and try again.",
+        "notificationsIosHint": "Add Frigorino to your Home Screen to enable notifications on iOS.",
+        "inventoryNotificationsEnable": "Notify me about this inventory",
+        "inventoryNotificationsRequiresGlobal": "Expiry reminders are turned off in your User Settings — turn them on there to actually receive these."
     }
 }

@@ -1,7 +1,6 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
-using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Inventories.Settings
 {
-    public sealed record UpdateInventorySettingsRequest(int? ExpiryLeadDays);
+    // Placeholder: notification prefs moved to per-user; retained for future household config.
+    public sealed record UpdateInventorySettingsRequest();
 
     public static class UpdateInventorySettingsEndpoint
     {
@@ -21,12 +21,11 @@ namespace Frigorino.Features.Inventories.Settings
                .WithName("UpdateInventorySettings")
                .Produces<InventorySettingsResponse>()
                .Produces(StatusCodes.Status404NotFound)
-               .Produces(StatusCodes.Status403Forbidden)
-               .ProducesValidationProblem();
+               .Produces(StatusCodes.Status403Forbidden);
             return app;
         }
 
-        private static async Task<Results<Ok<InventorySettingsResponse>, NotFound, ForbidHttpResult, ValidationProblem>> Handle(
+        private static async Task<Results<Ok<InventorySettingsResponse>, NotFound, ForbidHttpResult>> Handle(
             int householdId,
             int inventoryId,
             UpdateInventorySettingsRequest request,
@@ -61,14 +60,8 @@ namespace Frigorino.Features.Inventories.Settings
                 db.InventorySettings.Add(settings);
             }
 
-            var result = settings.SetExpiryLeadDays(request.ExpiryLeadDays);
-            if (result.IsFailed)
-            {
-                return result.ToValidationProblem();
-            }
-
             await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(new InventorySettingsResponse(settings.ExpiryLeadDays));
+            return TypedResults.Ok(new InventorySettingsResponse());
         }
     }
 }

@@ -1,17 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-    getInventorySettingsQueryKey,
-    updateInventorySettingsMutation,
+    getMyInventoryNotificationQueryKey,
+    updateMyInventoryNotificationMutation,
 } from "../../lib/api/@tanstack/react-query.gen";
 
-export const useUpdateInventorySettings = () => {
+export const useUpdateMyInventoryNotification = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        ...updateInventorySettingsMutation(),
+        ...updateMyInventoryNotificationMutation(),
         onSuccess: (data, variables) => {
             queryClient.setQueryData(
-                getInventorySettingsQueryKey({
+                getMyInventoryNotificationQueryKey({
                     path: {
                         householdId: variables.path.householdId,
                         inventoryId: variables.path.inventoryId,

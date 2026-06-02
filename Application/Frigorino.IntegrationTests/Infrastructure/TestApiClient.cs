@@ -340,6 +340,20 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    // ---- Notifications / maintenance ----
+
+    // The machine-to-machine /internal/expiry-scan endpoint is key-guarded (X-Maintenance-Key) and
+    // anonymous, so no test-user auth headers are sent — only the maintenance key.
+    public Task<IAPIResponse> TryTriggerExpiryScanAsync(string maintenanceKey)
+    {
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            "/internal/expiry-scan",
+            new APIRequestContextOptions
+            {
+                Headers = new Dictionary<string, string> { ["X-Maintenance-Key"] = maintenanceKey },
+            });
+    }
+
     public Task<IAPIResponse> TryGetInventorySettingsAsync(int inventoryId, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
@@ -348,14 +362,24 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryUpdateInventorySettingsAsync(int inventoryId, int? expiryLeadDays, int? householdId = null)
+    // ---- Per-user inventory notification preferences ----
+
+    public Task<IAPIResponse> TryGetMyInventoryNotificationAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/notifications",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryUpdateMyInventoryNotificationAsync(int inventoryId, bool enabled, int? leadDays, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
         return ctx.BrowserContext.APIRequest.PutAsync(
-            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/settings",
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/notifications",
             new APIRequestContextOptions
             {
-                DataObject = new { expiryLeadDays },
+                DataObject = new { enabled, leadDays },
                 Headers = AuthHeaders,
             });
     }

@@ -17,6 +17,17 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(s => s.Language)
                 .HasMaxLength(8);
 
+            // ValueGeneratedNever: keep the DB default for migration backfill on existing rows,
+            // but always send the explicit value on INSERT so the lazy-create path cannot lose
+            // a CLR-default value (false / 0) to the OnAdd sentinel-skip.
+            builder.Property(s => s.ExpiryNotificationsEnabled)
+                .HasDefaultValue(false)
+                .ValueGeneratedNever();
+
+            builder.Property(s => s.ExpiryLeadDays)
+                .HasDefaultValue(UserSettings.DefaultExpiryLeadDays)
+                .ValueGeneratedNever();
+
             builder.Property(s => s.CreatedAt).IsRequired();
             builder.Property(s => s.UpdatedAt).IsRequired();
 

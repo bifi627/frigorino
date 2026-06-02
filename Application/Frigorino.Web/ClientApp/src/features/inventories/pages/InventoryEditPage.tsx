@@ -14,9 +14,7 @@ import {
 import { useParams, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuthStore } from "../../../common/authProvider";
 import { pageContainerSx } from "../../../theme";
-import { HouseholdRoleValue, roleRank } from "../../households/householdRole";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteInventoryConfirmDialog } from "../components/DeleteInventoryConfirmDialog";
 import { EditInventoryForm } from "../components/EditInventoryForm";
@@ -30,8 +28,6 @@ export const InventoryEditPage = () => {
     });
     const { t } = useTranslation();
     const inventoryIdNum = parseInt(inventoryId, 10);
-
-    const { user } = useAuthStore();
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -114,12 +110,6 @@ export const InventoryEditPage = () => {
 
     const inventoryName = inventory.name || t("inventory.untitledInventory");
 
-    const role = currentHousehold?.role;
-    const isAdmin =
-        !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
-    const canManageInventory =
-        isAdmin || inventory.createdByUser.externalId === user?.uid;
-
     return (
         <Container maxWidth="md" sx={pageContainerSx}>
             <Box
@@ -165,7 +155,6 @@ export const InventoryEditPage = () => {
                 <InventorySettingsCard
                     householdId={householdId}
                     inventoryId={inventory.id}
-                    canManage={canManageInventory}
                 />
             )}
 

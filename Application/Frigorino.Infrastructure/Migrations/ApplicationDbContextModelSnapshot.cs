@@ -39,6 +39,40 @@ namespace Frigorino.Infrastructure.Migrations
                     b.ToTable("Demo");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.FcmToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("FcmTokens");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.Household", b =>
                 {
                     b.Property<int>("Id")
@@ -223,9 +257,6 @@ namespace Frigorino.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("ExpiryLeadDays")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -341,6 +372,33 @@ namespace Frigorino.Infrastructure.Migrations
                     b.HasIndex("ListId", "Status", "SortOrder");
 
                     b.ToTable("ListItems");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.NotificationDispatch", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InventoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("SentOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "InventoryId", "SentOn")
+                        .IsUnique();
+
+                    b.ToTable("NotificationDispatches");
                 });
 
             modelBuilder.Entity("Frigorino.Domain.Entities.Product", b =>
@@ -466,6 +524,45 @@ namespace Frigorino.Infrastructure.Migrations
                     b.ToTable("UserHouseholds");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.UserInventoryNotificationSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("InventoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LeadDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryId");
+
+                    b.HasIndex("UserId", "InventoryId")
+                        .IsUnique();
+
+                    b.ToTable("UserInventoryNotificationSettings");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.UserSettings", b =>
                 {
                     b.Property<string>("UserId")
@@ -474,6 +571,14 @@ namespace Frigorino.Infrastructure.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ExpiryLeadDays")
+                        .HasColumnType("integer")
+                        .HasDefaultValue(3);
+
+                    b.Property<bool>("ExpiryNotificationsEnabled")
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Language")
                         .HasMaxLength(8)
@@ -485,6 +590,17 @@ namespace Frigorino.Infrastructure.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserSettings");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.FcmToken", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Frigorino.Domain.Entities.Household", b =>
@@ -618,6 +734,17 @@ namespace Frigorino.Infrastructure.Migrations
                     b.Navigation("Household");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.UserInventoryNotificationSetting", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.Inventory", "Inventory")
+                        .WithMany()
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Inventory");
                 });
 
             modelBuilder.Entity("Frigorino.Domain.Entities.UserSettings", b =>

@@ -6,20 +6,24 @@ using Frigorino.Features.Households.Members;
 using Frigorino.Features.Households.Settings;
 using Frigorino.Features.Inventories;
 using Frigorino.Features.Inventories.Items;
+using Frigorino.Features.Inventories.Notifications;
 using Frigorino.Features.Inventories.Settings;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Features.Me.Settings;
+using Frigorino.Features.Notifications;
 using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
+using Frigorino.Infrastructure.Notifications;
 using Frigorino.Infrastructure.Services;
 using Frigorino.Infrastructure.HealthChecks;
 using Frigorino.Web.Middlewares;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -63,16 +67,23 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
     if (devAuthEnabled)
     {
         builder.Services.AddDevAuth(builder.Configuration);
+        builder.Services.AddScoped<INotificationSender, LogOnlyNotificationSender>();
     }
     else
     {
         builder.Services.AddFirebaseAuth(builder.Configuration);
+        builder.Services.AddScoped<INotificationSender, FcmNotificationSender>();
     }
 }
+// Fallback: IntegrationTest + build-time paths skip the block above, so ensure
+// INotificationSender always resolves (TryAddScoped is a no-op when already registered).
+builder.Services.TryAddScoped<INotificationSender, LogOnlyNotificationSender>();
+
 builder.Services.AddBackgroundTaskQueue();
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
 builder.Services.AddMaintenanceServices();
+builder.Services.AddExpiryNotifications(builder.Configuration);
 
 if (!isBuildTimeOpenApi)
 {
@@ -347,6 +358,12 @@ var inventorySettings = app.MapGroup("/api/household/{householdId:int}/inventori
 inventorySettings.MapGetInventorySettings();
 inventorySettings.MapUpdateInventorySettings();
 
+var inventoryNotifications = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/notifications")
+    .RequireAuthorization()
+    .WithTags("Inventories");
+inventoryNotifications.MapGetMyInventoryNotification();
+inventoryNotifications.MapUpdateMyInventoryNotification();
+
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()
     .WithTags("Me");
@@ -354,6 +371,16 @@ me.MapGetActiveHousehold();
 me.MapSetActiveHousehold();
 me.MapGetUserSettings();
 me.MapUpdateUserSettings();
+me.MapUpdateUserNotificationSettings();
+
+var notifications = app.MapGroup("/api/notifications")
+    .RequireAuthorization()
+    .WithTags("Notifications");
+notifications.MapRegisterFcmToken();
+notifications.MapUnregisterFcmToken();
+
+// Machine-to-machine trigger (key-guarded inside the handler; not in the auth group).
+app.MapTriggerExpiryScan();
 
 // SPA configuration
 app.UseSpa(spa =>

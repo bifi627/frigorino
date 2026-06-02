@@ -10,8 +10,6 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
         {
             builder.HasKey(s => s.InventoryId);
 
-            builder.Property(s => s.ExpiryLeadDays);
-
             builder.Property(s => s.CreatedAt).IsRequired();
             builder.Property(s => s.UpdatedAt).IsRequired();
 

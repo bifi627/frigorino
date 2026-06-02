@@ -100,7 +100,7 @@ export type InventoryResponse = {
 };
 
 export type InventorySettingsResponse = {
-    expiryLeadDays: null | number;
+    [key: string]: unknown;
 };
 
 export type ListCreatorResponse = {
@@ -142,6 +142,11 @@ export type MemberResponse = {
     joinedAt: string;
 };
 
+export type MyInventoryNotificationResponse = {
+    enabled: boolean;
+    leadDays: null | number;
+};
+
 export type PromoteSuggestion = {
     expiryHandling: ExpiryHandling;
     suggestedExpiry: null | string;
@@ -153,6 +158,10 @@ export type QuantityDto = {
 };
 
 export type QuantityUnit = 'Gram' | 'Kilogram' | 'Milliliter' | 'Liter' | 'Piece' | 'Pack' | 'Can' | 'Bottle' | 'Bag';
+
+export type RegisterFcmTokenRequest = {
+    token: string;
+};
 
 export type ReorderItemRequest = {
     afterId: number;
@@ -179,7 +188,7 @@ export type UpdateInventoryRequest = {
 };
 
 export type UpdateInventorySettingsRequest = {
-    expiryLeadDays: null | number;
+    [key: string]: unknown;
 };
 
 export type UpdateItemRequest = {
@@ -198,8 +207,18 @@ export type UpdateMemberRoleRequest = {
     role: HouseholdRole;
 };
 
+export type UpdateMyInventoryNotificationRequest = {
+    enabled: boolean;
+    leadDays: null | number;
+};
+
 export type UpdateProfileRequest = {
     name: string;
+};
+
+export type UpdateUserNotificationSettingsRequest = {
+    expiryNotificationsEnabled: boolean;
+    expiryLeadDays: number;
 };
 
 export type UpdateUserSettingsRequest = {
@@ -208,6 +227,8 @@ export type UpdateUserSettingsRequest = {
 
 export type UserSettingsResponse = {
     language: null | string;
+    expiryNotificationsEnabled: boolean;
+    expiryLeadDays: number;
 };
 
 export type WeatherForecast = {
@@ -1263,10 +1284,6 @@ export type UpdateInventorySettingsData = {
 
 export type UpdateInventorySettingsErrors = {
     /**
-     * Bad Request
-     */
-    400: HttpValidationProblemDetails;
-    /**
      * Forbidden
      */
     403: unknown;
@@ -1276,8 +1293,6 @@ export type UpdateInventorySettingsErrors = {
     404: unknown;
 };
 
-export type UpdateInventorySettingsError = UpdateInventorySettingsErrors[keyof UpdateInventorySettingsErrors];
-
 export type UpdateInventorySettingsResponses = {
     /**
      * OK
@@ -1286,6 +1301,64 @@ export type UpdateInventorySettingsResponses = {
 };
 
 export type UpdateInventorySettingsResponse = UpdateInventorySettingsResponses[keyof UpdateInventorySettingsResponses];
+
+export type GetMyInventoryNotificationData = {
+    body?: never;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/notifications';
+};
+
+export type GetMyInventoryNotificationErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetMyInventoryNotificationResponses = {
+    /**
+     * OK
+     */
+    200: MyInventoryNotificationResponse;
+};
+
+export type GetMyInventoryNotificationResponse = GetMyInventoryNotificationResponses[keyof GetMyInventoryNotificationResponses];
+
+export type UpdateMyInventoryNotificationData = {
+    body: UpdateMyInventoryNotificationRequest;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/notifications';
+};
+
+export type UpdateMyInventoryNotificationErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateMyInventoryNotificationError = UpdateMyInventoryNotificationErrors[keyof UpdateMyInventoryNotificationErrors];
+
+export type UpdateMyInventoryNotificationResponses = {
+    /**
+     * OK
+     */
+    200: MyInventoryNotificationResponse;
+};
+
+export type UpdateMyInventoryNotificationResponse = UpdateMyInventoryNotificationResponses[keyof UpdateMyInventoryNotificationResponses];
 
 export type GetActiveHouseholdData = {
     body?: never;
@@ -1373,6 +1446,63 @@ export type UpdateUserSettingsResponses = {
 };
 
 export type UpdateUserSettingsResponse = UpdateUserSettingsResponses[keyof UpdateUserSettingsResponses];
+
+export type UpdateUserNotificationSettingsData = {
+    body: UpdateUserNotificationSettingsRequest;
+    path?: never;
+    query?: never;
+    url: '/api/me/settings/notifications';
+};
+
+export type UpdateUserNotificationSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+};
+
+export type UpdateUserNotificationSettingsError = UpdateUserNotificationSettingsErrors[keyof UpdateUserNotificationSettingsErrors];
+
+export type UpdateUserNotificationSettingsResponses = {
+    /**
+     * OK
+     */
+    200: UserSettingsResponse;
+};
+
+export type UpdateUserNotificationSettingsResponse = UpdateUserNotificationSettingsResponses[keyof UpdateUserNotificationSettingsResponses];
+
+export type UnregisterFcmTokenData = {
+    body?: never;
+    path?: never;
+    query: {
+        token: string;
+    };
+    url: '/api/notifications/token';
+};
+
+export type UnregisterFcmTokenResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UnregisterFcmTokenResponse = UnregisterFcmTokenResponses[keyof UnregisterFcmTokenResponses];
+
+export type RegisterFcmTokenData = {
+    body: RegisterFcmTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/api/notifications/token';
+};
+
+export type RegisterFcmTokenResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetWeatherForecastData = {
     body?: never;

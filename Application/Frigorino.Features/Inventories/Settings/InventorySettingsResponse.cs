@@ -1,4 +1,4 @@
 namespace Frigorino.Features.Inventories.Settings
 {
-    public sealed record InventorySettingsResponse(int? ExpiryLeadDays);
+    public sealed record InventorySettingsResponse();
 }

@@ -45,7 +45,8 @@ namespace Frigorino.Features.Me.Settings
             }
 
             await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(new UserSettingsResponse(settings.Language));
+            return TypedResults.Ok(new UserSettingsResponse(
+                settings.Language, settings.ExpiryNotificationsEnabled, settings.ExpiryLeadDays));
         }
     }
 }
