@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 import { useRouter } from "@tanstack/react-router";
 import { memo, useCallback, useState } from "react";
+import { sectionIcons } from "../../common/sections";
+import { sectionColors, type SectionKey } from "../../theme";
 
 export type HeadNavigationAction = {
     text?: string;
@@ -31,6 +33,10 @@ export interface HeadNavigationProps {
     directActions: HeadNavigationAction[];
     maxWidth?: Breakpoint;
     menuButtonTestId?: string;
+    // When set, shows the section's identity icon (section-colored glyph on a
+    // neutral surface) before the title — the same wayfinding cue used on the
+    // dashboard, continued into the feature.
+    section?: SectionKey;
 }
 
 export const PageHeadActionBar = memo(
@@ -41,8 +47,11 @@ export const PageHeadActionBar = memo(
         directActions,
         maxWidth = "sm",
         menuButtonTestId,
+        section,
     }: HeadNavigationProps) => {
         const router = useRouter();
+        const SectionIcon = section ? sectionIcons[section] : null;
+        const sectionColor = section ? sectionColors[section] : undefined;
         const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(
             null,
         );
@@ -86,6 +95,21 @@ export const PageHeadActionBar = memo(
                         <IconButton onClick={handleBack} sx={{ p: 1 }}>
                             <ArrowBack />
                         </IconButton>
+                        {SectionIcon && (
+                            <Box
+                                sx={{
+                                    p: 1,
+                                    borderRadius: 2,
+                                    bgcolor: "action.hover",
+                                    color: sectionColor,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    flexShrink: 0,
+                                }}
+                            >
+                                <SectionIcon />
+                            </Box>
+                        )}
                         <Box sx={{ flex: 1 }}>
                             <Typography
                                 variant="h5"

@@ -227,6 +227,7 @@ export const ListViewPage = () => {
             <PageHeadActionBar
                 title={list.name || t("lists.untitledList")}
                 subtitle={list.description || undefined}
+                section="lists"
                 directActions={directActions}
                 menuActions={menuActions}
             />

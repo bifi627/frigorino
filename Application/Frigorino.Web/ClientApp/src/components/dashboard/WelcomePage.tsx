@@ -1,10 +1,4 @@
-import {
-    Add,
-    ChevronRight,
-    KitchenOutlined,
-    RestaurantOutlined,
-    TimerOutlined,
-} from "@mui/icons-material";
+import { Add, ChevronRight } from "@mui/icons-material";
 import {
     Box,
     Card,
@@ -16,7 +10,6 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemIcon,
     ListItemText,
     Stack,
     Typography,
@@ -37,6 +30,8 @@ import {
     getExpiryColor,
     getExpiryInfo,
 } from "../../utils/dateUtils";
+import { sectionColors } from "../../theme";
+import { sectionIcons } from "../../common/sections";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
@@ -123,12 +118,16 @@ export const WelcomePage = () => {
         }
     };
 
+    const ListsIcon = sectionIcons.lists;
+    const InventoryIcon = sectionIcons.inventory;
+    const RecipesIcon = sectionIcons.recipes;
+
     const collections = [
         {
             id: "einkaufslisten",
             label: t("lists.shoppingLists"),
-            icon: <KitchenOutlined />,
-            color: "#2196F3",
+            icon: <ListsIcon />,
+            color: sectionColors.lists,
             items: listsLoading
                 ? [
                       {
@@ -157,8 +156,8 @@ export const WelcomePage = () => {
         {
             id: "inventar",
             label: t("navigation.inventory"),
-            icon: <TimerOutlined />,
-            color: "#FF9800",
+            icon: <InventoryIcon />,
+            color: sectionColors.inventory,
             items: inventoriesLoading
                 ? [
                       {
@@ -204,8 +203,8 @@ export const WelcomePage = () => {
         {
             id: "rezepte",
             label: t("dashboard.recipes"),
-            icon: <RestaurantOutlined />,
-            color: "#4CAF50",
+            icon: <RecipesIcon />,
+            color: sectionColors.recipes,
             items: [
                 {
                     name: t("dashboard.comingSoon"),
@@ -333,7 +332,7 @@ export const WelcomePage = () => {
                                             sx={{
                                                 p: 1.5,
                                                 borderRadius: 2,
-                                                bgcolor: `${collection.color}15`,
+                                                bgcolor: "action.hover",
                                                 color: collection.color,
                                                 display: "flex",
                                                 alignItems: "center",
@@ -368,12 +367,11 @@ export const WelcomePage = () => {
                                                 handleAddItem(collection.id);
                                             }}
                                             sx={{
-                                                bgcolor: `${collection.color}15`,
-                                                color: collection.color,
+                                                color: "text.secondary",
                                                 width: 32,
                                                 height: 32,
                                                 "&:hover": {
-                                                    bgcolor: `${collection.color}25`,
+                                                    bgcolor: "action.hover",
                                                 },
                                             }}
                                         >
@@ -397,11 +395,11 @@ export const WelcomePage = () => {
                                                 }
                                             }}
                                             sx={{
-                                                color: collection.color,
+                                                color: "text.secondary",
                                                 width: 32,
                                                 height: 32,
                                                 "&:hover": {
-                                                    bgcolor: `${collection.color}15`,
+                                                    bgcolor: "action.hover",
                                                 },
                                             }}
                                         >
@@ -471,20 +469,6 @@ export const WelcomePage = () => {
                                                             : undefined
                                                     }
                                                 >
-                                                    <ListItemIcon
-                                                        sx={{ minWidth: 36 }}
-                                                    >
-                                                        <Box
-                                                            sx={{
-                                                                width: 8,
-                                                                height: 8,
-                                                                borderRadius:
-                                                                    "50%",
-                                                                bgcolor:
-                                                                    collection.color,
-                                                            }}
-                                                        />
-                                                    </ListItemIcon>
                                                     <ListItemText
                                                         primary={
                                                             <Box

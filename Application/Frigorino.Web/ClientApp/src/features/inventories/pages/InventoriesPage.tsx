@@ -89,6 +89,7 @@ export const InventoriesPage = () => {
         <>
             <PageHeadActionBar
                 title={t("inventory.inventories")}
+                section="inventory"
                 directActions={[
                     { icon: <Add />, onClick: handleCreateInventory },
                 ]}

@@ -107,6 +107,7 @@ export const InventoryEditPage = () => {
         <>
             <PageHeadActionBar
                 title={t("inventory.editInventory")}
+                section="inventory"
                 maxWidth="md"
                 directActions={[]}
                 menuActions={menuActions}

@@ -88,6 +88,7 @@ export const ListsPage = () => {
         <>
             <PageHeadActionBar
                 title={t("lists.shoppingLists")}
+                section="lists"
                 directActions={[{ icon: <Add />, onClick: handleCreateList }]}
                 menuActions={[]}
             />

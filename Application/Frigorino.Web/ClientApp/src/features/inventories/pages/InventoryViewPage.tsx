@@ -203,6 +203,7 @@ export const InventoryViewPage = () => {
             <PageHeadActionBar
                 title={inventory.name || t("inventory.untitledInventory")}
                 subtitle={inventory.description || undefined}
+                section="inventory"
                 directActions={directActions}
                 menuActions={menuActions}
             />

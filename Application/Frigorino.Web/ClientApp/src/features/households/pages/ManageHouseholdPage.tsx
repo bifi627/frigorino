@@ -92,6 +92,7 @@ export function ManageHouseholdPage() {
         <>
             <PageHeadActionBar
                 title={t("household.householdManagement")}
+                section="household"
                 maxWidth="md"
                 directActions={[]}
                 menuActions={menuActions}

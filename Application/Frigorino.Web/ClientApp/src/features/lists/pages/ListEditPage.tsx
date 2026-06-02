@@ -104,6 +104,7 @@ export const ListEditPage = () => {
         <>
             <PageHeadActionBar
                 title={t("lists.editList")}
+                section="lists"
                 maxWidth="md"
                 directActions={[]}
                 menuActions={menuActions}
