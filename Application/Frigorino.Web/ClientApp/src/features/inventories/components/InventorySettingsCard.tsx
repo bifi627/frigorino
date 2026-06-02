@@ -27,7 +27,8 @@ export function InventorySettingsCard({
 }: Props) {
     const { t } = useTranslation();
     const { data } = useInventorySettings(householdId, inventoryId);
-    const { data: userSettings } = useUserSettings();
+    const { data: userSettings, isSuccess: userSettingsLoaded } =
+        useUserSettings();
     const globalNotificationsEnabled =
         userSettings?.expiryNotificationsEnabled ?? false;
     const updateSettings = useUpdateInventorySettings();
@@ -87,7 +88,7 @@ export function InventorySettingsCard({
                 <Typography variant="h6" sx={{ mb: 1 }}>
                     {t("settings.inventorySettings")}
                 </Typography>
-                {!globalNotificationsEnabled && (
+                {userSettingsLoaded && !globalNotificationsEnabled && (
                     <Alert
                         severity="info"
                         sx={{ mb: 2 }}
