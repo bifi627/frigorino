@@ -10,10 +10,11 @@ namespace Frigorino.Infrastructure.Notifications
     // Invoked by the secured /internal/expiry-scan endpoint. Claim-slot-first ordering: the
     // NotificationDispatch ledger row is inserted and committed BEFORE the digest is sent, so
     // concurrent/double fires are safe — only the run that wins the unique-index race on
-    // (UserId, HouseholdId, SentOn) sends. The send runs SYNCHRONOUSLY inside the request (the open
-    // HTTP request keeps Railway's serverless container awake) — no lossy queue. Trade-off: a slot
-    // may be claimed whose send then fails (rare, accepted for a daily digest — better to occasionally
-    // miss than double-notify, since the ledger already committed).
+    // (UserId, HouseholdId, SentOn) sends. The send runs SYNCHRONOUSLY inside the request rather than
+    // via the in-memory queue: the queue gives no durability guarantee (work lost on restart/crash),
+    // and a once-daily cron+ledger loss is unrecoverable, so the outcome must be known in-request.
+    // Trade-off: a slot may be claimed whose send then fails (rare, accepted for a daily digest —
+    // better to occasionally miss than double-notify, since the ledger already committed).
     public class ExpiryNotificationScan
     {
         private readonly ApplicationDbContext _db;
