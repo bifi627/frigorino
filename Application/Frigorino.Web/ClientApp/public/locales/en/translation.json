@@ -272,6 +272,7 @@
         "notificationsLeadHelp": "Days before expiry to notify, unless an inventory overrides it.",
         "notificationsPermissionDenied": "Notification permission was denied.",
         "notificationsIosHint": "Add Frigorino to your Home Screen to enable notifications on iOS.",
-        "inventoryNotificationsEnable": "Expiry reminders for this inventory"
+        "inventoryNotificationsEnable": "Expiry reminders for this inventory",
+        "inventoryNotificationsRequiresGlobal": "Expiry reminders are turned off in your User Settings — turn them on there to actually receive these."
     }
 }

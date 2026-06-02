@@ -272,6 +272,7 @@
         "notificationsLeadHelp": "Tage vor Ablauf benachrichtigen, sofern ein Inventar dies nicht überschreibt.",
         "notificationsPermissionDenied": "Benachrichtigungsberechtigung wurde verweigert.",
         "notificationsIosHint": "Füge Frigorino zum Startbildschirm hinzu, um Benachrichtigungen auf iOS zu aktivieren.",
-        "inventoryNotificationsEnable": "Ablauf-Erinnerungen für dieses Inventar"
+        "inventoryNotificationsEnable": "Ablauf-Erinnerungen für dieses Inventar",
+        "inventoryNotificationsRequiresGlobal": "Ablauf-Erinnerungen sind in deinen Benutzereinstellungen deaktiviert — aktiviere sie dort, um diese tatsächlich zu erhalten."
     }
 }

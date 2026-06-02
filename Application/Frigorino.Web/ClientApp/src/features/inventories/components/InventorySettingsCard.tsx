@@ -1,4 +1,5 @@
 import {
+    Alert,
     Card,
     CardContent,
     FormControlLabel,
@@ -9,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useUserSettings } from "../../settings/useUserSettings";
 import { useInventorySettings } from "../useInventorySettings";
 import { useUpdateInventorySettings } from "../useUpdateInventorySettings";
 
@@ -25,6 +27,9 @@ export function InventorySettingsCard({
 }: Props) {
     const { t } = useTranslation();
     const { data } = useInventorySettings(householdId, inventoryId);
+    const { data: userSettings } = useUserSettings();
+    const globalNotificationsEnabled =
+        userSettings?.expiryNotificationsEnabled ?? false;
     const updateSettings = useUpdateInventorySettings();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [override, setOverride] = useState(false);
@@ -82,6 +87,15 @@ export function InventorySettingsCard({
                 <Typography variant="h6" sx={{ mb: 1 }}>
                     {t("settings.inventorySettings")}
                 </Typography>
+                {!globalNotificationsEnabled && (
+                    <Alert
+                        severity="info"
+                        sx={{ mb: 2 }}
+                        data-testid="inventory-notifications-global-off-hint"
+                    >
+                        {t("settings.inventoryNotificationsRequiresGlobal")}
+                    </Alert>
+                )}
                 <FormControlLabel
                     control={
                         <Switch
