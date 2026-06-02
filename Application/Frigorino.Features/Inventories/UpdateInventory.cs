@@ -64,11 +64,17 @@ namespace Frigorino.Features.Inventories
             await db.SaveChangesAsync(ct);
 
             var threshold = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(InventoryResponse.ExpiringWithinDays);
+            var earliestExpiry = inventory.InventoryItems
+                .Where(x => x.IsActive && x.ExpiryDate != null)
+                .OrderBy(x => x.ExpiryDate)
+                .Select(x => x.ExpiryDate)
+                .FirstOrDefault();
             var response = InventoryResponse.From(
                 inventory,
                 inventory.CreatedByUser,
                 inventory.InventoryItems.Count(x => x.IsActive),
-                inventory.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= threshold));
+                inventory.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= threshold),
+                earliestExpiry);
             return TypedResults.Ok(response);
         }
     }

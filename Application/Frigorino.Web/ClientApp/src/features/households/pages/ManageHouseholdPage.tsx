@@ -1,19 +1,11 @@
-import { ArrowBack, Delete, MoreVert } from "@mui/icons-material";
-import {
-    Alert,
-    Box,
-    Container,
-    IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Skeleton,
-    Typography,
-} from "@mui/material";
-import { useNavigate } from "@tanstack/react-router";
+import { Delete } from "@mui/icons-material";
+import { Alert, Box, Container, Skeleton } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    PageHeadActionBar,
+    type HeadNavigationAction,
+} from "../../../components/shared/PageHeadActionBar";
 import { pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteHouseholdDialog } from "../components/DeleteHouseholdDialog";
@@ -24,10 +16,8 @@ import { MembersPanel } from "../members/components/MembersPanel";
 import { useHouseholdMembers } from "../members/useHouseholdMembers";
 
 export function ManageHouseholdPage() {
-    const navigate = useNavigate();
     const { t } = useTranslation();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const {
         currentHousehold,
@@ -86,102 +76,54 @@ export function ManageHouseholdPage() {
     const canManageSettings =
         !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
 
+    const menuActions: HeadNavigationAction[] = isOwner
+        ? [
+              {
+                  text: t("household.deleteHousehold"),
+                  icon: <Delete fontSize="small" color="error" />,
+                  onClick: () => setDeleteDialogOpen(true),
+                  testId: "household-manage-menu-delete",
+                  color: "error",
+              },
+          ]
+        : [];
+
     return (
-        <Container maxWidth="md" sx={pageContainerSx}>
-            <Box sx={{ mb: { xs: 2, sm: 3 } }}>
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 1, sm: 2 },
-                        mb: { xs: 2, sm: 3 },
-                    }}
-                >
-                    <IconButton onClick={() => navigate({ to: "/" })}>
-                        <ArrowBack />
-                    </IconButton>
-
-                    <Typography
-                        variant="h5"
-                        component="h1"
-                        sx={{ fontWeight: 600, flexGrow: 1 }}
-                    >
-                        {t("household.householdManagement")}
-                    </Typography>
-
-                    {isOwner && (
-                        <IconButton
-                            data-testid="household-manage-menu-toggle"
-                            onClick={(e) => setMenuAnchor(e.currentTarget)}
-                            size="small"
-                            sx={{
-                                bgcolor: "background.paper",
-                                border: 1,
-                                borderColor: "divider",
-                                "&:hover": { bgcolor: "action.hover" },
-                            }}
-                        >
-                            <MoreVert fontSize="small" />
-                        </IconButton>
-                    )}
+        <>
+            <PageHeadActionBar
+                title={t("household.householdManagement")}
+                section="household"
+                maxWidth="md"
+                directActions={[]}
+                menuActions={menuActions}
+                menuButtonTestId="household-manage-menu-toggle"
+            />
+            <Container maxWidth="md" sx={pageContainerSx}>
+                <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+                    <HouseholdSummaryCard
+                        householdName={householdName}
+                        memberCount={members?.length ?? 0}
+                        userRole={userRole}
+                    />
                 </Box>
 
-                <HouseholdSummaryCard
-                    householdName={householdName}
-                    memberCount={members?.length ?? 0}
-                    userRole={userRole}
+                <MembersPanel
+                    householdId={currentHousehold.householdId}
+                    currentUserRole={userRole}
                 />
-            </Box>
 
-            <MembersPanel
-                householdId={currentHousehold.householdId}
-                currentUserRole={userRole}
-            />
+                <HouseholdSettingsCard
+                    householdId={currentHousehold.householdId}
+                    canManage={canManageSettings}
+                />
 
-            <HouseholdSettingsCard
-                householdId={currentHousehold.householdId}
-                canManage={canManageSettings}
-            />
-
-            <Menu
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={() => setMenuAnchor(null)}
-                elevation={4}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                slotProps={{
-                    paper: { sx: { minWidth: 200, mt: 1 } },
-                }}
-            >
-                <MenuItem
-                    data-testid="household-manage-menu-delete"
-                    onClick={() => {
-                        setDeleteDialogOpen(true);
-                        setMenuAnchor(null);
-                    }}
-                    sx={{
-                        color: "error.main",
-                        py: 1.5,
-                        "&:hover": {
-                            bgcolor: "error.light",
-                            color: "error.contrastText",
-                        },
-                    }}
-                >
-                    <ListItemIcon>
-                        <Delete fontSize="small" color="error" />
-                    </ListItemIcon>
-                    <ListItemText primary={t("household.deleteHousehold")} />
-                </MenuItem>
-            </Menu>
-
-            <DeleteHouseholdDialog
-                open={deleteDialogOpen}
-                onClose={() => setDeleteDialogOpen(false)}
-                householdId={currentHousehold.householdId}
-                householdName={householdName}
-            />
-        </Container>
+                <DeleteHouseholdDialog
+                    open={deleteDialogOpen}
+                    onClose={() => setDeleteDialogOpen(false)}
+                    householdId={currentHousehold.householdId}
+                    householdName={householdName}
+                />
+            </Container>
+        </>
     );
 }

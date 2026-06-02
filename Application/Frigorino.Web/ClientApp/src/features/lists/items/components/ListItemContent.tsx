@@ -55,9 +55,6 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                             onClick={onEditQuantity}
                             sx={{
                                 height: 20,
-                                textDecoration: item.status
-                                    ? "line-through"
-                                    : "none",
                             }}
                         />
                     </Box>

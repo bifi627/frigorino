@@ -97,6 +97,7 @@ export type InventoryResponse = {
     createdByUser: InventoryCreatorResponse;
     totalItems: number;
     expiringItems: number;
+    earliestExpiryDate: null | string;
 };
 
 export type InventorySettingsResponse = {

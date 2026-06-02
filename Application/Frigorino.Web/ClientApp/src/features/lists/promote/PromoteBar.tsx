@@ -1,5 +1,6 @@
 import { Inventory2Outlined } from "@mui/icons-material";
 import { Button, Paper, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { usePromotableForList } from "./promotableStore";
@@ -41,18 +42,26 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                    color: "text.primary",
+                    border: "1px solid",
+                    borderColor: (theme) =>
+                        alpha(theme.palette.primary.main, 0.3),
+                    borderLeft: "3px solid",
+                    borderLeftColor: "primary.main",
                 }}
             >
-                <Inventory2Outlined fontSize="small" />
+                <Inventory2Outlined
+                    fontSize="small"
+                    sx={{ color: "primary.main" }}
+                />
                 <Typography variant="body2" sx={{ flex: 1 }}>
                     {t("promote.barReady", { count: entries.length })}
                 </Typography>
                 <Button
                     size="small"
                     variant="contained"
-                    color="secondary"
+                    color="primary"
                     data-testid="promote-bar-review"
                     onClick={() => setOpen(true)}
                 >

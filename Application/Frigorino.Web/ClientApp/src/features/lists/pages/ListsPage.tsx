@@ -1,4 +1,4 @@
-import { Add, ArrowBack } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -7,7 +7,6 @@ import {
     CardContent,
     CircularProgress,
     Container,
-    IconButton,
     Stack,
     Typography,
 } from "@mui/material";
@@ -16,6 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ListResponse } from "../../../lib/api";
 import { pageContainerSx } from "../../../theme";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListActionsMenu } from "../components/ListActionsMenu";
 import { ListSummaryCard } from "../components/ListSummaryCard";
@@ -68,8 +68,6 @@ export const ListsPage = () => {
         handleMenuClose();
     };
 
-    const handleEditList = () => handleMenuClose();
-
     if (!householdId) {
         return (
             <Container maxWidth="sm" sx={pageContainerSx}>
@@ -87,99 +85,76 @@ export const ListsPage = () => {
     }
 
     return (
-        <Container maxWidth="sm" sx={pageContainerSx}>
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: { xs: 2, sm: 3 },
-                }}
-            >
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 1, sm: 2 },
-                    }}
-                >
-                    <IconButton onClick={handleBack}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Typography
-                        variant="h5"
-                        component="h1"
-                        sx={{ fontWeight: 600 }}
-                    >
-                        {t("lists.shoppingLists")}
-                    </Typography>
-                </Box>
-
-                <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    onClick={handleCreateList}
-                    sx={{ fontWeight: 600 }}
-                >
-                    {t("common.create")}
-                </Button>
-            </Box>
-            {isLoading && (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                    <CircularProgress />
-                </Box>
-            )}
-            {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                    {t("lists.failedToLoadLists")}
-                </Alert>
-            )}
-            {lists && lists.length === 0 && !isLoading && (
-                <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
-                    <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                            {t("lists.noListsYet")}
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                color: "text.secondary",
-                                mb: 3,
-                            }}
-                        >
-                            {t("lists.createFirstShoppingList")}
-                        </Typography>
-                        <Button
-                            variant="contained"
-                            startIcon={<Add />}
-                            onClick={handleCreateList}
-                            sx={{ fontWeight: 600 }}
-                        >
-                            {t("lists.createYourFirstList")}
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-            {lists && lists.length > 0 && (
-                <Stack spacing={2}>
-                    {lists.map((list) => (
-                        <ListSummaryCard
-                            key={list.id}
-                            list={list}
-                            onClick={handleListClick}
-                            onMenuOpen={handleMenuOpen}
-                            menuDisabled={deleteListMutation.isPending}
-                        />
-                    ))}
-                </Stack>
-            )}
-            <ListActionsMenu
-                anchorEl={anchorEl}
-                onClose={handleMenuClose}
-                onEdit={handleEditList}
-                onDelete={handleDeleteList}
-                isDeleting={deleteListMutation.isPending}
+        <>
+            <PageHeadActionBar
+                title={t("lists.shoppingLists")}
+                section="lists"
+                directActions={[{ icon: <Add />, onClick: handleCreateList }]}
+                menuActions={[]}
             />
-        </Container>
+            <Container maxWidth="sm" sx={pageContainerSx}>
+                {isLoading && (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            py: 4,
+                        }}
+                    >
+                        <CircularProgress />
+                    </Box>
+                )}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3 }}>
+                        {t("lists.failedToLoadLists")}
+                    </Alert>
+                )}
+                {lists && lists.length === 0 && !isLoading && (
+                    <Card elevation={1} sx={{ textAlign: "center", py: 4 }}>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
+                                {t("lists.noListsYet")}
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    color: "text.secondary",
+                                    mb: 3,
+                                }}
+                            >
+                                {t("lists.createFirstShoppingList")}
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={handleCreateList}
+                                sx={{ fontWeight: 600 }}
+                            >
+                                {t("lists.createYourFirstList")}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+                {lists && lists.length > 0 && (
+                    <Stack spacing={2}>
+                        {lists.map((list) => (
+                            <ListSummaryCard
+                                key={list.id}
+                                list={list}
+                                onClick={handleListClick}
+                                onMenuOpen={handleMenuOpen}
+                                menuDisabled={deleteListMutation.isPending}
+                            />
+                        ))}
+                    </Stack>
+                )}
+                <ListActionsMenu
+                    anchorEl={anchorEl}
+                    onClose={handleMenuClose}
+                    onDelete={handleDeleteList}
+                    isDeleting={deleteListMutation.isPending}
+                />
+            </Container>
+        </>
     );
 };

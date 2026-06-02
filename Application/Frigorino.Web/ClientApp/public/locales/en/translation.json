@@ -247,6 +247,8 @@
         "items": "Items",
         "articles": "Articles",
         "expiring": "expiring",
+        "open": "open",
+        "itemsTotal": "items total",
         "recipes": "Recipes",
         "comingSoon": "Coming soon...",
         "recipeManagementLater": "Recipe management will be added later"

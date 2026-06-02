@@ -23,6 +23,7 @@ import {
     isIosNeedingInstall,
     pushSupported,
 } from "../../../common/pushNotifications";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { pageContainerSx } from "../../../theme";
 import { useUpdateUserNotificationSettings } from "../useUpdateUserNotificationSettings";
 import { useUpdateUserSettings } from "../useUpdateUserSettings";
@@ -167,121 +168,132 @@ export function UserSettingsPage() {
     const effectiveEnabled = enabled && permissionGranted;
 
     return (
-        <Container maxWidth="sm" sx={pageContainerSx}>
-            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3 } }}>
-                {t("settings.userSettings")}
-            </Typography>
-
-            <Card elevation={2}>
-                <CardContent>
-                    <TextField
-                        select
-                        fullWidth
-                        size="small"
-                        data-testid="settings-language-select"
-                        label={t("settings.language")}
-                        helperText={t("settings.languageHelp")}
-                        value={currentLanguage}
-                        disabled={isLoading || updateSettings.isPending}
-                        onChange={(e) => handleLanguageChange(e.target.value)}
-                        slotProps={{
-                            htmlInput: {
-                                "data-testid": "settings-language-value",
-                            },
-                        }}
-                    >
-                        {LANGUAGES.map((lang) => (
-                            <MenuItem
-                                key={lang.code}
-                                value={lang.code}
-                                data-testid={`settings-language-option-${lang.code}`}
-                            >
-                                {lang.label}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                </CardContent>
-            </Card>
-
-            <Card elevation={2} sx={{ mt: { xs: 2, sm: 3 } }}>
-                <CardContent>
-                    <Typography variant="h6" sx={{ mb: 1 }}>
-                        {t("settings.notifications")}
-                    </Typography>
-
-                    {iosHint && (
-                        <Alert
-                            severity="info"
-                            sx={{ mb: 2 }}
-                            data-testid="settings-ios-install-hint"
-                        >
-                            {t("settings.notificationsIosHint")}
-                        </Alert>
-                    )}
-
-                    {supported && permissionBlocked && (
-                        <Alert
-                            severity="warning"
-                            sx={{ mb: 2 }}
-                            data-testid="settings-notifications-blocked-hint"
-                        >
-                            {t("settings.notificationsBlockedHint")}
-                        </Alert>
-                    )}
-
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    data-testid="settings-notifications-switch"
-                                    checked={effectiveEnabled}
-                                    disabled={
-                                        !supported ||
-                                        permissionBlocked ||
-                                        togglingPush ||
-                                        updateNotifications.isPending
-                                    }
-                                    onChange={(e) =>
-                                        handleToggleNotifications(
-                                            e.target.checked,
-                                        )
-                                    }
-                                />
-                            }
-                            label={t("settings.notificationsEnable")}
-                        />
-                        {togglingPush && (
-                            <CircularProgress
-                                size={18}
-                                data-testid="settings-notifications-spinner"
-                            />
-                        )}
-                    </Box>
-
-                    {effectiveEnabled && (
+        <>
+            <PageHeadActionBar
+                title={t("settings.userSettings")}
+                directActions={[]}
+                menuActions={[]}
+            />
+            <Container maxWidth="sm" sx={pageContainerSx}>
+                <Card elevation={2}>
+                    <CardContent>
                         <TextField
-                            type="number"
+                            select
                             fullWidth
                             size="small"
-                            sx={{ mt: 1 }}
-                            label={t("settings.notificationsLeadDays")}
-                            helperText={t("settings.notificationsLeadHelp")}
-                            value={leadDays}
-                            disabled={updateNotifications.isPending}
-                            onChange={(e) => setLeadDays(e.target.value)}
-                            onBlur={handleLeadDaysBlur}
+                            data-testid="settings-language-select"
+                            label={t("settings.language")}
+                            helperText={t("settings.languageHelp")}
+                            value={currentLanguage}
+                            disabled={isLoading || updateSettings.isPending}
+                            onChange={(e) =>
+                                handleLanguageChange(e.target.value)
+                            }
                             slotProps={{
                                 htmlInput: {
-                                    min: 0,
-                                    max: 365,
-                                    "data-testid":
-                                        "settings-notifications-lead-input",
+                                    "data-testid": "settings-language-value",
                                 },
                             }}
-                        />
-                    )}
-                </CardContent>
-            </Card>
-        </Container>
+                        >
+                            {LANGUAGES.map((lang) => (
+                                <MenuItem
+                                    key={lang.code}
+                                    value={lang.code}
+                                    data-testid={`settings-language-option-${lang.code}`}
+                                >
+                                    {lang.label}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </CardContent>
+                </Card>
+
+                <Card elevation={2} sx={{ mt: { xs: 2, sm: 3 } }}>
+                    <CardContent>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                            {t("settings.notifications")}
+                        </Typography>
+
+                        {iosHint && (
+                            <Alert
+                                severity="info"
+                                sx={{ mb: 2 }}
+                                data-testid="settings-ios-install-hint"
+                            >
+                                {t("settings.notificationsIosHint")}
+                            </Alert>
+                        )}
+
+                        {supported && permissionBlocked && (
+                            <Alert
+                                severity="warning"
+                                sx={{ mb: 2 }}
+                                data-testid="settings-notifications-blocked-hint"
+                            >
+                                {t("settings.notificationsBlockedHint")}
+                            </Alert>
+                        )}
+
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                            }}
+                        >
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        data-testid="settings-notifications-switch"
+                                        checked={effectiveEnabled}
+                                        disabled={
+                                            !supported ||
+                                            permissionBlocked ||
+                                            togglingPush ||
+                                            updateNotifications.isPending
+                                        }
+                                        onChange={(e) =>
+                                            handleToggleNotifications(
+                                                e.target.checked,
+                                            )
+                                        }
+                                    />
+                                }
+                                label={t("settings.notificationsEnable")}
+                            />
+                            {togglingPush && (
+                                <CircularProgress
+                                    size={18}
+                                    data-testid="settings-notifications-spinner"
+                                />
+                            )}
+                        </Box>
+
+                        {effectiveEnabled && (
+                            <TextField
+                                type="number"
+                                fullWidth
+                                size="small"
+                                sx={{ mt: 1 }}
+                                label={t("settings.notificationsLeadDays")}
+                                helperText={t("settings.notificationsLeadHelp")}
+                                value={leadDays}
+                                disabled={updateNotifications.isPending}
+                                onChange={(e) => setLeadDays(e.target.value)}
+                                onBlur={handleLeadDaysBlur}
+                                slotProps={{
+                                    htmlInput: {
+                                        min: 0,
+                                        max: 365,
+                                        "data-testid":
+                                            "settings-notifications-lead-input",
+                                    },
+                                }}
+                            />
+                        )}
+                    </CardContent>
+                </Card>
+            </Container>
+        </>
     );
 }

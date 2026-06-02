@@ -1,10 +1,4 @@
-import {
-    Add,
-    ChevronRight,
-    KitchenOutlined,
-    RestaurantOutlined,
-    TimerOutlined,
-} from "@mui/icons-material";
+import { Add, ChevronRight } from "@mui/icons-material";
 import {
     Box,
     Card,
@@ -16,7 +10,6 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemIcon,
     ListItemText,
     Stack,
     Typography,
@@ -32,11 +25,21 @@ import { useHouseholdInventories } from "../../features/inventories/useHousehold
 import { useHouseholdLists } from "../../features/lists/useHouseholdLists";
 import { useLongPress } from "../../hooks/useLongPress";
 import { HeroImage } from "../common/HeroImage";
+import {
+    formatLocalDate,
+    getExpiryColor,
+    getExpiryInfo,
+} from "../../utils/dateUtils";
+import { sectionColors } from "../../theme";
+import { sectionIcons } from "../../common/sections";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    // getExpiryInfo expects a plain (key) => string; the i18n t has stricter overloads.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const translateKey = (key: string): string => t(key as any);
 
     // Local storage key for expanded sections
     const EXPANDED_SECTIONS_KEY = "frigorino-welcome-expanded-sections";
@@ -115,12 +118,16 @@ export const WelcomePage = () => {
         }
     };
 
+    const ListsIcon = sectionIcons.lists;
+    const InventoryIcon = sectionIcons.inventory;
+    const RecipesIcon = sectionIcons.recipes;
+
     const collections = [
         {
             id: "einkaufslisten",
             label: t("lists.shoppingLists"),
-            icon: <KitchenOutlined />,
-            color: "#2196F3",
+            icon: <ListsIcon />,
+            color: sectionColors.lists,
             items: listsLoading
                 ? [
                       {
@@ -133,10 +140,8 @@ export const WelcomePage = () => {
                 : lists.length > 0
                   ? lists.map((list) => ({
                         name: list.name || "Unnamed List",
-                        count: `${list.checkedCount}/${list.uncheckedCount} ${t("dashboard.articles")}`,
-                        status: new Date(list.createdAt!).toLocaleDateString(
-                            "de-DE",
-                        ),
+                        count: `${list.uncheckedCount} ${t("dashboard.open")}`,
+                        status: `${list.uncheckedCount + list.checkedCount} ${t("dashboard.itemsTotal")}`,
                         id: list.id,
                     }))
                   : [
@@ -151,8 +156,8 @@ export const WelcomePage = () => {
         {
             id: "inventar",
             label: t("navigation.inventory"),
-            icon: <TimerOutlined />,
-            color: "#FF9800",
+            icon: <InventoryIcon />,
+            color: sectionColors.inventory,
             items: inventoriesLoading
                 ? [
                       {
@@ -163,16 +168,29 @@ export const WelcomePage = () => {
                       },
                   ]
                 : inventories.length > 0
-                  ? inventories.map((inventory) => ({
-                        name: inventory.name || "Unnamed Inventory",
-                        count: `${inventory.totalItems || 0} ${t("dashboard.items")}`,
-                        status:
-                            inventory.expiringItems &&
-                            inventory.expiringItems > 0
-                                ? `${inventory.expiringItems} ${t("dashboard.expiring")}`
-                                : t("common.current"),
-                        id: inventory.id,
-                    }))
+                  ? inventories.map((inventory) => {
+                        const expiry = inventory.earliestExpiryDate;
+                        const expiryChip = expiry
+                            ? {
+                                  label:
+                                      getExpiryInfo(expiry, translateKey)
+                                          .humanReadable ||
+                                      formatLocalDate(expiry),
+                                  color: getExpiryColor(expiry),
+                              }
+                            : null;
+                        return {
+                            name: inventory.name || "Unnamed Inventory",
+                            count: `${inventory.totalItems || 0} ${t("dashboard.items")}`,
+                            status:
+                                inventory.expiringItems &&
+                                inventory.expiringItems > 0
+                                    ? `${inventory.expiringItems} ${t("dashboard.expiring")}`
+                                    : t("common.current"),
+                            id: inventory.id,
+                            expiryChip,
+                        };
+                    })
                   : [
                         {
                             name: t("inventory.noInventoriesYet"),
@@ -185,8 +203,8 @@ export const WelcomePage = () => {
         {
             id: "rezepte",
             label: t("dashboard.recipes"),
-            icon: <RestaurantOutlined />,
-            color: "#4CAF50",
+            icon: <RecipesIcon />,
+            color: sectionColors.recipes,
             items: [
                 {
                     name: t("dashboard.comingSoon"),
@@ -314,7 +332,7 @@ export const WelcomePage = () => {
                                             sx={{
                                                 p: 1.5,
                                                 borderRadius: 2,
-                                                bgcolor: `${collection.color}15`,
+                                                bgcolor: "action.hover",
                                                 color: collection.color,
                                                 display: "flex",
                                                 alignItems: "center",
@@ -349,12 +367,11 @@ export const WelcomePage = () => {
                                                 handleAddItem(collection.id);
                                             }}
                                             sx={{
-                                                bgcolor: `${collection.color}15`,
-                                                color: collection.color,
+                                                color: "text.secondary",
                                                 width: 32,
                                                 height: 32,
                                                 "&:hover": {
-                                                    bgcolor: `${collection.color}25`,
+                                                    bgcolor: "action.hover",
                                                 },
                                             }}
                                         >
@@ -378,11 +395,11 @@ export const WelcomePage = () => {
                                                 }
                                             }}
                                             sx={{
-                                                color: collection.color,
+                                                color: "text.secondary",
                                                 width: 32,
                                                 height: 32,
                                                 "&:hover": {
-                                                    bgcolor: `${collection.color}15`,
+                                                    bgcolor: "action.hover",
                                                 },
                                             }}
                                         >
@@ -452,20 +469,6 @@ export const WelcomePage = () => {
                                                             : undefined
                                                     }
                                                 >
-                                                    <ListItemIcon
-                                                        sx={{ minWidth: 36 }}
-                                                    >
-                                                        <Box
-                                                            sx={{
-                                                                width: 8,
-                                                                height: 8,
-                                                                borderRadius:
-                                                                    "50%",
-                                                                bgcolor:
-                                                                    collection.color,
-                                                            }}
-                                                        />
-                                                    </ListItemIcon>
                                                     <ListItemText
                                                         primary={
                                                             <Box
@@ -486,21 +489,56 @@ export const WelcomePage = () => {
                                                                 >
                                                                     {item.name}
                                                                 </Typography>
-                                                                <Chip
-                                                                    label={
-                                                                        item.count
-                                                                    }
-                                                                    size="small"
-                                                                    variant="outlined"
+                                                                <Box
                                                                     sx={{
-                                                                        fontSize:
-                                                                            "0.7rem",
-                                                                        height: 20,
+                                                                        display:
+                                                                            "flex",
+                                                                        alignItems:
+                                                                            "center",
+                                                                        gap: 0.5,
                                                                     }}
-                                                                />
+                                                                >
+                                                                    {"expiryChip" in
+                                                                        item &&
+                                                                        item.expiryChip && (
+                                                                            <Chip
+                                                                                label={
+                                                                                    item
+                                                                                        .expiryChip
+                                                                                        .label
+                                                                                }
+                                                                                size="small"
+                                                                                variant="outlined"
+                                                                                sx={{
+                                                                                    fontSize:
+                                                                                        "0.7rem",
+                                                                                    height: 20,
+                                                                                    color: item
+                                                                                        .expiryChip
+                                                                                        .color,
+                                                                                    borderColor:
+                                                                                        item
+                                                                                            .expiryChip
+                                                                                            .color,
+                                                                                }}
+                                                                            />
+                                                                        )}
+                                                                    <Chip
+                                                                        label={
+                                                                            item.count
+                                                                        }
+                                                                        size="small"
+                                                                        variant="outlined"
+                                                                        sx={{
+                                                                            fontSize:
+                                                                                "0.7rem",
+                                                                            height: 20,
+                                                                        }}
+                                                                    />
+                                                                </Box>
                                                             </Box>
                                                         }
-                                                        secondary={item.count}
+                                                        secondary={item.status}
                                                     />
                                                 </ListItem>
                                             );

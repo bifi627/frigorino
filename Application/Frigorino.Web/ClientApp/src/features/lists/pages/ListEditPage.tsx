@@ -1,19 +1,12 @@
-import { ArrowBack, Delete, MoreVert } from "@mui/icons-material";
-import {
-    Alert,
-    Box,
-    Container,
-    IconButton,
-    ListItemIcon,
-    ListItemText,
-    Menu,
-    MenuItem,
-    Skeleton,
-    Typography,
-} from "@mui/material";
-import { useParams, useRouter } from "@tanstack/react-router";
+import { Delete } from "@mui/icons-material";
+import { Alert, Box, Container, Skeleton } from "@mui/material";
+import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    PageHeadActionBar,
+    type HeadNavigationAction,
+} from "../../../components/shared/PageHeadActionBar";
 import { pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteListConfirmDialog } from "../components/DeleteListConfirmDialog";
@@ -21,13 +14,11 @@ import { EditListForm } from "../components/EditListForm";
 import { useList } from "../useList";
 
 export const ListEditPage = () => {
-    const router = useRouter();
     const { listId } = useParams({ from: "/lists/$listId/edit" });
     const { t } = useTranslation();
     const listIdNum = parseInt(listId, 10);
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
     const {
         currentHousehold,
@@ -47,14 +38,7 @@ export const ListEditPage = () => {
         hasActiveHousehold && !isNaN(listIdNum),
     );
 
-    const handleBack = () => router.history.back();
-    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) =>
-        setMenuAnchor(event.currentTarget);
-    const handleMenuClose = () => setMenuAnchor(null);
-    const handleDeleteClick = () => {
-        setDeleteDialogOpen(true);
-        handleMenuClose();
-    };
+    const handleDeleteClick = () => setDeleteDialogOpen(true);
 
     const isLoading = householdLoading || listLoading;
     const error = householdError || listError;
@@ -107,80 +91,37 @@ export const ListEditPage = () => {
 
     const listName = list.name || t("lists.untitledList");
 
+    const menuActions: HeadNavigationAction[] = [
+        {
+            text: t("lists.deleteList"),
+            icon: <Delete fontSize="small" color="error" />,
+            onClick: handleDeleteClick,
+            color: "error",
+        },
+    ];
+
     return (
-        <Container maxWidth="md" sx={pageContainerSx}>
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: { xs: 1, sm: 2 },
-                    mb: { xs: 2, sm: 3 },
-                }}
-            >
-                <IconButton onClick={handleBack}>
-                    <ArrowBack />
-                </IconButton>
+        <>
+            <PageHeadActionBar
+                title={t("lists.editList")}
+                section="lists"
+                maxWidth="md"
+                directActions={[]}
+                menuActions={menuActions}
+            />
+            <Container maxWidth="md" sx={pageContainerSx}>
+                <EditListForm householdId={householdId} list={list} />
 
-                <Typography
-                    variant="h5"
-                    component="h1"
-                    sx={{ fontWeight: 600, flexGrow: 1 }}
-                >
-                    {t("lists.editList")}
-                </Typography>
-
-                <IconButton
-                    onClick={handleMenuClick}
-                    size="small"
-                    sx={{
-                        bgcolor: "background.paper",
-                        border: 1,
-                        borderColor: "divider",
-                        "&:hover": { bgcolor: "action.hover" },
-                    }}
-                >
-                    <MoreVert fontSize="small" />
-                </IconButton>
-            </Box>
-
-            <EditListForm householdId={householdId} list={list} />
-
-            <Menu
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                elevation={4}
-                slotProps={{ paper: { sx: { minWidth: 200, mt: 1 } } }}
-            >
-                <MenuItem
-                    onClick={handleDeleteClick}
-                    sx={{
-                        color: "error.main",
-                        py: 1.5,
-                        "&:hover": {
-                            bgcolor: "error.light",
-                            color: "error.contrastText",
-                        },
-                    }}
-                >
-                    <ListItemIcon>
-                        <Delete fontSize="small" color="error" />
-                    </ListItemIcon>
-                    <ListItemText primary={t("lists.deleteList")} />
-                </MenuItem>
-            </Menu>
-
-            {list.id && (
-                <DeleteListConfirmDialog
-                    open={deleteDialogOpen}
-                    onClose={() => setDeleteDialogOpen(false)}
-                    householdId={householdId}
-                    listId={list.id}
-                    listName={listName}
-                />
-            )}
-        </Container>
+                {list.id && (
+                    <DeleteListConfirmDialog
+                        open={deleteDialogOpen}
+                        onClose={() => setDeleteDialogOpen(false)}
+                        householdId={householdId}
+                        listId={list.id}
+                        listName={listName}
+                    />
+                )}
+            </Container>
+        </>
     );
 };
