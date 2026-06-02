@@ -470,76 +470,64 @@ export const WelcomePage = () => {
                                                     }
                                                 >
                                                     <ListItemText
+                                                        sx={{ my: 0 }}
                                                         primary={
-                                                            <Box
+                                                            <Typography
+                                                                variant="body2"
                                                                 sx={{
-                                                                    display:
-                                                                        "flex",
-                                                                    justifyContent:
-                                                                        "space-between",
-                                                                    alignItems:
-                                                                        "center",
+                                                                    fontWeight: 500,
                                                                 }}
                                                             >
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{
-                                                                        fontWeight: 500,
-                                                                    }}
-                                                                >
-                                                                    {item.name}
-                                                                </Typography>
-                                                                <Box
-                                                                    sx={{
-                                                                        display:
-                                                                            "flex",
-                                                                        alignItems:
-                                                                            "center",
-                                                                        gap: 0.5,
-                                                                    }}
-                                                                >
-                                                                    {"expiryChip" in
-                                                                        item &&
-                                                                        item.expiryChip && (
-                                                                            <Chip
-                                                                                label={
-                                                                                    item
-                                                                                        .expiryChip
-                                                                                        .label
-                                                                                }
-                                                                                size="small"
-                                                                                variant="outlined"
-                                                                                sx={{
-                                                                                    fontSize:
-                                                                                        "0.7rem",
-                                                                                    height: 20,
-                                                                                    color: item
-                                                                                        .expiryChip
-                                                                                        .color,
-                                                                                    borderColor:
-                                                                                        item
-                                                                                            .expiryChip
-                                                                                            .color,
-                                                                                }}
-                                                                            />
-                                                                        )}
-                                                                    <Chip
-                                                                        label={
-                                                                            item.count
-                                                                        }
-                                                                        size="small"
-                                                                        variant="outlined"
-                                                                        sx={{
-                                                                            fontSize:
-                                                                                "0.7rem",
-                                                                            height: 20,
-                                                                        }}
-                                                                    />
-                                                                </Box>
-                                                            </Box>
+                                                                {item.name}
+                                                            </Typography>
                                                         }
                                                         secondary={item.status}
                                                     />
+                                                    <Box
+                                                        sx={{
+                                                            display: "flex",
+                                                            alignItems:
+                                                                "center",
+                                                            gap: 0.5,
+                                                            flexShrink: 0,
+                                                            ml: 1,
+                                                        }}
+                                                    >
+                                                        {"expiryChip" in item &&
+                                                            item.expiryChip && (
+                                                                <Chip
+                                                                    label={
+                                                                        item
+                                                                            .expiryChip
+                                                                            .label
+                                                                    }
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    sx={{
+                                                                        fontSize:
+                                                                            "0.7rem",
+                                                                        height: 20,
+                                                                        color: item
+                                                                            .expiryChip
+                                                                            .color,
+                                                                        borderColor:
+                                                                            item
+                                                                                .expiryChip
+                                                                                .color,
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        <Chip
+                                                            label={item.count}
+                                                            size="small"
+                                                            variant="outlined"
+                                                            sx={{
+                                                                fontSize:
+                                                                    "0.7rem",
+                                                                height: 20,
+                                                            }}
+                                                        />
+                                                    </Box>
                                                 </ListItem>
                                             );
                                         })}

@@ -1,7 +1,7 @@
-import { Box, Chip, Link, ListItemText, Typography } from "@mui/material";
+import { Box, Link, ListItemText, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { formatQuantity } from "../../../../components/composer";
+import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
 import { useLongPress } from "../../../../hooks/useLongPress";
 import type { ListItemResponse } from "../../../../lib/api";
 
@@ -47,15 +47,10 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                             gap: 0.5,
                         }}
                     >
-                        <Chip
-                            size="small"
-                            variant="outlined"
-                            data-testid={`list-item-quantity-${item.text}`}
-                            label={formatQuantity(t, item.quantity)}
+                        <ItemQuantityChip
+                            quantity={item.quantity}
                             onClick={onEditQuantity}
-                            sx={{
-                                height: 20,
-                            }}
+                            testId={`list-item-quantity-${item.text}`}
                         />
                     </Box>
                 ) : null
