@@ -24,6 +24,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<InventorySettings> InventorySettings { get; set; }
         public DbSet<FcmToken> FcmTokens { get; set; }
         public DbSet<NotificationDispatch> NotificationDispatches { get; set; }
+        public DbSet<UserInventoryNotificationSetting> UserInventoryNotificationSettings { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -120,6 +121,12 @@ namespace Frigorino.Infrastructure.EntityFramework
                         fcmTokenAdded.CreatedAt = now;
                         fcmTokenAdded.LastSeenAt = now;
                     }
+
+                    if (entry.Entity is UserInventoryNotificationSetting uins && uins.CreatedAt == default)
+                    {
+                        uins.CreatedAt = now;
+                        uins.UpdatedAt = now;
+                    }
                 }
                 else if (entry.State == EntityState.Modified)
                 {
@@ -171,6 +178,11 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is FcmToken fcmTokenModified)
                     {
                         fcmTokenModified.LastSeenAt = now;
+                    }
+
+                    if (entry.Entity is UserInventoryNotificationSetting uinsModified)
+                    {
+                        uinsModified.UpdatedAt = now;
                     }
                 }
             }
