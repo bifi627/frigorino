@@ -32,11 +32,19 @@ import { useHouseholdInventories } from "../../features/inventories/useHousehold
 import { useHouseholdLists } from "../../features/lists/useHouseholdLists";
 import { useLongPress } from "../../hooks/useLongPress";
 import { HeroImage } from "../common/HeroImage";
+import {
+    formatLocalDate,
+    getExpiryColor,
+    getExpiryInfo,
+} from "../../utils/dateUtils";
 
 export const WelcomePage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    // getExpiryInfo expects a plain (key) => string; the i18n t has stricter overloads.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const translateKey = (key: string): string => t(key as any);
 
     // Local storage key for expanded sections
     const EXPANDED_SECTIONS_KEY = "frigorino-welcome-expanded-sections";
@@ -161,16 +169,29 @@ export const WelcomePage = () => {
                       },
                   ]
                 : inventories.length > 0
-                  ? inventories.map((inventory) => ({
-                        name: inventory.name || "Unnamed Inventory",
-                        count: `${inventory.totalItems || 0} ${t("dashboard.items")}`,
-                        status:
-                            inventory.expiringItems &&
-                            inventory.expiringItems > 0
-                                ? `${inventory.expiringItems} ${t("dashboard.expiring")}`
-                                : t("common.current"),
-                        id: inventory.id,
-                    }))
+                  ? inventories.map((inventory) => {
+                        const expiry = inventory.earliestExpiryDate;
+                        const expiryChip = expiry
+                            ? {
+                                  label:
+                                      getExpiryInfo(expiry, translateKey)
+                                          .humanReadable ||
+                                      formatLocalDate(expiry),
+                                  color: getExpiryColor(expiry),
+                              }
+                            : null;
+                        return {
+                            name: inventory.name || "Unnamed Inventory",
+                            count: `${inventory.totalItems || 0} ${t("dashboard.items")}`,
+                            status:
+                                inventory.expiringItems &&
+                                inventory.expiringItems > 0
+                                    ? `${inventory.expiringItems} ${t("dashboard.expiring")}`
+                                    : t("common.current"),
+                            id: inventory.id,
+                            expiryChip,
+                        };
+                    })
                   : [
                         {
                             name: t("inventory.noInventoriesYet"),
@@ -484,18 +505,53 @@ export const WelcomePage = () => {
                                                                 >
                                                                     {item.name}
                                                                 </Typography>
-                                                                <Chip
-                                                                    label={
-                                                                        item.count
-                                                                    }
-                                                                    size="small"
-                                                                    variant="outlined"
+                                                                <Box
                                                                     sx={{
-                                                                        fontSize:
-                                                                            "0.7rem",
-                                                                        height: 20,
+                                                                        display:
+                                                                            "flex",
+                                                                        alignItems:
+                                                                            "center",
+                                                                        gap: 0.5,
                                                                     }}
-                                                                />
+                                                                >
+                                                                    {"expiryChip" in
+                                                                        item &&
+                                                                        item.expiryChip && (
+                                                                            <Chip
+                                                                                label={
+                                                                                    item
+                                                                                        .expiryChip
+                                                                                        .label
+                                                                                }
+                                                                                size="small"
+                                                                                variant="outlined"
+                                                                                sx={{
+                                                                                    fontSize:
+                                                                                        "0.7rem",
+                                                                                    height: 20,
+                                                                                    color: item
+                                                                                        .expiryChip
+                                                                                        .color,
+                                                                                    borderColor:
+                                                                                        item
+                                                                                            .expiryChip
+                                                                                            .color,
+                                                                                }}
+                                                                            />
+                                                                        )}
+                                                                    <Chip
+                                                                        label={
+                                                                            item.count
+                                                                        }
+                                                                        size="small"
+                                                                        variant="outlined"
+                                                                        sx={{
+                                                                            fontSize:
+                                                                                "0.7rem",
+                                                                            height: 20,
+                                                                        }}
+                                                                    />
+                                                                </Box>
                                                             </Box>
                                                         }
                                                         secondary={item.status}
