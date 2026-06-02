@@ -14,15 +14,13 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void NotificationDispatch_Create_SetsKey()
+        public void NotificationDispatch_Create_Sets_Keys()
         {
-            var sentOn = new DateOnly(2026, 6, 1);
+            var d = NotificationDispatch.Create("user-1", 99, new DateOnly(2026, 6, 2));
 
-            var dispatch = NotificationDispatch.Create("user-1", householdId: 7, sentOn);
-
-            Assert.Equal("user-1", dispatch.UserId);
-            Assert.Equal(7, dispatch.HouseholdId);
-            Assert.Equal(sentOn, dispatch.SentOn);
+            Assert.Equal("user-1", d.UserId);
+            Assert.Equal(99, d.InventoryId);
+            Assert.Equal(new DateOnly(2026, 6, 2), d.SentOn);
         }
     }
 }

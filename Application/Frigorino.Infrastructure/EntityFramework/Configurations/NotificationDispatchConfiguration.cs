@@ -14,8 +14,8 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .HasMaxLength(128)
                 .IsRequired();
 
-            // At most one digest per user-household-day.
-            builder.HasIndex(d => new { d.UserId, d.HouseholdId, d.SentOn }).IsUnique();
+            // At most one notification per user-inventory-day.
+            builder.HasIndex(d => new { d.UserId, d.InventoryId, d.SentOn }).IsUnique();
         }
     }
 }

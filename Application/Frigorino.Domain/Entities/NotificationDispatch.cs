@@ -1,20 +1,20 @@
 namespace Frigorino.Domain.Entities
 {
-    // De-dup ledger: at most one digest per (user, household, day). A unique index on
-    // (UserId, HouseholdId, SentOn) makes the scan idempotent across re-triggers / double fires.
+    // De-dup ledger: at most one notification per (user, inventory, day). A unique index on
+    // (UserId, InventoryId, SentOn) makes the scan idempotent across re-triggers / double fires.
     public class NotificationDispatch
     {
         public int Id { get; set; }
         public string UserId { get; set; } = string.Empty;
-        public int HouseholdId { get; set; }
+        public int InventoryId { get; set; }
         public DateOnly SentOn { get; set; }
 
-        public static NotificationDispatch Create(string userId, int householdId, DateOnly sentOn)
+        public static NotificationDispatch Create(string userId, int inventoryId, DateOnly sentOn)
         {
             return new NotificationDispatch
             {
                 UserId = userId,
-                HouseholdId = householdId,
+                InventoryId = inventoryId,
                 SentOn = sentOn,
             };
         }
