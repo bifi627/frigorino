@@ -94,8 +94,9 @@ export const ListEditPage = () => {
     const menuActions: HeadNavigationAction[] = [
         {
             text: t("lists.deleteList"),
-            icon: <Delete fontSize="small" />,
+            icon: <Delete fontSize="small" color="error" />,
             onClick: handleDeleteClick,
+            color: "error",
         },
     ];
 

@@ -97,8 +97,9 @@ export const InventoryEditPage = () => {
     const menuActions: HeadNavigationAction[] = [
         {
             text: t("inventory.deleteInventory"),
-            icon: <Delete fontSize="small" />,
+            icon: <Delete fontSize="small" color="error" />,
             onClick: handleDeleteClick,
+            color: "error",
         },
     ];
 

@@ -19,6 +19,9 @@ export type HeadNavigationAction = {
     icon?: React.ReactNode;
     onClick: () => void;
     testId?: string;
+    // "error" renders the menu item in the destructive (red) color, matching the
+    // overview cards' delete styling so destructive actions look consistent everywhere.
+    color?: "error";
 };
 
 export interface HeadNavigationProps {
@@ -162,6 +165,11 @@ export const PageHeadActionBar = memo(
                                 key={index}
                                 onClick={() => handleMenuAction(action)}
                                 data-testid={action.testId}
+                                sx={
+                                    action.color === "error"
+                                        ? { color: "error.main" }
+                                        : undefined
+                                }
                             >
                                 {action.icon && (
                                     <ListItemIcon>{action.icon}</ListItemIcon>

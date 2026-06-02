@@ -80,9 +80,10 @@ export function ManageHouseholdPage() {
         ? [
               {
                   text: t("household.deleteHousehold"),
-                  icon: <Delete fontSize="small" />,
+                  icon: <Delete fontSize="small" color="error" />,
                   onClick: () => setDeleteDialogOpen(true),
                   testId: "household-manage-menu-delete",
+                  color: "error",
               },
           ]
         : [];
