@@ -260,9 +260,9 @@
         "checkedItemRetentionDays": "Erledigte Einträge behalten (Tage)",
         "checkedItemRetentionHelp": "Tage, die erledigte Listeneinträge aufbewahrt werden, bevor sie entfernt werden.",
         "inventorySettings": "Inventareinstellungen",
-        "expiryLeadOverride": "Vorlaufzeit für Ablauf-Erinnerung überschreiben",
+        "expiryLeadOverride": "Meine Vorlaufzeit überschreiben",
         "expiryLeadDays": "Vorlaufzeit (Tage)",
-        "expiryLeadHelp": "Tage vor Ablauf, ab denen für dieses Inventar erinnert wird.",
+        "expiryLeadHelp": "Tage vor Ablauf, an denen ich für dieses Inventar erinnert werde.",
         "saved": "Einstellungen gespeichert",
         "saveFailed": "Einstellungen konnten nicht gespeichert werden",
         "readOnlyHint": "Nur Eigentümer und Admins können dies ändern.",
@@ -273,7 +273,7 @@
         "notificationsPermissionDenied": "Benachrichtigungsberechtigung wurde verweigert.",
         "notificationsToggleFailed": "Benachrichtigungen konnten nicht aktualisiert werden. Prüfe die Benachrichtigungsberechtigung deines Browsers und versuche es erneut.",
         "notificationsIosHint": "Füge Frigorino zum Startbildschirm hinzu, um Benachrichtigungen auf iOS zu aktivieren.",
-        "inventoryNotificationsEnable": "Ablauf-Erinnerungen für dieses Inventar",
+        "inventoryNotificationsEnable": "Mich über dieses Inventar benachrichtigen",
         "inventoryNotificationsRequiresGlobal": "Ablauf-Erinnerungen sind in deinen Benutzereinstellungen deaktiviert — aktiviere sie dort, um diese tatsächlich zu erhalten."
     }
 }

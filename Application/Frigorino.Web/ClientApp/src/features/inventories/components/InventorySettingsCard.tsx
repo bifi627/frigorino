@@ -11,49 +11,41 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useUserSettings } from "../../settings/useUserSettings";
-import { useInventorySettings } from "../useInventorySettings";
-import { useUpdateInventorySettings } from "../useUpdateInventorySettings";
+import { useMyInventoryNotification } from "../useMyInventoryNotification";
+import { useUpdateMyInventoryNotification } from "../useUpdateMyInventoryNotification";
 
 interface Props {
     householdId: number;
     inventoryId: number;
-    canManage: boolean;
 }
 
-export function InventorySettingsCard({
-    householdId,
-    inventoryId,
-    canManage,
-}: Props) {
+export function InventorySettingsCard({ householdId, inventoryId }: Props) {
     const { t } = useTranslation();
-    const { data } = useInventorySettings(householdId, inventoryId);
+    const { data } = useMyInventoryNotification(householdId, inventoryId);
     const { data: userSettings, isSuccess: userSettingsLoaded } =
         useUserSettings();
     const globalNotificationsEnabled =
         userSettings?.expiryNotificationsEnabled ?? false;
-    const updateSettings = useUpdateInventorySettings();
+    const update = useUpdateMyInventoryNotification();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [override, setOverride] = useState(false);
     const [value, setValue] = useState("7");
 
     useEffect(() => {
         if (data) {
-            setNotificationsEnabled(data.expiryNotificationsEnabled);
-            setOverride(data.expiryLeadDays !== null);
-            if (data.expiryLeadDays !== null) {
-                setValue(String(data.expiryLeadDays));
+            setNotificationsEnabled(data.enabled);
+            setOverride(data.leadDays !== null);
+            if (data.leadDays !== null) {
+                setValue(String(data.leadDays));
             }
         }
     }, [data]);
 
-    const save = async (
-        expiryNotificationsEnabled: boolean,
-        leadDays: number | null,
-    ) => {
+    const save = async (enabled: boolean, leadDays: number | null) => {
         try {
-            await updateSettings.mutateAsync({
+            await update.mutateAsync({
                 path: { householdId, inventoryId },
-                body: { expiryNotificationsEnabled, expiryLeadDays: leadDays },
+                body: { enabled, leadDays },
             });
             toast.success(t("settings.saved"));
         } catch {
@@ -76,7 +68,7 @@ export function InventorySettingsCard({
         if (!override || !Number.isInteger(days) || days < 0) {
             return;
         }
-        if (data && data.expiryLeadDays === days) {
+        if (data && data.leadDays === days) {
             return;
         }
         await save(notificationsEnabled, days);
@@ -102,7 +94,7 @@ export function InventorySettingsCard({
                         <Switch
                             data-testid="inventory-notifications-switch"
                             checked={notificationsEnabled}
-                            disabled={!canManage || updateSettings.isPending}
+                            disabled={update.isPending}
                             onChange={(e) =>
                                 handleNotificationsToggle(e.target.checked)
                             }
@@ -115,7 +107,7 @@ export function InventorySettingsCard({
                         <Switch
                             data-testid="inventory-expiry-override-switch"
                             checked={override}
-                            disabled={!canManage || updateSettings.isPending}
+                            disabled={update.isPending}
                             onChange={(e) => handleToggle(e.target.checked)}
                         />
                     }
@@ -130,7 +122,7 @@ export function InventorySettingsCard({
                         label={t("settings.expiryLeadDays")}
                         helperText={t("settings.expiryLeadHelp")}
                         value={value}
-                        disabled={!canManage || updateSettings.isPending}
+                        disabled={update.isPending}
                         onChange={(e) => setValue(e.target.value)}
                         onBlur={handleBlur}
                         slotProps={{
