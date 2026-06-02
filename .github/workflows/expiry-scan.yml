@@ -12,14 +12,23 @@ permissions:
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    # One independent leg per environment URL. EXPIRY_SCAN_URLS is a JSON array repo
+    # variable, e.g. ["https://stage…/internal/expiry-scan","https://prod…/internal/expiry-scan"].
+    # Add an environment by editing the variable — no workflow change. The same
+    # MAINTENANCE_TRIGGER_TOKEN secret is reused across environments. fail-fast is off
+    # so one environment being down does not cancel the scan for the others.
+    strategy:
+      fail-fast: false
+      matrix:
+        url: ${{ fromJSON(vars.EXPIRY_SCAN_URLS) }}
     steps:
       - name: POST /internal/expiry-scan
         env:
-          SCAN_URL: ${{ vars.EXPIRY_SCAN_URL }}
+          SCAN_URL: ${{ matrix.url }}
           TRIGGER_TOKEN: ${{ secrets.MAINTENANCE_TRIGGER_TOKEN }}
         run: |
           if [ -z "$SCAN_URL" ] || [ -z "$TRIGGER_TOKEN" ]; then
-            echo "EXPIRY_SCAN_URL var or MAINTENANCE_TRIGGER_TOKEN secret not set." >&2
+            echo "EXPIRY_SCAN_URLS var or MAINTENANCE_TRIGGER_TOKEN secret not set." >&2
             exit 1
           fi
           curl --fail --silent --show-error \

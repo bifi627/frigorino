@@ -1,7 +1,9 @@
 import {
     Alert,
+    Box,
     Card,
     CardContent,
+    CircularProgress,
     Container,
     FormControlLabel,
     MenuItem,
@@ -37,6 +39,10 @@ export function UserSettingsPage() {
     const [leadDays, setLeadDays] = useState("3");
     const [supported, setSupported] = useState(true);
     const [iosHint, setIosHint] = useState(false);
+    // Covers the push enable/disable round-trip (permission prompt + token mint /
+    // delete), which lives outside the mutation's isPending — so the switch shows a
+    // spinner and stays disabled while it runs, and failures surface as a toast.
+    const [togglingPush, setTogglingPush] = useState(false);
 
     const currentLanguage = data?.language ?? i18n.language;
 
@@ -80,17 +86,27 @@ export function UserSettingsPage() {
     };
 
     const handleToggleNotifications = async (checked: boolean) => {
-        if (checked) {
-            const ok = await enablePush();
-            if (!ok) {
-                toast.error(t("settings.notificationsPermissionDenied"));
-                return;
+        setTogglingPush(true);
+        try {
+            if (checked) {
+                const ok = await enablePush();
+                if (!ok) {
+                    toast.error(t("settings.notificationsPermissionDenied"));
+                    return;
+                }
+            } else {
+                await disablePush();
             }
-        } else {
-            await disablePush();
+            setEnabled(checked);
+            await persistNotifications(checked, Number(leadDays));
+        } catch {
+            // enablePush/disablePush can throw (e.g. AbortError when the browser's
+            // push service rejects token minting); persistNotifications swallows its
+            // own errors, so anything reaching here is the push round-trip failing.
+            toast.error(t("settings.notificationsToggleFailed"));
+        } finally {
+            setTogglingPush(false);
         }
-        setEnabled(checked);
-        await persistNotifications(checked, Number(leadDays));
     };
 
     const handleLeadDaysBlur = async () => {
@@ -157,21 +173,33 @@ export function UserSettingsPage() {
                         </Alert>
                     )}
 
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                data-testid="settings-notifications-switch"
-                                checked={enabled}
-                                disabled={
-                                    !supported || updateNotifications.isPending
-                                }
-                                onChange={(e) =>
-                                    handleToggleNotifications(e.target.checked)
-                                }
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    data-testid="settings-notifications-switch"
+                                    checked={enabled}
+                                    disabled={
+                                        !supported ||
+                                        togglingPush ||
+                                        updateNotifications.isPending
+                                    }
+                                    onChange={(e) =>
+                                        handleToggleNotifications(
+                                            e.target.checked,
+                                        )
+                                    }
+                                />
+                            }
+                            label={t("settings.notificationsEnable")}
+                        />
+                        {togglingPush && (
+                            <CircularProgress
+                                size={18}
+                                data-testid="settings-notifications-spinner"
                             />
-                        }
-                        label={t("settings.notificationsEnable")}
-                    />
+                        )}
+                    </Box>
 
                     {enabled && (
                         <TextField
