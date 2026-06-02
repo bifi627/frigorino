@@ -362,18 +362,6 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryUpdateInventorySettingsAsync(int inventoryId, int? expiryLeadDays, int? householdId = null)
-    {
-        var targetHouseholdId = householdId ?? ctx.HouseholdId;
-        return ctx.BrowserContext.APIRequest.PutAsync(
-            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/settings",
-            new APIRequestContextOptions
-            {
-                DataObject = new { expiryLeadDays },
-                Headers = AuthHeaders,
-            });
-    }
-
     // ---- Per-user inventory notification preferences ----
 
     public Task<IAPIResponse> TryGetMyInventoryNotificationAsync(int inventoryId, int? householdId = null)
