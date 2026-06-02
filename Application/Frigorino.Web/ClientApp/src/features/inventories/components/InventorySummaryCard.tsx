@@ -10,7 +10,13 @@ import {
     List as MuiList,
     Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import type { InventoryResponse } from "../../../lib/api";
+import {
+    formatLocalDate,
+    getExpiryColor,
+    getExpiryInfo,
+} from "../../../utils/dateUtils";
 
 interface InventorySummaryCardProps {
     inventory: InventoryResponse;
@@ -35,6 +41,17 @@ export const InventorySummaryCard = ({
     onMenuOpen,
     menuDisabled = false,
 }: InventorySummaryCardProps) => {
+    const { t } = useTranslation();
+    // getExpiryInfo expects a plain (key) => string; the i18n t has stricter overloads.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const translateKey = (key: string): string => t(key as any);
+
+    const expiry = inventory.earliestExpiryDate;
+    const expiryLabel = expiry
+        ? getExpiryInfo(expiry, translateKey).humanReadable ||
+          formatLocalDate(expiry)
+        : null;
+
     return (
         <Card elevation={1}>
             <CardContent sx={{ py: 2 }}>
@@ -55,6 +72,18 @@ export const InventorySummaryCard = ({
                                     gap: 1,
                                 }}
                             >
+                                {expiry && expiryLabel && (
+                                    <Chip
+                                        label={expiryLabel}
+                                        size="small"
+                                        variant="outlined"
+                                        data-testid={`inventory-earliest-expiry-${inventory.name}`}
+                                        sx={{
+                                            color: getExpiryColor(expiry),
+                                            borderColor: getExpiryColor(expiry),
+                                        }}
+                                    />
+                                )}
                                 <Chip
                                     label={
                                         inventory.createdAt
