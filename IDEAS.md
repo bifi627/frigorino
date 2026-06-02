@@ -26,19 +26,6 @@ Format per item:
 
 ---
 
-## Promote checked list items into inventory (classifier-driven)
-
-- **Status:** **Shipped** across four spec→plan→implement cycles — (1) async Channels runner, (2) classification engine (`Product` catalog aggregate + `ExpiryProfile` VO + `IItemClassifier`/OpenAI adapter via `Microsoft.Extensions.AI`), (2.5) quantity extraction, and (3) the promote-to-inventory UX (sticky bar + batch review sheet on check-off; spec `docs/superpowers/specs/2026-05-31-promote-to-inventory-ux-design.md`). The classifier catalog (`Product`, `ProductCategory`, `ExpiryProfile`) now lives in code; this entry is retained only for the enhancements deliberately left open below (and because other ideas `[[wikilink]]` to it).
-- **Deferred future doors:**
-  - **User-override layer (two-layer model).** `Product` was built with an AI-owned `Classification` layer only. The sparse, user-owned `Override` layer the classifier never touches — additive nullable columns + a "remember this for the product" UI, consumers reading the effective value `Override ?? Classification` — is not built. Ownership is structural (no source flag, no clobber-guard, reversible).
-  - **Learning from corrections.** Auto-promoting repeated per-instance edits (date/quantity tweaks a user makes in the promote review sheet) into product overrides. Today per-instance edits are not modeled back into the catalog.
-  - **More classification facets.** The `ProductClassification` composite is an additive seam — storage location / default unit / aisle category are each one enum + one column + one record field + one schema line (nothing existing rewritten; typed columns per facet, not EAV). A richer `ProductCategory` taxonomy + a `ClassifierVersion` bump to re-classify the catalog also unblocks [[AI-assisted list sorting (category blueprints)]] and smart inventory-target selection (the classifier call could return a Fridge/Pantry/Freezer hint to pick the target inventory — defer until a second inventory is the norm).
-  - **Cross-list promote batching.** The promote bar/store is scoped to the current list for MVP; batching pending promotes across multiple lists is a future enhancement.
-  - **localStorage TTL / cleanup.** Promote-batch entries persist (device-scoped, no DB row) until added / omitted / un-checked; a TTL or cleanup pass is deferred (acceptable for MVP given the small device-local footprint).
-  - **Vendor swap path.** If OpenAI ever needs replacing (cost / availability / EU residency), the `IItemClassifier` / `IChatClient` (`Microsoft.Extensions.AI`) layer keeps it a one-line DI change (Gemini 2.5 Flash-Lite / Mistral Small 3 were the noted GDPR / cost-floor fallbacks).
-
----
-
 ## Frontend business events (Faro `pushEvent`)
 
 - **Why:** Faro is wired and capturing pageviews + errors + Web Vitals automatically. What it doesn't yet give us is **which features people actually use** — when someone creates a household, switches active household, invites a member, etc. Without these, dashboards show traffic but not behaviour, and "did anyone use the new feature?" is unanswerable. This is the natural follow-up to the Faro rollout and the missing piece for a usable product-side view in Grafana's Frontend Observability dashboards.
@@ -59,22 +46,6 @@ Format per item:
 
 ---
 
-
-## Stale checked-item cleanup: schedule it + extend to inventories
-
-- **What already exists:** `Frigorino.Infrastructure.Tasks.DeleteInactiveItems` (`Application/Frigorino.Infrastructure/Tasks/DeleteInactiveItems.cs`) already hard-deletes soft-deleted Households/Inventories/Lists/InventoryItems and **checked `ListItems` where `UpdatedAt < UtcNow - 30 days`**. It's wired through `AddMaintenanceServices` (`Frigorino.Infrastructure/Services/MaintenanceDependencyInjection.cs`) and runs **once on app startup** via `MaintenanceHostedService` (a `BackgroundService` with a 5s delay). So the *idea* is half-done; the gaps below are what's missing.
-- **Why this needs follow-up:**
-  - **Triggered by deploys, not by time.** On Railway with sleep mode, the app may stay warm for days or sleep for days — cleanup cadence is unpredictable. Active users on a long-warm instance build up checked-item cruft until the next deploy.
-  - **No equivalent rule for `InventoryItems`.** Inventories often have items "consumed" (checked) that linger forever. The same staleness signal applies.
-  - **30-day threshold is a magic number** baked into the cleanup file. Should be a configurable setting (`Maintenance:StaleCheckedItemDays`) so households with different rhythms can tune it later (out of scope: per-household setting).
-- **Sketch:**
-  - Extend the query to cover `InventoryItems` with the same `IsChecked && UpdatedAt < threshold` rule. Verify `InventoryItem` actually has a `Status`/checked column — if it doesn't, the inventory side of this idea needs a separate "items have a consumed state" discussion first.
-  - Move the threshold into `appsettings.json` (`Maintenance:StaleCheckedItemDays`, default 30). Read via `IOptions<MaintenanceOptions>`.
-  - Both changes stay inside the existing `DeleteInactiveItems` task / `MaintenanceHostedService` startup batch. (Hangfire was trialled then reverted — see [[Async fire-and-forget runner (in-process Channels)]] — so there's no scheduler to migrate to; the startup batch is the sleep-safe home.)
-  - **Pairs with [[Undo on item delete]]:** if users can restore checked items via a snackbar, a 30-day hard-delete is fine (snackbar window is seconds, restore via "trash bin" is a separate future feature). If a trash bin lands later, this cleanup becomes the trash-bin TTL enforcer.
-- **Impact / cost:** ~half-day. Extend `DeleteInactiveItems` to cover `InventoryItems` and move the 30-day threshold into `appsettings.json` (`Maintenance:StaleCheckedItemDays`, via `IOptions`). No new packages, no schema change, no Hangfire. Reversible — the cleanup is a `DELETE` by predicate; narrow it if the rule is wrong.
-
----
 
 ## Rich list items: photos & documents (text / image / document)
 
@@ -100,21 +71,6 @@ Format per item:
 
 ---
 
-## User settings & household settings (infrastructure first)
-
-- **Why:** There's no home for preferences today. We can already foresee two distinct scopes: **user settings** (personal, e.g. language, notification prefs, default landing view — affect only the signed-in user across all their households) and **household settings** (household-wide, e.g. shared defaults / behaviour toggles — affect everyone in the household, editable only by Owner/Admin). The *content* of each isn't scoped yet, but standing up the storage + read/write seams now means future preference features are "add a field + a control," not "design the whole settings subsystem." Keeping the two scopes structurally separate from day one avoids overloading one bag with mode-dependent meaning ([[feedback_clean_domain_separation]]).
-- **Sketch (infrastructure, content TBD):**
-  - **Two separate stores, one per scope.** `UserSettings` keyed by user; `HouseholdSettings` keyed by household (cascade-delete with the household). Don't fold either into the other — personal vs. shared is the whole point.
-  - **Storage shape — OPEN.** Either typed flat columns that grow per setting (aligns with [[feedback_flat_db_schema]], queryable, migration per field) **or** a single JSON document column (zero-migration as settings churn, but opaque to SQL). Lean typed-columns for the handful of known-shape prefs; revisit JSON only if settings sprawl into dozens of rarely-queried toggles. Decide when the first real settings land — but pick a default for the infra so it's not blocked.
-  - **Lazy creation, same as `User`.** No row until first write; reads of a missing row return defaults. Mirrors the existing lazy `User`-row sync pattern rather than seeding on household/user creation.
-  - **Permission gate on household settings.** Writes go through a `Household` aggregate method that enforces Owner/Admin (`HouseholdRole`) — same place all the other household permission checks live. User settings need no role check (you can only edit your own; resolve via `ICurrentUserService`).
-  - **Vertical slices** (per `knowledge/Vertical_Slices.md`): `GetUserSettings` / `UpdateUserSettings` under the existing `Me` group; `GetHouseholdSettings` / `UpdateHouseholdSettings` under the household-scoped group (write dispatches the aggregate `Result` → 403 on `AccessDeniedError`). Reads are inline EF projection into the response DTO.
-  - **Frontend.** A Settings area with two sections (Personal / Household), the household section hidden or read-only for non-admins. One query + one mutation hook per store following the canonical hook shape; settings persisted via TanStack Query, not a new state layer. Routes are thin shells under `routes/settings/`.
-  - **Out of scope for the infra step:** the actual settings (what knobs exist), per-setting validation, and any behaviour they drive. This entry is the plumbing only — each real preference is a follow-up that adds a field + a control.
-- **Impact / cost:** 1 EF migration (two new tables, or two settings rows depending on storage shape) + 1 aggregate method (household-settings authz) + ~4 slices + the frontend Settings area with 2–4 hooks. Small-to-medium, and almost entirely enabling — no user-visible behaviour until the first concrete setting is added on top.
-
----
-
 ## AI-assisted list sorting (category blueprints)
 
 - **Why:** List items are ordered purely by manual drag-and-drop today (`ListItem.SortOrder`, midpoint-insertion in `List.ReorderItem` — `Frigorino.Domain/Entities/List.cs` — driven by the `@dnd-kit` `SortableList`). For grocery shopping the *useful* order is "the order you walk your supermarket" — produce, then dairy, then bakery, then frozen, etc. Re-dragging every item into that order on every shop is tedious, and the order is identical trip after trip. Owners/Admins want to define their household's preferred sort **once** (matching their usual store's layout) and apply it to any list with one tap.
@@ -128,12 +84,6 @@ Format per item:
   - **Free-prompt — parked, not dead.** A custom prompt could still earn its place at **configuration** time (not sort time): an LLM proposes a category order from a typed store description, the Admin **reviews and edits** the result, and it's saved as a static blueprint. Human-in-the-loop + reviewable static artifact contains the risk while keeping the "describe my store" UX. Defer until the deterministic blueprint path proves the feature.
   - **Frontend.** Reuse `@dnd-kit` `SortableList` (`ClientApp/src/components/sortables/SortableList.tsx`) for the blueprint editor — same drag UX as list items, so categories arrange exactly like items do. A list-level "Sort by category" button fires the apply mutation (optimistic, mirroring the existing `useReorderListItem` pattern).
 - **Impact / cost:** richer `ProductCategory` taxonomy (enum expand + `ClassifierVersion` re-classify) + a household `SortBlueprint` store (rides the settings infra) + 1 "apply blueprint" bulk-reorder slice + the blueprint-editor UI + a per-list sort action. Medium, mostly composition — leans on the already-shipped classifier and the existing `SortOrder`/`ReorderItem` + `@dnd-kit` mechanics. **No added LLM cost** in the recommended design (classification already runs; the sort is deterministic). Sequence **after** [[User settings & household settings]] (needs the household-settings home) and benefits from the classifier already being in `stage`.
-
----
-
-## User notifications on inventory item expiration
-
-Designed, planned, and built on `feat/expiry-notifications` (pending merge). See `docs/superpowers/specs/2026-06-01-inventory-expiry-notifications-design.md` and `docs/superpowers/plans/2026-06-01-inventory-expiry-notifications.md`. Was blocked on the settings infra (now on `stage`). Delivery resolved to FCM behind an `INotificationSender` port, a daily external cron hitting a secured `/internal/expiry-scan`, and a custom service worker — the `vite-plugin-pwa` PWA plugin **is** wired (`ClientApp/vite.config.ts`).
 
 ---
 
