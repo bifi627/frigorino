@@ -23,6 +23,7 @@ import {
     isIosNeedingInstall,
     pushSupported,
 } from "../../../common/pushNotifications";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { pageContainerSx } from "../../../theme";
 import { useUpdateUserNotificationSettings } from "../useUpdateUserNotificationSettings";
 import { useUpdateUserSettings } from "../useUpdateUserSettings";
@@ -167,10 +168,13 @@ export function UserSettingsPage() {
     const effectiveEnabled = enabled && permissionGranted;
 
     return (
-        <Container maxWidth="sm" sx={pageContainerSx}>
-            <Typography variant="h5" sx={{ mb: { xs: 2, sm: 3 } }}>
-                {t("settings.userSettings")}
-            </Typography>
+        <>
+            <PageHeadActionBar
+                title={t("settings.userSettings")}
+                directActions={[]}
+                menuActions={[]}
+            />
+            <Container maxWidth="sm" sx={pageContainerSx}>
 
             <Card elevation={2}>
                 <CardContent>
@@ -282,6 +286,7 @@ export function UserSettingsPage() {
                     )}
                 </CardContent>
             </Card>
-        </Container>
+            </Container>
+        </>
     );
 }
