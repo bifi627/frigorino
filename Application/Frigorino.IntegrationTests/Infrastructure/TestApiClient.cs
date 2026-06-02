@@ -373,4 +373,26 @@ public class TestApiClient(ScenarioContextHolder ctx)
                 Headers = AuthHeaders,
             });
     }
+
+    // ---- Per-user inventory notification preferences ----
+
+    public Task<IAPIResponse> TryGetMyInventoryNotificationAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/notifications",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryUpdateMyInventoryNotificationAsync(int inventoryId, bool enabled, int? leadDays, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/notifications",
+            new APIRequestContextOptions
+            {
+                DataObject = new { enabled, leadDays },
+                Headers = AuthHeaders,
+            });
+    }
 }

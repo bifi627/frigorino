@@ -39,7 +39,7 @@ public class SettingsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryUpdateHouseholdSettingsAsync(retentionDays);
     }
 
-    // ---- Inventory settings ----
+    // ---- Inventory settings (household-wide placeholder) ----
 
     [When("I GET the settings of inventory {string} via the API")]
     public async Task WhenIGetTheSettingsOfInventoryViaTheApi(string inventoryName)
@@ -48,18 +48,34 @@ public class SettingsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryGetInventorySettingsAsync(inventoryId);
     }
 
-    [When("I PUT the settings of inventory {string} lead {int} via the API")]
-    public async Task WhenIPutTheSettingsOfInventoryLeadViaTheApi(string inventoryName, int lead)
+    // ---- Per-user inventory notification preferences ----
+
+    [When("I GET my notification preference for inventory {string}")]
+    public async Task WhenIGetMyNotificationPreferenceForInventory(string inventoryName)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        ctx.LastApiResponse = await api.TryUpdateInventorySettingsAsync(inventoryId, lead);
+        ctx.LastApiResponse = await api.TryGetMyInventoryNotificationAsync(inventoryId);
     }
 
-    [When("I PUT the settings of inventory {string} lead to null via the API")]
-    public async Task WhenIPutTheSettingsOfInventoryLeadToNullViaTheApi(string inventoryName)
+    [When("I PUT my notification preference for inventory {string} with enabled true and lead {int}")]
+    public async Task WhenIPutMyNotificationPreferenceEnabledWithLead(string inventoryName, int lead)
     {
         var inventoryId = ctx.InventoryIds[inventoryName];
-        ctx.LastApiResponse = await api.TryUpdateInventorySettingsAsync(inventoryId, null);
+        ctx.LastApiResponse = await api.TryUpdateMyInventoryNotificationAsync(inventoryId, enabled: true, leadDays: lead);
+    }
+
+    [When("I PUT my notification preference for inventory {string} with enabled false and no lead")]
+    public async Task WhenIPutMyNotificationPreferenceDisabled(string inventoryName)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        ctx.LastApiResponse = await api.TryUpdateMyInventoryNotificationAsync(inventoryId, enabled: false, leadDays: null);
+    }
+
+    [When("I PUT my notification preference for inventory {string} with enabled true and no lead")]
+    public async Task WhenIPutMyNotificationPreferenceEnabledNoLead(string inventoryName)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        ctx.LastApiResponse = await api.TryUpdateMyInventoryNotificationAsync(inventoryId, enabled: true, leadDays: null);
     }
 
     // ---- Response body assertions ----
@@ -91,7 +107,7 @@ public class SettingsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task ThenTheApiResponseLeadIs(int expected)
     {
         var body = await ReadBodyAsync();
-        var lead = body.GetProperty("expiryLeadDays");
+        var lead = body.GetProperty("leadDays");
         Assert.Equal(JsonValueKind.Number, lead.ValueKind);
         Assert.Equal(expected, lead.GetInt32());
     }
@@ -100,7 +116,21 @@ public class SettingsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task ThenTheApiResponseHasNoLead()
     {
         var body = await ReadBodyAsync();
-        Assert.Equal(JsonValueKind.Null, body.GetProperty("expiryLeadDays").ValueKind);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("leadDays").ValueKind);
+    }
+
+    [Then("the notification preference is enabled")]
+    public async Task ThenTheNotificationPreferenceIsEnabled()
+    {
+        var body = await ReadBodyAsync();
+        Assert.True(body.GetProperty("enabled").GetBoolean());
+    }
+
+    [Then("the notification preference is disabled")]
+    public async Task ThenTheNotificationPreferenceIsDisabled()
+    {
+        var body = await ReadBodyAsync();
+        Assert.False(body.GetProperty("enabled").GetBoolean());
     }
 
     private async Task<JsonElement> ReadBodyAsync()

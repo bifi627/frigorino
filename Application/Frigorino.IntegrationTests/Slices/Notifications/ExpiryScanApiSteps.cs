@@ -88,6 +88,19 @@ public class ExpiryScanApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         Assert.All(ctx.ConcurrentApiResponses!, r => Assert.Equal(expected, r.Status));
     }
 
+    [Given("I have muted notifications for inventory {string}")]
+    public async Task GivenIHaveMutedNotificationsForInventory(string inventoryName)
+    {
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        var setting = UserInventoryNotificationSetting.Create(ctx.UserContext.UserId, inventoryId);
+        setting.SetEnabled(false);
+        db.UserInventoryNotificationSettings.Add(setting);
+        await db.SaveChangesAsync();
+    }
+
     [Then("exactly {int} notification dispatch(es) exists for me today")]
     public async Task ThenExactlyNotificationDispatchesExistForMeToday(int expected)
     {
@@ -99,5 +112,11 @@ public class ExpiryScanApiSteps(ScenarioContextHolder ctx, TestApiClient api)
             d => d.UserId == ctx.UserContext.UserId
                  && d.SentOn == today);
         Assert.Equal(expected, count);
+    }
+
+    [Then("exactly {int} notification dispatches exist for me today")]
+    public async Task ThenExactlyNotificationDispatchesExistForMeTodayPlural(int expected)
+    {
+        await ThenExactlyNotificationDispatchesExistForMeToday(expected);
     }
 }
