@@ -1793,16 +1793,6 @@
           "404": {
             "description": "Not Found"
           },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
           "403": {
             "description": "Forbidden"
           }
@@ -2517,23 +2507,7 @@
         }
       },
       "InventorySettingsResponse": {
-        "required": [
-          "expiryNotificationsEnabled",
-          "expiryLeadDays"
-        ],
-        "type": "object",
-        "properties": {
-          "expiryNotificationsEnabled": {
-            "type": "boolean"
-          },
-          "expiryLeadDays": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
-          }
-        }
+        "type": "object"
       },
       "ListCreatorResponse": {
         "required": [
@@ -2861,23 +2835,7 @@
         }
       },
       "UpdateInventorySettingsRequest": {
-        "required": [
-          "expiryNotificationsEnabled",
-          "expiryLeadDays"
-        ],
-        "type": "object",
-        "properties": {
-          "expiryNotificationsEnabled": {
-            "type": "boolean"
-          },
-          "expiryLeadDays": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "format": "int32"
-          }
-        }
+        "type": "object"
       },
       "UpdateItemRequest": {
         "required": [

@@ -67,11 +67,11 @@ public class ExpiryScanApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryTriggerExpiryScanAsync("wrong-key");
     }
 
-    // Fires two scans at once to exercise the real (UserId, HouseholdId, SentOn) unique index.
+    // Fires two scans at once to exercise the real (UserId, InventoryId, SentOn) unique index.
     // The two requests may serialize (the second sees the first's ledger row via the in-memory
     // pre-filter and skips) OR genuinely race (both pass the pre-filter, both INSERT, and the loser
     // catches SQLSTATE 23505). Either way the invariant is the same: both respond 200 and exactly
-    // one dispatch row exists. This can only go red if the claim-slot-first fix regresses.
+    // one dispatch row exists per (user, inventory). This can only go red if the claim-slot-first fix regresses.
     [When("I trigger the expiry scan twice concurrently")]
     public async Task WhenITriggerTheExpiryScanTwiceConcurrently()
     {
@@ -97,7 +97,6 @@ public class ExpiryScanApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var count = await db.NotificationDispatches.CountAsync(
             d => d.UserId == ctx.UserContext.UserId
-                 && d.HouseholdId == ctx.HouseholdId
                  && d.SentOn == today);
         Assert.Equal(expected, count);
     }

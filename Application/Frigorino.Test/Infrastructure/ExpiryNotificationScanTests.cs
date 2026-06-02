@@ -201,8 +201,9 @@ namespace Frigorino.Test.Infrastructure
             db.UserSettings.Add(userSettings);
             db.FcmTokens.Add(FcmToken.Create("u1", "tok-1"));
             // Mute inventory 100 for user u1
-            db.UserInventoryNotificationSettings.Add(UserInventoryNotificationSetting.Create("u1", 100));
-            db.UserInventoryNotificationSettings.Single(s => s.UserId == "u1" && s.InventoryId == 100).SetEnabled(false);
+            var mutedPref = UserInventoryNotificationSetting.Create("u1", 100);
+            mutedPref.SetEnabled(false);
+            db.UserInventoryNotificationSettings.Add(mutedPref);
             await db.SaveChangesAsync();
             db.ChangeTracker.Clear();
             var sender = new CapturingSender();
