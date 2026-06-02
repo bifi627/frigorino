@@ -48,10 +48,15 @@ ARG VITE_FARO_URL=
 ARG VITE_FARO_APP_NAME=
 ARG VITE_FARO_ENV=
 ARG VITE_APP_VERSION=
+# VITE_FCM_VAPID_KEY is the public Web Push certificate key — safe to inline in the
+# bundle. Without it `enablePush()` short-circuits (no permission prompt, just a
+# refuse message), so it MUST be set as a Railway build variable per environment.
+ARG VITE_FCM_VAPID_KEY=
 ENV VITE_FARO_URL=$VITE_FARO_URL \
     VITE_FARO_APP_NAME=$VITE_FARO_APP_NAME \
     VITE_FARO_ENV=$VITE_FARO_ENV \
-    VITE_APP_VERSION=$VITE_APP_VERSION
+    VITE_APP_VERSION=$VITE_APP_VERSION \
+    VITE_FCM_VAPID_KEY=$VITE_FCM_VAPID_KEY
 RUN npm run build
 
 FROM runtime AS final
