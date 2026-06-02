@@ -1,6 +1,7 @@
 import { ArrowBack, MoreVert } from "@mui/icons-material";
 import {
     Box,
+    type Breakpoint,
     Container,
     IconButton,
     ListItemIcon,
@@ -25,10 +26,19 @@ export interface HeadNavigationProps {
     subtitle?: string;
     menuActions: HeadNavigationAction[];
     directActions: HeadNavigationAction[];
+    maxWidth?: Breakpoint;
+    menuButtonTestId?: string;
 }
 
 export const PageHeadActionBar = memo(
-    ({ title, subtitle, menuActions, directActions }: HeadNavigationProps) => {
+    ({
+        title,
+        subtitle,
+        menuActions,
+        directActions,
+        maxWidth = "sm",
+        menuButtonTestId,
+    }: HeadNavigationProps) => {
         const router = useRouter();
         const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(
             null,
@@ -60,7 +70,7 @@ export const PageHeadActionBar = memo(
         return (
             <>
                 <Container
-                    maxWidth="sm"
+                    maxWidth={maxWidth}
                     sx={{ px: 1.5, py: 1.5, flexShrink: 0 }}
                 >
                     <Box
@@ -120,6 +130,7 @@ export const PageHeadActionBar = memo(
                             {menuActions.length > 0 && (
                                 <IconButton
                                     onClick={handleMenuOpen}
+                                    data-testid={menuButtonTestId}
                                     sx={{
                                         bgcolor: "grey.100",
                                         color: "grey.700",
@@ -150,6 +161,7 @@ export const PageHeadActionBar = memo(
                             <MenuItem
                                 key={index}
                                 onClick={() => handleMenuAction(action)}
+                                data-testid={action.testId}
                             >
                                 {action.icon && (
                                     <ListItemIcon>{action.icon}</ListItemIcon>
