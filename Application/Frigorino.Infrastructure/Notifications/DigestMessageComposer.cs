@@ -5,7 +5,6 @@ namespace Frigorino.Infrastructure.Notifications
     public static class DigestMessageComposer
     {
         private const int MaxNamesInBody = 3;
-        private const string DeepLinkPath = "/inventories";
 
         public static ExpiryDigestNotification Compose(DigestPlan plan)
         {
@@ -13,8 +12,8 @@ namespace Frigorino.Infrastructure.Notifications
             var count = plan.Lines.Count;
 
             var title = german
-                ? $"{count} Artikel laufen bald ab"
-                : $"{count} item{(count == 1 ? "" : "s")} expiring soon";
+                ? $"{plan.InventoryName}: {count} Artikel laufen bald ab"
+                : $"{plan.InventoryName}: {count} item{(count == 1 ? "" : "s")} expiring soon";
 
             var named = plan.Lines
                 .Take(MaxNamesInBody)
@@ -28,7 +27,10 @@ namespace Frigorino.Infrastructure.Notifications
                 body += german ? $" und {remaining} weitere" : $", +{remaining} more";
             }
 
-            return new ExpiryDigestNotification(title, body, DeepLinkPath);
+            // Deep-link straight to the inventory detail page so a click lands on the items.
+            var deepLinkPath = $"/inventories/{plan.InventoryId}/view";
+
+            return new ExpiryDigestNotification(title, body, deepLinkPath);
         }
 
         private static string Phrase(int daysUntil, bool german)
