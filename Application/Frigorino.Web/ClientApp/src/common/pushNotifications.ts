@@ -58,9 +58,12 @@ function registerForegroundHandler(
         if (title) {
             const registration = await swRegistration();
             if (registration) {
+                // Carry the deep link so the SW's notificationclick handler routes
+                // a click on a foreground-shown digest the same as a background one.
                 registration.showNotification(title, {
                     body,
                     icon: "/192.png",
+                    data: { link: payload.data?.link },
                 });
             }
         }
