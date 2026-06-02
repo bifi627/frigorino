@@ -82,7 +82,7 @@ builder.Services.TryAddScoped<INotificationSender, LogOnlyNotificationSender>();
 builder.Services.AddBackgroundTaskQueue();
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
-builder.Services.AddMaintenanceServices();
+builder.Services.AddMaintenanceServices(builder.Configuration);
 builder.Services.AddExpiryNotifications(builder.Configuration);
 
 if (!isBuildTimeOpenApi)
