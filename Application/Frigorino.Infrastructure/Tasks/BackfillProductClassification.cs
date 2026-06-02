@@ -32,7 +32,7 @@ namespace Frigorino.Infrastructure.Tasks
         public async Task Run(CancellationToken cancellationToken = default)
         {
             var candidates = await _dbContext.ListItems
-                .Where(li => li.IsActive)
+                .Where(li => li.IsActive && li.List.IsActive)
                 .Select(li => new ListItemNameCandidate(li.List.HouseholdId, li.Text))
                 .Distinct()
                 .ToListAsync(cancellationToken);

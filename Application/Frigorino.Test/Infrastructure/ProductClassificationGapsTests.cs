@@ -72,6 +72,23 @@ namespace Frigorino.Test.Infrastructure
         }
 
         [Fact]
+        public void HighestProductVersionWins_WhenDuplicateRowsExist()
+        {
+            var candidates = new[] { new ListItemNameCandidate(10, "Milk") };
+            // Duplicate rows for the same (household, name): one stale, one current. The current
+            // one must win so the name is considered up-to-date and skipped.
+            var existing = new[]
+            {
+                new ExistingProduct(10, "milk", ClassifierVersion: CurrentVersion - 1),
+                new ExistingProduct(10, "milk", ClassifierVersion: CurrentVersion),
+            };
+
+            var gaps = ProductClassificationGaps.SelectGaps(candidates, existing, CurrentVersion);
+
+            Assert.Empty(gaps);
+        }
+
+        [Fact]
         public void BlankText_IsSkipped()
         {
             var candidates = new[]
