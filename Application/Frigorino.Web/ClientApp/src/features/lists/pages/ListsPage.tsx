@@ -68,8 +68,6 @@ export const ListsPage = () => {
         handleMenuClose();
     };
 
-    const handleEditList = () => handleMenuClose();
-
     if (!householdId) {
         return (
             <Container maxWidth="sm" sx={pageContainerSx}>
@@ -176,7 +174,6 @@ export const ListsPage = () => {
             <ListActionsMenu
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
-                onEdit={handleEditList}
                 onDelete={handleDeleteList}
                 isDeleting={deleteListMutation.isPending}
             />

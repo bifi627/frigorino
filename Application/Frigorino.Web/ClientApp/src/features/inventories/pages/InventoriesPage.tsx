@@ -69,8 +69,6 @@ export const InventoriesPage = () => {
         handleMenuClose();
     };
 
-    const handleEditInventory = () => handleMenuClose();
-
     if (!householdId) {
         return (
             <Container maxWidth="sm" sx={pageContainerSx}>
@@ -177,7 +175,6 @@ export const InventoriesPage = () => {
             <InventoryActionsMenu
                 anchorEl={anchorEl}
                 onClose={handleMenuClose}
-                onEdit={handleEditInventory}
                 onDelete={handleDeleteInventory}
                 isDeleting={deleteInventoryMutation.isPending}
             />

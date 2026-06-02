@@ -1,11 +1,10 @@
-import { Delete, Edit } from "@mui/icons-material";
+import { Delete } from "@mui/icons-material";
 import { Menu, MenuItem } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 interface InventoryActionsMenuProps {
     anchorEl: HTMLElement | null;
     onClose: () => void;
-    onEdit: () => void;
     onDelete: () => void;
     isDeleting?: boolean;
 }
@@ -13,7 +12,6 @@ interface InventoryActionsMenuProps {
 export const InventoryActionsMenu = ({
     anchorEl,
     onClose,
-    onEdit,
     onDelete,
     isDeleting = false,
 }: InventoryActionsMenuProps) => {
@@ -27,10 +25,6 @@ export const InventoryActionsMenu = ({
             elevation={4}
             slotProps={{ paper: { sx: { minWidth: 160 } } }}
         >
-            <MenuItem onClick={onEdit} disabled>
-                <Edit fontSize="small" sx={{ mr: 1 }} />
-                {t("common.edit")}
-            </MenuItem>
             <MenuItem
                 onClick={onDelete}
                 disabled={isDeleting}
