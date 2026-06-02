@@ -50,7 +50,7 @@ namespace Frigorino.Features.Inventories
             db.Inventories.Add(inventory);
             await db.SaveChangesAsync(ct);
 
-            var response = InventoryResponse.From(inventory, creator, totalItems: 0, expiringItems: 0);
+            var response = InventoryResponse.From(inventory, creator, totalItems: 0, expiringItems: 0, earliestExpiryDate: null);
             return TypedResults.Created($"/api/household/{householdId}/inventories/{inventory.Id}", response);
         }
     }

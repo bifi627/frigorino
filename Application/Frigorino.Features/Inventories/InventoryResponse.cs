@@ -12,14 +12,15 @@ namespace Frigorino.Features.Inventories
         DateTime UpdatedAt,
         InventoryCreatorResponse CreatedByUser,
         int TotalItems,
-        int ExpiringItems)
+        int ExpiringItems,
+        DateOnly? EarliestExpiryDate)
     {
         // Threshold (in days) for the "expiring soon" highlight on inventory items. Shared by
         // both the aggregate-count projection here and InventoryItemResponse.IsExpiring so the
         // overview card count and per-item flag stay in sync.
         public const int ExpiringWithinDays = 7;
 
-        public static InventoryResponse From(Inventory inventory, User creator, int totalItems, int expiringItems)
+        public static InventoryResponse From(Inventory inventory, User creator, int totalItems, int expiringItems, DateOnly? earliestExpiryDate)
         {
             return new InventoryResponse(
                 inventory.Id,
@@ -30,7 +31,8 @@ namespace Frigorino.Features.Inventories
                 inventory.UpdatedAt,
                 new InventoryCreatorResponse(creator.ExternalId, creator.Name, creator.Email),
                 totalItems,
-                expiringItems);
+                expiringItems,
+                earliestExpiryDate);
         }
 
         // EF-translatable projection used by read slices (GetInventory, GetInventories). Lifted
@@ -47,7 +49,12 @@ namespace Frigorino.Features.Inventories
             i.UpdatedAt,
             new InventoryCreatorResponse(i.CreatedByUser.ExternalId, i.CreatedByUser.Name, i.CreatedByUser.Email),
             i.InventoryItems.Count(x => x.IsActive),
-            i.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(ExpiringWithinDays)));
+            i.InventoryItems.Count(x => x.IsActive && x.ExpiryDate.HasValue && x.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(ExpiringWithinDays)),
+            i.InventoryItems
+                .Where(x => x.IsActive && x.ExpiryDate != null)
+                .OrderBy(x => x.ExpiryDate)
+                .Select(x => x.ExpiryDate)
+                .FirstOrDefault());
     }
 
     public sealed record InventoryCreatorResponse(
