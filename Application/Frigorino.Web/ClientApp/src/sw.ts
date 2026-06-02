@@ -38,7 +38,7 @@ onBackgroundMessage(messaging, (payload) => {
     });
 });
 
-// Focus an existing tab or open the deep link on click.
+// Focus an existing window (navigating it to the deep link) or open a new one.
 self.addEventListener("notificationclick", (event) => {
     event.notification.close();
     const link =
@@ -49,11 +49,15 @@ self.addEventListener("notificationclick", (event) => {
             .then((clients) => {
                 for (const client of clients) {
                     if ("focus" in client) {
-                        void client.focus();
-                        if ("navigate" in client) {
-                            void (client as WindowClient).navigate(link);
-                        }
-                        return undefined;
+                        const windowClient = client as WindowClient;
+                        // Return the chained promise so the SW stays alive until the
+                        // navigate + focus settle. A bare `void` lets the SW be killed
+                        // mid-navigation, which on Android can drop back to the browser.
+                        return windowClient
+                            .navigate(link)
+                            .then((navigated) =>
+                                (navigated ?? windowClient).focus(),
+                            );
                     }
                 }
                 return self.clients.openWindow(link);

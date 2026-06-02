@@ -52,11 +52,15 @@ ARG VITE_APP_VERSION=
 # bundle. Without it `enablePush()` short-circuits (no permission prompt, just a
 # refuse message), so it MUST be set as a Railway build variable per environment.
 ARG VITE_FCM_VAPID_KEY=
+# VITE_APP_NAME is the installed PWA's display name. Defaults to "Frigorino"; set it
+# (e.g. "Frigorino (Stage)") to distinguish separately-installed stage/prod PWAs.
+ARG VITE_APP_NAME=
 ENV VITE_FARO_URL=$VITE_FARO_URL \
     VITE_FARO_APP_NAME=$VITE_FARO_APP_NAME \
     VITE_FARO_ENV=$VITE_FARO_ENV \
     VITE_APP_VERSION=$VITE_APP_VERSION \
-    VITE_FCM_VAPID_KEY=$VITE_FCM_VAPID_KEY
+    VITE_FCM_VAPID_KEY=$VITE_FCM_VAPID_KEY \
+    VITE_APP_NAME=$VITE_APP_NAME
 RUN npm run build
 
 FROM runtime AS final

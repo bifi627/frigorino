@@ -17,6 +17,8 @@
                 height: 100dvh;
                 /* Dynamic viewport height - adjusts for mobile keyboards */
                 overflow-x: hidden;
+                /* Match the dark app theme so there's no white flash before React mounts */
+                background-color: #121212;
             }
 
             #root {
@@ -49,7 +51,7 @@
         <link rel="icon" href="/favicon.ico" />
         <!-- <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"> -->
         <link rel="mask-icon" href="/mask-icon.svg" color="#FFFFFF" />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#121212" />
     </head>
 
     <body>

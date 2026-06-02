@@ -14,6 +14,11 @@ const compressionExclude = [/\.(br|gz)$/, /\.(png|jpe?g|gif|webp|woff2?)$/i];
 
 const target = env.VITE_PROXY_TARGET ?? "https://localhost:5001";
 
+// PWA display name. Defaults to "Frigorino"; set VITE_APP_NAME per environment (e.g.
+// "Frigorino (Stage)") to tell separately-installed stage/prod PWAs apart on a device.
+// `||` (not `??`) so the Dockerfile's empty-string ARG default also falls back.
+const appName = env.VITE_APP_NAME || "Frigorino";
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
     plugins: [
@@ -35,20 +40,47 @@ export default defineConfig(({ command }) => ({
                 type: "module",
             },
             manifest: {
-                name: "Frigorino",
-                short_name: "Frigorino",
+                // `id` is the stable install identity, resolved relative to the origin
+                // ("/" → https://<origin>/). Keeping it relative means the same build
+                // deployed to stage and prod installs as two independent WebAPKs with no
+                // collision. "/" also equals the previous implicit default (start_url),
+                // so existing installs are preserved rather than duplicated.
+                id: "/",
+                name: appName,
+                short_name: appName,
                 description: "Frigorino",
-                theme_color: "#ffffff",
+                // Match the dark app theme (MUI dark `background.default` = #121212).
+                // theme_color tints the Android standalone status bar; background_color
+                // is the launch splash background — both were white, clashing with the app.
+                theme_color: "#121212",
+                background_color: "#121212",
                 icons: [
+                    // "any" = the transparent logo (browser tab, app lists).
                     {
                         src: "192.png",
                         sizes: "192x192",
                         type: "image/png",
+                        purpose: "any",
                     },
                     {
                         src: "512.png",
                         sizes: "512x512",
                         type: "image/png",
+                        purpose: "any",
+                    },
+                    // "maskable" = logo composited on the dark app background, so the
+                    // Android launcher tile is #121212 instead of a white plate.
+                    {
+                        src: "maskable-192.png",
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "maskable",
+                    },
+                    {
+                        src: "maskable-512.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "maskable",
                     },
                 ],
             },
