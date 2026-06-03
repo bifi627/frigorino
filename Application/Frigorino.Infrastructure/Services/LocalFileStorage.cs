@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Frigorino.Domain.Interfaces;
 
 namespace Frigorino.Infrastructure.Services
@@ -5,7 +6,7 @@ namespace Frigorino.Infrastructure.Services
     // Dev/test blob backend: writes each blob to {root}/{guid}. Keys are GUIDs, deliberately not
     // tied to the DB id, so an upload can happen before the row is persisted (sub-feature #2 adds a
     // compensating Delete on persist failure). Stateless apart from the root path → singleton.
-    public sealed class LocalFileStorage : IFileStorage
+    public sealed class LocalFileStorage : IFileStorage, IFileStorageMaintenance
     {
         private readonly string _root;
 
@@ -48,6 +49,23 @@ namespace Frigorino.Infrastructure.Services
                 File.Delete(path);
             }
             return Task.CompletedTask;
+        }
+
+        // Enumerates this backend's own namespace (the files directly under _root). Blobs are
+        // write-once (content-addressable GUID, never updated), so last-write time equals creation
+        // time and is portable across OSes (unlike creation time on Linux).
+        public async IAsyncEnumerable<StoredBlob> ListAsync(
+            [EnumeratorCancellation] CancellationToken ct)
+        {
+            foreach (var path in Directory.EnumerateFiles(_root))
+            {
+                ct.ThrowIfCancellationRequested();
+                var key = Path.GetFileName(path);
+                yield return new StoredBlob(
+                    key, new DateTimeOffset(File.GetLastWriteTimeUtc(path), TimeSpan.Zero));
+            }
+
+            await Task.CompletedTask;
         }
 
         // Resolve the key to a path INSIDE the root. Any key that escapes the root (separators,
