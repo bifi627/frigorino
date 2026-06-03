@@ -327,6 +327,7 @@ var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int
 listItems.MapGetItems();
 listItems.MapGetItem();
 listItems.MapCreateItem();
+listItems.MapCreateMediaItem();
 listItems.MapUpdateItem();
 listItems.MapDeleteItem();
 listItems.MapRestoreItem();
