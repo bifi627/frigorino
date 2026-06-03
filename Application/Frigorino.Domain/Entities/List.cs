@@ -135,9 +135,10 @@ namespace Frigorino.Domain.Entities
         // reorder / delete / compact, matching the collaborative grocery-list UX. The handler
         // enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<ListItem> AddItem(string text, Quantity? quantity = null)
+        public Result<ListItem> AddItem(string text, Quantity? quantity = null, string? comment = null)
         {
             var errors = ValidateItemText(text, requireText: true);
+            errors.AddRange(ValidateComment(comment));
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -148,6 +149,7 @@ namespace Frigorino.Domain.Entities
             {
                 ListId = Id,
                 Text = text.Trim(),
+                Comment = NormalizeComment(comment),
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 Status = false,
@@ -160,7 +162,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status)
+        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status, string? comment = null)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
@@ -169,10 +171,10 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError($"List item {itemId} not found."));
             }
 
-            // text/quantity/status are "preserve on null"; clearQuantity is the explicit "remove
+            // text/quantity/status/comment are "preserve on null"; clearQuantity is the explicit "remove
             // the quantity" intent. With none of them set the payload is a guaranteed no-op —
             // reject it rather than returning 200 OK on garbage.
-            if (text is null && quantity is null && !clearQuantity && status is null)
+            if (text is null && quantity is null && !clearQuantity && status is null && comment is null)
             {
                 return Result.Fail<ListItem>(
                     new Error("Update request must set at least one field.")
@@ -180,6 +182,10 @@ namespace Frigorino.Domain.Entities
             }
 
             var errors = ValidateItemText(text, requireText: text is not null);
+            if (comment is not null)
+            {
+                errors.AddRange(ValidateComment(comment));
+            }
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -207,6 +213,12 @@ namespace Frigorino.Domain.Entities
                 var q = quantity.Value;
                 item.QuantityValue = q.Value;
                 item.QuantityUnit = q.Unit;
+            }
+
+            // comment == null means "preserve"; an empty/whitespace string clears it; otherwise set.
+            if (comment is not null)
+            {
+                item.Comment = NormalizeComment(comment);
             }
 
             item.UpdatedAt = DateTime.UtcNow;
@@ -371,6 +383,24 @@ namespace Frigorino.Domain.Entities
             }
 
             return Result.Ok();
+        }
+
+        // empty/whitespace comment is normalized to null; otherwise trimmed.
+        private static string? NormalizeComment(string? comment)
+        {
+            return string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        }
+
+        private static List<IError> ValidateComment(string? comment)
+        {
+            var errors = new System.Collections.Generic.List<IError>();
+            var trimmed = NormalizeComment(comment);
+            if (trimmed is not null && trimmed.Length > ListItem.CommentMaxLength)
+            {
+                errors.Add(new Error($"Item comment must be {ListItem.CommentMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(ListItem.Comment)));
+            }
+            return errors;
         }
 
         private static List<IError> ValidateItemText(string? text, bool requireText)

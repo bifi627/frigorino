@@ -204,7 +204,9 @@
         "noListsYet": "No lists yet",
         "createFirstShoppingList": "Create your first shopping list to get started",
         "createYourFirstList": "Create Your First List",
-        "quantity": "Quantity"
+        "quantity": "Quantity",
+        "comment": "Comment",
+        "commentPlaceholder": "Add a hint…"
     },
     "promote": {
         "barReady_one": "{{count}} item ready for inventory",

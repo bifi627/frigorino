@@ -41,6 +41,12 @@ export const useUpdateListItem = () => {
                                       ? null
                                       : (variables.body.quantity ??
                                         item.quantity),
+                                  // null = preserve; empty/whitespace → cleared to null; else trimmed
+                                  comment:
+                                      variables.body.comment == null
+                                          ? item.comment
+                                          : variables.body.comment.trim() ||
+                                            null,
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -64,6 +70,10 @@ export const useUpdateListItem = () => {
                     quantity: variables.body.clearQuantity
                         ? null
                         : (variables.body.quantity ?? currentItem.quantity),
+                    comment:
+                        variables.body.comment == null
+                            ? currentItem.comment
+                            : variables.body.comment.trim() || null,
                     updatedAt: new Date().toISOString(),
                 });
             }

@@ -33,6 +33,7 @@ export type CreateInventoryRequest = {
 
 export type CreateItemRequest = {
     text: string;
+    comment: null | string;
 };
 
 export type CreateListRequest = {
@@ -114,6 +115,7 @@ export type ListItemResponse = {
     id: number;
     listId: number;
     text: string;
+    comment: null | string;
     quantity: null | QuantityDto;
     status: boolean;
     sortOrder: number;
@@ -197,6 +199,7 @@ export type UpdateItemRequest = {
     quantity: null | QuantityDto;
     clearQuantity: null | boolean;
     status: null | boolean;
+    comment: null | string;
 };
 
 export type UpdateListRequest = {

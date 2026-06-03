@@ -125,14 +125,14 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryCreateListItemAsync(int listId, string? text, int? householdId = null)
+    public Task<IAPIResponse> TryCreateListItemAsync(int listId, string? text, int? householdId = null, string? comment = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
         return ctx.BrowserContext.APIRequest.PostAsync(
             $"/api/household/{targetHouseholdId}/lists/{listId}/items",
             new APIRequestContextOptions
             {
-                DataObject = new { text },
+                DataObject = new { text, comment },
                 Headers = AuthHeaders,
             });
     }
@@ -161,14 +161,14 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryUpdateListItemAsync(int listId, int itemId, string? text, string? quantity, bool? status, int? householdId = null)
+    public Task<IAPIResponse> TryUpdateListItemAsync(int listId, int itemId, string? text, string? quantity, bool? status, int? householdId = null, string? comment = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
         return ctx.BrowserContext.APIRequest.PutAsync(
             $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}",
             new APIRequestContextOptions
             {
-                DataObject = new { text, quantity, status },
+                DataObject = new { text, quantity, status, comment },
                 Headers = AuthHeaders,
             });
     }

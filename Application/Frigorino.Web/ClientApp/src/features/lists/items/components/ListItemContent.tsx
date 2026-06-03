@@ -9,9 +9,15 @@ interface Props {
     item: ListItemResponse;
     // Tapping the quantity chip opens the item in edit mode with the quantity panel open.
     onEditQuantity?: () => void;
+    // Tapping the comment opens the item in edit mode with the comment panel open.
+    onEditComment?: () => void;
 }
 
-export function ListItemContent({ item, onEditQuantity }: Props) {
+export function ListItemContent({
+    item,
+    onEditQuantity,
+    onEditComment,
+}: Props) {
     const { t } = useTranslation();
     const events = useLongPress({
         shouldPreventDefault: true,
@@ -39,19 +45,60 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                 </Typography>
             }
             secondary={
-                item.quantity ? (
+                item.quantity || item.comment ? (
                     <Box
                         sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.25,
                         }}
                     >
-                        <ItemQuantityChip
-                            quantity={item.quantity}
-                            onClick={onEditQuantity}
-                            testId={`list-item-quantity-${item.text}`}
-                        />
+                        {item.comment ? (
+                            <Typography
+                                component="div"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={t("lists.comment")}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditComment?.();
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        onEditComment?.();
+                                    }
+                                }}
+                                data-testid={`list-item-comment-${item.id}`}
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                    fontSize: "0.7rem",
+                                    fontStyle: "italic",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {item.comment}
+                            </Typography>
+                        ) : null}
+                        {item.quantity ? (
+                            <Box
+                                sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                }}
+                            >
+                                <ItemQuantityChip
+                                    quantity={item.quantity}
+                                    onClick={onEditQuantity}
+                                    testId={`list-item-quantity-${item.text}`}
+                                />
+                            </Box>
+                        ) : null}
                     </Box>
                 ) : null
             }

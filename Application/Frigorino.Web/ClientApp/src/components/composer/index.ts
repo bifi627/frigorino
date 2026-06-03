@@ -14,6 +14,11 @@ export {
     QUANTITY_UNIT_VALUES,
 } from "./features/quantityFormat";
 export { expiryFeature } from "./features/expiryFeature";
+export {
+    commentComposerFeature,
+    isCommentValid,
+    COMMENT_MAX_LENGTH,
+} from "./features/commentComposerFeature";
 export type {
     ActionFeature,
     Completion,

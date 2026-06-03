@@ -37,6 +37,7 @@ export const useCreateListItem = () => {
             const optimisticItem: ListItemResponse = {
                 id: tempId,
                 text: variables.body.text,
+                comment: variables.body.comment ?? null,
                 quantity: null,
                 status: false,
                 sortOrder: lastUncheckedSortOrder + 1,

@@ -37,6 +37,9 @@ export const ListViewPage = () => {
     // True when edit mode was opened via the quantity chip — the composer then starts
     // with the quantity panel expanded.
     const [editOpenQuantity, setEditOpenQuantity] = useState(false);
+    // True when edit mode was opened via tapping the comment — the composer then starts
+    // with the comment panel expanded.
+    const [editOpenComment, setEditOpenComment] = useState(false);
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
         extractionPending: boolean;
@@ -94,12 +97,12 @@ export const ListViewPage = () => {
     }, []);
 
     const handleAddItem = useCallback(
-        async (data: string) => {
+        async (data: string, comment: string | null) => {
             if (!householdId) return;
             try {
                 const created = await createMutation.mutateAsync({
                     path: { householdId, listId: listIdNum },
-                    body: { text: data },
+                    body: { text: data, comment },
                 });
                 // Only the latest add is polled for extraction; rapid successive adds
                 // replace this, so just the last item shows the extracting spinner (v1).
@@ -117,7 +120,11 @@ export const ListViewPage = () => {
     );
 
     const handleUpdateItem = useCallback(
-        (data: string, quantity: QuantityDto | null) => {
+        (
+            data: string,
+            quantity: QuantityDto | null,
+            comment: string | null,
+        ) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
@@ -125,17 +132,16 @@ export const ListViewPage = () => {
                         listId: listIdNum,
                         itemId: editingItem.id,
                     },
-                    // The edit composer is authoritative for quantity: a non-null value sets it,
-                    // an empty one clears it (clearQuantity). Text is always sent, so this never
-                    // collides with the domain's null=preserve semantics for the other fields.
                     body: {
                         text: data,
                         quantity,
                         clearQuantity: quantity === null,
                         status: null,
+                        comment,
                     },
                 });
                 setEditOpenQuantity(false);
+                setEditOpenComment(false);
                 setEditingItem(null);
             }
         },
@@ -144,16 +150,25 @@ export const ListViewPage = () => {
 
     const handleEditItem = useCallback((item: ListItemResponse) => {
         setEditOpenQuantity(false);
+        setEditOpenComment(false);
         setEditingItem(item);
     }, []);
 
     const handleEditQuantity = useCallback((item: ListItemResponse) => {
+        setEditOpenComment(false);
         setEditOpenQuantity(true);
+        setEditingItem(item);
+    }, []);
+
+    const handleEditComment = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(false);
+        setEditOpenComment(true);
         setEditingItem(item);
     }, []);
 
     const handleCancelEdit = useCallback(() => {
         setEditOpenQuantity(false);
+        setEditOpenComment(false);
         setEditingItem(null);
     }, []);
 
@@ -241,6 +256,7 @@ export const ListViewPage = () => {
                 editingItem={editingItem}
                 onEdit={handleEditItem}
                 onEditQuantity={handleEditQuantity}
+                onEditComment={handleEditComment}
                 showDragHandles={showDragHandles}
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
@@ -256,6 +272,7 @@ export const ListViewPage = () => {
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
                 openQuantityPanel={editOpenQuantity}
+                openCommentPanel={editOpenComment}
             />
         </Box>
     );

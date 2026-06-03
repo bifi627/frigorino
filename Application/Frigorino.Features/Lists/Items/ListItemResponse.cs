@@ -8,6 +8,7 @@ namespace Frigorino.Features.Lists.Items
         int Id,
         int ListId,
         string Text,
+        string? Comment,
         QuantityDto? Quantity,
         bool Status,
         int SortOrder,
@@ -24,6 +25,7 @@ namespace Frigorino.Features.Lists.Items
                 item.Id,
                 item.ListId,
                 item.Text,
+                item.Comment,
                 item.QuantityValue == null
                     ? null
                     : new QuantityDto(item.QuantityValue.Value, item.QuantityUnit!.Value),
@@ -43,6 +45,7 @@ namespace Frigorino.Features.Lists.Items
             i.Id,
             i.ListId,
             i.Text,
+            i.Comment,
             i.QuantityValue == null
                 ? null
                 : new QuantityDto(i.QuantityValue.Value, i.QuantityUnit!.Value),

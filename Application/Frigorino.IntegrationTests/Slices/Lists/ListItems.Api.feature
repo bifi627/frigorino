@@ -64,3 +64,16 @@ Feature: List Items API
     And I POST restore for the item "Milk" in list "Weekly Groceries" via the API
     Then the API response status is 200
     And the API response when getting items of list "Weekly Groceries" includes "Milk"
+
+  Scenario: Creating an item with a comment round-trips through the API
+    Given there is a list named "Weekly Groceries"
+    When I POST an item "Milk" with comment "the blue one" to "Weekly Groceries" via the API
+    Then the API response status is 201
+    And the API item "Milk" in "Weekly Groceries" has comment "the blue one"
+
+  Scenario: Clearing a comment via an empty-string update
+    Given there is a list named "Weekly Groceries"
+    When I POST an item "Milk" with comment "the blue one" to "Weekly Groceries" via the API
+    And I PUT a comment "" onto "Milk" in "Weekly Groceries" via the API
+    Then the API response status is 200
+    And the API item "Milk" in "Weekly Groceries" has no comment

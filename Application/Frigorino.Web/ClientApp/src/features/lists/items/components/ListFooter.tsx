@@ -3,6 +3,7 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
+    commentComposerFeature,
     draftToQuantity,
     formatQuantity,
     quantityComposerFeature,
@@ -13,22 +14,32 @@ import {
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
 
-// Lists add via free-text (extraction fills the quantity), so the add composer is text-only.
-// Manual quantity entry/correction happens in edit mode — hence the feature is edit-only.
-const EDIT_FEATURES = [quantityComposerFeature] as const;
-const NO_FEATURES = [] as const;
+// Lists add via free-text (extraction fills the quantity), so the add composer stays
+// quantity-free — but a comment can be attached at add time. Manual quantity entry/correction
+// happens in edit mode.
+const EDIT_FEATURES = [
+    quantityComposerFeature,
+    commentComposerFeature,
+] as const;
+const ADD_FEATURES = [commentComposerFeature] as const;
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
     existingItems: ListItemResponse[];
-    onAddItem: (data: string) => void;
-    onUpdateItem: (data: string, quantity: QuantityDto | null) => void;
+    onAddItem: (data: string, comment: string | null) => void;
+    onUpdateItem: (
+        data: string,
+        quantity: QuantityDto | null,
+        comment: string | null,
+    ) => void;
     onCancelEdit: () => void;
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
     onScrollToLastUnchecked: () => void;
     /** When entering edit mode, start with the quantity panel expanded. */
     openQuantityPanel?: boolean;
+    /** When entering edit mode, start with the comment panel expanded. */
+    openCommentPanel?: boolean;
 }
 
 export const ListFooter = memo(
@@ -42,6 +53,7 @@ export const ListFooter = memo(
         isLoading,
         onScrollToLastUnchecked,
         openQuantityPanel,
+        openCommentPanel,
     }: ListFooterProps) => {
         const { t } = useTranslation();
 
@@ -89,7 +101,7 @@ export const ListFooter = memo(
             onDuplicate,
         });
 
-        const features = editingItem ? EDIT_FEATURES : NO_FEATURES;
+        const features = editingItem ? EDIT_FEATURES : ADD_FEATURES;
 
         const initialDraft = useMemo(
             () =>
@@ -98,23 +110,42 @@ export const ListFooter = memo(
                           text: editingItem.text,
                           values: {
                               quantity: quantityToDraft(editingItem.quantity),
+                              comment: editingItem.comment ?? "",
                           },
                       }
                     : undefined,
             [editingItem],
         );
 
+        // handleComplete is typed to the EDIT superset so TS knows r.quantity exists in the
+        // edit branch; the create branch uses ADD_FEATURES and never reads r.quantity. r.comment
+        // is present in both because both feature sets include commentComposerFeature.
         const handleComplete = useCallback(
             (r: Completion<typeof EDIT_FEATURES>) => {
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, draftToQuantity(r.quantity));
+                    // Send the trimmed string (incl. "") so emptying the field clears the
+                    // comment — downstream null means "preserve", "" means "clear".
+                    onUpdateItem(
+                        r.text,
+                        draftToQuantity(r.quantity),
+                        r.comment.trim(),
+                    );
                 } else {
-                    onAddItem(r.text);
+                    onAddItem(r.text, r.comment.trim() || null);
                     onScrollToLastUnchecked();
                 }
             },
             [onAddItem, onUpdateItem, onScrollToLastUnchecked],
         );
+
+        // Which modifier panel opens when edit mode starts — comment wins if both were
+        // requested (you can only have tapped one affordance), then quantity.
+        let initialOpenId: string | undefined;
+        if (editingItem && openCommentPanel) {
+            initialOpenId = "comment";
+        } else if (editingItem && openQuantityPanel) {
+            initialOpenId = "quantity";
+        }
 
         return (
             <Container
@@ -137,11 +168,7 @@ export const ListFooter = memo(
                         onCancel: onCancelEdit,
                     }}
                     initialDraft={initialDraft}
-                    initialOpenId={
-                        openQuantityPanel && editingItem
-                            ? "quantity"
-                            : undefined
-                    }
+                    initialOpenId={initialOpenId}
                     suggestions={suggestions}
                     duplicate={duplicate}
                     onComplete={handleComplete}

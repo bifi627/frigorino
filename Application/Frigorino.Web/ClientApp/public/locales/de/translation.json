@@ -204,7 +204,9 @@
         "noListsYet": "Noch keine Listen",
         "createFirstShoppingList": "Erstellen Sie Ihre erste Einkaufsliste, um zu beginnen",
         "createYourFirstList": "Erstellen Sie Ihre erste Liste",
-        "quantity": "Menge"
+        "quantity": "Menge",
+        "comment": "Kommentar",
+        "commentPlaceholder": "Hinweis hinzufügen…"
     },
     "promote": {
         "barReady_one": "{{count}} Artikel bereit fürs Inventar",

@@ -481,3 +481,4 @@ Application/Frigorino.Web/ClientApp/.tanstack/tmp/
 
 # Superpowers brainstorm visual-companion artifacts (local-only)
 .superpowers/
+.superpowers/
