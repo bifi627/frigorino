@@ -9,6 +9,7 @@ using Frigorino.Test.TestInfrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Frigorino.Test.Features
 {
@@ -88,7 +89,8 @@ namespace Frigorino.Test.Features
                 householdId: 1, listId,
                 FakeFile("photo.jpg", length: 2048),
                 ListItemType.Image, caption: "the blue one",
-                UserNamed("u1"), db, storage, OkProcessor(), CancellationToken.None);
+                UserNamed("u1"), db, storage, OkProcessor(),
+                NullLoggerFactory.Instance, CancellationToken.None);
 
             Assert.IsType<Created<ListItemResponse>>(result.Result);
 
@@ -113,7 +115,8 @@ namespace Frigorino.Test.Features
 
             var result = await CreateMediaItemEndpoint.Handle(
                 householdId: 1, listId, FakeFile("p.jpg", 10), ListItemType.Image, null,
-                UserNamed("intruder"), db, storage, OkProcessor(), CancellationToken.None);
+                UserNamed("intruder"), db, storage, OkProcessor(),
+                NullLoggerFactory.Instance, CancellationToken.None);
 
             Assert.IsType<NotFound>(result.Result);
             A.CallTo(() => storage.SaveAsync(A<Stream>._, A<CancellationToken>._)).MustNotHaveHappened();
@@ -131,7 +134,8 @@ namespace Frigorino.Test.Features
                 householdId: 1, listId,
                 FakeFile("big.jpg", length: ListItem.MaxFileSizeBytes + 1),
                 ListItemType.Image, null,
-                UserNamed("u1"), db, storage, processor, CancellationToken.None);
+                UserNamed("u1"), db, storage, processor,
+                NullLoggerFactory.Instance, CancellationToken.None);
 
             var status = Assert.IsType<StatusCodeHttpResult>(result.Result);
             Assert.Equal(StatusCodes.Status413PayloadTooLarge, status.StatusCode);
@@ -148,7 +152,8 @@ namespace Frigorino.Test.Features
 
             var result = await CreateMediaItemEndpoint.Handle(
                 householdId: 1, listId, FakeFile("p.jpg", 10), ListItemType.Image, null,
-                UserNamed("u1"), db, storage, processor, CancellationToken.None);
+                UserNamed("u1"), db, storage, processor,
+                NullLoggerFactory.Instance, CancellationToken.None);
 
             Assert.IsType<ValidationProblem>(result.Result);
             A.CallTo(() => storage.SaveAsync(A<Stream>._, A<CancellationToken>._)).MustNotHaveHappened();
@@ -166,12 +171,35 @@ namespace Frigorino.Test.Features
 
             var result = await CreateMediaItemEndpoint.Handle(
                 householdId: 1, listId, FakeFile("p.jpg", 10), ListItemType.Image, tooLong,
-                UserNamed("u1"), db, storage, OkProcessor(), CancellationToken.None);
+                UserNamed("u1"), db, storage, OkProcessor(),
+                NullLoggerFactory.Instance, CancellationToken.None);
 
             Assert.IsType<ValidationProblem>(result.Result);
             Assert.Empty(await db.ListItems.ToListAsync());
             A.CallTo(() => storage.DeleteAsync("key-full", A<CancellationToken>._)).MustHaveHappenedOnceExactly();
             A.CallTo(() => storage.DeleteAsync("key-thumb", A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task Post_SecondBlobSaveThrows_CompensatesFirstBlob()
+        {
+            using var db = NewContext();
+            var listId = await SeedListAsync(db, "u1", householdId: 1);
+
+            // First save succeeds (full-res), second save (thumbnail) throws → the first blob must be compensated.
+            var storage = A.Fake<IFileStorage>();
+            A.CallTo(() => storage.SaveAsync(A<Stream>._, A<CancellationToken>._))
+                .Returns("key-full").Once()
+                .Then
+                .Throws<IOException>();
+
+            await Assert.ThrowsAsync<IOException>(() => CreateMediaItemEndpoint.Handle(
+                householdId: 1, listId, FakeFile("p.jpg", 10), ListItemType.Image, null,
+                UserNamed("u1"), db, storage, OkProcessor(),
+                NullLoggerFactory.Instance, CancellationToken.None));
+
+            Assert.Empty(await db.ListItems.ToListAsync());
+            A.CallTo(() => storage.DeleteAsync("key-full", A<CancellationToken>._)).MustHaveHappenedOnceExactly();
         }
     }
 }
