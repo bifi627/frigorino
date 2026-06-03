@@ -10,7 +10,7 @@ interface Props {
     item: ListItemResponse;
 }
 
-const THUMB_SIZE = 56;
+const THUMB_SIZE = 144;
 
 export function ImageItemRenderer({ item }: Props) {
     const { data: currentHousehold } = useCurrentHousehold();
