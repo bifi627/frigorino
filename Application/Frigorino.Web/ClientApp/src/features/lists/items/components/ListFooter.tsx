@@ -17,7 +17,10 @@ import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
 // Lists add via free-text (extraction fills the quantity), so the add composer stays
 // quantity-free — but a comment can be attached at add time. Manual quantity entry/correction
 // happens in edit mode.
-const EDIT_FEATURES = [quantityComposerFeature, commentComposerFeature] as const;
+const EDIT_FEATURES = [
+    quantityComposerFeature,
+    commentComposerFeature,
+] as const;
 const ADD_FEATURES = [commentComposerFeature] as const;
 
 interface ListFooterProps {

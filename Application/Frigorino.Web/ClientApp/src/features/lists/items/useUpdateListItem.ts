@@ -45,8 +45,8 @@ export const useUpdateListItem = () => {
                                   comment:
                                       variables.body.comment == null
                                           ? item.comment
-                                          : (variables.body.comment.trim() ||
-                                            null),
+                                          : variables.body.comment.trim() ||
+                                            null,
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -73,7 +73,7 @@ export const useUpdateListItem = () => {
                     comment:
                         variables.body.comment == null
                             ? currentItem.comment
-                            : (variables.body.comment.trim() || null),
+                            : variables.body.comment.trim() || null,
                     updatedAt: new Date().toISOString(),
                 });
             }

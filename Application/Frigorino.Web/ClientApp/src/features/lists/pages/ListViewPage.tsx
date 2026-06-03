@@ -117,7 +117,11 @@ export const ListViewPage = () => {
     );
 
     const handleUpdateItem = useCallback(
-        (data: string, quantity: QuantityDto | null, comment: string | null) => {
+        (
+            data: string,
+            quantity: QuantityDto | null,
+            comment: string | null,
+        ) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
