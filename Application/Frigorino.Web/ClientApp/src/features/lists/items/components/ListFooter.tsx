@@ -119,11 +119,12 @@ export const ListFooter = memo(
         // is present in both because both feature sets include commentComposerFeature.
         const handleComplete = useCallback(
             (r: Completion<typeof EDIT_FEATURES>) => {
-                const comment = r.comment.trim() || null;
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, draftToQuantity(r.quantity), comment);
+                    // Send the trimmed string (incl. "") so emptying the field clears the
+                    // comment — downstream null means "preserve", "" means "clear".
+                    onUpdateItem(r.text, draftToQuantity(r.quantity), r.comment.trim());
                 } else {
-                    onAddItem(r.text, comment);
+                    onAddItem(r.text, r.comment.trim() || null);
                     onScrollToLastUnchecked();
                 }
             },
