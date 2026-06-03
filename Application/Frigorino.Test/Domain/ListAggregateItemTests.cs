@@ -315,6 +315,69 @@ namespace Frigorino.Test.Domain
             Assert.True(item.UpdatedAt > before);
         }
 
+        [Fact]
+        public void UpdateItem_SetsTrimmedComment()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "  ask the butcher  ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("ask the butcher", item.Comment);
+        }
+
+        [Fact]
+        public void UpdateItem_NullComment_PreservesExistingComment()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+            item.Comment = "the blue one";
+
+            var result = list.UpdateItem(item.Id, text: "Soy milk", quantity: null, clearQuantity: false, status: null, comment: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("the blue one", item.Comment);
+        }
+
+        [Fact]
+        public void UpdateItem_EmptyComment_ClearsExistingComment()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+            item.Comment = "the blue one";
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "   ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.Comment);
+        }
+
+        [Fact]
+        public void UpdateItem_CommentOnly_IsNotTreatedAsNoOp()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "for Anna's party");
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("for Anna's party", item.Comment);
+        }
+
+        [Fact]
+        public void UpdateItem_CommentTooLong_FailsKeyedOnComment()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+            var tooLong = new string('x', ListItem.CommentMaxLength + 1);
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: tooLong);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal(nameof(ListItem.Comment), result.Errors[0].Metadata["Property"]);
+        }
+
         // ------- ApplyExtractedQuantity -------
 
         [Fact]

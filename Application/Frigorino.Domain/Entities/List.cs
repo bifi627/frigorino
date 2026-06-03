@@ -162,7 +162,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status)
+        public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status, string? comment = null)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
             if (item is null)
@@ -171,10 +171,10 @@ namespace Frigorino.Domain.Entities
                     new EntityNotFoundError($"List item {itemId} not found."));
             }
 
-            // text/quantity/status are "preserve on null"; clearQuantity is the explicit "remove
+            // text/quantity/status/comment are "preserve on null"; clearQuantity is the explicit "remove
             // the quantity" intent. With none of them set the payload is a guaranteed no-op —
             // reject it rather than returning 200 OK on garbage.
-            if (text is null && quantity is null && !clearQuantity && status is null)
+            if (text is null && quantity is null && !clearQuantity && status is null && comment is null)
             {
                 return Result.Fail<ListItem>(
                     new Error("Update request must set at least one field.")
@@ -182,6 +182,7 @@ namespace Frigorino.Domain.Entities
             }
 
             var errors = ValidateItemText(text, requireText: text is not null);
+            errors.AddRange(ValidateComment(comment));
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -209,6 +210,12 @@ namespace Frigorino.Domain.Entities
                 var q = quantity.Value;
                 item.QuantityValue = q.Value;
                 item.QuantityUnit = q.Unit;
+            }
+
+            // comment == null means "preserve"; an empty/whitespace string clears it; otherwise set.
+            if (comment is not null)
+            {
+                item.Comment = NormalizeComment(comment);
             }
 
             item.UpdatedAt = DateTime.UtcNow;
