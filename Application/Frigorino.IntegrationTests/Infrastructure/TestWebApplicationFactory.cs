@@ -70,12 +70,15 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IQuantityExtractor>();
             services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
 
-            // Real blob storage bound to a unique temp dir per factory instance, so the genuine
-            // ImageSharp pipeline writes/reads actual webp renditions during the test. Only the AI
-            // classifiers stay stubbed; IImageProcessor is left as its real registration.
+            // Real blob storage bound to a unique temp dir per factory instance, registered under BOTH
+            // storage interfaces (one shared instance) so the startup orphan-sweep operates on the temp
+            // dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor stays real.
             services.RemoveAll<IFileStorage>();
+            services.RemoveAll<IFileStorageMaintenance>();
             var blobRoot = Path.Combine(Path.GetTempPath(), "frigorino-it-blobs", Guid.NewGuid().ToString("N"));
-            services.AddSingleton<IFileStorage>(new LocalFileStorage(blobRoot));
+            var blobStorage = new LocalFileStorage(blobRoot);
+            services.AddSingleton<IFileStorage>(blobStorage);
+            services.AddSingleton<IFileStorageMaintenance>(blobStorage);
         });
     }
 }

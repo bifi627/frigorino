@@ -1,4 +1,5 @@
 using System.Text;
+using Frigorino.Domain.Interfaces;
 using Frigorino.Infrastructure.Services;
 
 namespace Frigorino.Test.Infrastructure
@@ -73,6 +74,28 @@ namespace Frigorino.Test.Infrastructure
             var storage = NewStorage();
             await Assert.ThrowsAsync<ArgumentException>(
                 async () => await storage.OpenAsync(key, CancellationToken.None));
+        }
+
+        [Fact]
+        public async Task ListAsync_EnumeratesSavedBlobs_WithKeysAndRecentTimestamps()
+        {
+            var storage = NewStorage();
+            using var a = new MemoryStream(new byte[] { 1 });
+            using var b = new MemoryStream(new byte[] { 2 });
+            var keyA = await storage.SaveAsync(a, CancellationToken.None);
+            var keyB = await storage.SaveAsync(b, CancellationToken.None);
+
+            var listed = new List<StoredBlob>();
+            await foreach (var blob in storage.ListAsync(CancellationToken.None))
+            {
+                listed.Add(blob);
+            }
+
+            Assert.Equal(2, listed.Count);
+            Assert.Contains(listed, x => x.Key == keyA);
+            Assert.Contains(listed, x => x.Key == keyB);
+            Assert.All(listed, x => Assert.True(x.CreatedAt <= DateTimeOffset.UtcNow.AddSeconds(5)));
+            Assert.All(listed, x => Assert.True(x.CreatedAt > DateTimeOffset.UtcNow.AddMinutes(-5)));
         }
 
         public void Dispose()
