@@ -11,6 +11,7 @@ namespace Frigorino.Infrastructure.Services
             this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IMaintenanceTask, DeleteInactiveItems>();
+            services.AddScoped<IMaintenanceTask, ReclaimOrphanBlobs>();
 
             // Registered only when live classification is on (same condition as
             // ItemClassificationDependencyInjection); otherwise IItemClassifier and the queueing

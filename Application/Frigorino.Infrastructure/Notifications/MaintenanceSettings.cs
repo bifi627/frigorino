@@ -12,5 +12,9 @@ namespace Frigorino.Infrastructure.Notifications
         // items notify; an item more than this many days overdue drops off (so a permanently-overdue
         // item is not re-listed in every daily digest forever).
         public int OverdueGraceDays { get; set; } = 1;
+
+        // Blobs younger than this are never reclaimed by the orphan sweep — protects an in-flight
+        // upload whose ListItems row is not yet committed.
+        public int OrphanBlobGraceHours { get; set; } = 24;
     }
 }
