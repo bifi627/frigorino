@@ -10,7 +10,7 @@ import {
     IconButton,
     TextField,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
 
@@ -30,18 +30,21 @@ export function MediaPreviewSheet({
     const { t } = useTranslation();
     const [caption, setCaption] = useState("");
 
-    // Local object URL for the picked file (no server round-trip for the preview).
-    const previewUrl = useMemo(
-        () => (file ? URL.createObjectURL(file) : null),
-        [file],
-    );
+    // Local object URL for the picked file (no server round-trip for the preview). createObjectURL
+    // and revokeObjectURL MUST be paired in one effect so the URL survives StrictMode's
+    // mount→unmount→remount probe (a useMemo here can outlive the cleanup that revoked it → dead URL).
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     useEffect(() => {
+        if (!file) {
+            setPreviewUrl(null);
+            return;
+        }
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewUrl(objectUrl);
         return () => {
-            if (previewUrl) {
-                URL.revokeObjectURL(previewUrl);
-            }
+            URL.revokeObjectURL(objectUrl);
         };
-    }, [previewUrl]);
+    }, [file]);
 
     // Reset caption whenever a new file is opened.
     useEffect(() => {
