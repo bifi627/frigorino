@@ -211,7 +211,8 @@
         "attach": "Anhängen",
         "attachPhoto": "Foto",
         "attachDocument": "Dokument",
-        "captionPlaceholder": "Bildunterschrift hinzufügen (optional)"
+        "captionPlaceholder": "Bildunterschrift hinzufügen (optional)",
+        "editCaption": "Bildunterschrift bearbeiten"
     },
     "promote": {
         "barReady_one": "{{count}} Artikel bereit fürs Inventar",

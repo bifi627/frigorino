@@ -211,7 +211,8 @@
         "attach": "Attach",
         "attachPhoto": "Photo",
         "attachDocument": "Document",
-        "captionPlaceholder": "Add a caption (optional)"
+        "captionPlaceholder": "Add a caption (optional)",
+        "editCaption": "Edit caption"
     },
     "promote": {
         "barReady_one": "{{count}} item ready for inventory",

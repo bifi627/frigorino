@@ -264,6 +264,16 @@ namespace Frigorino.Domain.Entities
                         .WithMetadata("Property", string.Empty));
             }
 
+            // Media items (Image/Document) carry no Text or quantity by design — only the caption
+            // (Comment) and status are editable. Reject any attempt to mutate text/quantity on them
+            // so the clean-separation invariant holds regardless of client.
+            if (item.Type != ListItemType.Text && (text is not null || quantity is not null || clearQuantity))
+            {
+                return Result.Fail<ListItem>(
+                    new Error("Only the caption can be edited on a media item.")
+                        .WithMetadata("Property", string.Empty));
+            }
+
             var errors = ValidateItemText(text, requireText: text is not null);
             if (comment is not null)
             {
