@@ -17,6 +17,12 @@ namespace Frigorino.Infrastructure.Services
         private const int ThumbnailQuality = 75;
         private const string WebpContentType = "image/webp";
 
+        // Decode-bomb guard. The upstream 25 MB byte cap bounds the COMPRESSED payload, but a tiny,
+        // highly-compressed image can still decode into an enormous pixel buffer (DoS). We read the
+        // dimensions from the header (Image.Identify, no full decode) and reject before LoadAsync.
+        // 64 MP comfortably covers 48 MP+ phone cameras while blocking absurd bombs.
+        private const long MaxDecodedPixels = 64_000_000;
+
         // Only these decoders are accepted — shrinks the decode attack surface and avoids surprises
         // (e.g. animated GIF). The detected format name is compared case-insensitively.
         private static readonly HashSet<string> AllowedInputFormats =
@@ -35,6 +41,16 @@ namespace Frigorino.Infrastructure.Services
                 if (format is null || !AllowedInputFormats.Contains(format.Name))
                 {
                     return Result.Fail(new Error("Unsupported image format.")
+                        .WithMetadata("Property", "file"));
+                }
+
+                // Header-only read: get the declared pixel dimensions without allocating the decoded
+                // buffer, so a compressed bomb is rejected before LoadAsync ever materializes it.
+                buffer.Position = 0;
+                var info = await Image.IdentifyAsync(buffer, ct);
+                if ((long)info.Width * info.Height > MaxDecodedPixels)
+                {
+                    return Result.Fail(new Error("Image dimensions exceed the allowed limit.")
                         .WithMetadata("Property", "file"));
                 }
 
