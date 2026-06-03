@@ -37,6 +37,9 @@ export const ListViewPage = () => {
     // True when edit mode was opened via the quantity chip — the composer then starts
     // with the quantity panel expanded.
     const [editOpenQuantity, setEditOpenQuantity] = useState(false);
+    // True when edit mode was opened via tapping the comment — the composer then starts
+    // with the comment panel expanded.
+    const [editOpenComment, setEditOpenComment] = useState(false);
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
         extractionPending: boolean;
@@ -138,6 +141,7 @@ export const ListViewPage = () => {
                     },
                 });
                 setEditOpenQuantity(false);
+                setEditOpenComment(false);
                 setEditingItem(null);
             }
         },
@@ -146,16 +150,25 @@ export const ListViewPage = () => {
 
     const handleEditItem = useCallback((item: ListItemResponse) => {
         setEditOpenQuantity(false);
+        setEditOpenComment(false);
         setEditingItem(item);
     }, []);
 
     const handleEditQuantity = useCallback((item: ListItemResponse) => {
+        setEditOpenComment(false);
         setEditOpenQuantity(true);
+        setEditingItem(item);
+    }, []);
+
+    const handleEditComment = useCallback((item: ListItemResponse) => {
+        setEditOpenQuantity(false);
+        setEditOpenComment(true);
         setEditingItem(item);
     }, []);
 
     const handleCancelEdit = useCallback(() => {
         setEditOpenQuantity(false);
+        setEditOpenComment(false);
         setEditingItem(null);
     }, []);
 
@@ -243,6 +256,7 @@ export const ListViewPage = () => {
                 editingItem={editingItem}
                 onEdit={handleEditItem}
                 onEditQuantity={handleEditQuantity}
+                onEditComment={handleEditComment}
                 showDragHandles={showDragHandles}
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
@@ -258,6 +272,7 @@ export const ListViewPage = () => {
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
                 openQuantityPanel={editOpenQuantity}
+                openCommentPanel={editOpenComment}
             />
         </Box>
     );

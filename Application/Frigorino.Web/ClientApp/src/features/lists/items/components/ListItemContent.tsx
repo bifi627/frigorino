@@ -1,6 +1,4 @@
-import StickyNote2 from "@mui/icons-material/StickyNote2";
 import { Box, Link, ListItemText, Typography } from "@mui/material";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
@@ -11,9 +9,15 @@ interface Props {
     item: ListItemResponse;
     // Tapping the quantity chip opens the item in edit mode with the quantity panel open.
     onEditQuantity?: () => void;
+    // Tapping the comment opens the item in edit mode with the comment panel open.
+    onEditComment?: () => void;
 }
 
-export function ListItemContent({ item, onEditQuantity }: Props) {
+export function ListItemContent({
+    item,
+    onEditQuantity,
+    onEditComment,
+}: Props) {
     const { t } = useTranslation();
     const events = useLongPress({
         shouldPreventDefault: true,
@@ -24,8 +28,6 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
             });
         },
     });
-
-    const [commentExpanded, setCommentExpanded] = useState(false);
 
     return (
         <ListItemText
@@ -67,59 +69,35 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                             </Box>
                         ) : null}
                         {item.comment ? (
-                            <Box
-                                component="span"
+                            <Typography
+                                component="div"
                                 role="button"
                                 tabIndex={0}
                                 aria-label={t("lists.comment")}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setCommentExpanded((v) => !v);
+                                    onEditComment?.();
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        setCommentExpanded((v) => !v);
+                                        onEditComment?.();
                                     }
                                 }}
                                 data-testid={`list-item-comment-${item.id}`}
+                                variant="caption"
+                                color="text.secondary"
                                 sx={{
-                                    display: "inline-flex",
-                                    alignItems: "flex-start",
-                                    gap: 0.5,
+                                    fontSize: "0.7rem",
+                                    fontStyle: "italic",
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
                                     cursor: "pointer",
                                 }}
                             >
-                                <StickyNote2
-                                    aria-hidden="true"
-                                    sx={{
-                                        fontSize: "0.85rem",
-                                        mt: "1px",
-                                        color: "text.disabled",
-                                    }}
-                                />
-                                <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{
-                                        fontSize: "0.7rem",
-                                        ...(commentExpanded
-                                            ? {
-                                                  whiteSpace: "pre-wrap",
-                                                  wordBreak: "break-word",
-                                              }
-                                            : {
-                                                  display: "-webkit-box",
-                                                  WebkitLineClamp: 1,
-                                                  WebkitBoxOrient: "vertical",
-                                                  overflow: "hidden",
-                                              }),
-                                    }}
-                                >
-                                    {item.comment}
-                                </Typography>
-                            </Box>
+                                {item.comment}
+                            </Typography>
                         ) : null}
                     </Box>
                 ) : null

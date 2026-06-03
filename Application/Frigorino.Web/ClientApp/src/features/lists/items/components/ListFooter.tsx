@@ -38,6 +38,8 @@ interface ListFooterProps {
     onScrollToLastUnchecked: () => void;
     /** When entering edit mode, start with the quantity panel expanded. */
     openQuantityPanel?: boolean;
+    /** When entering edit mode, start with the comment panel expanded. */
+    openCommentPanel?: boolean;
 }
 
 export const ListFooter = memo(
@@ -51,6 +53,7 @@ export const ListFooter = memo(
         isLoading,
         onScrollToLastUnchecked,
         openQuantityPanel,
+        openCommentPanel,
     }: ListFooterProps) => {
         const { t } = useTranslation();
 
@@ -135,6 +138,15 @@ export const ListFooter = memo(
             [onAddItem, onUpdateItem, onScrollToLastUnchecked],
         );
 
+        // Which modifier panel opens when edit mode starts — comment wins if both were
+        // requested (you can only have tapped one affordance), then quantity.
+        let initialOpenId: string | undefined;
+        if (editingItem && openCommentPanel) {
+            initialOpenId = "comment";
+        } else if (editingItem && openQuantityPanel) {
+            initialOpenId = "quantity";
+        }
+
         return (
             <Container
                 maxWidth="sm"
@@ -156,11 +168,7 @@ export const ListFooter = memo(
                         onCancel: onCancelEdit,
                     }}
                     initialDraft={initialDraft}
-                    initialOpenId={
-                        openQuantityPanel && editingItem
-                            ? "quantity"
-                            : undefined
-                    }
+                    initialOpenId={initialOpenId}
                     suggestions={suggestions}
                     duplicate={duplicate}
                     onComplete={handleComplete}

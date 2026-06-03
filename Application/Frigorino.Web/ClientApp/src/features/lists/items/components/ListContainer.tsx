@@ -15,6 +15,8 @@ interface ListContainerProps {
     onEdit: (item: ListItemResponse) => void;
     /** Opens edit mode with the quantity panel expanded (triggered by the quantity chip). */
     onEditQuantity: (item: ListItemResponse) => void;
+    /** Opens edit mode with the comment panel expanded (triggered by tapping the comment). */
+    onEditComment: (item: ListItemResponse) => void;
     showDragHandles: boolean;
     isExtracting?: boolean;
     extractingItemId?: number | null;
@@ -28,6 +30,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
             editingItem,
             onEdit,
             onEditQuantity,
+            onEditComment,
             showDragHandles,
             isExtracting,
             extractingItemId,
@@ -86,6 +89,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                         <ListItemContent
                             item={item}
                             onEditQuantity={() => onEditQuantity(item)}
+                            onEditComment={() => onEditComment(item)}
                         />
                     )}
                 />
