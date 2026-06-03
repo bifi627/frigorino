@@ -28,7 +28,8 @@ namespace Frigorino.Test.Features
             return svc;
         }
 
-        private static async Task<(int listId, int itemId)> SeedImageItemAsync(TestApplicationDbContext db, string userId)
+        private static async Task<(int listId, int itemId)> SeedImageItemAsync(
+            TestApplicationDbContext db, string userId, string originalFileName = "p.jpg")
         {
             db.Households.Add(new Household { Id = 1, Name = "HH", CreatedByUserId = userId });
             db.UserHouseholds.Add(new UserHousehold
@@ -43,7 +44,7 @@ namespace Frigorino.Test.Features
             {
                 ListId = list.Id, Type = ListItemType.Image, Text = "",
                 StorageKey = "full-key", ThumbnailStorageKey = "thumb-key",
-                ContentType = "image/webp", OriginalFileName = "p.jpg", FileSizeBytes = 3, IsActive = true,
+                ContentType = "image/webp", OriginalFileName = originalFileName, FileSizeBytes = 3, IsActive = true,
             };
             db.ListItems.Add(item);
             await db.SaveChangesAsync();
@@ -64,6 +65,41 @@ namespace Frigorino.Test.Features
 
             var file = Assert.IsType<FileStreamHttpResult>(result.Result);
             Assert.Equal("image/webp", file.ContentType);
+
+            using var reader = new StreamReader(file.FileStream);
+            Assert.Equal("img", await reader.ReadToEndAsync());
+        }
+
+        [Fact]
+        public async Task GetFile_HostileFileName_StripsControlCharsAndSeparators()
+        {
+            using var db = NewContext();
+            var (listId, itemId) = await SeedImageItemAsync(db, "u1", "a\r\nb/c\\d\"e.jpg");
+            var storage = A.Fake<IFileStorage>();
+            A.CallTo(() => storage.OpenAsync("full-key", A<CancellationToken>._))
+                .Returns<Stream?>(new MemoryStream(Encoding.UTF8.GetBytes("img")));
+
+            var result = await GetItemFileEndpoint.Handle(
+                1, listId, itemId, UserNamed("u1"), db, storage, new DefaultHttpContext(), CancellationToken.None);
+
+            var file = Assert.IsType<FileStreamHttpResult>(result.Result);
+            Assert.Equal("abcde.jpg", file.FileDownloadName);
+        }
+
+        [Fact]
+        public async Task GetFile_AllControlCharFileName_YieldsNullDownloadName()
+        {
+            using var db = NewContext();
+            var (listId, itemId) = await SeedImageItemAsync(db, "u1", "\r\n\t");
+            var storage = A.Fake<IFileStorage>();
+            A.CallTo(() => storage.OpenAsync("full-key", A<CancellationToken>._))
+                .Returns<Stream?>(new MemoryStream(Encoding.UTF8.GetBytes("img")));
+
+            var result = await GetItemFileEndpoint.Handle(
+                1, listId, itemId, UserNamed("u1"), db, storage, new DefaultHttpContext(), CancellationToken.None);
+
+            var file = Assert.IsType<FileStreamHttpResult>(result.Result);
+            Assert.Null(file.FileDownloadName);
         }
 
         [Fact]

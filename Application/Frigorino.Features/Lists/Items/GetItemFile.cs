@@ -60,7 +60,9 @@ namespace Frigorino.Features.Lists.Items
                 fileDownloadName: SanitizeFileName(item.OriginalFileName));
         }
 
-        // Strip path separators / control chars so OriginalFileName can't inject into Content-Disposition.
+        // Defense-in-depth: strip path separators / control chars / quotes from OriginalFileName.
+        // The real boundary defense is ASP.NET's ContentDispositionHeaderValue encoder, which already
+        // quotes / RFC-5987-encodes the value; this just keeps obviously-hostile names from reaching it.
         private static string? SanitizeFileName(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))
