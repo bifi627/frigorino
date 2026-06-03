@@ -117,4 +117,53 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
             .ToArray();
         Assert.Equal(expected, actual);
     }
+
+    [When("I POST an item {string} with comment {string} to {string} via the API")]
+    public async Task WhenIPostAnItemWithCommentViaTheApi(string itemText, string comment, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryCreateListItemAsync(listId, itemText, comment: comment);
+
+        if (ctx.LastApiResponse.Ok)
+        {
+            var json = await ctx.LastApiResponse.JsonAsync();
+            var itemId = json!.Value.GetProperty("id").GetInt32();
+            ctx.SetListItemId(listName, itemText, itemId);
+        }
+    }
+
+    [When("I PUT a comment {string} onto {string} in {string} via the API")]
+    public async Task WhenIPutACommentOntoViaTheApi(string comment, string itemText, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, itemText);
+        ctx.LastApiResponse = await api.TryUpdateListItemAsync(listId, itemId, text: null, quantity: null, status: null, comment: comment);
+    }
+
+    [Then("the API item {string} in {string} has comment {string}")]
+    public async Task ThenTheApiItemHasComment(string itemText, string listName, string expectedComment)
+    {
+        var listId = ctx.ListIds[listName];
+        var response = await api.TryGetListItemsAsync(listId);
+        Assert.Equal(200, response.Status);
+
+        var json = await response.JsonAsync();
+        var item = json!.Value.EnumerateArray()
+            .First(e => e.GetProperty("text").GetString() == itemText);
+        Assert.Equal(expectedComment, item.GetProperty("comment").GetString());
+    }
+
+    [Then("the API item {string} in {string} has no comment")]
+    public async Task ThenTheApiItemHasNoComment(string itemText, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var response = await api.TryGetListItemsAsync(listId);
+        Assert.Equal(200, response.Status);
+
+        var json = await response.JsonAsync();
+        var item = json!.Value.EnumerateArray()
+            .First(e => e.GetProperty("text").GetString() == itemText);
+        var comment = item.GetProperty("comment");
+        Assert.True(comment.ValueKind == System.Text.Json.JsonValueKind.Null);
+    }
 }
