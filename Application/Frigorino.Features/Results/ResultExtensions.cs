@@ -22,5 +22,16 @@ namespace Frigorino.Features.Results
         {
             return (Error)error.WithMetadata(PropertyMetadataKey, propertyName);
         }
+
+        // Convenience for slices that build a one-off ValidationProblem from a single Error without
+        // going through a Result<T> (e.g. transport-level guards).
+        public static ValidationProblem ToValidationProblemResult(this Error error)
+        {
+            var key = error.Metadata.TryGetValue(PropertyMetadataKey, out var p)
+                ? p?.ToString() ?? string.Empty
+                : string.Empty;
+            return TypedResults.ValidationProblem(
+                new Dictionary<string, string[]> { [key] = new[] { error.Message } });
+        }
     }
 }

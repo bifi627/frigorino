@@ -865,6 +865,11 @@
         "resolved": "1.4.2",
         "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
+      "SixLabors.ImageSharp": {
+        "type": "Transitive",
+        "resolved": "3.1.12",
+        "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
+      },
       "SSH.NET": {
         "type": "Transitive",
         "resolved": "2025.1.0",
@@ -1013,7 +1018,8 @@
           "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "[10.0.8, )",
           "Microsoft.Extensions.Options": "[10.0.8, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.2, )",
-          "OpenAI": "[2.8.0, )"
+          "OpenAI": "[2.8.0, )",
+          "SixLabors.ImageSharp": "[3.1.12, )"
         }
       },
       "frigorino.web": {

@@ -1,5 +1,6 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Files;
+using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Test.Domain
 {
@@ -221,6 +222,68 @@ namespace Frigorino.Test.Domain
 
             Assert.True(result.IsFailed);
             Assert.Equal(nameof(ListItem.Comment), result.Errors[0].Metadata["Property"]);
+        }
+
+        // ------- update restrictions -------
+
+        [Fact]
+        public void UpdateItem_OnMediaItem_WithText_Fails()
+        {
+            var list = NewList();
+            var media = list.AddMediaItem(ListItemType.Image, "cap", ImageFile()).Value;
+
+            var result = list.UpdateItem(media.Id, text: "now has a name", quantity: null, clearQuantity: false, status: null);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal("", media.Text);
+        }
+
+        [Fact]
+        public void UpdateItem_OnMediaItem_WithQuantity_Fails()
+        {
+            var list = NewList();
+            var media = list.AddMediaItem(ListItemType.Image, "cap", ImageFile()).Value;
+
+            var result = list.UpdateItem(
+                media.Id, text: null, quantity: Quantity.Create(2, QuantityUnit.Piece).Value, clearQuantity: false, status: null);
+
+            Assert.True(result.IsFailed);
+            Assert.Null(media.QuantityValue);
+        }
+
+        [Fact]
+        public void UpdateItem_OnMediaItem_WithClearQuantity_Fails()
+        {
+            var list = NewList();
+            var media = list.AddMediaItem(ListItemType.Image, "cap", ImageFile()).Value;
+
+            var result = list.UpdateItem(media.Id, text: null, quantity: null, clearQuantity: true, status: null);
+
+            Assert.True(result.IsFailed);
+        }
+
+        [Fact]
+        public void UpdateItem_OnMediaItem_CommentOnly_UpdatesCaption()
+        {
+            var list = NewList();
+            var media = list.AddMediaItem(ListItemType.Image, "old caption", ImageFile()).Value;
+
+            var result = list.UpdateItem(media.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "  new caption  ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("new caption", media.Comment);
+        }
+
+        [Fact]
+        public void UpdateItem_OnMediaItem_EmptyComment_ClearsCaption()
+        {
+            var list = NewList();
+            var media = list.AddMediaItem(ListItemType.Image, "old caption", ImageFile()).Value;
+
+            var result = list.UpdateItem(media.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "   ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(media.Comment);
         }
 
         // ------- lifecycle uniformity -------
