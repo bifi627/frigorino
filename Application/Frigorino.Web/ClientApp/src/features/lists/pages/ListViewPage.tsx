@@ -18,7 +18,9 @@ import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListContainer } from "../items/components/ListContainer";
 import { ListFooter } from "../items/components/ListFooter";
+import { MediaPreviewSheet } from "../items/components/MediaPreviewSheet";
 import { useCreateListItem } from "../items/useCreateListItem";
+import { useCreateMediaItem } from "../items/useCreateMediaItem";
 import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
@@ -44,6 +46,7 @@ export const ListViewPage = () => {
         id: number;
         extractionPending: boolean;
     } | null>(null);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
@@ -61,6 +64,7 @@ export const ListViewPage = () => {
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
+    const createMediaMutation = useCreateMediaItem();
 
     const { isExtracting, extractingItemId } = useExtractionPoll(
         householdId,
@@ -172,6 +176,37 @@ export const ListViewPage = () => {
         setEditingItem(null);
     }, []);
 
+    const handleAttachFile = useCallback((file: File) => {
+        setPendingFile(file);
+    }, []);
+
+    const handleSendMedia = useCallback(
+        async (caption: string | null) => {
+            if (!householdId || !pendingFile) return;
+            try {
+                await createMediaMutation.mutateAsync({
+                    path: { householdId, listId: listIdNum },
+                    body: {
+                        file: pendingFile,
+                        type: "Image",
+                        caption: caption ?? undefined,
+                    },
+                });
+                setPendingFile(null);
+                scrollToLastUncheckedItem();
+            } catch {
+                // Mutation surfaces the error; keep the sheet open so the user can retry/cancel.
+            }
+        },
+        [
+            householdId,
+            listIdNum,
+            pendingFile,
+            createMediaMutation,
+            scrollToLastUncheckedItem,
+        ],
+    );
+
     const handleUncheckExisting = useCallback(
         (itemId: number) => {
             if (!householdId) return;
@@ -271,8 +306,16 @@ export const ListViewPage = () => {
                 onUncheckExisting={handleUncheckExisting}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
+                onAttachFile={handleAttachFile}
                 openQuantityPanel={editOpenQuantity}
                 openCommentPanel={editOpenComment}
+            />
+
+            <MediaPreviewSheet
+                file={pendingFile}
+                isUploading={createMediaMutation.isPending}
+                onSend={handleSendMedia}
+                onClose={() => setPendingFile(null)}
             />
         </Box>
     );
