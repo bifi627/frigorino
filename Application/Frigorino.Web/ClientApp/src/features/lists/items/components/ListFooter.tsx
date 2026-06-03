@@ -111,6 +111,9 @@ export const ListFooter = memo(
             [editingItem],
         );
 
+        // handleComplete is typed to the EDIT superset so TS knows r.quantity exists in the
+        // edit branch; the create branch uses ADD_FEATURES and never reads r.quantity. r.comment
+        // is present in both because both feature sets include commentComposerFeature.
         const handleComplete = useCallback(
             (r: Completion<typeof EDIT_FEATURES>) => {
                 const comment = r.comment.trim() || null;

@@ -18,7 +18,7 @@ const CommentToggle = ({ value, open, toggleOpen }: FeatureSlot<string>) => {
     return (
         <IconButton
             onClick={toggleOpen}
-            aria-label={t("lists.addComment")}
+            aria-label={t("lists.comment")}
             sx={{
                 minWidth: 44,
                 minHeight: 44,
@@ -40,7 +40,14 @@ const CommentChip = ({ value, toggleOpen }: FeatureSlot<string>) => {
             size="small"
             icon={<StickyNote2 fontSize="small" />}
             label={value.trim()}
-            sx={{ minHeight: 32, maxWidth: 220 }}
+            sx={{
+                minHeight: 32,
+                maxWidth: 220,
+                "& .MuiChip-label": {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                },
+            }}
         />
     );
 };
@@ -67,6 +74,7 @@ const CommentPanel = ({ value, setValue, disabled }: FeatureSlot<string>) => {
                 size="small"
                 slotProps={{
                     htmlInput: {
+                        maxLength: COMMENT_MAX_LENGTH,
                         "data-testid": "composer-comment",
                     },
                 }}
