@@ -80,6 +80,7 @@ if (!builder.Environment.IsEnvironment("IntegrationTest") && !isBuildTimeOpenApi
 builder.Services.TryAddScoped<INotificationSender, LogOnlyNotificationSender>();
 
 builder.Services.AddBackgroundTaskQueue();
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
 builder.Services.AddMaintenanceServices(builder.Configuration);
