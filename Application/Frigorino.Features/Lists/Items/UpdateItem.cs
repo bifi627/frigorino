@@ -62,11 +62,10 @@ namespace Frigorino.Features.Lists.Items
                 quantity = parsed.Value;
             }
 
-            // Run the deterministic router ONLY on a text change with no explicit quantity intent —
-            // same condition as the legacy re-extraction guard (the edit composer always sends a
-            // quantity or ClearQuantity, making the user authoritative). On a Resolved parse we write
-            // the stripped name + quantity in this same save; SkipAi/NeedsExtraction/ClassifyOnly
-            // leave the user's text as-typed and the existing quantity untouched.
+            // Route ONLY on a text change with no explicit quantity intent — the edit composer always
+            // sends a quantity or ClearQuantity, making the user authoritative. When it does route to
+            // NeedsExtraction, the async LLM job re-extracts and strips the name; the user's text is
+            // written as-typed here and the existing quantity is left untouched.
             var textChangedWithoutQuantityIntent =
                 request.Text is not null && request.Quantity is null && request.ClearQuantity != true;
 
@@ -76,14 +75,7 @@ namespace Frigorino.Features.Lists.Items
                 analysis = ItemTextRouter.Analyze(request.Text);
             }
 
-            var textToWrite = request.Text;
-            if (analysis is { Route: ItemTextRoute.Resolved } resolved)
-            {
-                textToWrite = resolved.CleanName;
-                quantity = resolved.Quantity;
-            }
-
-            var result = list.UpdateItem(itemId, textToWrite, quantity, request.ClearQuantity ?? false, request.Status, request.Comment);
+            var result = list.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.Status, request.Comment);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];

@@ -14,7 +14,6 @@ namespace Frigorino.Test.Domain
             var result = ItemTextRouter.Analyze(input);
 
             Assert.Equal(ItemTextRoute.SkipAi, result.Route);
-            Assert.Null(result.Quantity);
         }
 
         [Fact]
@@ -38,55 +37,28 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void Analyze_UrlWithDigits_SkipsBeforeDigitGate()
+        public void Analyze_UrlWithDigits_SkipsBeforeProcessing()
         {
             var result = ItemTextRouter.Analyze("https://shop.com/item/123");
 
             Assert.Equal(ItemTextRoute.SkipAi, result.Route);
         }
 
-        [Fact]
-        public void Analyze_ConfidentQuantity_Resolves()
+        [Theory]
+        [InlineData("2kg flour")]              // digit quantity
+        [InlineData("two cups of coffee")]     // spelled-out quantity (EN) — no digit, still extracted
+        [InlineData("zwei Liter Cola")]        // spelled-out quantity (DE)
+        [InlineData("7up")]                    // brand-digit — LLM decides it is not a quantity
+        [InlineData("milk")]                   // no quantity at all — LLM returns it unchanged
+        public void Analyze_AnyProductText_NeedsExtraction(string input)
         {
-            var result = ItemTextRouter.Analyze("2kg flour");
-
-            Assert.Equal(ItemTextRoute.Resolved, result.Route);
-            Assert.Equal("flour", result.CleanName);
-            Assert.NotNull(result.Quantity);
-            Assert.Equal(2m, result.Quantity!.Value.Value);
-            Assert.Equal(QuantityUnit.Kilogram, result.Quantity!.Value.Unit);
-        }
-
-        [Fact]
-        public void Analyze_DigitNoConfidentParse_NeedsExtraction()
-        {
-            var result = ItemTextRouter.Analyze("7up");
+            // Anything that survives the junk guard is handed to the LLM verbatim: there is no
+            // reliable cheap way to tell quantity-bearing text from plain text, so the router does
+            // not try. The raw text is preserved as CleanName.
+            var result = ItemTextRouter.Analyze(input);
 
             Assert.Equal(ItemTextRoute.NeedsExtraction, result.Route);
-            Assert.Equal("7up", result.CleanName);
-            Assert.Null(result.Quantity);
-        }
-
-        [Fact]
-        public void Analyze_NoDigit_ClassifyOnly()
-        {
-            var result = ItemTextRouter.Analyze("milk");
-
-            Assert.Equal(ItemTextRoute.ClassifyOnly, result.Route);
-            Assert.Equal("milk", result.CleanName);
-            Assert.Null(result.Quantity);
-        }
-
-        [Fact]
-        public void Analyze_NonResolvedRoute_KeepsRawTextAsCleanName()
-        {
-            // The trigger keys off CleanName for every route; non-Resolved must echo raw text.
-            // "milk 2" is a trailing bare integer — ambiguous to Quantity.TryParse (no confident
-            // parse) but contains a digit, so it routes to NeedsExtraction with raw text intact.
-            var result = ItemTextRouter.Analyze("milk 2");
-
-            Assert.Equal(ItemTextRoute.NeedsExtraction, result.Route);
-            Assert.Equal("milk 2", result.CleanName);
+            Assert.Equal(input, result.CleanName);
         }
     }
 }
