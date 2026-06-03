@@ -9,7 +9,11 @@ interface Props {
 }
 
 // Renderer switch keyed by item.type. Document renderer arrives in sub-feature #3.
-export function ListItemContent({ item, onEditQuantity, onEditComment }: Props) {
+export function ListItemContent({
+    item,
+    onEditQuantity,
+    onEditComment,
+}: Props) {
     if (item.type === "Image") {
         return <ImageItemRenderer item={item} />;
     }

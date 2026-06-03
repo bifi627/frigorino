@@ -24,7 +24,15 @@ export function ImageItemRenderer({ item }: Props) {
     } = useItemImage(householdId, item.listId, item.id, "thumbnail");
 
     return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
+        <Box
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                flex: 1,
+                minWidth: 0,
+            }}
+        >
             <Box
                 role="button"
                 tabIndex={0}
@@ -51,7 +59,11 @@ export function ImageItemRenderer({ item }: Props) {
                 }}
             >
                 {isLoading ? (
-                    <Skeleton variant="rectangular" width={THUMB_SIZE} height={THUMB_SIZE} />
+                    <Skeleton
+                        variant="rectangular"
+                        width={THUMB_SIZE}
+                        height={THUMB_SIZE}
+                    />
                 ) : isError || !url ? (
                     <BrokenImage fontSize="small" color="disabled" />
                 ) : (
@@ -59,7 +71,11 @@ export function ImageItemRenderer({ item }: Props) {
                         component="img"
                         src={url}
                         alt={item.comment ?? ""}
-                        sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                        }}
                     />
                 )}
             </Box>
@@ -67,7 +83,12 @@ export function ImageItemRenderer({ item }: Props) {
             {item.comment ? (
                 <Typography
                     variant="body2"
-                    sx={{ wordBreak: "break-word", color: "text.secondary", flex: 1, minWidth: 0 }}
+                    sx={{
+                        wordBreak: "break-word",
+                        color: "text.secondary",
+                        flex: 1,
+                        minWidth: 0,
+                    }}
                 >
                     {item.comment}
                 </Typography>

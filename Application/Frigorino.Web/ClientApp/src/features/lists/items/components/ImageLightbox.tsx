@@ -34,17 +34,36 @@ export function ImageLightbox({
     );
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="lg" data-testid="image-lightbox">
+        <Dialog
+            open={open}
+            onClose={onClose}
+            maxWidth="lg"
+            data-testid="image-lightbox"
+        >
             <Box sx={{ position: "relative", bgcolor: "common.black" }}>
                 <IconButton
                     onClick={onClose}
                     aria-label="close"
-                    sx={{ position: "absolute", top: 8, right: 8, color: "common.white", zIndex: 1 }}
+                    sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        color: "common.white",
+                        zIndex: 1,
+                    }}
                 >
                     <Close />
                 </IconButton>
                 {isLoading || !url ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 240, minWidth: 240 }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            minHeight: 240,
+                            minWidth: 240,
+                        }}
+                    >
                         <CircularProgress sx={{ color: "common.white" }} />
                     </Box>
                 ) : (
@@ -52,12 +71,21 @@ export function ImageLightbox({
                         component="img"
                         src={url}
                         alt={caption ?? ""}
-                        sx={{ display: "block", maxWidth: "90vw", maxHeight: "85vh", width: "auto", height: "auto" }}
+                        sx={{
+                            display: "block",
+                            maxWidth: "90vw",
+                            maxHeight: "85vh",
+                            width: "auto",
+                            height: "auto",
+                        }}
                     />
                 )}
             </Box>
             {caption ? (
-                <Typography variant="body2" sx={{ p: 1.5, color: "text.secondary" }}>
+                <Typography
+                    variant="body2"
+                    sx={{ p: 1.5, color: "text.secondary" }}
+                >
                     {caption}
                 </Typography>
             ) : null}

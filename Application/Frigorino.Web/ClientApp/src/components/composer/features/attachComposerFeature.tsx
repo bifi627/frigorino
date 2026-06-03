@@ -1,7 +1,13 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
    descriptor (non-component) alongside a local presentational component. */
 import { AddPhotoAlternate, Description, Image } from "@mui/icons-material";
-import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import {
+    IconButton,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+} from "@mui/material";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { defineAction } from "../defineFeature";
@@ -12,7 +18,10 @@ export interface AttachPayload {
     file: File;
 }
 
-const AttachTrigger = ({ complete, disabled }: ActionContext<AttachPayload>) => {
+const AttachTrigger = ({
+    complete,
+    disabled,
+}: ActionContext<AttachPayload>) => {
     const { t } = useTranslation();
     const [anchor, setAnchor] = useState<null | HTMLElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,7 +47,11 @@ const AttachTrigger = ({ complete, disabled }: ActionContext<AttachPayload>) => 
                 <AddPhotoAlternate fontSize="small" />
             </IconButton>
 
-            <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+            <Menu
+                anchorEl={anchor}
+                open={Boolean(anchor)}
+                onClose={() => setAnchor(null)}
+            >
                 <MenuItem
                     data-testid="composer-attach-photo"
                     onClick={() => {
@@ -46,12 +59,16 @@ const AttachTrigger = ({ complete, disabled }: ActionContext<AttachPayload>) => 
                         fileInputRef.current?.click();
                     }}
                 >
-                    <ListItemIcon><Image fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                        <Image fontSize="small" />
+                    </ListItemIcon>
                     <ListItemText>{t("lists.attachPhoto")}</ListItemText>
                 </MenuItem>
                 {/* Document arrives in sub-feature #3. */}
                 <MenuItem disabled data-testid="composer-attach-document">
-                    <ListItemIcon><Description fontSize="small" /></ListItemIcon>
+                    <ListItemIcon>
+                        <Description fontSize="small" />
+                    </ListItemIcon>
                     <ListItemText>{t("lists.attachDocument")}</ListItemText>
                 </MenuItem>
             </Menu>
