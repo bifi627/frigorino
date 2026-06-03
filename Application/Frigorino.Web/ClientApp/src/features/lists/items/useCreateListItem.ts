@@ -36,6 +36,7 @@ export const useCreateListItem = () => {
             const tempId = Date.now();
             const optimisticItem: ListItemResponse = {
                 id: tempId,
+                type: "Text",
                 text: variables.body.text,
                 comment: variables.body.comment ?? null,
                 quantity: null,
