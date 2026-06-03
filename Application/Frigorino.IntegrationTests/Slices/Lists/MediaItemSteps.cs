@@ -85,4 +85,49 @@ public class MediaItemSteps
     {
         await Assertions.Expect(ctx.Page.GetByTestId("image-lightbox")).ToBeVisibleAsync();
     }
+
+    // Checks off the photo row. An image item has no text, so its toggle testid is keyed by id
+    // (toggle-item-{id}); rather than know the id, we scope to the row (li) that contains the image
+    // thumbnail and click its toggle. Awaits the toggle-status PATCH so the remount (the row moves
+    // between the unchecked/checked sections) has actually happened before the next assertion.
+    [When("I check off the photo")]
+    public async Task WhenICheckOffThePhoto()
+    {
+        var photoRow = ctx.Page.Locator("li:has([data-testid^='list-item-image-'])").First;
+        var toggle = photoRow.Locator("[data-testid^='toggle-item-']");
+        await toggle.WaitForAsync();
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.Contains("/items/")
+            && r.Url.Contains("/toggle-status")
+            && r.Request.Method == "PATCH");
+        await toggle.ClickAsync();
+        await responseTask;
+    }
+
+    // Regression guard for the thumbnail-breaks-on-toggle bug (fixed in useItemImage.ts by caching
+    // the Blob, not the object URL). A revoked object URL still renders a "visible" <img>, so
+    // ToBeVisible would NOT catch it — we must assert the image actually decoded: complete &&
+    // naturalWidth > 0. Polled to ride out the remount's brief skeleton/load gap.
+    [Then("the photo thumbnail is still shown")]
+    public async Task ThenThumbnailStillShown()
+    {
+        var img = ctx.Page.Locator("[data-testid^='list-item-image-'] img").First;
+        await Assertions.Expect(img).ToBeVisibleAsync();
+
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        var loaded = false;
+        while (DateTime.UtcNow < deadline)
+        {
+            loaded = await img.EvaluateAsync<bool>(
+                "el => el.complete && el.naturalWidth > 0");
+            if (loaded)
+            {
+                break;
+            }
+
+            await Task.Delay(200);
+        }
+
+        Assert.True(loaded, "Thumbnail <img> did not finish loading (complete && naturalWidth > 0) after toggle.");
+    }
 }

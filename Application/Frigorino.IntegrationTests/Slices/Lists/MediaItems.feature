@@ -10,3 +10,11 @@ Feature: Media Items
     Then a photo thumbnail appears in the list
     When I open the photo
     Then the image lightbox is shown
+
+  Scenario: Photo thumbnail survives being checked off
+    Given there is a list named "Trip"
+    When I open the list "Trip"
+    And I attach a photo with caption "beach"
+    Then a photo thumbnail appears in the list
+    When I check off the photo
+    Then the photo thumbnail is still shown
