@@ -1,4 +1,6 @@
+import StickyNote2 from "@mui/icons-material/StickyNote2";
 import { Box, Link, ListItemText, Typography } from "@mui/material";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
@@ -23,6 +25,8 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
         },
     });
 
+    const [commentExpanded, setCommentExpanded] = useState(false);
+
     return (
         <ListItemText
             {...events}
@@ -39,19 +43,75 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                 </Typography>
             }
             secondary={
-                item.quantity ? (
+                item.quantity || item.comment ? (
                     <Box
                         sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.25,
                         }}
                     >
-                        <ItemQuantityChip
-                            quantity={item.quantity}
-                            onClick={onEditQuantity}
-                            testId={`list-item-quantity-${item.text}`}
-                        />
+                        {item.quantity ? (
+                            <Box
+                                sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                }}
+                            >
+                                <ItemQuantityChip
+                                    quantity={item.quantity}
+                                    onClick={onEditQuantity}
+                                    testId={`list-item-quantity-${item.text}`}
+                                />
+                            </Box>
+                        ) : null}
+                        {item.comment ? (
+                            <Box
+                                component="span"
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCommentExpanded((v) => !v);
+                                }}
+                                data-testid={`list-item-comment-${item.id}`}
+                                sx={{
+                                    display: "inline-flex",
+                                    alignItems: "flex-start",
+                                    gap: 0.5,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <StickyNote2
+                                    sx={{
+                                        fontSize: "0.85rem",
+                                        mt: "1px",
+                                        color: "text.disabled",
+                                    }}
+                                />
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{
+                                        fontSize: "0.7rem",
+                                        ...(commentExpanded
+                                            ? {
+                                                  whiteSpace: "pre-wrap",
+                                                  wordBreak: "break-word",
+                                              }
+                                            : {
+                                                  display: "-webkit-box",
+                                                  WebkitLineClamp: 1,
+                                                  WebkitBoxOrient: "vertical",
+                                                  overflow: "hidden",
+                                              }),
+                                    }}
+                                >
+                                    {item.comment}
+                                </Typography>
+                            </Box>
+                        ) : null}
                     </Box>
                 ) : null
             }
