@@ -210,6 +210,8 @@
         "commentPlaceholder": "Hinweis hinzufügen…",
         "attach": "Anhängen",
         "attachPhoto": "Foto",
+        "takePhoto": "Foto aufnehmen",
+        "choosePhoto": "Aus Dateien wählen",
         "attachDocument": "Dokument",
         "captionPlaceholder": "Bildunterschrift hinzufügen (optional)",
         "editCaption": "Bildunterschrift bearbeiten"

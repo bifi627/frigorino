@@ -210,6 +210,8 @@
         "commentPlaceholder": "Add a hint…",
         "attach": "Attach",
         "attachPhoto": "Photo",
+        "takePhoto": "Take Photo",
+        "choosePhoto": "Choose from Files",
         "attachDocument": "Document",
         "captionPlaceholder": "Add a caption (optional)",
         "editCaption": "Edit caption"
