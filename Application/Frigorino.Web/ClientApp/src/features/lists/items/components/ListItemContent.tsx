@@ -71,9 +71,17 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                                 component="span"
                                 role="button"
                                 tabIndex={0}
+                                aria-label={t("lists.comment")}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setCommentExpanded((v) => !v);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setCommentExpanded((v) => !v);
+                                    }
                                 }}
                                 data-testid={`list-item-comment-${item.id}`}
                                 sx={{
@@ -84,6 +92,7 @@ export function ListItemContent({ item, onEditQuantity }: Props) {
                                 }}
                             >
                                 <StickyNote2
+                                    aria-hidden="true"
                                     sx={{
                                         fontSize: "0.85rem",
                                         mt: "1px",

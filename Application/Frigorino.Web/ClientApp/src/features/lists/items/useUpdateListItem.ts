@@ -41,6 +41,7 @@ export const useUpdateListItem = () => {
                                       ? null
                                       : (variables.body.quantity ??
                                         item.quantity),
+                                  // null = preserve; empty/whitespace → cleared to null; else trimmed
                                   comment:
                                       variables.body.comment == null
                                           ? item.comment
