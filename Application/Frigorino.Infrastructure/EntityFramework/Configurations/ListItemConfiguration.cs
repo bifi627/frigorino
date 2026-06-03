@@ -20,6 +20,9 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .HasMaxLength(ListItem.TextMaxLength)
                 .IsRequired();
 
+            builder.Property(li => li.Comment)
+                .HasMaxLength(ListItem.CommentMaxLength);
+
             builder.Property(li => li.QuantityValue)
                 .HasColumnType("numeric(12,3)");
 
