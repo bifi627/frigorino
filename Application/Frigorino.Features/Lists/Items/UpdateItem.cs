@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record UpdateItemRequest(string? Text, QuantityDto? Quantity, bool? ClearQuantity, bool? Status);
+    public sealed record UpdateItemRequest(string? Text, QuantityDto? Quantity, bool? ClearQuantity, bool? Status, string? Comment);
 
     public static class UpdateItemEndpoint
     {
@@ -83,7 +83,7 @@ namespace Frigorino.Features.Lists.Items
                 quantity = resolved.Quantity;
             }
 
-            var result = list.UpdateItem(itemId, textToWrite, quantity, request.ClearQuantity ?? false, request.Status);
+            var result = list.UpdateItem(itemId, textToWrite, quantity, request.ClearQuantity ?? false, request.Status, request.Comment);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];

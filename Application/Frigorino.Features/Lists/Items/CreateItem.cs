@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record CreateItemRequest(string Text);
+    public sealed record CreateItemRequest(string Text, string? Comment);
 
     public static class CreateItemEndpoint
     {
@@ -50,7 +50,7 @@ namespace Frigorino.Features.Lists.Items
 
             var analysis = ItemTextRouter.Analyze(request.Text);
 
-            var result = list.AddItem(analysis.CleanName, analysis.Quantity);
+            var result = list.AddItem(analysis.CleanName, analysis.Quantity, request.Comment);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();
