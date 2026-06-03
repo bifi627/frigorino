@@ -328,6 +328,8 @@ listItems.MapGetItems();
 listItems.MapGetItem();
 listItems.MapCreateItem();
 listItems.MapCreateMediaItem();
+listItems.MapGetItemFile();
+listItems.MapGetItemThumbnail();
 listItems.MapUpdateItem();
 listItems.MapDeleteItem();
 listItems.MapRestoreItem();
