@@ -2334,12 +2334,19 @@
       },
       "CreateItemRequest": {
         "required": [
-          "text"
+          "text",
+          "comment"
         ],
         "type": "object",
         "properties": {
           "text": {
             "type": "string"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -2648,6 +2655,7 @@
           "id",
           "listId",
           "text",
+          "comment",
           "quantity",
           "status",
           "sortOrder",
@@ -2667,6 +2675,12 @@
           },
           "text": {
             "type": "string"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "quantity": {
             "oneOf": [
@@ -2973,7 +2987,8 @@
           "text",
           "quantity",
           "clearQuantity",
-          "status"
+          "status",
+          "comment"
         ],
         "type": "object",
         "properties": {
@@ -3003,6 +3018,12 @@
             "type": [
               "null",
               "boolean"
+            ]
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }

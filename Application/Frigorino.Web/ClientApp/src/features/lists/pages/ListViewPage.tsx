@@ -99,7 +99,7 @@ export const ListViewPage = () => {
             try {
                 const created = await createMutation.mutateAsync({
                     path: { householdId, listId: listIdNum },
-                    body: { text: data },
+                    body: { text: data, comment: null },
                 });
                 // Only the latest add is polled for extraction; rapid successive adds
                 // replace this, so just the last item shows the extracting spinner (v1).
@@ -130,6 +130,7 @@ export const ListViewPage = () => {
                     // collides with the domain's null=preserve semantics for the other fields.
                     body: {
                         text: data,
+                        comment: null,
                         quantity,
                         clearQuantity: quantity === null,
                         status: null,
