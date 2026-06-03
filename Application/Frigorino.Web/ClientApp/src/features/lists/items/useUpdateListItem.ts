@@ -41,6 +41,11 @@ export const useUpdateListItem = () => {
                                       ? null
                                       : (variables.body.quantity ??
                                         item.quantity),
+                                  comment:
+                                      variables.body.comment == null
+                                          ? item.comment
+                                          : (variables.body.comment.trim() ||
+                                            null),
                                   updatedAt: new Date().toISOString(),
                               }
                             : item,
@@ -64,6 +69,10 @@ export const useUpdateListItem = () => {
                     quantity: variables.body.clearQuantity
                         ? null
                         : (variables.body.quantity ?? currentItem.quantity),
+                    comment:
+                        variables.body.comment == null
+                            ? currentItem.comment
+                            : (variables.body.comment.trim() || null),
                     updatedAt: new Date().toISOString(),
                 });
             }
