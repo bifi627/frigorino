@@ -23,6 +23,24 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(li => li.Comment)
                 .HasMaxLength(ListItem.CommentMaxLength);
 
+            builder.Property(li => li.Type)
+                .IsRequired()
+                .HasDefaultValue(ListItemType.Text);
+
+            builder.Property(li => li.StorageKey)
+                .HasMaxLength(ListItem.StorageKeyMaxLength);
+
+            builder.Property(li => li.ThumbnailStorageKey)
+                .HasMaxLength(ListItem.StorageKeyMaxLength);
+
+            builder.Property(li => li.OriginalFileName)
+                .HasMaxLength(ListItem.OriginalFileNameMaxLength);
+
+            builder.Property(li => li.ContentType)
+                .HasMaxLength(ListItem.ContentTypeMaxLength);
+
+            builder.Property(li => li.FileSizeBytes);
+
             builder.Property(li => li.QuantityValue)
                 .HasColumnType("numeric(12,3)");
 
