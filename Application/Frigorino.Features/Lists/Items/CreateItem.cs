@@ -50,7 +50,9 @@ namespace Frigorino.Features.Lists.Items
 
             var analysis = ItemTextRouter.Analyze(request.Text);
 
-            var result = list.AddItem(analysis.CleanName, analysis.Quantity, request.Comment);
+            // The item is created with no quantity; if the text needs extraction the async LLM job
+            // fills in the quantity (and strips the name) afterwards.
+            var result = list.AddItem(analysis.CleanName, null, request.Comment);
             if (result.IsFailed)
             {
                 return result.ToValidationProblem();

@@ -7,8 +7,9 @@ namespace Frigorino.Infrastructure.Services
 {
     public static class QuantityExtractionDependencyInjection
     {
-        // Must be called AFTER AddItemClassification — both trigger impls depend on the
-        // IProductClassificationTrigger it registers.
+        // Must be called AFTER AddItemClassification — the disabled-path trigger (and, via the
+        // chained extract job, the enabled path) depends on the IProductClassificationTrigger it
+        // registers.
         public static IServiceCollection AddQuantityExtraction(
             this IServiceCollection services, IConfiguration configuration)
         {

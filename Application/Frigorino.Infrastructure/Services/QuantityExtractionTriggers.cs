@@ -4,19 +4,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Frigorino.Infrastructure.Services
 {
-    // Enabled path. Resolved/ClassifyOnly classify the clean name directly (no LLM). NeedsExtraction
-    // enqueues the extract job, which re-extracts from the raw text and chains classification on its
-    // own clean name. SkipAi (URL/junk) does nothing — no extraction, no classification.
+    // Enabled path. NeedsExtraction enqueues the extract job, which extracts from the raw text and
+    // chains classification on its own clean name. SkipAi (URL/junk) does nothing — no extraction,
+    // no classification.
     public class QueueingQuantityExtractionTrigger : IQuantityExtractionTrigger
     {
         private readonly IBackgroundTaskQueue _queue;
-        private readonly IProductClassificationTrigger _classificationTrigger;
 
-        public QueueingQuantityExtractionTrigger(
-            IBackgroundTaskQueue queue, IProductClassificationTrigger classificationTrigger)
+        public QueueingQuantityExtractionTrigger(IBackgroundTaskQueue queue)
         {
             _queue = queue;
-            _classificationTrigger = classificationTrigger;
         }
 
         public void OnItemRouted(int householdId, int listId, int itemId, ItemTextAnalysis analysis)
@@ -27,10 +24,6 @@ namespace Frigorino.Infrastructure.Services
                     _queue.TryEnqueue((sp, ct) =>
                         sp.GetRequiredService<IExtractQuantityJob>()
                           .Run(householdId, listId, itemId, analysis.CleanName, ct));
-                    break;
-                case ItemTextRoute.Resolved:
-                case ItemTextRoute.ClassifyOnly:
-                    _classificationTrigger.OnProductReferenced(householdId, analysis.CleanName);
                     break;
                 case ItemTextRoute.SkipAi:
                 default:
