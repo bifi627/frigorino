@@ -81,6 +81,7 @@ builder.Services.TryAddScoped<INotificationSender, LogOnlyNotificationSender>();
 
 builder.Services.AddBackgroundTaskQueue();
 builder.Services.AddFileStorage(builder.Configuration);
+builder.Services.AddImageProcessing();
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
 builder.Services.AddMaintenanceServices(builder.Configuration);
