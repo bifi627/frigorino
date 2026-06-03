@@ -94,12 +94,12 @@ export const ListViewPage = () => {
     }, []);
 
     const handleAddItem = useCallback(
-        async (data: string) => {
+        async (data: string, comment: string | null) => {
             if (!householdId) return;
             try {
                 const created = await createMutation.mutateAsync({
                     path: { householdId, listId: listIdNum },
-                    body: { text: data, comment: null },
+                    body: { text: data, comment },
                 });
                 // Only the latest add is polled for extraction; rapid successive adds
                 // replace this, so just the last item shows the extracting spinner (v1).
@@ -117,7 +117,7 @@ export const ListViewPage = () => {
     );
 
     const handleUpdateItem = useCallback(
-        (data: string, quantity: QuantityDto | null) => {
+        (data: string, quantity: QuantityDto | null, comment: string | null) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: {
@@ -125,15 +125,12 @@ export const ListViewPage = () => {
                         listId: listIdNum,
                         itemId: editingItem.id,
                     },
-                    // The edit composer is authoritative for quantity: a non-null value sets it,
-                    // an empty one clears it (clearQuantity). Text is always sent, so this never
-                    // collides with the domain's null=preserve semantics for the other fields.
                     body: {
                         text: data,
-                        comment: null,
                         quantity,
                         clearQuantity: quantity === null,
                         status: null,
+                        comment,
                     },
                 });
                 setEditOpenQuantity(false);

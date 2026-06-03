@@ -3,6 +3,7 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
+    commentComposerFeature,
     draftToQuantity,
     formatQuantity,
     quantityComposerFeature,
@@ -13,16 +14,21 @@ import {
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
 
-// Lists add via free-text (extraction fills the quantity), so the add composer is text-only.
-// Manual quantity entry/correction happens in edit mode — hence the feature is edit-only.
-const EDIT_FEATURES = [quantityComposerFeature] as const;
-const NO_FEATURES = [] as const;
+// Lists add via free-text (extraction fills the quantity), so the add composer stays
+// quantity-free — but a comment can be attached at add time. Manual quantity entry/correction
+// happens in edit mode.
+const EDIT_FEATURES = [quantityComposerFeature, commentComposerFeature] as const;
+const ADD_FEATURES = [commentComposerFeature] as const;
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
     existingItems: ListItemResponse[];
-    onAddItem: (data: string) => void;
-    onUpdateItem: (data: string, quantity: QuantityDto | null) => void;
+    onAddItem: (data: string, comment: string | null) => void;
+    onUpdateItem: (
+        data: string,
+        quantity: QuantityDto | null,
+        comment: string | null,
+    ) => void;
     onCancelEdit: () => void;
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
@@ -89,7 +95,7 @@ export const ListFooter = memo(
             onDuplicate,
         });
 
-        const features = editingItem ? EDIT_FEATURES : NO_FEATURES;
+        const features = editingItem ? EDIT_FEATURES : ADD_FEATURES;
 
         const initialDraft = useMemo(
             () =>
@@ -98,6 +104,7 @@ export const ListFooter = memo(
                           text: editingItem.text,
                           values: {
                               quantity: quantityToDraft(editingItem.quantity),
+                              comment: editingItem.comment ?? "",
                           },
                       }
                     : undefined,
@@ -106,10 +113,11 @@ export const ListFooter = memo(
 
         const handleComplete = useCallback(
             (r: Completion<typeof EDIT_FEATURES>) => {
+                const comment = r.comment.trim() || null;
                 if (r.mode === "edit") {
-                    onUpdateItem(r.text, draftToQuantity(r.quantity));
+                    onUpdateItem(r.text, draftToQuantity(r.quantity), comment);
                 } else {
-                    onAddItem(r.text);
+                    onAddItem(r.text, comment);
                     onScrollToLastUnchecked();
                 }
             },
