@@ -14,6 +14,12 @@ namespace Frigorino.Features.Lists.Items
         int SortOrder,
         DateTime CreatedAt,
         DateTime UpdatedAt,
+        // Item type — Text (default) | Image | Document. Serialized as its string name.
+        ListItemType Type = ListItemType.Text,
+        // Media metadata — all null for Text items.
+        string? FileName = null,
+        string? ContentType = null,
+        long? FileSize = null,
         // True only on the create response when the router enqueued LLM extraction for this item
         // (route NeedsExtraction). The client drives its extraction poll off this single signal
         // instead of re-deriving a digit gate; read/projection paths always leave it false.
@@ -32,7 +38,11 @@ namespace Frigorino.Features.Lists.Items
                 item.Status,
                 item.SortOrder,
                 item.CreatedAt,
-                item.UpdatedAt);
+                item.UpdatedAt,
+                item.Type,
+                item.OriginalFileName,
+                item.ContentType,
+                item.FileSizeBytes);
         }
 
         // Promote-to-inventory hint, set only by the ToggleItemStatus slice via `with { Promote = ... }`.
@@ -53,6 +63,10 @@ namespace Frigorino.Features.Lists.Items
             i.SortOrder,
             i.CreatedAt,
             i.UpdatedAt,
+            i.Type,
+            i.OriginalFileName,
+            i.ContentType,
+            i.FileSizeBytes,
             false);
     }
 }

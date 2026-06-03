@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItems, getList, getLists, getMembers, getMyInventoryNotification, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, toggleItemStatus, unregisterFcmToken, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
-import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemResponse, GetItemsData, GetItemsResponse, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
+import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getLists, getMembers, getMyInventoryNotification, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, toggleItemStatus, unregisterFcmToken, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
+import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -311,6 +311,50 @@ export const updateItemMutation = (options?: Partial<Options<UpdateItemData>>): 
     };
     return mutationOptions;
 };
+
+export const createMediaItemMutation = (options?: Partial<Options<CreateMediaItemData>>): UseMutationOptions<CreateMediaItemResponse, CreateMediaItemError, Options<CreateMediaItemData>> => {
+    const mutationOptions: UseMutationOptions<CreateMediaItemResponse, CreateMediaItemError, Options<CreateMediaItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createMediaItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getItemFileQueryKey = (options: Options<GetItemFileData>) => createQueryKey('getItemFile', options, false, ['ListItems']);
+
+export const getItemFileOptions = (options: Options<GetItemFileData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getItemFileQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getItemFile({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getItemFileQueryKey(options)
+});
+
+export const getItemThumbnailQueryKey = (options: Options<GetItemThumbnailData>) => createQueryKey('getItemThumbnail', options, false, ['ListItems']);
+
+export const getItemThumbnailOptions = (options: Options<GetItemThumbnailData>) => queryOptions<unknown, DefaultError, unknown, ReturnType<typeof getItemThumbnailQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getItemThumbnail({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getItemThumbnailQueryKey(options)
+});
 
 export const restoreItemMutation = (options?: Partial<Options<RestoreItemData>>): UseMutationOptions<RestoreItemResponse, DefaultError, Options<RestoreItemData>> => {
     const mutationOptions: UseMutationOptions<RestoreItemResponse, DefaultError, Options<RestoreItemData>> = {

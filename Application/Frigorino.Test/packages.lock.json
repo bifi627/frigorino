@@ -140,6 +140,24 @@
           "Newtonsoft.Json": "13.0.4"
         }
       },
+      "Google.Apis.Storage.v1": {
+        "type": "Transitive",
+        "resolved": "1.71.0.3920",
+        "contentHash": "jW4i96fvFjtkPOdOo3bfC2Wity0krx3RTCExTksIx9lS/k7HmbF/zfxE1z3VouhrQvwwdEOkrR4TxdxzomJKxQ==",
+        "dependencies": {
+          "Google.Apis": "1.71.0",
+          "Google.Apis.Auth": "1.71.0"
+        }
+      },
+      "Google.Cloud.Storage.V1": {
+        "type": "Transitive",
+        "resolved": "4.14.0",
+        "contentHash": "CLoAz9BDzqGEXWKWPuUxlk8/wcabsONxCa3MEQzxhbEGoKT1TOT6KnWNl1IhrBGqNw7IWtR/Xg06XHS8JYF1qQ==",
+        "dependencies": {
+          "Google.Api.Gax.Rest": "[4.12.1, 5.0.0)",
+          "Google.Apis.Storage.v1": "[1.71.0.3920, 2.0.0)"
+        }
+      },
       "JetBrains.Annotations": {
         "type": "Transitive",
         "resolved": "2025.2.2",
@@ -369,6 +387,11 @@
           "System.ClientModel": "1.8.1"
         }
       },
+      "SixLabors.ImageSharp": {
+        "type": "Transitive",
+        "resolved": "3.1.12",
+        "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
+      },
       "System.ClientModel": {
         "type": "Transitive",
         "resolved": "1.8.1",
@@ -487,6 +510,7 @@
         "dependencies": {
           "FirebaseAdmin": "[3.5.0, )",
           "Frigorino.Domain": "[1.0.0, )",
+          "Google.Cloud.Storage.V1": "[4.14.0, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.8, )",
@@ -494,7 +518,8 @@
           "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "[10.0.8, )",
           "Microsoft.Extensions.Options": "[10.0.8, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.2, )",
-          "OpenAI": "[2.8.0, )"
+          "OpenAI": "[2.8.0, )",
+          "SixLabors.ImageSharp": "[3.1.12, )"
         }
       }
     }

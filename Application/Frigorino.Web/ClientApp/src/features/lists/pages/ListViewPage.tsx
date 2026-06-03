@@ -18,7 +18,10 @@ import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListContainer } from "../items/components/ListContainer";
 import { ListFooter } from "../items/components/ListFooter";
+import { MediaCaptionSheet } from "../items/components/MediaCaptionSheet";
+import { MediaPreviewSheet } from "../items/components/MediaPreviewSheet";
 import { useCreateListItem } from "../items/useCreateListItem";
+import { useCreateMediaItem } from "../items/useCreateMediaItem";
 import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
@@ -44,6 +47,10 @@ export const ListViewPage = () => {
         id: number;
         extractionPending: boolean;
     } | null>(null);
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    // Media items have no text/quantity — editing one opens the caption sheet, not the footer composer.
+    const [editingMediaItem, setEditingMediaItem] =
+        useState<ListItemResponse | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
@@ -61,6 +68,7 @@ export const ListViewPage = () => {
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();
     const toggleMutation = useToggleListItemStatus();
+    const createMediaMutation = useCreateMediaItem();
 
     const { isExtracting, extractingItemId } = useExtractionPoll(
         householdId,
@@ -149,10 +157,39 @@ export const ListViewPage = () => {
     );
 
     const handleEditItem = useCallback((item: ListItemResponse) => {
+        // Image/Document items only expose a caption — route them to the caption sheet.
+        if (item.type !== "Text") {
+            setEditingMediaItem(item);
+            return;
+        }
         setEditOpenQuantity(false);
         setEditOpenComment(false);
         setEditingItem(item);
     }, []);
+
+    const handleSaveCaption = useCallback(
+        (caption: string) => {
+            if (!householdId || !editingMediaItem) return;
+            // Comment-only update: "" clears the caption, non-empty sets it. text/quantity stay null
+            // so the server keeps the media item's clean-separation invariant.
+            updateMutation.mutate({
+                path: {
+                    householdId,
+                    listId: listIdNum,
+                    itemId: editingMediaItem.id,
+                },
+                body: {
+                    text: null,
+                    quantity: null,
+                    clearQuantity: false,
+                    status: null,
+                    comment: caption,
+                },
+            });
+            setEditingMediaItem(null);
+        },
+        [householdId, listIdNum, editingMediaItem, updateMutation],
+    );
 
     const handleEditQuantity = useCallback((item: ListItemResponse) => {
         setEditOpenComment(false);
@@ -171,6 +208,37 @@ export const ListViewPage = () => {
         setEditOpenComment(false);
         setEditingItem(null);
     }, []);
+
+    const handleAttachFile = useCallback((file: File) => {
+        setPendingFile(file);
+    }, []);
+
+    const handleSendMedia = useCallback(
+        async (caption: string | null) => {
+            if (!householdId || !pendingFile) return;
+            try {
+                await createMediaMutation.mutateAsync({
+                    path: { householdId, listId: listIdNum },
+                    body: {
+                        file: pendingFile,
+                        type: "Image",
+                        caption: caption ?? undefined,
+                    },
+                });
+                setPendingFile(null);
+                scrollToLastUncheckedItem();
+            } catch {
+                // Mutation surfaces the error; keep the sheet open so the user can retry/cancel.
+            }
+        },
+        [
+            householdId,
+            listIdNum,
+            pendingFile,
+            createMediaMutation,
+            scrollToLastUncheckedItem,
+        ],
+    );
 
     const handleUncheckExisting = useCallback(
         (itemId: number) => {
@@ -271,8 +339,24 @@ export const ListViewPage = () => {
                 onUncheckExisting={handleUncheckExisting}
                 isLoading={createMutation.isPending || updateMutation.isPending}
                 onScrollToLastUnchecked={scrollToLastUncheckedItem}
+                onAttachFile={handleAttachFile}
                 openQuantityPanel={editOpenQuantity}
                 openCommentPanel={editOpenComment}
+            />
+
+            <MediaPreviewSheet
+                file={pendingFile}
+                isUploading={createMediaMutation.isPending}
+                onSend={handleSendMedia}
+                onClose={() => setPendingFile(null)}
+            />
+
+            <MediaCaptionSheet
+                householdId={householdId}
+                item={editingMediaItem}
+                isSaving={updateMutation.isPending}
+                onSave={handleSaveCaption}
+                onClose={() => setEditingMediaItem(null)}
             />
         </Box>
     );

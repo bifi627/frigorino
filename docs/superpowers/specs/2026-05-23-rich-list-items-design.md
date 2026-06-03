@@ -1,8 +1,18 @@
 # Rich list items (text / image / document) — design
 
-- **Date:** 2026-05-23
-- **Status:** Approved (design); implementation plan pending
+- **Date:** 2026-05-23 (decomposition added 2026-06-03)
+- **Status:** Approved (design); decomposed into sequenced sub-features (see "Decomposition / sequencing"); per-sub-feature specs pending
 - **Branch:** `feat/rich-list-items` (off `stage`)
+
+> **Context update (2026-06-03).** Two things have moved since this design was written:
+> 1. **The `RestoreItem` dependency has landed on `stage`** (`List.RestoreItem` + `RestoreItem.cs`
+>    slice). The blocking caveat in "Dependencies" is **resolved** — media-item restore-on-undo is no
+>    longer contingent on another branch.
+> 2. **`ListItem` has grown.** It now carries `Comment` (free-text hint) and structured
+>    `QuantityValue`/`QuantityUnit`, and all quantity parsing routes through the LLM. The domain-model
+>    table below (written when the entity was `Text` + `Quantity` + `Status`) is slightly stale —
+>    media columns remain purely additive, but the caption mapping (`Text` vs. `Comment`) should be
+>    settled when sub-feature #2 is spec'd.
 
 ## Summary
 
@@ -38,12 +48,30 @@ port; only the rendering and the content-type/thumbnail edges differ per type.
 
 ## Dependencies
 
-- **Undo-delete / `List.RestoreItem` is not in `stage` yet.** It lives on `feat/undo-delete`
-  (unmerged). This branch is based on `stage`, so `RestoreItem` is currently **absent** here. The
-  blob-retention decision below is independently valid (it only relies on `RemoveItem`, which exists),
-  but the "restore re-exposes the blob" behavior and the restore integration test are **contingent on
-  `feat/undo-delete` landing in `stage` first** (then rebase this branch) — or on adding `RestoreItem`
-  here. Resolve the ordering before implementing the restore-related work.
+- **~~Undo-delete / `List.RestoreItem` is not in `stage` yet.~~ RESOLVED (2026-06-03).**
+  `List.RestoreItem` and the `RestoreItem.cs` slice are now on `stage`. The "restore re-exposes the
+  blob" behavior and the restore integration test are no longer blocked — `RestoreItem` applies
+  uniformly to media items once the nullable columns exist, so media-restore is a **test, not new
+  code**. (Original blocker preserved in git history.)
+
+## Decomposition / sequencing
+
+This design is too large for a single spec→plan→implement cycle, so it is split into sequenced
+sub-features. **Strategy: walking skeleton** — take one media type (image) all the way through the
+stack first so the whole pipeline (port → upload → thumbnail → auth'd blob fetch → render) is proven
+and demoable early; the second type is then a thin edge-only add-on. Each sub-feature below gets its
+**own** brainstorm → spec → plan → implement cycle.
+
+| # | Sub-feature | Scope | Demoable |
+|---|---|---|---|
+| **1** | **Typed-item foundation + storage seam** | `ListItemType` enum, 5 nullable file columns, **one EF migration** (existing rows → `Text`); `IFileStorage` port + `LocalFileStorage` dev impl (DI-wired); `List.AddMediaItem` aggregate method + length/limit constants on `ListItem`; domain unit tests (validation; media items toggle/reorder/compact/soft-delete-retains-blob uniformly). **Deliberately endpoint-free** — the clean, fully unit-testable seam. | No (backend plumbing) |
+| **2** | **Image items, end-to-end** *(walking skeleton)* | Slices `CreateMediaItem` (multipart streaming, orphan-safe ordering + compensating blob-delete), `GetItemFile`, `GetItemThumbnail`; ImageSharp thumbnail gen; `ListItemResponse` DTO additions; slice tests with a fake in-memory `IFileStorage`. Frontend: image renderer (thumbnail + caption), WhatsApp-style attach affordance **scaffolded here** (Photo option live), `useCreateMediaItem` multipart hook, auth-aware blob/thumbnail fetch hook, full-res lightbox. Caption mapping (`Text` vs `Comment`) and media-restore verification ride here. | **Yes** — full photo flow |
+| **3** | **Document items** *(thin add-on)* | Extend content-type allowlist for documents; document renderer (file card: icon + filename + size); add **Document** option to the existing attach menu; tap → open/download. Reuses #2's `CreateMediaItem`/`GetItemFile` wholesale — no new pipeline. | **Yes** — adds PDFs/docs |
+| **4** | **Production storage backend** *(separate track)* | Vendor pick (Firebase-GCS / R2 / S3) + impl behind `IFileStorage`. Prerequisite for prod, **not** for demo. Stays a pointer until #1–#3 land. See "Limits & cost" + "Non-goals". | prod-only |
+
+First demo arrives after #2. Sub-features #1–#3 are sequential (each builds on the prior); #4 is a
+parallel track that can start any time after #1 defines the port. Still fully out of scope (future,
+build on existing infra): the post-upload classify hook and the orphaned-blob cleanup job.
 
 ## Key decisions & rationale
 

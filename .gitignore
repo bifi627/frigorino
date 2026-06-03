@@ -482,3 +482,6 @@ Application/Frigorino.Web/ClientApp/.tanstack/tmp/
 # Superpowers brainstorm visual-companion artifacts (local-only)
 .superpowers/
 .superpowers/
+
+# Local dev blob storage (LocalFileStorage fallback dir; runtime data)
+Application/Frigorino.Web/blobs/

@@ -15,6 +15,7 @@
         "submit": "Absenden",
         "reset": "Zurücksetzen",
         "clear": "Löschen",
+        "send": "Senden",
         "search": "Suchen",
         "filter": "Filtern",
         "sort": "Sortieren",
@@ -206,7 +207,14 @@
         "createYourFirstList": "Erstellen Sie Ihre erste Liste",
         "quantity": "Menge",
         "comment": "Kommentar",
-        "commentPlaceholder": "Hinweis hinzufügen…"
+        "commentPlaceholder": "Hinweis hinzufügen…",
+        "attach": "Anhängen",
+        "attachPhoto": "Foto",
+        "takePhoto": "Foto aufnehmen",
+        "choosePhoto": "Aus Dateien wählen",
+        "attachDocument": "Dokument",
+        "captionPlaceholder": "Bildunterschrift hinzufügen (optional)",
+        "editCaption": "Bildunterschrift bearbeiten"
     },
     "promote": {
         "barReady_one": "{{count}} Artikel bereit fürs Inventar",

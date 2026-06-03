@@ -193,6 +193,40 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    // ---- Media items (multipart upload + byte-serving) ----
+
+    // Small 8x8 RGBA PNG (valid, CRC-correct — ImageSharp validates IDAT CRC) for upload scenarios.
+    private static readonly byte[] TinyPng = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAFklEQVR4nGOpCDjxnwEPYGEgAIaHAgCvwgKw2JOr9gAAAABJRU5ErkJggg==");
+
+    public Task<IAPIResponse> TryUploadImageAsync(int listId, string caption = "", int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        var form = ctx.BrowserContext.APIRequest.CreateFormData();
+        form.Append("file", new FilePayload { Name = "photo.png", MimeType = "image/png", Buffer = TinyPng });
+        form.Append("type", "Image");
+        form.Append("caption", caption);
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/media",
+            new APIRequestContextOptions { Headers = AuthHeaders, Multipart = form });
+    }
+
+    public Task<IAPIResponse> TryGetItemThumbnailAsync(int listId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}/thumbnail",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetItemFileAsync(int listId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/{itemId}/file",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     public async Task<int> CreateInventoryAsync(string name)
     {
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/inventories", new { name });

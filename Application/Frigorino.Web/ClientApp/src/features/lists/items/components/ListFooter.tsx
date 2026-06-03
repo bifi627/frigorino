@@ -3,6 +3,7 @@ import { memo, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
+    attachComposerFeature,
     commentComposerFeature,
     draftToQuantity,
     formatQuantity,
@@ -21,7 +22,7 @@ const EDIT_FEATURES = [
     quantityComposerFeature,
     commentComposerFeature,
 ] as const;
-const ADD_FEATURES = [commentComposerFeature] as const;
+const ADD_FEATURES = [commentComposerFeature, attachComposerFeature] as const;
 
 interface ListFooterProps {
     editingItem: ListItemResponse | null;
@@ -36,6 +37,7 @@ interface ListFooterProps {
     onUncheckExisting: (itemId: number) => void;
     isLoading: boolean;
     onScrollToLastUnchecked: () => void;
+    onAttachFile: (file: File) => void;
     /** When entering edit mode, start with the quantity panel expanded. */
     openQuantityPanel?: boolean;
     /** When entering edit mode, start with the comment panel expanded. */
@@ -52,6 +54,7 @@ export const ListFooter = memo(
         onUncheckExisting,
         isLoading,
         onScrollToLastUnchecked,
+        onAttachFile,
         openQuantityPanel,
         openCommentPanel,
     }: ListFooterProps) => {
@@ -117,25 +120,39 @@ export const ListFooter = memo(
             [editingItem],
         );
 
-        // handleComplete is typed to the EDIT superset so TS knows r.quantity exists in the
-        // edit branch; the create branch uses ADD_FEATURES and never reads r.quantity. r.comment
-        // is present in both because both feature sets include commentComposerFeature.
+        // handleComplete accepts the union of both feature sets: ADD_FEATURES carries the
+        // "attach" action completion (kind: "attach", file), while EDIT_FEATURES is the text
+        // superset that knows r.quantity. r.comment is present in both text completions because
+        // both feature sets include commentComposerFeature.
         const handleComplete = useCallback(
-            (r: Completion<typeof EDIT_FEATURES>) => {
-                if (r.mode === "edit") {
+            (
+                r:
+                    | Completion<typeof ADD_FEATURES>
+                    | Completion<typeof EDIT_FEATURES>,
+            ) => {
+                if (r.kind === "attach") {
+                    onAttachFile(r.file);
+                    return;
+                }
+                // After excluding the attach action, both feature sets yield a text completion.
+                // Treat it as the EDIT superset so the edit branch can read r.quantity (the create
+                // branch never reads it). r.comment is present in both — both include the comment
+                // feature.
+                const text = r as Completion<typeof EDIT_FEATURES>;
+                if (text.mode === "edit") {
                     // Send the trimmed string (incl. "") so emptying the field clears the
                     // comment — downstream null means "preserve", "" means "clear".
                     onUpdateItem(
-                        r.text,
-                        draftToQuantity(r.quantity),
-                        r.comment.trim(),
+                        text.text,
+                        draftToQuantity(text.quantity),
+                        text.comment.trim(),
                     );
                 } else {
-                    onAddItem(r.text, r.comment.trim() || null);
+                    onAddItem(text.text, text.comment.trim() || null);
                     onScrollToLastUnchecked();
                 }
             },
-            [onAddItem, onUpdateItem, onScrollToLastUnchecked],
+            [onAddItem, onUpdateItem, onScrollToLastUnchecked, onAttachFile],
         );
 
         // Which modifier panel opens when edit mode starts — comment wins if both were

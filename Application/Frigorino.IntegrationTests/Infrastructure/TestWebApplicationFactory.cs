@@ -1,4 +1,5 @@
 using Frigorino.Domain.Interfaces;
+using Frigorino.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -68,6 +69,16 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             // so the full slice→trigger→queue→job→DB path runs without any network call.
             services.RemoveAll<IQuantityExtractor>();
             services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
+
+            // Real blob storage bound to a unique temp dir per factory instance, registered under BOTH
+            // storage interfaces (one shared instance) so the startup orphan-sweep operates on the temp
+            // dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor stays real.
+            services.RemoveAll<IFileStorage>();
+            services.RemoveAll<IFileStorageMaintenance>();
+            var blobRoot = Path.Combine(Path.GetTempPath(), "frigorino-it-blobs", Guid.NewGuid().ToString("N"));
+            var blobStorage = new LocalFileStorage(blobRoot);
+            services.AddSingleton<IFileStorage>(blobStorage);
+            services.AddSingleton<IFileStorageMaintenance>(blobStorage);
         });
     }
 }

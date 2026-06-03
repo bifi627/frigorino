@@ -70,6 +70,8 @@ export type HttpValidationProblemDetails = {
     };
 };
 
+export type IFormFile = Blob | File;
+
 export type InventoryCreatorResponse = {
     externalId: string;
     name: string;
@@ -121,9 +123,15 @@ export type ListItemResponse = {
     sortOrder: number;
     createdAt: string;
     updatedAt: string;
+    type: ListItemType;
+    fileName?: null | string;
+    contentType?: null | string;
+    fileSize?: null | number;
     extractionPending: boolean;
     promote?: null | PromoteSuggestion;
 };
+
+export type ListItemType = 'Text' | 'Image' | 'Document';
 
 export type ListResponse = {
     id: number;
@@ -796,6 +804,98 @@ export type UpdateItemResponses = {
 };
 
 export type UpdateItemResponse = UpdateItemResponses[keyof UpdateItemResponses];
+
+export type CreateMediaItemData = {
+    body: {
+        file: IFormFile;
+    } & {
+        type: ListItemType;
+    } & {
+        caption?: string;
+    };
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/items/media';
+};
+
+export type CreateMediaItemErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+    /**
+     * Payload Too Large
+     */
+    413: unknown;
+};
+
+export type CreateMediaItemError = CreateMediaItemErrors[keyof CreateMediaItemErrors];
+
+export type CreateMediaItemResponses = {
+    /**
+     * Created
+     */
+    201: ListItemResponse;
+};
+
+export type CreateMediaItemResponse = CreateMediaItemResponses[keyof CreateMediaItemResponses];
+
+export type GetItemFileData = {
+    body?: never;
+    path: {
+        householdId: number;
+        listId: number;
+        itemId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/items/{itemId}/file';
+};
+
+export type GetItemFileErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetItemFileResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetItemThumbnailData = {
+    body?: never;
+    path: {
+        householdId: number;
+        listId: number;
+        itemId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/items/{itemId}/thumbnail';
+};
+
+export type GetItemThumbnailErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetItemThumbnailResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type RestoreItemData = {
     body?: never;

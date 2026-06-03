@@ -1,5 +1,6 @@
 using FluentResults;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Files;
 using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
@@ -162,6 +163,88 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        public Result<ListItem> AddMediaItem(ListItemType type, string? caption, StoredFile file)
+        {
+            var errors = new System.Collections.Generic.List<IError>();
+
+            if (type != ListItemType.Image && type != ListItemType.Document)
+            {
+                errors.Add(new Error("Media item type must be Image or Document.")
+                    .WithMetadata("Property", nameof(ListItem.Type)));
+                // Bail early: the allowlist branch below dereferences `type`.
+                return Result.Fail<ListItem>(errors);
+            }
+
+            var allowed = type == ListItemType.Image
+                ? ListItem.ImageContentTypes
+                : ListItem.DocumentContentTypes;
+            if (string.IsNullOrWhiteSpace(file.ContentType) || !allowed.Contains(file.ContentType))
+            {
+                errors.Add(new Error($"Content type '{file.ContentType}' is not allowed for {type} items.")
+                    .WithMetadata("Property", nameof(ListItem.ContentType)));
+            }
+
+            if (string.IsNullOrWhiteSpace(file.StorageKey) || file.StorageKey.Length > ListItem.StorageKeyMaxLength)
+            {
+                errors.Add(new Error($"Storage key is required and must be {ListItem.StorageKeyMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(ListItem.StorageKey)));
+            }
+
+            if (string.IsNullOrWhiteSpace(file.OriginalFileName)
+                || file.OriginalFileName.Length > ListItem.OriginalFileNameMaxLength)
+            {
+                errors.Add(new Error($"File name is required and must be {ListItem.OriginalFileNameMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(ListItem.OriginalFileName)));
+            }
+
+            if (file.SizeBytes <= 0 || file.SizeBytes > ListItem.MaxFileSizeBytes)
+            {
+                errors.Add(new Error($"File size must be between 1 and {ListItem.MaxFileSizeBytes} bytes.")
+                    .WithMetadata("Property", nameof(ListItem.FileSizeBytes)));
+            }
+
+            // Type/thumbnail invariant: images carry a thumbnail, documents must not.
+            var hasThumbnail = !string.IsNullOrWhiteSpace(file.ThumbnailKey);
+            if (type == ListItemType.Image && !hasThumbnail)
+            {
+                errors.Add(new Error("Image items require a thumbnail key.")
+                    .WithMetadata("Property", nameof(ListItem.ThumbnailStorageKey)));
+            }
+            else if (type == ListItemType.Document && hasThumbnail)
+            {
+                errors.Add(new Error("Document items must not have a thumbnail key.")
+                    .WithMetadata("Property", nameof(ListItem.ThumbnailStorageKey)));
+            }
+
+            errors.AddRange(ValidateComment(caption));
+
+            if (errors.Count > 0)
+            {
+                return Result.Fail<ListItem>(errors);
+            }
+
+            var now = DateTime.UtcNow;
+            var item = new ListItem
+            {
+                ListId = Id,
+                Type = type,
+                Text = "",
+                Comment = NormalizeComment(caption),
+                StorageKey = file.StorageKey,
+                ThumbnailStorageKey = file.ThumbnailKey,
+                ContentType = file.ContentType,
+                OriginalFileName = file.OriginalFileName,
+                FileSizeBytes = file.SizeBytes,
+                Status = false,
+                SortOrder = ComputeAppendSortOrder(targetStatus: false),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+            };
+            ListItems.Add(item);
+            return Result.Ok(item);
+        }
+
         public Result<ListItem> UpdateItem(int itemId, string? text, Quantity? quantity, bool clearQuantity, bool? status, string? comment = null)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
@@ -178,6 +261,16 @@ namespace Frigorino.Domain.Entities
             {
                 return Result.Fail<ListItem>(
                     new Error("Update request must set at least one field.")
+                        .WithMetadata("Property", string.Empty));
+            }
+
+            // Media items (Image/Document) carry no Text or quantity by design — only the caption
+            // (Comment) and status are editable. Reject any attempt to mutate text/quantity on them
+            // so the clean-separation invariant holds regardless of client.
+            if (item.Type != ListItemType.Text && (text is not null || quantity is not null || clearQuantity))
+            {
+                return Result.Fail<ListItem>(
+                    new Error("Only the caption can be edited on a media item.")
                         .WithMetadata("Property", string.Empty));
             }
 

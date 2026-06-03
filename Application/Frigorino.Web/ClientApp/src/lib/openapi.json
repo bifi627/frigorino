@@ -895,6 +895,192 @@
         }
       }
     },
+    "/api/household/{householdId}/lists/{listId}/items/media": {
+      "post": {
+        "tags": [
+          "ListItems"
+        ],
+        "operationId": "CreateMediaItem",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file",
+                  "type"
+                ],
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "$ref": "#/components/schemas/ListItemType"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "caption": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/lists/{listId}/items/{itemId}/file": {
+      "get": {
+        "tags": [
+          "ListItems"
+        ],
+        "operationId": "GetItemFile",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/lists/{listId}/items/{itemId}/thumbnail": {
+      "get": {
+        "tags": [
+          "ListItems"
+        ],
+        "operationId": "GetItemThumbnail",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found"
+          },
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/lists/{listId}/items/{itemId}/restore": {
       "post": {
         "tags": [
@@ -2484,6 +2670,10 @@
           }
         }
       },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
       "InventoryCreatorResponse": {
         "required": [
           "externalId",
@@ -2661,6 +2851,7 @@
           "sortOrder",
           "createdAt",
           "updatedAt",
+          "type",
           "extractionPending"
         ],
         "type": "object",
@@ -2707,6 +2898,28 @@
             "type": "string",
             "format": "date-time"
           },
+          "type": {
+            "$ref": "#/components/schemas/ListItemType"
+          },
+          "fileName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fileSize": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
           "extractionPending": {
             "type": "boolean",
             "default": false
@@ -2722,6 +2935,14 @@
             ]
           }
         }
+      },
+      "ListItemType": {
+        "enum": [
+          "Text",
+          "Image",
+          "Document"
+        ],
+        "default": "Text"
       },
       "ListResponse": {
         "required": [
