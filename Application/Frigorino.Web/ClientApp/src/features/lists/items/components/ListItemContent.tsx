@@ -53,21 +53,6 @@ export function ListItemContent({
                             gap: 0.25,
                         }}
                     >
-                        {item.quantity ? (
-                            <Box
-                                sx={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 0.5,
-                                }}
-                            >
-                                <ItemQuantityChip
-                                    quantity={item.quantity}
-                                    onClick={onEditQuantity}
-                                    testId={`list-item-quantity-${item.text}`}
-                                />
-                            </Box>
-                        ) : null}
                         {item.comment ? (
                             <Typography
                                 component="div"
@@ -98,6 +83,21 @@ export function ListItemContent({
                             >
                                 {item.comment}
                             </Typography>
+                        ) : null}
+                        {item.quantity ? (
+                            <Box
+                                sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                }}
+                            >
+                                <ItemQuantityChip
+                                    quantity={item.quantity}
+                                    onClick={onEditQuantity}
+                                    testId={`list-item-quantity-${item.text}`}
+                                />
+                            </Box>
                         ) : null}
                     </Box>
                 ) : null
