@@ -1,4 +1,5 @@
 using Frigorino.Domain.Interfaces;
+using Frigorino.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -68,6 +69,13 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             // so the full slice→trigger→queue→job→DB path runs without any network call.
             services.RemoveAll<IQuantityExtractor>();
             services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
+
+            // Real blob storage bound to a unique temp dir per factory instance, so the genuine
+            // ImageSharp pipeline writes/reads actual webp renditions during the test. Only the AI
+            // classifiers stay stubbed; IImageProcessor is left as its real registration.
+            services.RemoveAll<IFileStorage>();
+            var blobRoot = Path.Combine(Path.GetTempPath(), "frigorino-it-blobs", Guid.NewGuid().ToString("N"));
+            services.AddSingleton<IFileStorage>(new LocalFileStorage(blobRoot));
         });
     }
 }
