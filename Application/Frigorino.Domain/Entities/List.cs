@@ -135,9 +135,10 @@ namespace Frigorino.Domain.Entities
         // reorder / delete / compact, matching the collaborative grocery-list UX. The handler
         // enforces membership; the aggregate doesn't take callerRole.
 
-        public Result<ListItem> AddItem(string text, Quantity? quantity = null)
+        public Result<ListItem> AddItem(string text, Quantity? quantity = null, string? comment = null)
         {
             var errors = ValidateItemText(text, requireText: true);
+            errors.AddRange(ValidateComment(comment));
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -148,6 +149,7 @@ namespace Frigorino.Domain.Entities
             {
                 ListId = Id,
                 Text = text.Trim(),
+                Comment = NormalizeComment(comment),
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 Status = false,
@@ -371,6 +373,23 @@ namespace Frigorino.Domain.Entities
             }
 
             return Result.Ok();
+        }
+
+        // empty/whitespace comment is normalized to null; otherwise trimmed.
+        private static string? NormalizeComment(string? comment)
+        {
+            return string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+        }
+
+        private static List<IError> ValidateComment(string? comment)
+        {
+            var errors = new System.Collections.Generic.List<IError>();
+            if (!string.IsNullOrWhiteSpace(comment) && comment.Trim().Length > ListItem.CommentMaxLength)
+            {
+                errors.Add(new Error($"Item comment must be {ListItem.CommentMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(ListItem.Comment)));
+            }
+            return errors;
         }
 
         private static List<IError> ValidateItemText(string? text, bool requireText)

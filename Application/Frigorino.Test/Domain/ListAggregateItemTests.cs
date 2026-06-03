@@ -79,6 +79,51 @@ namespace Frigorino.Test.Domain
             Assert.Null(result.Value.QuantityUnit);
         }
 
+        [Fact]
+        public void AddItem_SetsTrimmedComment()
+        {
+            var list = NewList();
+
+            var result = list.AddItem("Milk", quantity: null, comment: "  the blue one  ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("the blue one", result.Value.Comment);
+        }
+
+        [Fact]
+        public void AddItem_WhitespaceComment_StoredAsNull()
+        {
+            var list = NewList();
+
+            var result = list.AddItem("Milk", quantity: null, comment: "   ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Comment);
+        }
+
+        [Fact]
+        public void AddItem_NoComment_StoredAsNull()
+        {
+            var list = NewList();
+
+            var result = list.AddItem("Milk");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Comment);
+        }
+
+        [Fact]
+        public void AddItem_CommentTooLong_FailsKeyedOnComment()
+        {
+            var list = NewList();
+            var tooLong = new string('x', ListItem.CommentMaxLength + 1);
+
+            var result = list.AddItem("Milk", quantity: null, comment: tooLong);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal(nameof(ListItem.Comment), result.Errors[0].Metadata["Property"]);
+        }
+
         // ------- ToggleItemStatus into a populated checked section -------
         // Covers the asymmetric "checked-section prepends" branch of ComputeAppendSortOrder
         // (first - DefaultGap), which the empty-section toggle tests don't exercise.
