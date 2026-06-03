@@ -122,7 +122,11 @@ export const ListFooter = memo(
                 if (r.mode === "edit") {
                     // Send the trimmed string (incl. "") so emptying the field clears the
                     // comment — downstream null means "preserve", "" means "clear".
-                    onUpdateItem(r.text, draftToQuantity(r.quantity), r.comment.trim());
+                    onUpdateItem(
+                        r.text,
+                        draftToQuantity(r.quantity),
+                        r.comment.trim(),
+                    );
                 } else {
                     onAddItem(r.text, r.comment.trim() || null);
                     onScrollToLastUnchecked();
