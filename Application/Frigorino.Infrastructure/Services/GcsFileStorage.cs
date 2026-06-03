@@ -78,8 +78,8 @@ namespace Frigorino.Infrastructure.Services
         {
             await foreach (var obj in _client.ListObjectsAsync(_bucket, _prefix).WithCancellation(ct))
             {
-                // TimeCreatedDateTimeOffset is the non-deprecated timestamp on Google.Apis.Storage
-                // 1.60+; falls back to MinValue (always past the grace cutoff -> eligible) if absent.
+                // TimeCreatedDateTimeOffset is the non-deprecated creation timestamp on the resolved
+                // Google.Apis.Storage; falls back to MinValue (always past the grace cutoff -> eligible) if absent.
                 yield return new StoredBlob(
                     GcsObjectNaming.ToKey(_prefix, obj.Name),
                     obj.TimeCreatedDateTimeOffset ?? DateTimeOffset.MinValue);
