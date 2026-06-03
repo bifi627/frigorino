@@ -378,6 +378,18 @@ namespace Frigorino.Test.Domain
             Assert.Equal(nameof(ListItem.Comment), result.Errors[0].Metadata["Property"]);
         }
 
+        [Fact]
+        public void UpdateItem_WhitespaceComment_ClearsToNull_NotTreatedAsNoOp()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "Milk");
+
+            var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: null, comment: "   ");
+
+            Assert.True(result.IsSuccess);
+            Assert.Null(item.Comment);
+        }
+
         // ------- ApplyExtractedQuantity -------
 
         [Fact]

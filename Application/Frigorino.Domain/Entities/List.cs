@@ -182,7 +182,10 @@ namespace Frigorino.Domain.Entities
             }
 
             var errors = ValidateItemText(text, requireText: text is not null);
-            errors.AddRange(ValidateComment(comment));
+            if (comment is not null)
+            {
+                errors.AddRange(ValidateComment(comment));
+            }
             if (errors.Count > 0)
             {
                 return Result.Fail<ListItem>(errors);
@@ -391,7 +394,8 @@ namespace Frigorino.Domain.Entities
         private static List<IError> ValidateComment(string? comment)
         {
             var errors = new System.Collections.Generic.List<IError>();
-            if (!string.IsNullOrWhiteSpace(comment) && comment.Trim().Length > ListItem.CommentMaxLength)
+            var trimmed = NormalizeComment(comment);
+            if (trimmed is not null && trimmed.Length > ListItem.CommentMaxLength)
             {
                 errors.Add(new Error($"Item comment must be {ListItem.CommentMaxLength} characters or fewer.")
                     .WithMetadata("Property", nameof(ListItem.Comment)));
