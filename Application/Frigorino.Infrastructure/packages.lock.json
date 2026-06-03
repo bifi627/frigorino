@@ -12,6 +12,16 @@
           "Google.Apis.Auth": "1.73.0"
         }
       },
+      "Google.Cloud.Storage.V1": {
+        "type": "Direct",
+        "requested": "[4.14.0, )",
+        "resolved": "4.14.0",
+        "contentHash": "CLoAz9BDzqGEXWKWPuUxlk8/wcabsONxCa3MEQzxhbEGoKT1TOT6KnWNl1IhrBGqNw7IWtR/Xg06XHS8JYF1qQ==",
+        "dependencies": {
+          "Google.Api.Gax.Rest": "[4.12.1, 5.0.0)",
+          "Google.Apis.Storage.v1": "[1.71.0.3920, 2.0.0)"
+        }
+      },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -156,6 +166,15 @@
         "contentHash": "vSc7CY4KCP7HE4QTElDx/ExnGLbg9kXb89MS6cdvI+0D4sxvTYb16vGtXmF2jSDMV3iDmykSXdIUPTz8TDS6gg==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4"
+        }
+      },
+      "Google.Apis.Storage.v1": {
+        "type": "Transitive",
+        "resolved": "1.71.0.3920",
+        "contentHash": "jW4i96fvFjtkPOdOo3bfC2Wity0krx3RTCExTksIx9lS/k7HmbF/zfxE1z3VouhrQvwwdEOkrR4TxdxzomJKxQ==",
+        "dependencies": {
+          "Google.Apis": "1.71.0",
+          "Google.Apis.Auth": "1.71.0"
         }
       },
       "Humanizer.Core": {
