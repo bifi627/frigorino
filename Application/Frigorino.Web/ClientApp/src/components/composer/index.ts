@@ -19,6 +19,10 @@ export {
     isCommentValid,
     COMMENT_MAX_LENGTH,
 } from "./features/commentComposerFeature";
+export {
+    attachComposerFeature,
+    type AttachPayload,
+} from "./features/attachComposerFeature";
 export type {
     ActionFeature,
     Completion,
