@@ -1,6 +1,7 @@
 using FluentResults;
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Files;
+using Frigorino.Domain.Products;
 using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
@@ -382,8 +383,60 @@ namespace Frigorino.Domain.Entities
             var newStatus = !item.Status;
             item.SortOrder = ComputeAppendSortOrder(targetStatus: newStatus);
             item.Status = newStatus;
+
+            // Unchecking retracts any promotion candidacy/resolution so a later re-check is a clean
+            // re-evaluation — mirrors the old localStorage "uncheck removes from the batch" contract.
+            if (!newStatus)
+            {
+                item.PromotionExpiryHandling = null;
+                item.PromotionSuggestedExpiry = null;
+                item.PromotionResolvedAt = null;
+            }
+
             item.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(item);
+        }
+
+        // Stamps the promotion candidacy captured when the item was checked (perishable product →
+        // handling + suggested expiry; non-perishable → both null) and clears any prior resolution
+        // so a re-checked item becomes pending again. The handler supplies the suggestion because
+        // it derives from the Product catalog (a different aggregate the entity must not touch).
+        // Callers pass null handling for non-candidate (non-perishable) items — never
+        // ExpiryHandling.NonPerishable — so the documented pending predicate holds.
+        public Result<ListItem> ApplyPromotionSuggestion(int itemId, ExpiryHandling? handling, DateOnly? suggestedExpiry)
+        {
+            var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<ListItem>(
+                    new EntityNotFoundError($"List item {itemId} not found."));
+            }
+
+            item.PromotionExpiryHandling = handling;
+            item.PromotionSuggestedExpiry = suggestedExpiry;
+            item.PromotionResolvedAt = null;
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
+        // Marks a pending-promotion item as dealt with — promoted into inventory OR skipped (X /
+        // Clear All). Idempotent: an already-resolved item is a no-op success, so two members racing
+        // the same shared batch (Person A + Person B) don't error — first writer wins.
+        public Result ResolvePromotion(int itemId, DateTime resolvedAt)
+        {
+            var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail(
+                    new EntityNotFoundError($"List item {itemId} not found."));
+            }
+
+            if (item.PromotionResolvedAt is null)
+            {
+                item.PromotionResolvedAt = resolvedAt;
+                item.UpdatedAt = resolvedAt;
+            }
+            return Result.Ok();
         }
 
         // AfterItemId == 0 means "move to the top of the current section". An afterItemId that
