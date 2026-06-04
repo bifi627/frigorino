@@ -32,7 +32,7 @@ State shape:
 
 ```ts
 interface CalendarViewSettings {
-  windowDays: number;   // 1–180, default 7
+  windowDays: number;   // 1–180, default 30
   fullRunway: boolean;  // default false; true ⇒ bars span [today … expiry]
   levels: {
     expired: boolean;   // all default true
@@ -43,7 +43,7 @@ interface CalendarViewSettings {
 }
 ```
 
-Plus actions: `setWindowDays(n)`, `setFullRunway(b)`, `toggleLevel(level)`, `reset()`. `reset()` restores all defaults (`windowDays: 7`, `fullRunway: false`, all levels `true`).
+Plus actions: `setWindowDays(n)`, `setFullRunway(b)`, `toggleLevel(level)`, `reset()`. `reset()` restores all defaults (`windowDays: 30`, `fullRunway: false`, all levels `true`).
 
 `windowDays` is range-clamped to `[1, 180]` on write so a stale/corrupt persisted value can't produce a broken render. `persist` is configured with a `version` and a defensive `merge` so an older/partial stored object falls back to defaults for any missing keys.
 
