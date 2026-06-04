@@ -14,6 +14,7 @@ import {
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
 import type { ListItemResponse, QuantityDto } from "../../../../lib/api";
+import { featureContentPx } from "../../../../theme";
 
 // Lists add via free-text (extraction fills the quantity), so the add composer stays
 // quantity-free — but a comment can be attached at add time. Manual quantity entry/correction
@@ -169,7 +170,7 @@ export const ListFooter = memo(
                 maxWidth="sm"
                 sx={{
                     flexShrink: 0,
-                    px: 3,
+                    px: featureContentPx,
                     py: 1,
                     borderTop: 1,
                     borderColor: "divider",

@@ -1,4 +1,4 @@
-import { Add, ChevronRight } from "@mui/icons-material";
+import { Add, ChevronRight, ExpandMore } from "@mui/icons-material";
 import {
     Box,
     Card,
@@ -29,7 +29,7 @@ import {
     getExpiryColor,
     getExpiryInfo,
 } from "../../utils/dateUtils";
-import { sectionColors } from "../../theme";
+import { sectionColors, tintedActionButtonSx } from "../../theme";
 import { sectionIcons } from "../../common/sections";
 
 export const WelcomePage = () => {
@@ -281,10 +281,21 @@ export const WelcomePage = () => {
 
             <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>
                 {collections.map((collection) => {
+                    // Only lists and inventory have expandable item previews;
+                    // recipes is a placeholder card with nothing to reveal.
+                    const isExpandable =
+                        collection.id === "einkaufslisten" ||
+                        collection.id === "inventar";
                     const isExpanded =
                         expandedSections.includes(collection.id) &&
-                        (collection.id === "einkaufslisten" ||
-                            collection.id === "inventar");
+                        isExpandable;
+                    // Tinted, section-colored action buttons so they read as
+                    // clearly tappable controls rather than ghost icons.
+                    const actionButtonSx = {
+                        ...tintedActionButtonSx(collection.color),
+                        width: 34,
+                        height: 34,
+                    };
                     return (
                         <Card
                             key={collection.id}
@@ -330,7 +341,13 @@ export const WelcomePage = () => {
                                         >
                                             {collection.icon}
                                         </Box>
-                                        <Box>
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 0.5,
+                                            }}
+                                        >
                                             <Typography
                                                 variant="body1"
                                                 sx={{
@@ -340,6 +357,19 @@ export const WelcomePage = () => {
                                             >
                                                 {collection.label}
                                             </Typography>
+                                            {isExpandable && (
+                                                <ExpandMore
+                                                    fontSize="small"
+                                                    sx={{
+                                                        color: "text.secondary",
+                                                        transition:
+                                                            "transform 0.2s ease",
+                                                        transform: isExpanded
+                                                            ? "rotate(180deg)"
+                                                            : "none",
+                                                    }}
+                                                />
+                                            )}
                                         </Box>
                                     </Box>
 
@@ -356,14 +386,7 @@ export const WelcomePage = () => {
                                                 e.stopPropagation();
                                                 handleAddItem(collection.id);
                                             }}
-                                            sx={{
-                                                color: "text.secondary",
-                                                width: 32,
-                                                height: 32,
-                                                "&:hover": {
-                                                    bgcolor: "action.hover",
-                                                },
-                                            }}
+                                            sx={actionButtonSx}
                                         >
                                             <Add fontSize="small" />
                                         </IconButton>
@@ -384,16 +407,9 @@ export const WelcomePage = () => {
                                                     });
                                                 }
                                             }}
-                                            sx={{
-                                                color: "text.secondary",
-                                                width: 32,
-                                                height: 32,
-                                                "&:hover": {
-                                                    bgcolor: "action.hover",
-                                                },
-                                            }}
+                                            sx={actionButtonSx}
                                         >
-                                            <ChevronRight />
+                                            <ChevronRight fontSize="small" />
                                         </IconButton>
                                     </Box>
                                 </Box>

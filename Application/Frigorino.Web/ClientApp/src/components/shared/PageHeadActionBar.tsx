@@ -13,7 +13,13 @@ import {
 import { useRouter } from "@tanstack/react-router";
 import { memo, useCallback, useState } from "react";
 import { sectionIcons } from "../../common/sections";
-import { sectionColors, type SectionKey } from "../../theme";
+import {
+    featureContentPx,
+    neutralActionColor,
+    sectionColors,
+    tintedActionButtonSx,
+    type SectionKey,
+} from "../../theme";
 
 export type HeadNavigationAction = {
     text?: string;
@@ -52,6 +58,10 @@ export const PageHeadActionBar = memo(
         const router = useRouter();
         const SectionIcon = section ? sectionIcons[section] : null;
         const sectionColor = section ? sectionColors[section] : undefined;
+        // The primary direct action (edit) takes the page's section color so it
+        // matches the identity glyph; falls back to the brand green when a page
+        // hasn't declared a section.
+        const identityColor = sectionColor ?? "#43A047";
         const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(
             null,
         );
@@ -83,7 +93,7 @@ export const PageHeadActionBar = memo(
             <>
                 <Container
                     maxWidth={maxWidth}
-                    sx={{ px: 1.5, py: 1.5, flexShrink: 0 }}
+                    sx={{ px: featureContentPx, py: 1.5, flexShrink: 0 }}
                 >
                     <Box
                         sx={{
@@ -136,20 +146,11 @@ export const PageHeadActionBar = memo(
                                     key={index}
                                     onClick={action.onClick}
                                     data-testid={action.testId}
-                                    sx={{
-                                        bgcolor:
-                                            index === 0
-                                                ? "primary.main"
-                                                : "grey.100",
-                                        color:
-                                            index === 0 ? "white" : "grey.700",
-                                        "&:hover": {
-                                            bgcolor:
-                                                index === 0
-                                                    ? "primary.dark"
-                                                    : "grey.200",
-                                        },
-                                    }}
+                                    sx={tintedActionButtonSx(
+                                        index === 0
+                                            ? identityColor
+                                            : neutralActionColor,
+                                    )}
                                 >
                                     {action.icon}
                                 </IconButton>
@@ -158,11 +159,9 @@ export const PageHeadActionBar = memo(
                                 <IconButton
                                     onClick={handleMenuOpen}
                                     data-testid={menuButtonTestId}
-                                    sx={{
-                                        bgcolor: "grey.100",
-                                        color: "grey.700",
-                                        "&:hover": { bgcolor: "grey.200" },
-                                    }}
+                                    sx={tintedActionButtonSx(
+                                        neutralActionColor,
+                                    )}
                                 >
                                     <MoreVert />
                                 </IconButton>

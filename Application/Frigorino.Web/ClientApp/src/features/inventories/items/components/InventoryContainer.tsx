@@ -1,5 +1,6 @@
 import { Container } from "@mui/material";
 import { forwardRef } from "react";
+import { featureContentPx } from "../../../../theme";
 import { SortableList } from "../../../../components/sortables/SortableList";
 import type { InventoryItemResponse } from "../../../../lib/api";
 import { useDeleteInventoryItem } from "../useDeleteInventoryItem";
@@ -40,7 +41,7 @@ export const InventoryContainer = forwardRef<
                 sx={{
                     flex: 1,
                     overflow: "auto",
-                    px: 3,
+                    px: featureContentPx,
                     py: 0,
                     minHeight: 0,
                 }}
