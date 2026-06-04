@@ -1,17 +1,35 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute } from "workbox-precaching";
-import { clientsClaim } from "workbox-core";
 import { initializeApp } from "firebase/app";
 import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 
-declare const self: ServiceWorkerGlobalScope & {
-    __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
-};
+declare const self: ServiceWorkerGlobalScope;
 
-// Precache the Vite build (injected at build time).
-precacheAndRoute(self.__WB_MANIFEST);
+// Push-only service worker. It deliberately does NOT precache or intercept any
+// app request — the SPA is always loaded fresh over HTTP (index.html is served
+// `no-cache`, hashed `/assets/*` are immutably cached by the browser), so there
+// is no stale-shell or purged-chunk failure mode to manage here. The sole job is
+// Firebase background push. `skipWaiting` lets an updated push handler activate
+// promptly; we don't `clientsClaim`, because there is no fetch handler to take
+// over and the page never depends on this worker for its content.
 self.skipWaiting();
-clientsClaim();
+
+// Migration cleanup: earlier versions of this worker precached the app shell with
+// Workbox. This push-only worker caches nothing, so on activate we purge those
+// now-orphaned precache caches — freeing storage and guaranteeing no stale shell
+// can ever be served to users upgrading from the precaching version.
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        caches
+            .keys()
+            .then((keys) =>
+                Promise.all(
+                    keys
+                        .filter((key) => key.startsWith("workbox-precache"))
+                        .map((key) => caches.delete(key)),
+                ),
+            ),
+    );
+});
 
 // Firebase config mirrors src/common/auth.ts (public values).
 const firebaseApp = initializeApp({

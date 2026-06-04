@@ -245,12 +245,27 @@ var staticFileOptions = new StaticFileOptions
         if (IsIndexHtml(fileName))
         {
             ctx.Context.Response.Headers.CacheControl = "no-cache, must-revalidate";
+            return;
+        }
+
+        // The service worker script must always revalidate so a new push worker is
+        // picked up on the next visit. Browsers already bypass the HTTP cache for the
+        // SW script on update checks; this is belt-and-suspenders against any proxy
+        // or older client caching a stale sw.js and getting "stuck".
+        if (IsServiceWorker(fileName))
+        {
+            ctx.Context.Response.Headers.CacheControl = "no-cache, must-revalidate";
         }
 
         static bool IsIndexHtml(string name) =>
             name.Equals("index.html", StringComparison.OrdinalIgnoreCase)
             || name.Equals("index.html.br", StringComparison.OrdinalIgnoreCase)
             || name.Equals("index.html.gz", StringComparison.OrdinalIgnoreCase);
+
+        static bool IsServiceWorker(string name) =>
+            name.Equals("sw.js", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sw.js.br", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("sw.js.gz", StringComparison.OrdinalIgnoreCase);
     },
 };
 
