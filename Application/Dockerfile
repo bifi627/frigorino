@@ -1,7 +1,14 @@
-# Runtime: distroless chiseled image — minimal CVE surface, runs as non-root ($APP_UID=1654).
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS runtime
+# Runtime: full Ubuntu (Noble), NOT chiseled. Magick.NET's native binary needs libgomp1 (OpenMP)
+# + libstdc++6, which chiseled images don't ship and there's no chiseled variant that adds them.
+# We install libgomp1 (libstdc++6 is present in the full image) and pin USER back to non-root,
+# because non-chiseled images default to root (chiseled defaulted to $APP_UID=1654).
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 WORKDIR /app
 EXPOSE 8080
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+USER $APP_UID
 
 # Backend build: dotnet SDK only — no Node needed for `dotnet publish`.
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS publish_backend
