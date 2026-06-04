@@ -3,6 +3,7 @@ import { Button, Paper, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { featureContentPx } from "../../../theme";
 import { useList } from "../useList";
 import { PromoteReviewSheet } from "./PromoteReviewSheet";
 
@@ -36,14 +37,14 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
                 data-testid="promote-bar"
                 data-count={count}
                 sx={{
-                    mx: 3,
+                    mx: featureContentPx,
                     mb: 1,
                     px: 1.5,
                     py: 1,
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
                     color: "text.primary",
                     border: "1px solid",
                     borderColor: (theme) =>
@@ -62,9 +63,13 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
                 <Button
                     size="small"
                     variant="contained"
-                    color="primary"
                     data-testid="promote-bar-review"
                     onClick={() => setOpen(true)}
+                    sx={{
+                        bgcolor: (theme) =>
+                            alpha(theme.palette.primary.main, 0.85),
+                        "&:hover": { bgcolor: "primary.main" },
+                    }}
                 >
                     {t("promote.review")}
                 </Button>

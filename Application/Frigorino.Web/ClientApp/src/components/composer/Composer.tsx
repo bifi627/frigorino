@@ -1,4 +1,5 @@
-import { Box, Collapse } from "@mui/material";
+import { Close } from "@mui/icons-material";
+import { Box, Collapse, IconButton } from "@mui/material";
 import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
@@ -173,6 +174,10 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     const chipFeatures = modifierFeatures.filter(
         (feature) =>
             feature.renderChip &&
+            // While a modifier's panel is open its field already shows the value,
+            // so suppress the summary chip to avoid showing it twice. The chip
+            // returns as the summary once the panel closes.
+            openId !== feature.id &&
             !isModifierValueEmpty(feature, values[feature.id]),
     );
 
@@ -197,9 +202,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                 cursor: "text",
             }}
         >
-            {isEditing && editing && (
-                <EditHeader label={editing.label} onCancel={handleCancelEdit} />
-            )}
+            {isEditing && editing && <EditHeader label={editing.label} />}
 
             {chipFeatures.length > 0 && (
                 <Box
@@ -311,6 +314,21 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             </Box>
                         ))}
                 </Box>
+
+                {isEditing && (
+                    <IconButton
+                        onClick={handleCancelEdit}
+                        aria-label={t("common.cancel")}
+                        sx={{
+                            minWidth: 44,
+                            minHeight: 44,
+                            color: "text.secondary",
+                            "&:hover": { bgcolor: "action.hover" },
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
+                )}
 
                 <SendButton
                     onClick={completeText}

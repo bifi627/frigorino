@@ -1,5 +1,6 @@
 import { Container } from "@mui/material";
 import { forwardRef } from "react";
+import { featureContentPx } from "../../../../theme";
 import { SortableList } from "../../../../components/sortables/SortableList";
 import type { ListItemResponse } from "../../../../lib/api";
 import { useDeleteListItem } from "../useDeleteListItem";
@@ -53,7 +54,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                 sx={{
                     flex: 1,
                     overflow: "auto",
-                    px: 3,
+                    px: featureContentPx,
                     py: 0,
                     minHeight: 0,
                 }}

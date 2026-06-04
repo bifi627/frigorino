@@ -1,4 +1,4 @@
-import { createTheme, responsiveFontSizes } from "@mui/material/styles";
+import { alpha, createTheme, responsiveFontSizes } from "@mui/material/styles";
 
 export const appTheme = responsiveFontSizes(
     createTheme({
@@ -33,7 +33,35 @@ export const sectionColors = {
 
 export type SectionKey = keyof typeof sectionColors;
 
+// Neutral grey for non-identity action buttons (e.g. the overflow menu) — visible
+// on the dark surface without competing with the section-colored identity actions.
+export const neutralActionColor = "#9E9E9E";
+
+// Soft, tinted, bordered action button. Reads as clearly tappable while staying
+// quiet — a filled-but-muted glyph instead of a ghost icon. Pass a section color
+// for identity actions (add / open / edit) or neutralActionColor for secondary
+// ones. Shared by the dashboard cards and feature headers so action buttons look
+// the same everywhere.
+export const tintedActionButtonSx = (color: string) => ({
+    color,
+    bgcolor: alpha(color, 0.14),
+    border: `1px solid ${alpha(color, 0.35)}`,
+    transition: "all 0.2s ease",
+    "&:hover": {
+        bgcolor: alpha(color, 0.24),
+        borderColor: color,
+    },
+    "&:active": {
+        bgcolor: alpha(color, 0.32),
+    },
+});
+
 export const pageContainerSx = {
     py: { xs: 2, sm: 3 },
     px: { xs: 1, sm: 2 },
 };
+
+// Shared horizontal inset for the feature screens (list/inventory header, item
+// list, composer footer, promote bar) so their left/right edges line up. One
+// source of truth keeps them from drifting apart.
+export const featureContentPx = 3;
