@@ -1,4 +1,4 @@
-import { Box, Collapse, Paper } from "@mui/material";
+import { Box, Collapse } from "@mui/material";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
@@ -165,21 +165,11 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         (isEditing ? t("common.editItem") : t("common.addItemPlaceholder"));
 
     return (
-        <Paper
-            elevation={3}
+        <Box
             onClick={handleContainerClick}
             sx={{
                 width: "100%",
-                p: 1,
-                bgcolor: "background.paper",
-                border: "1px solid",
-                borderColor: isEditing ? "warning.main" : "primary.200",
                 cursor: "text",
-                transition: "all 0.3s ease",
-                "&:hover, &:focus-within": {
-                    borderColor: isEditing ? "warning.dark" : "primary.main",
-                    boxShadow: 3,
-                },
             }}
         >
             {isEditing && editing && (
@@ -242,6 +232,16 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         bgcolor: "action.hover",
                         // Pill shape (≈12px). Distinct from card radius on purpose.
                         borderRadius: 3,
+                        // The pill is the input surface now (no outer card), so it
+                        // carries the edit/focus highlight border.
+                        border: "1px solid",
+                        borderColor: isEditing ? "warning.main" : "primary.200",
+                        transition: "border-color 0.2s ease",
+                        "&:hover, &:focus-within": {
+                            borderColor: isEditing
+                                ? "warning.dark"
+                                : "primary.main",
+                        },
                         // Inline icons read as in-field adornments, not standalone
                         // 44px buttons — overrides the per-feature minWidth/minHeight.
                         "& .MuiButtonBase-root": {
@@ -298,6 +298,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                     duplicate={Boolean(dup)}
                 />
             </Box>
-        </Paper>
+        </Box>
     );
 }

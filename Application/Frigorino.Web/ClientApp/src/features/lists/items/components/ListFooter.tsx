@@ -170,7 +170,7 @@ export const ListFooter = memo(
                 sx={{
                     flexShrink: 0,
                     px: 3,
-                    py: 2,
+                    py: 1,
                     borderTop: 1,
                     borderColor: "divider",
                     bgcolor: "background.paper",
