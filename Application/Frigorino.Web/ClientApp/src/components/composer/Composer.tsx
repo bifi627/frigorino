@@ -1,5 +1,5 @@
 import { Box, Collapse } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
 import { EditHeader } from "./components/EditHeader";
@@ -116,6 +116,20 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         editing?.onCancel();
         focusInput();
     };
+
+    // When entering edit mode, focus the field so editing can start immediately and
+    // the mobile keyboard opens. The composer is remounted per edited item (keyed by
+    // id in the footer), so this runs once on entering edit. Skipped when a modifier
+    // panel is opened instead (e.g. editing a comment/quantity via its chip) so we
+    // don't pull focus from that panel, and skipped in add mode so the keyboard
+    // doesn't pop open on every list load. rAF lets the input mount before focusing.
+    useEffect(() => {
+        if (!isEditing || initialOpenId) {
+            return;
+        }
+        const raf = requestAnimationFrame(focusInput);
+        return () => cancelAnimationFrame(raf);
+    }, [isEditing, initialOpenId, focusInput]);
 
     const handleContainerClick = (event: React.MouseEvent) => {
         if ((event.target as HTMLElement).closest(".composer-panel")) {
