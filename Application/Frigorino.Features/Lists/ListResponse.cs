@@ -12,9 +12,10 @@ namespace Frigorino.Features.Lists
         DateTime UpdatedAt,
         ListCreatorResponse CreatedByUser,
         int UncheckedCount,
-        int CheckedCount)
+        int CheckedCount,
+        int PendingPromotionCount)
     {
-        public static ListResponse From(List list, User creator, int uncheckedCount, int checkedCount)
+        public static ListResponse From(List list, User creator, int uncheckedCount, int checkedCount, int pendingPromotionCount)
         {
             return new ListResponse(
                 list.Id,
@@ -25,7 +26,8 @@ namespace Frigorino.Features.Lists
                 list.UpdatedAt,
                 new ListCreatorResponse(creator.ExternalId, creator.Name, creator.Email),
                 uncheckedCount,
-                checkedCount);
+                checkedCount,
+                pendingPromotionCount);
         }
 
         // EF-translatable projection used by read slices (GetList, GetLists). Lifted out of
@@ -40,7 +42,8 @@ namespace Frigorino.Features.Lists
             l.UpdatedAt,
             new ListCreatorResponse(l.CreatedByUser.ExternalId, l.CreatedByUser.Name, l.CreatedByUser.Email),
             l.ListItems.Count(i => i.IsActive && !i.Status),
-            l.ListItems.Count(i => i.IsActive && i.Status));
+            l.ListItems.Count(i => i.IsActive && i.Status),
+            l.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null));
     }
 
     public sealed record ListCreatorResponse(
