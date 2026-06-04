@@ -98,6 +98,23 @@ export const PromoteReviewSheet = ({
         (e) => seeded[e.listItemId]?.selected,
     ).length;
 
+    const allSelected = entries.length > 0 && selectedCount === entries.length;
+    const someSelected = selectedCount > 0 && selectedCount < entries.length;
+
+    // Master toggle: flip every row to `selected` in one go, so targeting a single item is
+    // "deselect all, then check the one" instead of unchecking each row by hand.
+    const handleToggleAll = (selected: boolean) =>
+        setDrafts((d) => {
+            const next = { ...d };
+            for (const e of entries) {
+                next[e.listItemId] = {
+                    ...(d[e.listItemId] ?? seeded[e.listItemId]),
+                    selected,
+                };
+            }
+            return next;
+        });
+
     const hasRowMissingDate = entries.some(
         (e) => seeded[e.listItemId]?.selected && !seeded[e.listItemId]?.expiry,
     );
@@ -217,6 +234,21 @@ export const PromoteReviewSheet = ({
                             </MenuItem>
                         ))}
                     </TextField>
+                )}
+
+                {entries.length > 1 && (
+                    <Stack direction="row" sx={{ alignItems: "center", mb: 1 }}>
+                        <Checkbox
+                            edge="start"
+                            checked={allSelected}
+                            indeterminate={someSelected}
+                            onChange={(e) => handleToggleAll(e.target.checked)}
+                            data-testid="promote-select-all"
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                            {t("promote.selectAll")}
+                        </Typography>
+                    </Stack>
                 )}
 
                 <Stack spacing={1.5}>
