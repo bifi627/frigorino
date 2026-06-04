@@ -1,10 +1,10 @@
 import type { ExpiryCalendarItemResponse } from "../../../lib/api";
 import {
-    CALENDAR_WINDOW_DAYS,
     getExpiryLevel,
     parseLocalDate,
     type ExpiryLevel,
 } from "../../../utils/dateUtils";
+import type { CalendarViewSettings } from "./calendarViewSettings";
 
 export interface ExpiryEventProps {
     itemId: number;
@@ -42,26 +42,53 @@ function wholeDayDiff(from: Date, to: Date): number {
     return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
 }
 
-// Maps inventory items (each with an expiry) to all-day cook-by bars spanning
-// [expiry - CALENDAR_WINDOW_DAYS, expiry]. FullCalendar's all-day `end` is EXCLUSIVE, so
-// end = expiry + 1 makes the bar cover the expiry day itself. `levelColor` is injected by the
-// page so the bar color stays in sync with the MUI theme palette. `todayIso` is passed in
-// (not read from the clock here) so the mapping is pure and deterministic.
+// Maps inventory items (each with an expiry) to all-day cook-by bars, applying the user's
+// view settings. Rules (see the view-settings design):
+//   • Level filter: items whose ExpiryLevel is toggled off are dropped.
+//   • Bars never extend into the past: barStart = max(expiry - windowDays, today).
+//   • Full runway: barStart = today (bar spans the full remaining runway to expiry).
+//   • Expired items (expiry < today) have no remaining window → a 1-day marker on the expiry date.
+// FullCalendar's all-day `end` is EXCLUSIVE, so end = expiry + 1 covers the expiry day itself.
+// `levelColor` keeps bar color in sync with the MUI theme; `todayIso` and `settings` are passed in
+// so the mapping stays pure and deterministic.
 export function buildExpiryEvents(
     items: ExpiryCalendarItemResponse[],
     todayIso: string,
     levelColor: (level: ExpiryLevel) => string,
+    settings: CalendarViewSettings,
 ): ExpiryCalendarEvent[] {
     const today = parseLocalDate(todayIso);
-    return items.map((item) => {
+    const events: ExpiryCalendarEvent[] = [];
+
+    for (const item of items) {
         const expiry = parseLocalDate(item.expiryDate);
-        const level = getExpiryLevel(wholeDayDiff(today, expiry));
+        const daysUntil = wholeDayDiff(today, expiry);
+        const level = getExpiryLevel(daysUntil);
+
+        if (!settings.levels[level]) {
+            continue;
+        }
+
         const color = levelColor(level);
-        const windowStart = addDays(expiry, -CALENDAR_WINDOW_DAYS);
+
+        let windowStart: Date;
+        if (daysUntil < 0) {
+            // Already expired: 1-day marker on the actual expiry date, no backward tail.
+            windowStart = expiry;
+        } else if (settings.fullRunway) {
+            windowStart = today;
+        } else {
+            const rawStart = addDays(expiry, -settings.windowDays);
+            // Clamp the start to today so the bar never extends into the past.
+            windowStart =
+                rawStart.getTime() > today.getTime() ? rawStart : today;
+        }
+
         const activeToday =
             wholeDayDiff(windowStart, today) >= 0 &&
             wholeDayDiff(today, expiry) >= 0;
-        return {
+
+        events.push({
             id: String(item.id),
             title: item.text,
             start: toIsoDate(windowStart),
@@ -76,6 +103,8 @@ export function buildExpiryEvents(
                 expiryDate: item.expiryDate,
                 activeToday,
             },
-        };
-    });
+        });
+    }
+
+    return events;
 }

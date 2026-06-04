@@ -18,11 +18,6 @@ export const EXPIRY_THRESHOLDS = {
     soon: 7,
 } as const;
 
-// Cook-by planning window for the expiry calendar: how many days BEFORE an item's expiry
-// its bar begins. Deliberately decoupled from EXPIRY_THRESHOLDS so the bar length (planning
-// horizon) and the urgency color bands can be tuned independently.
-export const CALENDAR_WINDOW_DAYS = 7;
-
 // Level → MUI palette color name (used by ExpiryInfo.color / chip color props).
 const LEVEL_COLOR: Record<ExpiryLevel, ExpiryInfo["color"]> = {
     expired: "error",

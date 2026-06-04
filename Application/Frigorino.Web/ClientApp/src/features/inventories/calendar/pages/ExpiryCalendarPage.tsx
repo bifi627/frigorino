@@ -26,6 +26,7 @@ import {
     type ExpiryEventProps,
 } from "../expiryCalendarEvents";
 import { useExpiryCalendar } from "../useExpiryCalendar";
+import { useCalendarViewSettings } from "../calendarViewSettings";
 import "../expiryCalendar.css";
 
 export const ExpiryCalendarPage = () => {
@@ -44,6 +45,10 @@ export const ExpiryCalendarPage = () => {
     // Single-select focus: the tapped item is highlighted, the rest dim. null = nothing selected.
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
+    const windowDays = useCalendarViewSettings((s) => s.windowDays);
+    const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
+    const levels = useCalendarViewSettings((s) => s.levels);
+
     const levelColor = useMemo(() => {
         return (level: ExpiryLevel): string => {
             if (level === "expired" || level === "critical") {
@@ -57,8 +62,13 @@ export const ExpiryCalendarPage = () => {
     }, [theme]);
 
     const events = useMemo(
-        () => buildExpiryEvents(items ?? [], todayIsoDate(), levelColor),
-        [items, levelColor],
+        () =>
+            buildExpiryEvents(items ?? [], todayIsoDate(), levelColor, {
+                windowDays,
+                fullRunway,
+                levels,
+            }),
+        [items, levelColor, windowDays, fullRunway, levels],
     );
 
     // Classes drive the focus-select visuals (see expiryCalendar.css).
