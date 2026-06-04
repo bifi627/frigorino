@@ -124,10 +124,20 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         focusInput();
     };
 
-    // Tapping a panel toggle/chip must not blur the text input — on mobile a blur
-    // collapses the soft keyboard. preventDefault on mousedown keeps focus where it
-    // is while still firing the click that opens/closes the panel.
-    const preventInputBlur = (event: React.MouseEvent) => {
+    // Keep the mobile soft keyboard open. Tapping any non-input control inside the
+    // composer (icon buttons, chips, padding) would by default move focus off the
+    // focused text field and collapse the keyboard, making the layout jump.
+    // preventDefault on mousedown keeps focus where it is while still firing the
+    // control's click. Real text inputs (the field, the comment textarea) are
+    // excluded so they can take focus normally.
+    const keepKeyboardOpen = (event: React.MouseEvent) => {
+        const target = event.target as HTMLElement;
+        const isTextInput = target.closest(
+            "input, textarea, [contenteditable='true']",
+        );
+        if (isTextInput) {
+            return;
+        }
         event.preventDefault();
     };
 
@@ -167,6 +177,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
     return (
         <Box
             onClick={handleContainerClick}
+            onMouseDown={keepKeyboardOpen}
             sx={{
                 width: "100%",
                 cursor: "text",
@@ -190,7 +201,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             key={feature.id}
                             className="composer-panel"
                             data-testid={`composer-chip-${feature.id}`}
-                            onMouseDown={preventInputBlur}
                             sx={{
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -267,7 +277,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                                 key={feature.id}
                                 className="composer-panel"
                                 data-testid={`composer-toggle-${feature.id}`}
-                                onMouseDown={preventInputBlur}
                             >
                                 {feature.renderToggle(slotFor(feature))}
                             </Box>

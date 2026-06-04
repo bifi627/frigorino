@@ -70,10 +70,16 @@ const AttachTrigger = ({
                 <AddPhotoAlternate fontSize="small" />
             </IconButton>
 
+            {/* Keep the mobile soft keyboard open: by default MUI's Menu moves focus
+                into itself on open, blurring the composer field. These disable the
+                focus grab/trap/restore so the field keeps focus while the menu is up. */}
             <Menu
                 anchorEl={anchor}
                 open={Boolean(anchor)}
                 onClose={() => setAnchor(null)}
+                disableAutoFocus
+                disableEnforceFocus
+                disableRestoreFocus
             >
                 <MenuItem
                     data-testid="composer-attach-camera"
