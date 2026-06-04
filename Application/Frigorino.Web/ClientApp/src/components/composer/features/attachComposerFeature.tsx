@@ -7,11 +7,15 @@ import {
     PhotoCamera,
 } from "@mui/icons-material";
 import {
+    ClickAwayListener,
+    Grow,
     IconButton,
     ListItemIcon,
     ListItemText,
-    Menu,
     MenuItem,
+    MenuList,
+    Paper,
+    Popper,
 } from "@mui/material";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -30,6 +34,7 @@ const AttachTrigger = ({
     const { t } = useTranslation();
     const [anchor, setAnchor] = useState<null | HTMLElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const open = Boolean(anchor);
 
     const handlePick = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -58,57 +63,94 @@ const AttachTrigger = ({
         input.click();
     };
 
+    const handleClickAway = (event: MouseEvent | TouchEvent) => {
+        // The trigger button's own click toggles the menu; ignore it here so the
+        // open click isn't immediately treated as a click-away.
+        if (anchor && anchor.contains(event.target as Node)) {
+            return;
+        }
+        setAnchor(null);
+    };
+
     return (
         <>
             <IconButton
-                onClick={(e) => setAnchor(e.currentTarget)}
+                onClick={(e) => setAnchor(anchor ? null : e.currentTarget)}
                 disabled={disabled}
                 aria-label={t("lists.attach")}
+                aria-haspopup="true"
+                aria-expanded={open ? "true" : undefined}
+                aria-controls={open ? "composer-attach-menu" : undefined}
                 data-testid="composer-attach-button"
                 sx={{ minWidth: 44, minHeight: 44 }}
             >
                 <AddPhotoAlternate fontSize="small" />
             </IconButton>
 
-            {/* Keep the mobile soft keyboard open: by default MUI's Menu focuses
-                itself (autoFocus) and the active item (autoFocusItem) on open, and
-                traps/restores focus — each of which blurs the composer field. Disable
-                all of them so the field keeps focus while the menu is up. */}
-            <Menu
+            {/* A non-modal Popper, NOT a Menu: a Menu is Modal-based and marks the rest
+                of the page aria-hidden on open, which blurs the focused composer field
+                and collapses the mobile soft keyboard. A Popper doesn't trap focus or
+                aria-hide the page, and MenuList with autoFocusItem off never pulls focus,
+                so the keyboard stays up. */}
+            <Popper
+                open={open}
                 anchorEl={anchor}
-                open={Boolean(anchor)}
-                onClose={() => setAnchor(null)}
-                autoFocus={false}
-                disableAutoFocusItem
-                disableEnforceFocus
-                disableRestoreFocus
+                placement="top-start"
+                transition
+                sx={{ zIndex: (theme) => theme.zIndex.modal }}
             >
-                <MenuItem
-                    data-testid="composer-attach-camera"
-                    onClick={() => openPicker(true)}
-                >
-                    <ListItemIcon>
-                        <PhotoCamera fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>{t("lists.takePhoto")}</ListItemText>
-                </MenuItem>
-                <MenuItem
-                    data-testid="composer-attach-photo"
-                    onClick={() => openPicker(false)}
-                >
-                    <ListItemIcon>
-                        <Image fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>{t("lists.choosePhoto")}</ListItemText>
-                </MenuItem>
-                {/* Document arrives in sub-feature #3. */}
-                <MenuItem disabled data-testid="composer-attach-document">
-                    <ListItemIcon>
-                        <Description fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>{t("lists.attachDocument")}</ListItemText>
-                </MenuItem>
-            </Menu>
+                {({ TransitionProps }) => (
+                    <Grow
+                        {...TransitionProps}
+                        style={{ transformOrigin: "left bottom" }}
+                    >
+                        <Paper elevation={3}>
+                            <ClickAwayListener onClickAway={handleClickAway}>
+                                <MenuList
+                                    id="composer-attach-menu"
+                                    autoFocusItem={false}
+                                    disablePadding
+                                >
+                                    <MenuItem
+                                        data-testid="composer-attach-camera"
+                                        onClick={() => openPicker(true)}
+                                    >
+                                        <ListItemIcon>
+                                            <PhotoCamera fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>
+                                            {t("lists.takePhoto")}
+                                        </ListItemText>
+                                    </MenuItem>
+                                    <MenuItem
+                                        data-testid="composer-attach-photo"
+                                        onClick={() => openPicker(false)}
+                                    >
+                                        <ListItemIcon>
+                                            <Image fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>
+                                            {t("lists.choosePhoto")}
+                                        </ListItemText>
+                                    </MenuItem>
+                                    {/* Document arrives in sub-feature #3. */}
+                                    <MenuItem
+                                        disabled
+                                        data-testid="composer-attach-document"
+                                    >
+                                        <ListItemIcon>
+                                            <Description fontSize="small" />
+                                        </ListItemIcon>
+                                        <ListItemText>
+                                            {t("lists.attachDocument")}
+                                        </ListItemText>
+                                    </MenuItem>
+                                </MenuList>
+                            </ClickAwayListener>
+                        </Paper>
+                    </Grow>
+                )}
+            </Popper>
 
             {/* `capture` is set/cleared imperatively in openPicker() before .click(); no static
                 attribute here so the default (file/gallery picker) applies. */}
