@@ -3,10 +3,13 @@ import { computeAppendSortOrder } from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     getItemsQueryKey,
+    getListQueryKey,
     toggleItemStatusMutation,
 } from "../../../lib/api/@tanstack/react-query.gen";
-import type { ListItemResponse } from "../../../lib/api/types.gen";
-import { usePromotableStore } from "../promote/promotableStore";
+import type {
+    ListItemResponse,
+    ListResponse,
+} from "../../../lib/api/types.gen";
 
 export const useToggleListItemStatus = () => {
     const queryClient = useQueryClient();
@@ -64,31 +67,48 @@ export const useToggleListItemStatus = () => {
                 );
             }
         },
-        onSuccess: (data) => {
-            // Store-only side effect — NOT a query invalidate (see the onSettled note below).
-            // The server attaches `promote` only when the item was checked DONE and its product
-            // is a perishable; un-check / non-perishable / unclassified come back without it,
-            // which retracts any pending entry for this item.
-            const store = usePromotableStore.getState();
-            if (data.promote) {
-                store.add({
-                    itemId: data.id,
-                    listId: data.listId,
-                    name: data.text,
-                    quantity: data.quantity ?? null,
-                    expiryHandling: data.promote.expiryHandling,
-                    suggestedExpiry: data.promote.suggestedExpiry ?? null,
-                });
-            } else {
-                store.remove(data.id);
+        onSuccess: async (data, variables) => {
+            // Bump the PromoteBar count the instant a perishable is checked off, so it doesn't
+            // lag the debounced getList refetch in onSettled. `promote` is non-null only when
+            // the server stamped the item as a pending candidate, so this is an accurate +1
+            // (uncheck/decrement is left to the onSettled reconcile — predicting it client-side
+            // would risk a wrong-direction flicker).
+            const becamePromotable = data.status && data.promote != null;
+            if (!becamePromotable) {
+                return;
             }
+            const listQueryKey = getListQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    listId: variables.path.listId,
+                },
+            });
+            // Cancel any in-flight list refetch so it can't clobber the optimistic count;
+            // onSettled re-invalidates for the authoritative value.
+            await queryClient.cancelQueries({ queryKey: listQueryKey });
+            queryClient.setQueryData<ListResponse>(listQueryKey, (old) =>
+                old
+                    ? {
+                          ...old,
+                          pendingPromotionCount: old.pendingPromotionCount + 1,
+                      }
+                    : old,
+            );
         },
         onSettled: (_data, _error, variables) => {
-            // Deliberate: no `onSuccess` invalidate. The optimistic update is the only UI
-            // signal we want — `onSettled` covers both success and rollback paths with a
-            // single debounced refetch. Don't add an `onSuccess` invalidate "for consistency".
+            // onSuccess optimistically patches the count; this is the single debounced
+            // reconcile that covers both success (authoritative count) and rollback paths.
             debouncedInvalidate(
                 getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
+            );
+            // Reconcile the PromoteBar count (pendingPromotionCount lives on the list response).
+            debouncedInvalidate(
+                getListQueryKey({
                     path: {
                         householdId: variables.path.householdId,
                         listId: variables.path.listId,

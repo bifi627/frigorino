@@ -1,3 +1,4 @@
+using Frigorino.Domain.Products;
 using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
@@ -53,6 +54,15 @@ namespace Frigorino.Domain.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+
+        // Promotion-to-inventory state (replaces the device-local localStorage batch). All null
+        // for items never checked-while-perishable. Pending promotion =
+        //   Status && PromotionExpiryHandling != null && PromotionResolvedAt == null.
+        // Stamped/cleared exclusively by List aggregate methods (ToggleItemStatus,
+        // ApplyPromotionSuggestion, ResolvePromotion).
+        public ExpiryHandling? PromotionExpiryHandling { get; set; }
+        public DateOnly? PromotionSuggestedExpiry { get; set; }
+        public DateTime? PromotionResolvedAt { get; set; }
 
         // Navigation properties
         public List List { get; set; } = null!;

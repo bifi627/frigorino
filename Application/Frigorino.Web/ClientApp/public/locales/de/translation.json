@@ -222,6 +222,7 @@
         "sheetTitle": "Zum Inventar hinzufügen",
         "sheetSubtitle": "Artikel und Ziel auswählen. Den Rest danach zu einem anderen Inventar hinzufügen.",
         "target": "Nach",
+        "selectAll": "Alle auswählen",
         "tagRecommended": "Empfohlen",
         "tagEnterDate": "Datum eingeben",
         "expiry": "Ablaufdatum",

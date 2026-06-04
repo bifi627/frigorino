@@ -23,14 +23,12 @@ import {
     type QuantityDraft,
 } from "../../../components/composer";
 import type { QuantityUnit } from "../../../lib/api";
+import type { PendingPromotionResponse } from "../../../lib/api/types.gen";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
-import { useCreateInventoryItem } from "../../inventories/items/useCreateInventoryItem";
 import { getExpiryInfo } from "../../../utils/dateUtils";
-import {
-    usePromotableForList,
-    usePromotableStore,
-    type PromotableEntry,
-} from "./promotableStore";
+import { usePendingPromotions } from "./usePendingPromotions";
+import { usePromoteListItems } from "./usePromoteListItems";
+import { useSkipPromotion } from "./useSkipPromotion";
 
 interface PromoteReviewSheetProps {
     open: boolean;
@@ -40,7 +38,7 @@ interface PromoteReviewSheetProps {
 }
 
 // Per-row editable draft. Quantity is editable here (a QuantityDraft) so the inventory can
-// reflect what was actually bought — the store may have had fewer items, or you bought more
+// reflect what was actually bought — the server may have had fewer items, or you bought more
 // than the list requested. Expiry is YYYY-MM-DD.
 interface RowDraft {
     selected: boolean;
@@ -55,10 +53,13 @@ export const PromoteReviewSheet = ({
     listId,
 }: PromoteReviewSheetProps) => {
     const { t } = useTranslation();
-    const entries = usePromotableForList(listId);
-    const remove = usePromotableStore((s) => s.remove);
-    const clearForList = usePromotableStore((s) => s.clearForList);
-    const createItem = useCreateInventoryItem();
+    const { data: entries = [] } = usePendingPromotions(
+        householdId,
+        listId,
+        open,
+    );
+    const promote = usePromoteListItems();
+    const skip = useSkipPromotion();
 
     const { data: inventories = [] } = useHouseholdInventories(
         householdId,
@@ -70,91 +71,110 @@ export const PromoteReviewSheet = ({
     const targetId = inventoryId ?? inventories[0]?.id ?? null;
     const targetName = inventories.find((i) => i.id === targetId)?.name ?? "";
 
-    // Drafts keyed by itemId; (re)seeded from the current entries.
+    // Drafts keyed by listItemId; (re)seeded from the current entries.
     const [drafts, setDrafts] = useState<Record<number, RowDraft>>({});
     const seeded = useMemo(() => {
         const next: Record<number, RowDraft> = {};
         for (const e of entries) {
-            next[e.itemId] = drafts[e.itemId] ?? {
+            next[e.listItemId] = drafts[e.listItemId] ?? {
                 selected: true,
                 expiry: e.suggestedExpiry ?? "",
-                quantity: quantityToDraft(e.quantity),
+                quantity: quantityToDraft(e.quantity ?? null),
             };
         }
         return next;
     }, [entries, drafts]);
 
-    const updateDraft = (itemId: number, patch: Partial<RowDraft>) =>
+    const updateDraft = (listItemId: number, patch: Partial<RowDraft>) =>
         setDrafts((d) => ({
             ...d,
-            [itemId]: { ...(d[itemId] ?? seeded[itemId]), ...patch },
+            [listItemId]: {
+                ...(d[listItemId] ?? seeded[listItemId]),
+                ...patch,
+            },
         }));
 
     const selectedCount = entries.filter(
-        (e) => seeded[e.itemId]?.selected,
+        (e) => seeded[e.listItemId]?.selected,
     ).length;
 
+    const allSelected = entries.length > 0 && selectedCount === entries.length;
+    const someSelected = selectedCount > 0 && selectedCount < entries.length;
+
+    // Master toggle: flip every row to `selected` in one go, so targeting a single item is
+    // "deselect all, then check the one" instead of unchecking each row by hand.
+    const handleToggleAll = (selected: boolean) =>
+        setDrafts((d) => {
+            const next = { ...d };
+            for (const e of entries) {
+                next[e.listItemId] = {
+                    ...(d[e.listItemId] ?? seeded[e.listItemId]),
+                    selected,
+                };
+            }
+            return next;
+        });
+
     const hasRowMissingDate = entries.some(
-        (e) => seeded[e.itemId]?.selected && !seeded[e.itemId]?.expiry,
+        (e) => seeded[e.listItemId]?.selected && !seeded[e.listItemId]?.expiry,
     );
 
     const hasRowInvalidQuantity = entries.some(
         (e) =>
-            seeded[e.itemId]?.selected &&
-            !isDraftValid(seeded[e.itemId].quantity),
+            seeded[e.listItemId]?.selected &&
+            !isDraftValid(seeded[e.listItemId].quantity),
     );
 
-    const handleOmit = (itemId: number) => {
-        remove(itemId);
+    const handleOmit = (listItemId: number) => {
+        skip.mutate({
+            path: { householdId, listId },
+            body: { listItemIds: [listItemId] },
+        });
         setDrafts((d) => {
             const next = { ...d };
-            delete next[itemId];
+            delete next[listItemId];
             return next;
         });
     };
 
     const handleClearAll = () => {
-        clearForList(listId);
+        skip.mutate({
+            path: { householdId, listId },
+            body: { listItemIds: entries.map((e) => e.listItemId) },
+        });
         setDrafts({});
         onClose();
     };
 
     const handleAdd = async () => {
         if (!targetId) return;
-        const toAdd = entries.filter((e) => seeded[e.itemId]?.selected);
-        let addedCount = 0;
-        for (const entry of toAdd) {
-            const draft = seeded[entry.itemId];
-            try {
-                await createItem.mutateAsync({
-                    path: { householdId, inventoryId: targetId },
-                    body: {
-                        text: entry.name,
-                        quantity: draftToQuantity(draft.quantity),
-                        expiryDate: draft.expiry || null,
-                    },
-                });
-                remove(entry.itemId);
-                addedCount++;
-            } catch {
-                // Leave the entry in the batch on failure; the user can retry.
+        const items = entries
+            .filter((e) => seeded[e.listItemId]?.selected)
+            .map((e) => {
+                const draft = seeded[e.listItemId];
+                return {
+                    listItemId: e.listItemId,
+                    quantity: draftToQuantity(draft.quantity),
+                    expiryDate: draft.expiry || null,
+                };
+            });
+        if (items.length === 0) return;
+        try {
+            const result = await promote.mutateAsync({
+                path: { householdId, listId },
+                body: { inventoryId: targetId, items },
+            });
+            if (result.promotedCount > 0) {
+                toast.success(
+                    t("promote.added", {
+                        count: result.promotedCount,
+                        inventory: targetName,
+                    }),
+                );
             }
-        }
-        if (addedCount > 0) {
-            toast.success(
-                t("promote.added", {
-                    count: addedCount,
-                    inventory: targetName,
-                }),
-            );
-        }
-        // Close once nothing is left for this list.
-        if (
-            usePromotableStore
-                .getState()
-                .entries.every((e) => e.listId !== listId)
-        ) {
             onClose();
+        } catch {
+            // Leave the batch intact on failure; the user can retry.
         }
     };
 
@@ -216,16 +236,31 @@ export const PromoteReviewSheet = ({
                     </TextField>
                 )}
 
+                {entries.length > 1 && (
+                    <Stack direction="row" sx={{ alignItems: "center", mb: 1 }}>
+                        <Checkbox
+                            edge="start"
+                            checked={allSelected}
+                            indeterminate={someSelected}
+                            onChange={(e) => handleToggleAll(e.target.checked)}
+                            data-testid="promote-select-all"
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                            {t("promote.selectAll")}
+                        </Typography>
+                    </Stack>
+                )}
+
                 <Stack spacing={1.5}>
                     {entries.map((entry) => (
                         <PromoteRow
-                            key={entry.itemId}
+                            key={entry.listItemId}
                             entry={entry}
-                            draft={seeded[entry.itemId]}
+                            draft={seeded[entry.listItemId]}
                             onChange={(patch) =>
-                                updateDraft(entry.itemId, patch)
+                                updateDraft(entry.listItemId, patch)
                             }
-                            onOmit={() => handleOmit(entry.itemId)}
+                            onOmit={() => handleOmit(entry.listItemId)}
                         />
                     ))}
                 </Stack>
@@ -245,7 +280,7 @@ export const PromoteReviewSheet = ({
                         disabled={
                             selectedCount === 0 ||
                             !targetId ||
-                            createItem.isPending ||
+                            promote.isPending ||
                             hasRowMissingDate ||
                             hasRowInvalidQuantity
                         }
@@ -264,7 +299,7 @@ export const PromoteReviewSheet = ({
 };
 
 interface PromoteRowProps {
-    entry: PromotableEntry;
+    entry: PendingPromotionResponse;
     draft: RowDraft;
     onChange: (patch: Partial<RowDraft>) => void;
     onOmit: () => void;
@@ -284,7 +319,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
 
     return (
         <Box
-            data-testid={`promote-row-${entry.name}`}
+            data-testid={`promote-row-${entry.text}`}
             sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}
         >
             <Stack direction="row" sx={{ alignItems: "center" }} spacing={1}>
@@ -292,10 +327,10 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     edge="start"
                     checked={draft.selected}
                     onChange={(e) => onChange({ selected: e.target.checked })}
-                    data-testid={`promote-row-select-${entry.name}`}
+                    data-testid={`promote-row-select-${entry.text}`}
                 />
                 <Typography sx={{ flex: 1, fontWeight: 600 }}>
-                    {entry.name}
+                    {entry.text}
                 </Typography>
                 <Chip
                     size="small"
@@ -311,7 +346,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     size="small"
                     onClick={onOmit}
                     aria-label={t("promote.omit")}
-                    data-testid={`promote-row-omit-${entry.name}`}
+                    data-testid={`promote-row-omit-${entry.text}`}
                 >
                     <Close fontSize="small" />
                 </IconButton>
@@ -341,7 +376,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                                 inputLabel: { shrink: true },
                                 htmlInput: {
                                     inputMode: "decimal",
-                                    "data-testid": `promote-row-quantity-value-${entry.name}`,
+                                    "data-testid": `promote-row-quantity-value-${entry.text}`,
                                 },
                             }}
                             sx={{ width: 90 }}
@@ -359,7 +394,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                                     },
                                 })
                             }
-                            data-testid={`promote-row-quantity-unit-${entry.name}`}
+                            data-testid={`promote-row-quantity-unit-${entry.text}`}
                             slotProps={{ inputLabel: { shrink: true } }}
                             sx={{ flex: 1, minWidth: 120 }}
                         >
@@ -387,7 +422,7 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     slotProps={{
                         inputLabel: { shrink: true },
                         htmlInput: {
-                            "data-testid": `promote-row-expiry-${entry.name}`,
+                            "data-testid": `promote-row-expiry-${entry.text}`,
                         },
                     }}
                 />

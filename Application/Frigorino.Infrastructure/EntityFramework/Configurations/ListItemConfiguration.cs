@@ -41,6 +41,12 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
 
             builder.Property(li => li.FileSizeBytes);
 
+            // Promotion-to-inventory state. PromotionExpiryHandling is a nullable enum → nullable
+            // int column (matches the QuantityUnit convention below).
+            builder.Property(li => li.PromotionExpiryHandling);
+            builder.Property(li => li.PromotionSuggestedExpiry);
+            builder.Property(li => li.PromotionResolvedAt);
+
             builder.Property(li => li.QuantityValue)
                 .HasColumnType("numeric(12,3)");
 
@@ -77,6 +83,8 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.HasIndex(li => li.IsActive);
             builder.HasIndex(li => new { li.ListId, li.Status, li.SortOrder }); // Composite index for sorting
             builder.HasIndex(li => new { li.ListId, li.IsActive });
+            // Supports the pending-promotion count (GetList) and the pending-promotions detail read.
+            builder.HasIndex(li => new { li.ListId, li.Status, li.PromotionResolvedAt });
         }
     }
 }

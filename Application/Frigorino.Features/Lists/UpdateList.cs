@@ -67,7 +67,8 @@ namespace Frigorino.Features.Lists
                 list,
                 list.CreatedByUser,
                 list.ListItems.Count(i => i.IsActive && !i.Status),
-                list.ListItems.Count(i => i.IsActive && i.Status));
+                list.ListItems.Count(i => i.IsActive && i.Status),
+                list.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null));
             return TypedResults.Ok(response);
         }
     }

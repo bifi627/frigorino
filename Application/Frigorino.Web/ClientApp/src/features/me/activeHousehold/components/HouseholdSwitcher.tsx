@@ -57,6 +57,7 @@ export const HouseholdSwitcher = ({
                 onClick={(e) => setAnchorEl(e.currentTarget)}
                 variant="outlined"
                 size="small"
+                color="inherit"
                 endIcon={<KeyboardArrowDown fontSize="small" />}
                 disabled={isSwitching}
                 data-testid="household-switcher-toggle"
@@ -64,11 +65,13 @@ export const HouseholdSwitcher = ({
                     minWidth: { xs: 120, sm: 140 },
                     maxWidth: { xs: 160, sm: 200 },
                     justifyContent: "space-between",
+                    // Muted to match the neutral email chip — no primary-green accent.
+                    color: "text.secondary",
                     bgcolor: "background.paper",
                     borderColor: "divider",
                     "&:hover": {
                         bgcolor: "action.hover",
-                        borderColor: "primary.main",
+                        borderColor: "text.secondary",
                     },
                 }}
             >

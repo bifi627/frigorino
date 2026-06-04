@@ -56,13 +56,11 @@ namespace Frigorino.Features.Lists.Items
                     $"ToggleItemStatus cannot map error of type {first.GetType().Name}.");
             }
 
-            await db.SaveChangesAsync(ct);
-
-            var response = ListItemResponse.From(result.Value);
-
             // Only when the item is now checked DONE do we look up its product (one indexed point
-            // lookup on the unique (HouseholdId, NormalizedName)) and attach a promote suggestion.
-            // Un-checking, non-perishable, and not-yet-classified all yield Promote == null.
+            // lookup on the unique (HouseholdId, NormalizedName)) and capture a promote suggestion.
+            // The suggestion is persisted on the item (shared, durable batch) AND returned in the
+            // response. Un-checking clears promotion state in the aggregate (no lookup needed).
+            PromoteSuggestion? suggestion = null;
             if (result.Value.Status)
             {
                 var normalized = ProductName.Normalize(result.Value.Text);
@@ -71,9 +69,15 @@ namespace Frigorino.Features.Lists.Items
                     .FirstOrDefaultAsync(
                         p => p.HouseholdId == householdId && p.NormalizedName == normalized, ct);
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                response = response with { Promote = PromoteSuggestion.For(product, today) };
+                suggestion = PromoteSuggestion.For(product, today);
+
+                list.ApplyPromotionSuggestion(
+                    result.Value.Id, suggestion?.ExpiryHandling, suggestion?.SuggestedExpiry);
             }
 
+            await db.SaveChangesAsync(ct);
+
+            var response = ListItemResponse.From(result.Value) with { Promote = suggestion };
             return TypedResults.Ok(response);
         }
     }

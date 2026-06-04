@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getLists, getMembers, getMyInventoryNotification, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, toggleItemStatus, unregisterFcmToken, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
-import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
+import { addMember, compactInventoryItems, compactItems, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getLists, getMembers, getMyInventoryNotification, getPendingPromotions, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, promoteListItems, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, skipPromotion, toggleItemStatus, unregisterFcmToken, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
+import type { AddMemberData, AddMemberError, AddMemberResponse, CompactInventoryItemsData, CompactInventoryItemsResponse, CompactItemsData, CompactItemsResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetPendingPromotionsData, GetPendingPromotionsResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PromoteListItemsData, PromoteListItemsError, PromoteListItemsResponse2, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, SkipPromotionData, SkipPromotionResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -230,6 +230,49 @@ export const updateListMutation = (options?: Partial<Options<UpdateListData>>): 
     const mutationOptions: UseMutationOptions<UpdateListResponse, UpdateListError, Options<UpdateListData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await updateList({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getPendingPromotionsQueryKey = (options: Options<GetPendingPromotionsData>) => createQueryKey('getPendingPromotions', options, false, ['Lists']);
+
+export const getPendingPromotionsOptions = (options: Options<GetPendingPromotionsData>) => queryOptions<GetPendingPromotionsResponse, DefaultError, GetPendingPromotionsResponse, ReturnType<typeof getPendingPromotionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPendingPromotions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPendingPromotionsQueryKey(options)
+});
+
+export const promoteListItemsMutation = (options?: Partial<Options<PromoteListItemsData>>): UseMutationOptions<PromoteListItemsResponse2, PromoteListItemsError, Options<PromoteListItemsData>> => {
+    const mutationOptions: UseMutationOptions<PromoteListItemsResponse2, PromoteListItemsError, Options<PromoteListItemsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await promoteListItems({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const skipPromotionMutation = (options?: Partial<Options<SkipPromotionData>>): UseMutationOptions<SkipPromotionResponse, DefaultError, Options<SkipPromotionData>> => {
+    const mutationOptions: UseMutationOptions<SkipPromotionResponse, DefaultError, Options<SkipPromotionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await skipPromotion({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

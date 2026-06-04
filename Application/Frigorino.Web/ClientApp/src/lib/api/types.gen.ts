@@ -143,6 +143,7 @@ export type ListResponse = {
     createdByUser: ListCreatorResponse;
     uncheckedCount: number;
     checkedCount: number;
+    pendingPromotionCount: number;
 };
 
 export type MemberResponse = {
@@ -156,6 +157,29 @@ export type MemberResponse = {
 export type MyInventoryNotificationResponse = {
     enabled: boolean;
     leadDays: null | number;
+};
+
+export type PendingPromotionResponse = {
+    listItemId: number;
+    text: string;
+    quantity: null | QuantityDto;
+    expiryHandling: ExpiryHandling;
+    suggestedExpiry: null | string;
+};
+
+export type PromoteEntry = {
+    listItemId: number;
+    quantity: null | QuantityDto;
+    expiryDate: null | string;
+};
+
+export type PromoteListItemsRequest = {
+    inventoryId: number;
+    items: Array<PromoteEntry>;
+};
+
+export type PromoteListItemsResponse = {
+    promotedCount: number;
 };
 
 export type PromoteSuggestion = {
@@ -180,6 +204,10 @@ export type ReorderItemRequest = {
 
 export type SetActiveHouseholdRequest = {
     householdId: number;
+};
+
+export type SkipPromotionRequest = {
+    listItemIds: Array<number>;
 };
 
 export type UpdateHouseholdSettingsRequest = {
@@ -659,6 +687,90 @@ export type UpdateListResponses = {
 };
 
 export type UpdateListResponse = UpdateListResponses[keyof UpdateListResponses];
+
+export type GetPendingPromotionsData = {
+    body?: never;
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/pending-promotions';
+};
+
+export type GetPendingPromotionsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetPendingPromotionsResponses = {
+    /**
+     * OK
+     */
+    200: Array<PendingPromotionResponse>;
+};
+
+export type GetPendingPromotionsResponse = GetPendingPromotionsResponses[keyof GetPendingPromotionsResponses];
+
+export type PromoteListItemsData = {
+    body: PromoteListItemsRequest;
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/promote';
+};
+
+export type PromoteListItemsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type PromoteListItemsError = PromoteListItemsErrors[keyof PromoteListItemsErrors];
+
+export type PromoteListItemsResponses = {
+    /**
+     * OK
+     */
+    200: PromoteListItemsResponse;
+};
+
+export type PromoteListItemsResponse2 = PromoteListItemsResponses[keyof PromoteListItemsResponses];
+
+export type SkipPromotionData = {
+    body: SkipPromotionRequest;
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/promote/skip';
+};
+
+export type SkipPromotionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type SkipPromotionResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type SkipPromotionResponse = SkipPromotionResponses[keyof SkipPromotionResponses];
 
 export type GetItemsData = {
     body?: never;

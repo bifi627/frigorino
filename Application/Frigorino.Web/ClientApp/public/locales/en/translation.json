@@ -222,6 +222,7 @@
         "sheetTitle": "Add to inventory",
         "sheetSubtitle": "Select items and a target. Add the rest to another inventory after.",
         "target": "To",
+        "selectAll": "Select all",
         "tagRecommended": "Recommended",
         "tagEnterDate": "Enter date",
         "expiry": "Expiry date",

@@ -50,7 +50,7 @@ namespace Frigorino.Features.Lists
             db.Lists.Add(list);
             await db.SaveChangesAsync(ct);
 
-            var response = ListResponse.From(list, creator, uncheckedCount: 0, checkedCount: 0);
+            var response = ListResponse.From(list, creator, uncheckedCount: 0, checkedCount: 0, pendingPromotionCount: 0);
             return TypedResults.Created($"/api/household/{householdId}/lists/{list.Id}", response);
         }
     }

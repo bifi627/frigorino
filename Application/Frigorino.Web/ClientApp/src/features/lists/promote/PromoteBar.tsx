@@ -3,7 +3,7 @@ import { Button, Paper, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { usePromotableForList } from "./promotableStore";
+import { useList } from "../useList";
 import { PromoteReviewSheet } from "./PromoteReviewSheet";
 
 interface PromoteBarProps {
@@ -15,16 +15,17 @@ interface PromoteBarProps {
 // pending promote candidates (perishables checked off but not yet added to inventory).
 export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
     const { t } = useTranslation();
-    const entries = usePromotableForList(listId);
+    const { data: list } = useList(householdId, listId);
+    const count = list?.pendingPromotionCount ?? 0;
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
-        if (entries.length === 0) {
+        if (count === 0) {
             setOpen(false);
         }
-    }, [entries.length]);
+    }, [count]);
 
-    if (entries.length === 0) {
+    if (count === 0) {
         return null;
     }
 
@@ -33,7 +34,7 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
             <Paper
                 elevation={0}
                 data-testid="promote-bar"
-                data-count={entries.length}
+                data-count={count}
                 sx={{
                     mx: 3,
                     mb: 1,
@@ -56,7 +57,7 @@ export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
                     sx={{ color: "primary.main" }}
                 />
                 <Typography variant="body2" sx={{ flex: 1 }}>
-                    {t("promote.barReady", { count: entries.length })}
+                    {t("promote.barReady", { count })}
                 </Typography>
                 <Button
                     size="small"
