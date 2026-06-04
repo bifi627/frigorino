@@ -163,6 +163,19 @@
         "resolved": "2025.2.2",
         "contentHash": "0X56ZRizuHdrnPpgXjWV7f2tQO1FlQg5O1967OGKnI/4ZRNOK642J8L7brM1nYvrxTTU5TP1yRyXLRLaXLPQ8A=="
       },
+      "Magick.NET-Q8-x64": {
+        "type": "Transitive",
+        "resolved": "14.13.1",
+        "contentHash": "Kmfxbr3hzpTpCkCOE1zt3ecXPElZ3c6Jt77BNxgOlVPXjBvDZjwXKOxp8QCnXuAROXAic1cN9coSorsoIJw2tA==",
+        "dependencies": {
+          "Magick.NET.Core": "14.13.1"
+        }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "14.13.1",
+        "contentHash": "BhqOKCLixvj/Ofwe+aRPHqoGdWekvKavsQrivBSuUq0zzzijnIF/OxqVA+GCd6WP46C4PaIfGhR65BPi2M0cKg=="
+      },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Transitive",
         "resolved": "10.0.8",
@@ -511,6 +524,7 @@
           "FirebaseAdmin": "[3.5.0, )",
           "Frigorino.Domain": "[1.0.0, )",
           "Google.Cloud.Storage.V1": "[4.14.0, )",
+          "Magick.NET-Q8-x64": "[14.13.1, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.8, )",
