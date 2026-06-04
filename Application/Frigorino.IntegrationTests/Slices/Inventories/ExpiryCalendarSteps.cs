@@ -37,4 +37,36 @@ public class ExpiryCalendarSteps(ScenarioContextHolder ctx)
                 ctx.Page.GetByTestId($"cal-event-{itemText}").First)
             .ToHaveAttributeAsync("data-selected", "true");
     }
+
+    [When("I open the calendar settings")]
+    public async Task WhenIOpenTheCalendarSettings()
+    {
+        await ctx.Page.GetByTestId("calendar-settings-button").ClickAsync();
+        await Assertions.Expect(ctx.Page.GetByTestId("calendar-settings-sheet"))
+            .ToBeVisibleAsync();
+    }
+
+    [When("I turn off the {string} level filter")]
+    public async Task WhenITurnOffTheLevelFilter(string level)
+    {
+        await ctx.Page.GetByTestId($"calendar-level-{level}").ClickAsync();
+        await Assertions.Expect(ctx.Page.GetByTestId($"calendar-level-{level}"))
+            .ToHaveAttributeAsync("data-active", "false");
+    }
+
+    [Then("the calendar does not show the item {string}")]
+    public async Task ThenTheCalendarDoesNotShowTheItem(string itemText)
+    {
+        // Filtered-out items are not rendered at all, so the locator resolves to zero elements.
+        await Assertions.Expect(ctx.Page.GetByTestId($"cal-event-{itemText}"))
+            .ToHaveCountAsync(0);
+    }
+
+    [When("I reload the calendar page")]
+    public async Task WhenIReloadTheCalendarPage()
+    {
+        await ctx.Page.ReloadAsync(
+            new PageReloadOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await ctx.Page.WaitForURLAsync("**/inventories/calendar");
+    }
 }
