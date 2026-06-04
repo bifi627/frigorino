@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add, CalendarMonth } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -41,6 +41,7 @@ export const InventoriesPage = () => {
 
     const handleBack = () => navigate({ to: "/" });
     const handleCreateInventory = () => navigate({ to: "/inventories/create" });
+    const handleOpenCalendar = () => navigate({ to: "/inventories/calendar" });
     const handleInventoryClick = (inventoryId: number) =>
         navigate({
             to: "/inventories/$inventoryId/view",
@@ -92,6 +93,11 @@ export const InventoriesPage = () => {
                 section="inventory"
                 directActions={[
                     { icon: <Add />, onClick: handleCreateInventory },
+                    {
+                        icon: <CalendarMonth />,
+                        onClick: handleOpenCalendar,
+                        testId: "inventories-calendar-button",
+                    },
                 ]}
                 menuActions={[]}
             />

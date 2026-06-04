@@ -166,7 +166,27 @@
         "entireInventory": "• Das gesamte Lager",
         "allInventoryItems": "• Alle Lagerelemente",
         "confirmTypeInventoryName": "Zur Bestätigung geben Sie bitte den Lagernamen ein:",
-        "typeInventoryNameToConfirm": "Geben Sie \"{{inventoryName}}\" zur Bestätigung ein"
+        "typeInventoryNameToConfirm": "Geben Sie \"{{inventoryName}}\" zur Bestätigung ein",
+        "calendar": {
+            "title": "Ablaufkalender",
+            "empty": "Noch keine Artikel mit Ablaufdatum.",
+            "failedToLoad": "Kalender konnte nicht geladen werden.",
+            "emptyFiltered": "Keine Artikel entsprechen deinen Filtern.",
+            "settings": {
+                "title": "Kalenderansicht",
+                "windowLength": "Verbrauchsfenster",
+                "days": "Tage",
+                "fullRunway": "Volle Laufzeit",
+                "levels": "Stufen anzeigen",
+                "level": {
+                    "expired": "Abgelaufen",
+                    "critical": "Kritisch",
+                    "soon": "Bald",
+                    "fresh": "Frisch"
+                },
+                "reset": "Auf Standard zurücksetzen"
+            }
+        }
     },
     "lists": {
         "title": "Listen",

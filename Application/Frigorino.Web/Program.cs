@@ -361,6 +361,7 @@ var inventories = app.MapGroup("/api/household/{householdId:int}/inventories")
     .WithTags("Inventories");
 inventories.MapCreateInventory();
 inventories.MapGetInventories();
+inventories.MapGetExpiryCalendar();
 inventories.MapGetInventory();
 inventories.MapUpdateInventory();
 inventories.MapDeleteInventory();
