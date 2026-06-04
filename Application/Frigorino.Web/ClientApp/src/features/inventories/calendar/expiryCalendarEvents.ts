@@ -12,6 +12,10 @@ export interface ExpiryEventProps {
     inventoryName: string;
     expiryDate: string;
     activeToday: boolean;
+    // Bars spanning fewer than COMPACT_SPAN_DAYS are too narrow to render legible inline text
+    // (notably expired 1-day markers). The page renders them name-only and opens a details
+    // sheet on tap instead of the focus-select highlight.
+    compact: boolean;
 }
 
 export interface ExpiryCalendarEvent {
@@ -26,6 +30,9 @@ export interface ExpiryCalendarEvent {
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+// Bars shorter than this many days can't fit readable inline text → rendered name-only + tap-sheet.
+const COMPACT_SPAN_DAYS = 4;
 
 function toIsoDate(date: Date): string {
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -88,6 +95,10 @@ export function buildExpiryEvents(
             wholeDayDiff(windowStart, today) >= 0 &&
             wholeDayDiff(today, expiry) >= 0;
 
+        // Visible span in whole days, inclusive of both ends (a 1-day marker spans 1).
+        const spanDays = wholeDayDiff(windowStart, expiry) + 1;
+        const compact = spanDays < COMPACT_SPAN_DAYS;
+
         events.push({
             id: String(item.id),
             title: item.text,
@@ -102,6 +113,7 @@ export function buildExpiryEvents(
                 inventoryName: item.inventoryName,
                 expiryDate: item.expiryDate,
                 activeToday,
+                compact,
             },
         });
     }

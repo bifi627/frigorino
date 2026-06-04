@@ -29,6 +29,10 @@ import {
 import { useExpiryCalendar } from "../useExpiryCalendar";
 import { useCalendarViewSettings } from "../calendarViewSettings";
 import { calendarLevelColor } from "../calendarColors";
+import {
+    CalendarItemDetailsSheet,
+    type CalendarItemDetail,
+} from "../components/CalendarItemDetailsSheet";
 import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
 import { CalendarSettingsSheet } from "../components/CalendarSettingsSheet";
 import "../expiryCalendar.css";
@@ -50,6 +54,11 @@ export const ExpiryCalendarPage = () => {
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
     const [settingsOpen, setSettingsOpen] = useState(false);
+
+    // Details for a tapped compact (narrow) bar. null = sheet closed.
+    const [detailItem, setDetailItem] = useState<CalendarItemDetail | null>(
+        null,
+    );
 
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
@@ -90,6 +99,27 @@ export const ExpiryCalendarPage = () => {
     // data-selected is the test hook for the focus-select assertion.
     const renderEventContent = (arg: EventContentArg) => {
         const props = arg.event.extendedProps as ExpiryEventProps;
+
+        // Narrow bars (expired markers, near-expiry items) can't fit "name · inventory · date":
+        // render the name only, ellipsized, and surface the rest in the tap-sheet.
+        if (props.compact) {
+            return (
+                <Box
+                    data-testid={`cal-event-${arg.event.title}`}
+                    sx={{
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        px: 0.25,
+                    }}
+                >
+                    {arg.event.title}
+                </Box>
+            );
+        }
+
         const isSelected = selectedId === props.itemId;
         return (
             <Box
@@ -123,6 +153,15 @@ export const ExpiryCalendarPage = () => {
         // Stop the wrapper's clear-on-empty handler from firing for this same click.
         info.jsEvent.stopPropagation();
         const props = info.event.extendedProps as ExpiryEventProps;
+        if (props.compact) {
+            // Compact bars can't be meaningfully highlighted → open the details sheet instead.
+            setDetailItem({
+                title: info.event.title,
+                inventoryName: props.inventoryName,
+                expiryDate: props.expiryDate,
+            });
+            return;
+        }
         setSelectedId((prev) => (prev === props.itemId ? null : props.itemId));
     };
 
@@ -244,6 +283,10 @@ export const ExpiryCalendarPage = () => {
             <CalendarSettingsSheet
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
+            />
+            <CalendarItemDetailsSheet
+                detail={detailItem}
+                onClose={() => setDetailItem(null)}
             />
         </>
     );

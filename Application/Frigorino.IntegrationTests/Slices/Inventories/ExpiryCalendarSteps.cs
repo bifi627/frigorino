@@ -38,6 +38,17 @@ public class ExpiryCalendarSteps(ScenarioContextHolder ctx)
             .ToHaveAttributeAsync("data-selected", "true");
     }
 
+    [Then("the item details sheet shows {string}")]
+    public async Task ThenTheItemDetailsSheetShows(string itemText)
+    {
+        await Assertions.Expect(
+                ctx.Page.GetByTestId("calendar-item-details-sheet"))
+            .ToBeVisibleAsync();
+        await Assertions.Expect(
+                ctx.Page.GetByTestId("calendar-item-details-title"))
+            .ToHaveTextAsync(itemText);
+    }
+
     [When("I turn off the {string} level filter")]
     public async Task WhenITurnOffTheLevelFilter(string level)
     {

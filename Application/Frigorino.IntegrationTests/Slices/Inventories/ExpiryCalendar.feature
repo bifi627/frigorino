@@ -4,12 +4,21 @@ Feature: Expiry Calendar
     Given I am logged in with an active household
 
   Scenario: User opens the calendar from the inventories header and focuses an item
-    Given an inventory "Fridge" has an item "Milk" expiring in 2 days
+    # 10 days out keeps the bar wide enough to highlight (short-span bars open a details sheet instead).
+    Given an inventory "Fridge" has an item "Milk" expiring in 10 days
     When I open the inventories overview
     And I open the expiry calendar from the header
     Then the calendar shows the item "Milk"
     When I select the calendar item "Milk"
     Then the calendar item "Milk" is focused
+
+  Scenario: Tapping a short-span item opens the details sheet
+    Given an inventory "Fridge" has an item "Yogurt" expiring in 2 days
+    When I open the inventories overview
+    And I open the expiry calendar from the header
+    Then the calendar shows the item "Yogurt"
+    When I select the calendar item "Yogurt"
+    Then the item details sheet shows "Yogurt"
 
   Scenario: Filtering a level hides matching items and persists across reload
     Given an inventory "Fridge" has an item "Milk" expiring in 2 days
