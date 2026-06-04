@@ -20,14 +20,18 @@ This is a **foundation pass** — get the calendar wired end-to-end (read → pa
 
 ## Architecture
 
+### Placement decision
+
+The calendar is a **collection-level view over all inventories**, kept in the **inventory domain** (not a separate top-level concept). It is *not* scoped to a single inventory — the route is `inventories/calendar`, never `inventories/{inventoryId}/calendar`. The slice is named for the **view** (`GetExpiryCalendar`), not the table, since it reads inventory items but exists to render cook-by windows.
+
 ### Backend — one new read slice
 
-`Frigorino.Features/Inventories/GetInventoryCalendar.cs` (+ `InventoryCalendarItemResponse` DTO).
+`Frigorino.Features/Inventories/GetExpiryCalendar.cs` (+ `ExpiryCalendarItemResponse` DTO).
 
 - **Route:** `GET /api/household/{householdId}/inventories/calendar`, registered on the existing `inventories` group in `Program.cs`. The `calendar` literal does not collide with the existing `{inventoryId:int}` routes (int route constraint).
 - **Guard:** standard `db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct)` → `404` if not a member, mirroring `GetInventories` / `GetInventoryItems`.
 - **Query:** EF projection over `InventoryItems` joined to active `Inventories` in the household, filtered to `IsActive && ExpiryDate != null`. One round-trip.
-- **Response DTO** (`InventoryCalendarItemResponse`): `{ id, inventoryId, inventoryName, text, quantity (QuantityDto?), expiryDate (DateOnly) }`. `inventoryName` gives the per-bar cue for free; `expiryDate` is non-null by construction (items without expiry are filtered out).
+- **Response DTO** (`ExpiryCalendarItemResponse`): `{ id, inventoryId, inventoryName, text, quantity (QuantityDto?), expiryDate (DateOnly) }`. `inventoryName` gives the per-bar cue for free; `expiryDate` is non-null by construction (items without expiry are filtered out).
 - **No domain change.** The window `X` is applied on the client.
 
 Why a dedicated slice (vs client-side aggregation of `GetInventories` + per-inventory `GetInventoryItems`): one query instead of N+1, no pulling non-expiring rows we'd discard, no duplicated filtering in TS — and it matches the vertical-slice conventions. Client regenerated via `npm run api`.
@@ -35,8 +39,8 @@ Why a dedicated slice (vs client-side aggregation of `GetInventories` + per-inve
 ### Frontend — route, hook, page
 
 - **Route:** `src/routes/inventories/calendar.tsx` — thin shell (`createFileRoute` + `requireAuth`), imports the page from `features/`. (`routeTree.gen.ts` regenerates automatically.)
-- **Query hook:** `features/inventories/calendar/useInventoryCalendar.ts` — spreads the generated `getInventoryCalendarOptions({ path: { householdId } })` into `useQuery`, `enabled` guarded on `householdId > 0`, with a `staleTime`. No hand-written `queryFn`/`queryKey`.
-- **Page:** `features/inventories/calendar/pages/InventoryCalendarPage.tsx` — `pageContainerSx` Container, owns `selectedId` React state, renders the FullCalendar.
+- **Query hook:** `features/inventories/calendar/useExpiryCalendar.ts` — spreads the generated `getExpiryCalendarOptions({ path: { householdId } })` into `useQuery`, `enabled` guarded on `householdId > 0`, with a `staleTime`. No hand-written `queryFn`/`queryKey`.
+- **Page:** `features/inventories/calendar/pages/ExpiryCalendarPage.tsx` — `pageContainerSx` Container, owns `selectedId` React state, renders the FullCalendar.
 - **Entry point:** a "Calendar" button in the Inventories index page (`/inventories`) header → navigates to `/inventories/calendar`.
 
 ### Calendar rendering (from validated spike patterns)
