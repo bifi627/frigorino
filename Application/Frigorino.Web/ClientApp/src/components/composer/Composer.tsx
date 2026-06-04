@@ -1,6 +1,5 @@
-import { Delete } from "@mui/icons-material";
-import { Box, Collapse, IconButton, Paper } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { Box, Collapse } from "@mui/material";
+import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
 import { EditHeader } from "./components/EditHeader";
@@ -112,16 +111,25 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [onComplete, reset],
     );
 
-    const handleDiscard = () => {
-        reset();
-        focusInput();
-    };
-
     const handleCancelEdit = () => {
         reset();
         editing?.onCancel();
         focusInput();
     };
+
+    // When entering edit mode, focus the field so editing can start immediately and
+    // the mobile keyboard opens. The composer is remounted per edited item (keyed by
+    // id in the footer), so this runs once on entering edit. Skipped when a modifier
+    // panel is opened instead (e.g. editing a comment/quantity via its chip) so we
+    // don't pull focus from that panel, and skipped in add mode so the keyboard
+    // doesn't pop open on every list load. rAF lets the input mount before focusing.
+    useEffect(() => {
+        if (!isEditing || initialOpenId) {
+            return;
+        }
+        const raf = requestAnimationFrame(focusInput);
+        return () => cancelAnimationFrame(raf);
+    }, [isEditing, initialOpenId, focusInput]);
 
     const handleContainerClick = (event: React.MouseEvent) => {
         if ((event.target as HTMLElement).closest(".composer-panel")) {
@@ -130,10 +138,20 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         focusInput();
     };
 
-    // Tapping a panel toggle/chip must not blur the text input — on mobile a blur
-    // collapses the soft keyboard. preventDefault on mousedown keeps focus where it
-    // is while still firing the click that opens/closes the panel.
-    const preventInputBlur = (event: React.MouseEvent) => {
+    // Keep the mobile soft keyboard open. Tapping any non-input control inside the
+    // composer (icon buttons, chips, padding) would by default move focus off the
+    // focused text field and collapse the keyboard, making the layout jump.
+    // preventDefault on mousedown keeps focus where it is while still firing the
+    // control's click. Real text inputs (the field, the comment textarea) are
+    // excluded so they can take focus normally.
+    const keepKeyboardOpen = (event: React.MouseEvent) => {
+        const target = event.target as HTMLElement;
+        const isTextInput = target.closest(
+            "input, textarea, [contenteditable='true']",
+        );
+        if (isTextInput) {
+            return;
+        }
         event.preventDefault();
     };
 
@@ -171,21 +189,12 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         (isEditing ? t("common.editItem") : t("common.addItemPlaceholder"));
 
     return (
-        <Paper
-            elevation={3}
+        <Box
             onClick={handleContainerClick}
+            onMouseDown={keepKeyboardOpen}
             sx={{
                 width: "100%",
-                p: 1,
-                bgcolor: "background.paper",
-                border: "1px solid",
-                borderColor: isEditing ? "warning.main" : "primary.200",
                 cursor: "text",
-                transition: "all 0.3s ease",
-                "&:hover, &:focus-within": {
-                    borderColor: isEditing ? "warning.dark" : "primary.main",
-                    boxShadow: 3,
-                },
             }}
         >
             {isEditing && editing && (
@@ -206,7 +215,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             key={feature.id}
                             className="composer-panel"
                             data-testid={`composer-chip-${feature.id}`}
-                            onMouseDown={preventInputBlur}
                             sx={{
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -236,62 +244,73 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                {trimmed && !isEditing && (
-                    <IconButton
-                        onClick={handleDiscard}
-                        title={t("common.discardInput")}
-                        aria-label={t("common.discardInput")}
-                        sx={{
-                            minWidth: 44,
-                            minHeight: 44,
-                            color: "text.secondary",
-                            bgcolor: "action.hover",
-                            "&:hover": {
-                                color: "error.main",
-                                bgcolor: "error.50",
-                            },
-                        }}
-                    >
-                        <Delete />
-                    </IconButton>
-                )}
+                <Box
+                    sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.25,
+                        pl: 1.5,
+                        pr: 0.5,
+                        bgcolor: "action.hover",
+                        // Pill shape (≈12px). Distinct from card radius on purpose.
+                        borderRadius: 3,
+                        // The pill is the input surface now (no outer card), so it
+                        // carries the edit/focus highlight border.
+                        border: "1px solid",
+                        borderColor: isEditing ? "warning.main" : "primary.200",
+                        transition: "border-color 0.2s ease",
+                        "&:hover, &:focus-within": {
+                            borderColor: isEditing
+                                ? "warning.dark"
+                                : "primary.main",
+                        },
+                        // Inline icons read as in-field adornments, not standalone
+                        // 44px buttons — overrides the per-feature minWidth/minHeight.
+                        "& .MuiButtonBase-root": {
+                            minWidth: 38,
+                            minHeight: 38,
+                        },
+                    }}
+                >
+                    <ComposerTextField
+                        text={text}
+                        onTextChange={setText}
+                        onEnter={completeText}
+                        inputRef={inputRef}
+                        placeholder={fieldPlaceholder}
+                        disabled={disabled}
+                        errorMessage={dup?.message}
+                        suggestions={suggestions}
+                    />
 
-                {modifierFeatures.map((feature) =>
-                    feature.renderToggle ? (
-                        <Box
-                            key={feature.id}
-                            className="composer-panel"
-                            data-testid={`composer-toggle-${feature.id}`}
-                            onMouseDown={preventInputBlur}
-                        >
-                            {feature.renderToggle(slotFor(feature))}
-                        </Box>
-                    ) : null,
-                )}
+                    {modifierFeatures.map((feature) =>
+                        feature.renderToggle ? (
+                            <Box
+                                key={feature.id}
+                                className="composer-panel"
+                                data-testid={`composer-toggle-${feature.id}`}
+                            >
+                                {feature.renderToggle(slotFor(feature))}
+                            </Box>
+                        ) : null,
+                    )}
 
-                {actionFeatures.map((feature) => (
-                    <Box key={feature.id} className="composer-panel">
-                        {feature.renderTrigger({
-                            complete: (payload) =>
-                                completeAction(
-                                    feature.id,
-                                    payload as Record<string, unknown>,
-                                ),
-                            disabled,
-                        })}
-                    </Box>
-                ))}
-
-                <ComposerTextField
-                    text={text}
-                    onTextChange={setText}
-                    onEnter={completeText}
-                    inputRef={inputRef}
-                    placeholder={fieldPlaceholder}
-                    disabled={disabled}
-                    errorMessage={dup?.message}
-                    suggestions={suggestions}
-                />
+                    {!trimmed &&
+                        actionFeatures.map((feature) => (
+                            <Box key={feature.id} className="composer-panel">
+                                {feature.renderTrigger({
+                                    complete: (payload) =>
+                                        completeAction(
+                                            feature.id,
+                                            payload as Record<string, unknown>,
+                                        ),
+                                    disabled,
+                                })}
+                            </Box>
+                        ))}
+                </Box>
 
                 <SendButton
                     onClick={completeText}
@@ -302,6 +321,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                     duplicate={Boolean(dup)}
                 />
             </Box>
-        </Paper>
+        </Box>
     );
 }

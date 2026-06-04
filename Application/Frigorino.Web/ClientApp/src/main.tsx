@@ -32,6 +32,7 @@ import {
     Box,
     CircularProgress,
     CssBaseline,
+    GlobalStyles,
     ThemeProvider,
 } from "@mui/material";
 import { Toaster } from "sonner";
@@ -83,7 +84,50 @@ createRoot(document.getElementById("root")!).render(
                 >
                     <RouterProvider router={router} />
                 </Suspense>
+                {/* Theme sonner to match the app: dark surfaces, green action
+                    button, and the close button pulled inline to the right instead
+                    of floating at the top-left corner. Driven by theme tokens (this
+                    sits inside ThemeProvider) so it tracks the palette. Selectors are
+                    scoped under [data-sonner-toaster] for specificity over sonner's
+                    own runtime-injected styles. */}
+                <GlobalStyles
+                    styles={(theme) => ({
+                        "[data-sonner-toaster]": {
+                            "--normal-bg": theme.palette.background.paper,
+                            "--normal-text": theme.palette.text.primary,
+                            "--normal-border": theme.palette.divider,
+                            "--success-bg": theme.palette.background.paper,
+                            "--success-text": theme.palette.text.primary,
+                            "--success-border": theme.palette.divider,
+                        },
+                        "[data-sonner-toaster] [data-sonner-toast]": {
+                            borderRadius: theme.shape.borderRadius,
+                        },
+                        "[data-sonner-toaster] [data-sonner-toast] [data-button]":
+                            {
+                                backgroundColor: theme.palette.primary.main,
+                                color: theme.palette.primary.contrastText,
+                            },
+                        "[data-sonner-toaster] [data-sonner-toast] [data-close-button]":
+                            {
+                                position: "static",
+                                order: 5,
+                                transform: "none",
+                                marginLeft: theme.spacing(1),
+                                background: "transparent",
+                                border: "none",
+                                color: theme.palette.text.secondary,
+                            },
+                        "[data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover":
+                            {
+                                color: theme.palette.text.primary,
+                                backgroundColor: theme.palette.action.hover,
+                            },
+                    })}
+                />
                 <Toaster
+                    theme="dark"
+                    closeButton
                     toastOptions={{
                         classNames: { actionButton: "undo-action-button" },
                     }}
