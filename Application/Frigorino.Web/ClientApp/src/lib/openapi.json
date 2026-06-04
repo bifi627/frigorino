@@ -1527,6 +1527,43 @@
         }
       }
     },
+    "/api/household/{householdId}/inventories/calendar": {
+      "get": {
+        "tags": [
+          "Inventories"
+        ],
+        "operationId": "GetExpiryCalendar",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpiryCalendarItemResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/inventories/{inventoryId}": {
       "get": {
         "tags": [
@@ -2706,6 +2743,47 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ExpiryCalendarItemResponse": {
+        "required": [
+          "id",
+          "inventoryId",
+          "inventoryName",
+          "text",
+          "quantity",
+          "expiryDate"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inventoryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inventoryName": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
