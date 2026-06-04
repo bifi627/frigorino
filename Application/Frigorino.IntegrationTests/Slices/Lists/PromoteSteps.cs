@@ -22,14 +22,13 @@ public class PromoteSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I add the selected promote items")]
     public async Task WhenIAddTheSelectedPromoteItems()
     {
-        // Subscribe before click — handleAdd fires a POST /inventories/{id}/items for each
-        // selected entry. WaitForResponseAsync resolves on the first matching response, which
-        // is sufficient here because the scenario has exactly one entry in the batch.
+        // Subscribe before click — handleAdd fires a single atomic POST .../lists/{id}/promote
+        // for the whole selected batch. EndsWith("/promote") excludes the "/promote/skip" route
+        // used by omit / clear-all.
         var responseTask = ctx.Page.WaitForResponseAsync(r =>
-            r.Url.Contains("/inventories/")
-            && r.Url.EndsWith("/items")
+            r.Url.EndsWith("/promote")
             && r.Request.Method == "POST"
-            && r.Status == 201);
+            && r.Status == 200);
         await ctx.Page.GetByTestId("promote-add-button").ClickAsync();
         await responseTask;
     }
