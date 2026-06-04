@@ -41,6 +41,15 @@ export type CreateListRequest = {
     description: null | string;
 };
 
+export type ExpiryCalendarItemResponse = {
+    id: number;
+    inventoryId: number;
+    inventoryName: string;
+    text: string;
+    quantity: null | QuantityDto;
+    expiryDate: string;
+};
+
 export type ExpiryHandling = 'Unknown' | 'NonPerishable' | 'UserEntersFromPackage' | 'AiRecommendsShelfLife';
 
 export type HouseholdResponse = {
@@ -1171,6 +1180,31 @@ export type CreateInventoryResponses = {
 };
 
 export type CreateInventoryResponse = CreateInventoryResponses[keyof CreateInventoryResponses];
+
+export type GetExpiryCalendarData = {
+    body?: never;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/calendar';
+};
+
+export type GetExpiryCalendarErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetExpiryCalendarResponses = {
+    /**
+     * OK
+     */
+    200: Array<ExpiryCalendarItemResponse>;
+};
+
+export type GetExpiryCalendarResponse = GetExpiryCalendarResponses[keyof GetExpiryCalendarResponses];
 
 export type DeleteInventoryData = {
     body?: never;
