@@ -1,5 +1,4 @@
-import { Delete } from "@mui/icons-material";
-import { Box, Collapse, IconButton, Paper } from "@mui/material";
+import { Box, Collapse, Paper } from "@mui/material";
 import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ComposerTextField } from "./components/ComposerTextField";
@@ -111,11 +110,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         },
         [onComplete, reset],
     );
-
-    const handleDiscard = () => {
-        reset();
-        focusInput();
-    };
 
     const handleCancelEdit = () => {
         reset();
@@ -236,62 +230,64 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
             )}
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                {trimmed && !isEditing && (
-                    <IconButton
-                        onClick={handleDiscard}
-                        title={t("common.discardInput")}
-                        aria-label={t("common.discardInput")}
-                        sx={{
-                            minWidth: 44,
-                            minHeight: 44,
-                            color: "text.secondary",
-                            bgcolor: "action.hover",
-                            "&:hover": {
-                                color: "error.main",
-                                bgcolor: "error.50",
-                            },
-                        }}
-                    >
-                        <Delete />
-                    </IconButton>
-                )}
+                <Box
+                    sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.25,
+                        pl: 1.5,
+                        pr: 0.5,
+                        bgcolor: "action.hover",
+                        // Pill shape (≈12px). Distinct from card radius on purpose.
+                        borderRadius: 3,
+                        // Inline icons read as in-field adornments, not standalone
+                        // 44px buttons — overrides the per-feature minWidth/minHeight.
+                        "& .MuiButtonBase-root": {
+                            minWidth: 38,
+                            minHeight: 38,
+                        },
+                    }}
+                >
+                    <ComposerTextField
+                        text={text}
+                        onTextChange={setText}
+                        onEnter={completeText}
+                        inputRef={inputRef}
+                        placeholder={fieldPlaceholder}
+                        disabled={disabled}
+                        errorMessage={dup?.message}
+                        suggestions={suggestions}
+                    />
 
-                {modifierFeatures.map((feature) =>
-                    feature.renderToggle ? (
-                        <Box
-                            key={feature.id}
-                            className="composer-panel"
-                            data-testid={`composer-toggle-${feature.id}`}
-                            onMouseDown={preventInputBlur}
-                        >
-                            {feature.renderToggle(slotFor(feature))}
-                        </Box>
-                    ) : null,
-                )}
+                    {modifierFeatures.map((feature) =>
+                        feature.renderToggle ? (
+                            <Box
+                                key={feature.id}
+                                className="composer-panel"
+                                data-testid={`composer-toggle-${feature.id}`}
+                                onMouseDown={preventInputBlur}
+                            >
+                                {feature.renderToggle(slotFor(feature))}
+                            </Box>
+                        ) : null,
+                    )}
 
-                {actionFeatures.map((feature) => (
-                    <Box key={feature.id} className="composer-panel">
-                        {feature.renderTrigger({
-                            complete: (payload) =>
-                                completeAction(
-                                    feature.id,
-                                    payload as Record<string, unknown>,
-                                ),
-                            disabled,
-                        })}
-                    </Box>
-                ))}
-
-                <ComposerTextField
-                    text={text}
-                    onTextChange={setText}
-                    onEnter={completeText}
-                    inputRef={inputRef}
-                    placeholder={fieldPlaceholder}
-                    disabled={disabled}
-                    errorMessage={dup?.message}
-                    suggestions={suggestions}
-                />
+                    {!trimmed &&
+                        actionFeatures.map((feature) => (
+                            <Box key={feature.id} className="composer-panel">
+                                {feature.renderTrigger({
+                                    complete: (payload) =>
+                                        completeAction(
+                                            feature.id,
+                                            payload as Record<string, unknown>,
+                                        ),
+                                    disabled,
+                                })}
+                            </Box>
+                        ))}
+                </Box>
 
                 <SendButton
                     onClick={completeText}
