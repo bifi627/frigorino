@@ -3,9 +3,9 @@ using FluentResults;
 namespace Frigorino.Domain.Interfaces
 {
     // Re-encodes an uploaded image into two sanitized renditions. Kept deliberately small (one
-    // method) so the library (ImageSharp) is swappable behind it — mirrors the IItemClassifier /
+    // method) so the library (Magick.NET) is swappable behind it — mirrors the IItemClassifier /
     // IQuantityExtractor / IFileStorage seams. The slice depends on this abstraction and is
-    // unit-tested with a fake; the ImageSharp impl lives in Infrastructure.
+    // unit-tested with a fake; the Magick.NET impl lives in Infrastructure.
     public interface IImageProcessor
     {
         // Decodes (validating the bytes are a real, allowed image), auto-orients from EXIF, strips

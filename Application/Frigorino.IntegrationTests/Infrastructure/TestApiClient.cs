@@ -195,7 +195,7 @@ public class TestApiClient(ScenarioContextHolder ctx)
 
     // ---- Media items (multipart upload + byte-serving) ----
 
-    // Small 8x8 RGBA PNG (valid, CRC-correct — ImageSharp validates IDAT CRC) for upload scenarios.
+    // Small 8x8 RGBA PNG (valid, CRC-correct — the decoder (Magick.NET) validates IDAT CRC) for upload scenarios.
     private static readonly byte[] TinyPng = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAFklEQVR4nGOpCDjxnwEPYGEgAIaHAgCvwgKw2JOr9gAAAABJRU5ErkJggg==");
 

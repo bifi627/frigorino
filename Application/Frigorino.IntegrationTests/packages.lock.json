@@ -294,6 +294,19 @@
           "Google.Apis.Storage.v1": "[1.71.0.3920, 2.0.0)"
         }
       },
+      "Magick.NET-Q8-x64": {
+        "type": "Transitive",
+        "resolved": "14.13.1",
+        "contentHash": "Kmfxbr3hzpTpCkCOE1zt3ecXPElZ3c6Jt77BNxgOlVPXjBvDZjwXKOxp8QCnXuAROXAic1cN9coSorsoIJw2tA==",
+        "dependencies": {
+          "Magick.NET.Core": "14.13.1"
+        }
+      },
+      "Magick.NET.Core": {
+        "type": "Transitive",
+        "resolved": "14.13.1",
+        "contentHash": "BhqOKCLixvj/Ofwe+aRPHqoGdWekvKavsQrivBSuUq0zzzijnIF/OxqVA+GCd6WP46C4PaIfGhR65BPi2M0cKg=="
+      },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Transitive",
         "resolved": "10.0.8",
@@ -883,11 +896,6 @@
         "resolved": "1.4.2",
         "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       },
-      "SixLabors.ImageSharp": {
-        "type": "Transitive",
-        "resolved": "3.1.12",
-        "contentHash": "iAg6zifihXEFS/t7fiHhZBGAdCp3FavsF4i2ZIDp0JfeYeDVzvmlbY1CNhhIKimaIzrzSi5M/NBFcWvZT2rB/A=="
-      },
       "SSH.NET": {
         "type": "Transitive",
         "resolved": "2025.1.0",
@@ -1030,6 +1038,7 @@
           "FirebaseAdmin": "[3.5.0, )",
           "Frigorino.Domain": "[1.0.0, )",
           "Google.Cloud.Storage.V1": "[4.14.0, )",
+          "Magick.NET-Q8-x64": "[14.13.1, )",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore": "[10.0.8, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.8, )",
@@ -1037,8 +1046,7 @@
           "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "[10.0.8, )",
           "Microsoft.Extensions.Options": "[10.0.8, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.2, )",
-          "OpenAI": "[2.8.0, )",
-          "SixLabors.ImageSharp": "[3.1.12, )"
+          "OpenAI": "[2.8.0, )"
         }
       },
       "frigorino.web": {
