@@ -30,10 +30,16 @@ export default defineConfig(({ command }) => ({
             strategies: "injectManifest",
             srcDir: "src",
             filename: "sw.ts",
-            registerType: "autoUpdate",
+            // "prompt" (not "autoUpdate"): the SW is push-only and never serves the
+            // app shell, so there's no new app version to silently reload onto. We
+            // register it without a refresh handler (src/common/pwa.ts), so it never
+            // forces a reload.
+            registerType: "prompt",
             injectManifest: {
-                // Firebase messaging SW imports push the bundle over the default 2 MiB limit.
-                maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+                // Push-only SW: no precaching. `injectionPoint: undefined` tells the
+                // plugin not to look for / inject a `self.__WB_MANIFEST`, so sw.ts
+                // needs no workbox precache machinery at all.
+                injectionPoint: undefined,
             },
             devOptions: {
                 enabled: true,

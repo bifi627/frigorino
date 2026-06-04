@@ -22,6 +22,11 @@ import { initForegroundPush } from "./common/pushNotifications";
 // push is unsupported or permission isn't granted.
 void initForegroundPush();
 
+import { initPwa } from "./common/pwa";
+
+// Register the push service worker and install the chunk-load-error reload net.
+initPwa();
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode, Suspense } from "react";
