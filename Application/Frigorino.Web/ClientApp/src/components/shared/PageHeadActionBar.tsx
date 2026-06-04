@@ -159,7 +159,9 @@ export const PageHeadActionBar = memo(
                                 <IconButton
                                     onClick={handleMenuOpen}
                                     data-testid={menuButtonTestId}
-                                    sx={tintedActionButtonSx(neutralActionColor)}
+                                    sx={tintedActionButtonSx(
+                                        neutralActionColor,
+                                    )}
                                 >
                                     <MoreVert />
                                 </IconButton>
