@@ -84,6 +84,7 @@ createRoot(document.getElementById("root")!).render(
                     <RouterProvider router={router} />
                 </Suspense>
                 <Toaster
+                    closeButton
                     toastOptions={{
                         classNames: { actionButton: "undo-action-button" },
                     }}
