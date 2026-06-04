@@ -1,7 +1,50 @@
 export interface ExpiryInfo {
     humanReadable: string;
-    color: "success" | "warning" | "error" | "info";
+    color: "success" | "warning" | "error";
     isOverdue: boolean;
+}
+
+// Escalation levels for an expiry date. One source of truth for coloring across the app
+// (chips, highlight bars) and for deciding what the overview surfaces.
+export type ExpiryLevel = "expired" | "critical" | "soon" | "fresh";
+
+// Band boundaries in whole days until expiry (negative diff = already expired).
+//   diff < 0        → expired   (red)
+//   0..critical     → critical  (red)
+//   critical+1..soon→ soon      (amber)
+//   > soon          → fresh     (green)
+export const EXPIRY_THRESHOLDS = {
+    critical: 3,
+    soon: 7,
+} as const;
+
+// Level → MUI palette color name (used by ExpiryInfo.color / chip color props).
+const LEVEL_COLOR: Record<ExpiryLevel, ExpiryInfo["color"]> = {
+    expired: "error",
+    critical: "error",
+    soon: "warning",
+    fresh: "success",
+};
+
+// Level → theme color path (used where a raw sx color string is needed).
+const LEVEL_THEME_COLOR: Record<ExpiryLevel, string> = {
+    expired: "error.main",
+    critical: "error.main",
+    soon: "warning.main",
+    fresh: "success.main",
+};
+
+export function getExpiryLevel(diffDays: number): ExpiryLevel {
+    if (diffDays < 0) {
+        return "expired";
+    }
+    if (diffDays <= EXPIRY_THRESHOLDS.critical) {
+        return "critical";
+    }
+    if (diffDays <= EXPIRY_THRESHOLDS.soon) {
+        return "soon";
+    }
+    return "fresh";
 }
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -40,6 +83,8 @@ export function getExpiryInfo(
     t: (key: string) => string,
 ): ExpiryInfo {
     const diffDays = diffInDays(expiryDate);
+    const level = getExpiryLevel(diffDays);
+    const color = LEVEL_COLOR[level];
 
     // Past dates
     if (diffDays < 0) {
@@ -47,20 +92,20 @@ export function getExpiryInfo(
         if (overdueDays === 1) {
             return {
                 humanReadable: `${t("common.expired")} ${t("common.yesterday")}`,
-                color: "error",
+                color,
                 isOverdue: true,
             };
         } else if (overdueDays < 7) {
             return {
-                humanReadable: `${t("common.expired")} ${t("common.ago")} ${overdueDays} ${overdueDays === 1 ? t("common.day") : t("common.days")}`,
-                color: "error",
+                humanReadable: `${t("common.expired")} ${t("common.ago")} ${overdueDays} ${t("common.days")}`,
+                color,
                 isOverdue: true,
             };
         } else {
             const overdueWeeks = Math.round(overdueDays / 7);
             return {
                 humanReadable: `${t("common.expired")} ${t("common.ago")} ${overdueWeeks} ${overdueWeeks > 1 ? t("common.weeks") : t("common.week")}`,
-                color: "error",
+                color,
                 isOverdue: true,
             };
         }
@@ -70,57 +115,34 @@ export function getExpiryInfo(
     if (diffDays === 0) {
         return {
             humanReadable: `${t("common.expires")} ${t("common.today")}`,
-            color: "error",
+            color,
             isOverdue: false,
         };
     } else if (diffDays === 1) {
         return {
             humanReadable: `${t("common.expires")} ${t("common.tomorrow")}`,
-            color: "error",
-            isOverdue: false,
-        };
-    } else if (diffDays < 2) {
-        return {
-            humanReadable: `${t("common.expires")} ${t("common.in")} 1 ${t("common.day")}`,
-            color: "error",
+            color,
             isOverdue: false,
         };
     } else if (diffDays < 7) {
         return {
             humanReadable: `${t("common.expires")} ${t("common.in")} ${diffDays} ${t("common.days")}`,
-            color: "error",
-            isOverdue: false,
-        };
-    } else if (diffDays < 14) {
-        const weeks = Math.round(diffDays / 7);
-        return {
-            humanReadable: `${t("common.expires")} ${t("common.in")} ${weeks} ${weeks > 1 ? t("common.weeks") : t("common.week")}`,
-            color: "warning",
+            color,
             isOverdue: false,
         };
     } else if (diffDays < 30) {
         const weeks = Math.round(diffDays / 7);
         return {
-            humanReadable: `${t("common.expires")} ${t("common.in")} ${weeks} ${t("common.weeks")}`,
-            color: "info",
+            humanReadable: `${t("common.expires")} ${t("common.in")} ${weeks} ${weeks > 1 ? t("common.weeks") : t("common.week")}`,
+            color,
             isOverdue: false,
         };
     }
 
-    // More than 30 days - don't show relative time
-    return { humanReadable: "", color: "success", isOverdue: false };
+    // More than 30 days - relative weeks get noisy; the caller falls back to the date.
+    return { humanReadable: "", color, isOverdue: false };
 }
 
 export function getExpiryColor(expiryDate: string) {
-    const diffDays = diffInDays(expiryDate);
-
-    if (diffDays < 2) {
-        return "error.main"; // Red: < 2 days
-    } else if (diffDays < 7) {
-        return "warning.main"; // Orange: < 1 week
-    } else if (diffDays < 14) {
-        return "#FFD700"; // Yellow: < 2 weeks
-    } else {
-        return "success.main"; // Green: > 2 weeks
-    }
+    return LEVEL_THEME_COLOR[getExpiryLevel(diffInDays(expiryDate))];
 }

@@ -24,7 +24,6 @@ import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurren
 import { useHouseholdInventories } from "../../features/inventories/useHouseholdInventories";
 import { useHouseholdLists } from "../../features/lists/useHouseholdLists";
 import { useLongPress } from "../../hooks/useLongPress";
-import { HeroImage } from "../common/HeroImage";
 import {
     formatLocalDate,
     getExpiryColor,
@@ -265,15 +264,6 @@ export const WelcomePage = () => {
             </Box>
 
             <Divider sx={{ mb: { xs: 3, sm: 4 } }} />
-
-            {/* Welcome Image */}
-            <Box sx={{ mb: { xs: 3, sm: 4 } }}>
-                <HeroImage
-                    src="/full.png"
-                    alt="Frigorino Welcome"
-                    size="small"
-                />
-            </Box>
 
             {/* Quick Stats */}
             <Typography
