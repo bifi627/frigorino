@@ -323,6 +323,7 @@ lists.MapUpdateList();
 lists.MapDeleteList();
 lists.MapGetPendingPromotions();
 lists.MapPromoteListItems();
+lists.MapSkipPromotion();
 
 var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int}/items")
     .RequireAuthorization()
