@@ -1,6 +1,7 @@
 import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg, EventContentArg } from "@fullcalendar/core";
+import { Tune } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -27,6 +28,7 @@ import {
 } from "../expiryCalendarEvents";
 import { useExpiryCalendar } from "../useExpiryCalendar";
 import { useCalendarViewSettings } from "../calendarViewSettings";
+import { CalendarSettingsSheet } from "../components/CalendarSettingsSheet";
 import "../expiryCalendar.css";
 
 export const ExpiryCalendarPage = () => {
@@ -44,6 +46,8 @@ export const ExpiryCalendarPage = () => {
 
     // Single-select focus: the tapped item is highlighted, the rest dim. null = nothing selected.
     const [selectedId, setSelectedId] = useState<number | null>(null);
+
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
@@ -148,7 +152,13 @@ export const ExpiryCalendarPage = () => {
             <PageHeadActionBar
                 title={t("inventory.calendar.title")}
                 section="inventory"
-                directActions={[]}
+                directActions={[
+                    {
+                        icon: <Tune />,
+                        onClick: () => setSettingsOpen(true),
+                        testId: "calendar-settings-button",
+                    },
+                ]}
                 menuActions={[]}
             />
             <Container maxWidth="sm" sx={pageContainerSx}>
@@ -168,19 +178,38 @@ export const ExpiryCalendarPage = () => {
                         {t("inventory.calendar.failedToLoad")}
                     </Alert>
                 )}
-                {!isLoading && !error && events.length === 0 && (
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: "text.secondary",
-                            textAlign: "center",
-                            py: 4,
-                        }}
-                        data-testid="calendar-empty"
-                    >
-                        {t("inventory.calendar.empty")}
-                    </Typography>
-                )}
+                {!isLoading &&
+                    !error &&
+                    events.length === 0 &&
+                    (items?.length ?? 0) > 0 && (
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: "text.secondary",
+                                textAlign: "center",
+                                py: 4,
+                            }}
+                            data-testid="calendar-empty-filtered"
+                        >
+                            {t("inventory.calendar.emptyFiltered")}
+                        </Typography>
+                    )}
+                {!isLoading &&
+                    !error &&
+                    events.length === 0 &&
+                    (items?.length ?? 0) === 0 && (
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: "text.secondary",
+                                textAlign: "center",
+                                py: 4,
+                            }}
+                            data-testid="calendar-empty"
+                        >
+                            {t("inventory.calendar.empty")}
+                        </Typography>
+                    )}
                 {!isLoading && !error && events.length > 0 && (
                     <Box
                         className="expiry-calendar"
@@ -216,6 +245,10 @@ export const ExpiryCalendarPage = () => {
                     </Box>
                 )}
             </Container>
+            <CalendarSettingsSheet
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+            />
         </>
     );
 };

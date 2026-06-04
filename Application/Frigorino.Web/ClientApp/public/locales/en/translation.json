@@ -170,7 +170,22 @@
         "calendar": {
             "title": "Expiry calendar",
             "empty": "No items with an expiry date yet.",
-            "failedToLoad": "Failed to load the calendar."
+            "failedToLoad": "Failed to load the calendar.",
+            "emptyFiltered": "No items match your filters.",
+            "settings": {
+                "title": "Calendar view",
+                "windowLength": "Cook-by window",
+                "days": "days",
+                "fullRunway": "Full runway",
+                "levels": "Show levels",
+                "level": {
+                    "expired": "Expired",
+                    "critical": "Critical",
+                    "soon": "Soon",
+                    "fresh": "Fresh"
+                },
+                "reset": "Reset to defaults"
+            }
         }
     },
     "lists": {
