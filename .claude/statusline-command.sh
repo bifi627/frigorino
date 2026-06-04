@@ -2,7 +2,7 @@
 # Claude Code status line: dir | branch | model | ctx% | 5h% | 7d%
 input=$(cat)
 printf '%s' "$input" | python -c "
-import sys, json, os, subprocess, datetime
+import sys, json, os, subprocess, datetime, time, tempfile, hashlib
 
 d = json.load(sys.stdin)
 
@@ -30,20 +30,63 @@ cwd = (d.get('workspace') or {}).get('current_dir') or d.get('cwd') or ''
 model = (d.get('model') or {}).get('display_name', '')
 dir_name = os.path.basename(cwd.rstrip('/\\\\')) if cwd else ''
 
+# Branch is the only expensive part (git subprocess). Cache it per-cwd with a
+# short TTL so rapid re-renders during heavy work skip git entirely, and a slow
+# or locked git can never blank the bar — we fall back to the last cached value.
+BRANCH_TTL = 10  # seconds
+
+def read_cache(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception:
+        return None
+
+def to_native(p):
+    # MSYS '/c/foo' -> 'C:/foo' so native git.exe (no MSYS path mangling) can parse it
+    if len(p) >= 3 and p[0] == '/' and p[2] == '/' and p[1].isalpha():
+        return p[1].upper() + ':/' + p[3:]
+    return p
+
+def git_branch(cwd):
+    cwd = to_native(cwd)
+    try:
+        r = subprocess.run(['git', '-C', cwd, 'rev-parse', '--abbrev-ref', 'HEAD'],
+                           capture_output=True, text=True, timeout=0.5)
+        if r.returncode != 0:
+            return None
+        name = r.stdout.strip()
+        if name != 'HEAD':
+            return name
+        r = subprocess.run(['git', '-C', cwd, 'rev-parse', '--short', 'HEAD'],
+                           capture_output=True, text=True, timeout=0.5)
+        return r.stdout.strip() if r.returncode == 0 else None
+    except Exception:
+        return None
+
 branch = ''
 if cwd:
+    key = hashlib.md5(cwd.encode('utf-8')).hexdigest()
+    cache_path = os.path.join(tempfile.gettempdir(), 'cc-statusline-branch-' + key)
+    fresh = False
     try:
-        r = subprocess.run(['git', '-C', cwd, 'symbolic-ref', '--short', 'HEAD'],
-                           capture_output=True, text=True, timeout=2)
-        if r.returncode == 0:
-            branch = r.stdout.strip()
+        fresh = (time.time() - os.path.getmtime(cache_path)) < BRANCH_TTL
+    except OSError:
+        fresh = False
+    if fresh:
+        branch = read_cache(cache_path) or ''
+    else:
+        name = git_branch(cwd)
+        if name is not None:
+            branch = name
+            try:
+                with open(cache_path, 'w', encoding='utf-8') as f:
+                    f.write(name)
+            except Exception:
+                pass
         else:
-            r = subprocess.run(['git', '-C', cwd, 'rev-parse', '--short', 'HEAD'],
-                               capture_output=True, text=True, timeout=2)
-            if r.returncode == 0:
-                branch = r.stdout.strip()
-    except Exception:
-        pass
+            # git failed/timed out — reuse stale cache rather than dropping branch
+            branch = read_cache(cache_path) or ''
 
 ctx = d.get('context_window') or {}
 ctx_pct = ctx.get('used_percentage')
@@ -97,5 +140,8 @@ seven_part = fmt_pct('7d', seven_d)
 if seven_part:
     parts.append(seven_part)
 
-sys.stdout.write(' | '.join(parts))
+out = ' | '.join(parts)
+if not out:
+    out = dir_name or model or 'claude'
+sys.stdout.write(out)
 "
