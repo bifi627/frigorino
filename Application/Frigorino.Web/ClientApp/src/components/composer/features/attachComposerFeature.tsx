@@ -70,14 +70,16 @@ const AttachTrigger = ({
                 <AddPhotoAlternate fontSize="small" />
             </IconButton>
 
-            {/* Keep the mobile soft keyboard open: by default MUI's Menu moves focus
-                into itself on open, blurring the composer field. These disable the
-                focus grab/trap/restore so the field keeps focus while the menu is up. */}
+            {/* Keep the mobile soft keyboard open: by default MUI's Menu focuses
+                itself (autoFocus) and the active item (autoFocusItem) on open, and
+                traps/restores focus — each of which blurs the composer field. Disable
+                all of them so the field keeps focus while the menu is up. */}
             <Menu
                 anchorEl={anchor}
                 open={Boolean(anchor)}
                 onClose={() => setAnchor(null)}
-                disableAutoFocus
+                autoFocus={false}
+                disableAutoFocusItem
                 disableEnforceFocus
                 disableRestoreFocus
             >
