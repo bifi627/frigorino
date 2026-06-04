@@ -51,13 +51,13 @@ Same class responsibilities, same constants. API mapping:
 | `Image.LoadAsync` | `new MagickImage(buffer)` |
 | `image.Mutate(x => x.AutoOrient())` | `image.AutoOrient()` |
 | strip EXIF/IPTC/XMP/ICC (4 nulls) | `image.Strip()` (single call removes all profiles) |
-| `Clone(x => x.Resize(Max, no-upscale))` | per rendition: `using var clone = image.Clone()` then `clone.Resize(new MagickGeometry((uint)maxEdge, (uint)maxEdge){ Greater = false })` |
+| `Clone(x => x.Resize(Max, no-upscale))` | per rendition: `using var clone = image.Clone()` then `clone.Resize(new MagickGeometry((uint)maxEdge, (uint)maxEdge){ Greater = true })` |
 | `WebpEncoder { Quality = q }` | `clone.Format = MagickFormat.WebP; clone.Quality = (uint)q; clone.Write(ms)` |
 
 Details:
 - `MagickImageInfo` and `MagickImage` accept a `Stream` / `byte[]`. Keep the existing buffer-to-`MemoryStream` approach so format detection, dimension read, and decode all read from position 0.
 - Per-rendition `Clone()` so encoding twice (full-res then thumbnail) never accumulates quality loss and never mutates the shared decoded image — mirrors the existing no-mutate-shared-image safety.
-- `Greater = false` on the geometry = shrink-only (never upscale), aspect ratio preserved — the `ResizeMode.Max` + no-upscale equivalent.
+- `Greater = true` on the geometry (the `>` modifier) = shrink-only (never upscale), aspect ratio preserved — the `ResizeMode.Max` + no-upscale equivalent.
 - `MagickImage` / `MagickImageInfo` are `IDisposable`; everything stays `using`-scoped.
 - Same `try/catch (Exception ex) when (ex is not OperationCanceledException)` → `Result.Fail` with `Property=file` metadata on decode failure; same `Property=file` fails for unsupported-format and oversized-dimension paths.
 - **Defense-in-depth:** set `ResourceLimits.Thread = 1` once at startup so ImageMagick's OpenMP does not fan threads per request under Railway's constrained CPU. Set in the DI extension (runs once). Optional but cheap.
