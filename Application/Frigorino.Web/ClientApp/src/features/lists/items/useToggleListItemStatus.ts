@@ -3,10 +3,10 @@ import { computeAppendSortOrder } from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     getItemsQueryKey,
+    getListQueryKey,
     toggleItemStatusMutation,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import type { ListItemResponse } from "../../../lib/api/types.gen";
-import { usePromotableStore } from "../promote/promotableStore";
 
 export const useToggleListItemStatus = () => {
     const queryClient = useQueryClient();
@@ -64,31 +64,21 @@ export const useToggleListItemStatus = () => {
                 );
             }
         },
-        onSuccess: (data) => {
-            // Store-only side effect — NOT a query invalidate (see the onSettled note below).
-            // The server attaches `promote` only when the item was checked DONE and its product
-            // is a perishable; un-check / non-perishable / unclassified come back without it,
-            // which retracts any pending entry for this item.
-            const store = usePromotableStore.getState();
-            if (data.promote) {
-                store.add({
-                    itemId: data.id,
-                    listId: data.listId,
-                    name: data.text,
-                    quantity: data.quantity ?? null,
-                    expiryHandling: data.promote.expiryHandling,
-                    suggestedExpiry: data.promote.suggestedExpiry ?? null,
-                });
-            } else {
-                store.remove(data.id);
-            }
-        },
         onSettled: (_data, _error, variables) => {
             // Deliberate: no `onSuccess` invalidate. The optimistic update is the only UI
             // signal we want — `onSettled` covers both success and rollback paths with a
             // single debounced refetch. Don't add an `onSuccess` invalidate "for consistency".
             debouncedInvalidate(
                 getItemsQueryKey({
+                    path: {
+                        householdId: variables.path.householdId,
+                        listId: variables.path.listId,
+                    },
+                }),
+            );
+            // Reconcile the PromoteBar count (pendingPromotionCount lives on the list response).
+            debouncedInvalidate(
+                getListQueryKey({
                     path: {
                         householdId: variables.path.householdId,
                         listId: variables.path.listId,

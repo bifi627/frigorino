@@ -25,7 +25,10 @@ export const usePromoteListItems = () => {
             });
             queryClient.invalidateQueries({
                 queryKey: getInventoryItemsQueryKey({
-                    path: { householdId, inventoryId: variables.body.inventoryId },
+                    path: {
+                        householdId,
+                        inventoryId: variables.body.inventoryId,
+                    },
                 }),
             });
         },
