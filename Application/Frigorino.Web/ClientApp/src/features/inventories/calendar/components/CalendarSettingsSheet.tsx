@@ -2,7 +2,6 @@ import { Close } from "@mui/icons-material";
 import {
     Box,
     Button,
-    Chip,
     Drawer,
     FormControlLabel,
     IconButton,
@@ -13,22 +12,11 @@ import {
     Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import type { ExpiryLevel } from "../../../../utils/dateUtils";
 import {
     CALENDAR_WINDOW_MAX,
     CALENDAR_WINDOW_MIN,
     useCalendarViewSettings,
 } from "../calendarViewSettings";
-
-const LEVEL_KEYS: ExpiryLevel[] = ["expired", "critical", "soon", "fresh"];
-
-// Chip color per level mirrors the urgency bands so the control reads as "what this shows/hides".
-const LEVEL_CHIP_COLOR: Record<ExpiryLevel, "error" | "warning" | "success"> = {
-    expired: "error",
-    critical: "error",
-    soon: "warning",
-    fresh: "success",
-};
 
 interface CalendarSettingsSheetProps {
     open: boolean;
@@ -42,10 +30,8 @@ export const CalendarSettingsSheet = ({
     const { t } = useTranslation();
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
-    const levels = useCalendarViewSettings((s) => s.levels);
     const setWindowDays = useCalendarViewSettings((s) => s.setWindowDays);
     const setFullRunway = useCalendarViewSettings((s) => s.setFullRunway);
-    const toggleLevel = useCalendarViewSettings((s) => s.toggleLevel);
     const reset = useCalendarViewSettings((s) => s.reset);
 
     return (
@@ -132,27 +118,6 @@ export const CalendarSettingsSheet = ({
                     data-testid="calendar-window-slider"
                     sx={{ mb: 2 }}
                 />
-
-                <Typography variant="subtitle2">
-                    {t("inventory.calendar.settings.levels")}
-                </Typography>
-                <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, my: 1 }}>
-                    {LEVEL_KEYS.map((lvl) => (
-                        <Chip
-                            key={lvl}
-                            label={t(
-                                `inventory.calendar.settings.level.${lvl}`,
-                            )}
-                            color={
-                                levels[lvl] ? LEVEL_CHIP_COLOR[lvl] : "default"
-                            }
-                            variant={levels[lvl] ? "filled" : "outlined"}
-                            onClick={() => toggleLevel(lvl)}
-                            data-testid={`calendar-level-${lvl}`}
-                            data-active={levels[lvl] ? "true" : "false"}
-                        />
-                    ))}
-                </Stack>
 
                 <Button
                     fullWidth

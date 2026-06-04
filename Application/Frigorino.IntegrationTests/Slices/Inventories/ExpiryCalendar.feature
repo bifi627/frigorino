@@ -17,8 +17,7 @@ Feature: Expiry Calendar
     When I open the inventories overview
     And I open the expiry calendar from the header
     Then the calendar shows the item "Rice"
-    When I open the calendar settings
-    And I turn off the "fresh" level filter
+    When I turn off the "fresh" level filter
     Then the calendar does not show the item "Rice"
     When I reload the calendar page
     Then the calendar does not show the item "Rice"

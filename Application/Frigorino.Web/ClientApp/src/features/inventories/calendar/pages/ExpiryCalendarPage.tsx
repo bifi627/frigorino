@@ -28,6 +28,8 @@ import {
 } from "../expiryCalendarEvents";
 import { useExpiryCalendar } from "../useExpiryCalendar";
 import { useCalendarViewSettings } from "../calendarViewSettings";
+import { calendarLevelColor } from "../calendarColors";
+import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
 import { CalendarSettingsSheet } from "../components/CalendarSettingsSheet";
 import "../expiryCalendar.css";
 
@@ -53,17 +55,10 @@ export const ExpiryCalendarPage = () => {
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
     const levels = useCalendarViewSettings((s) => s.levels);
 
-    const levelColor = useMemo(() => {
-        return (level: ExpiryLevel): string => {
-            if (level === "expired" || level === "critical") {
-                return theme.palette.error.main;
-            }
-            if (level === "soon") {
-                return theme.palette.warning.main;
-            }
-            return theme.palette.success.main;
-        };
-    }, [theme]);
+    const levelColor = useMemo(
+        () => (level: ExpiryLevel) => calendarLevelColor(theme, level),
+        [theme],
+    );
 
     const events = useMemo(
         () =>
@@ -162,6 +157,7 @@ export const ExpiryCalendarPage = () => {
                 menuActions={[]}
             />
             <Container maxWidth="sm" sx={pageContainerSx}>
+                <CalendarLevelToggles />
                 {isLoading && (
                     <Box
                         sx={{

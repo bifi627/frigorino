@@ -38,14 +38,6 @@ public class ExpiryCalendarSteps(ScenarioContextHolder ctx)
             .ToHaveAttributeAsync("data-selected", "true");
     }
 
-    [When("I open the calendar settings")]
-    public async Task WhenIOpenTheCalendarSettings()
-    {
-        await ctx.Page.GetByTestId("calendar-settings-button").ClickAsync();
-        await Assertions.Expect(ctx.Page.GetByTestId("calendar-settings-sheet"))
-            .ToBeVisibleAsync();
-    }
-
     [When("I turn off the {string} level filter")]
     public async Task WhenITurnOffTheLevelFilter(string level)
     {
