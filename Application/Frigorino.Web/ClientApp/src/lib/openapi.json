@@ -623,6 +623,161 @@
         }
       }
     },
+    "/api/household/{householdId}/lists/{listId}/pending-promotions": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "GetPendingPromotions",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingPromotionResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/lists/{listId}/promote": {
+      "post": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "PromoteListItems",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteListItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoteListItemsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/lists/{listId}/promote/skip": {
+      "post": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "SkipPromotion",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkipPromotionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/lists/{listId}/items": {
       "get": {
         "tags": [
@@ -2954,7 +3109,8 @@
           "updatedAt",
           "createdByUser",
           "uncheckedCount",
-          "checkedCount"
+          "checkedCount",
+          "pendingPromotionCount"
         ],
         "type": "object",
         "properties": {
@@ -2991,6 +3147,10 @@
             "format": "int32"
           },
           "checkedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingPromotionCount": {
             "type": "integer",
             "format": "int32"
           }
@@ -3039,6 +3199,107 @@
               "null",
               "integer"
             ],
+            "format": "int32"
+          }
+        }
+      },
+      "PendingPromotionResponse": {
+        "required": [
+          "listItemId",
+          "text",
+          "quantity",
+          "expiryHandling",
+          "suggestedExpiry"
+        ],
+        "type": "object",
+        "properties": {
+          "listItemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "text": {
+            "type": "string"
+          },
+          "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "expiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "suggestedExpiry": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PromoteEntry": {
+        "required": [
+          "listItemId",
+          "quantity",
+          "expiryDate"
+        ],
+        "type": "object",
+        "properties": {
+          "listItemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          },
+          "expiryDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PromoteListItemsRequest": {
+        "required": [
+          "inventoryId",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "inventoryId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PromoteEntry"
+            }
+          }
+        }
+      },
+      "PromoteListItemsResponse": {
+        "required": [
+          "promotedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "promotedCount": {
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -3127,6 +3388,21 @@
           "householdId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "SkipPromotionRequest": {
+        "required": [
+          "listItemIds"
+        ],
+        "type": "object",
+        "properties": {
+          "listItemIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         }
       },
