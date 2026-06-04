@@ -41,7 +41,8 @@ Why a dedicated slice (vs client-side aggregation of `GetInventories` + per-inve
 - **Route:** `src/routes/inventories/calendar.tsx` — thin shell (`createFileRoute` + `requireAuth`), imports the page from `features/`. (`routeTree.gen.ts` regenerates automatically.)
 - **Query hook:** `features/inventories/calendar/useExpiryCalendar.ts` — spreads the generated `getExpiryCalendarOptions({ path: { householdId } })` into `useQuery`, `enabled` guarded on `householdId > 0`, with a `staleTime`. No hand-written `queryFn`/`queryKey`.
 - **Page:** `features/inventories/calendar/pages/ExpiryCalendarPage.tsx` — `pageContainerSx` Container, owns `selectedId` React state, renders the FullCalendar.
-- **Entry point:** a "Calendar" button in the Inventories index page (`/inventories`) header → navigates to `/inventories/calendar`.
+- **Entry point / user flow:** a calendar **icon** added to the Inventories index page (`/inventories`) header as a second `directActions` entry on the existing `PageHeadActionBar` (next to the `+`), with a `testId`. Tapping it `navigate({ to: "/inventories/calendar" })`. Full path from home: dashboard → Inventory card chevron → `/inventories` → calendar icon → `/inventories/calendar`; the calendar page's own header back button returns to `/inventories`.
+  - *Deferred (not v1):* a one-tap calendar shortcut on the dashboard Inventory card — revisit once the view proves useful (the `WelcomePage` card is dense; adding a third action is its own small task).
 
 ### Calendar rendering (from validated spike patterns)
 
