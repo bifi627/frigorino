@@ -166,7 +166,12 @@
         "entireInventory": "• Das gesamte Lager",
         "allInventoryItems": "• Alle Lagerelemente",
         "confirmTypeInventoryName": "Zur Bestätigung geben Sie bitte den Lagernamen ein:",
-        "typeInventoryNameToConfirm": "Geben Sie \"{{inventoryName}}\" zur Bestätigung ein"
+        "typeInventoryNameToConfirm": "Geben Sie \"{{inventoryName}}\" zur Bestätigung ein",
+        "calendar": {
+            "title": "Ablaufkalender",
+            "empty": "Noch keine Artikel mit Ablaufdatum.",
+            "failedToLoad": "Kalender konnte nicht geladen werden."
+        }
     },
     "lists": {
         "title": "Listen",

@@ -166,7 +166,12 @@
         "entireInventory": "• The entire inventory",
         "allInventoryItems": "• All inventory items",
         "confirmTypeInventoryName": "To confirm, please type the inventory name:",
-        "typeInventoryNameToConfirm": "Type \"{{inventoryName}}\" to confirm"
+        "typeInventoryNameToConfirm": "Type \"{{inventoryName}}\" to confirm",
+        "calendar": {
+            "title": "Expiry calendar",
+            "empty": "No items with an expiry date yet.",
+            "failedToLoad": "Failed to load the calendar."
+        }
     },
     "lists": {
         "title": "Lists",

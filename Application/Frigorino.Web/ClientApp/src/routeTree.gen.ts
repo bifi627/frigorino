@@ -17,6 +17,7 @@ import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
 import { Route as ListsCreateRouteImport } from './routes/lists/create'
 import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
+import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
 import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -65,6 +66,11 @@ const InventoriesCreateRoute = InventoriesCreateRouteImport.update({
   path: '/inventories/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoriesCalendarRoute = InventoriesCalendarRouteImport.update({
+  id: '/inventories/calendar',
+  path: '/inventories/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HouseholdManageRoute = HouseholdManageRouteImport.update({
   id: '/household/manage',
   path: '/household/manage',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/inventories': typeof InventoriesIndexRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
+  '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
     | '/inventories/'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
     | '/inventories'
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/household/create'
     | '/household/manage'
+    | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
     | '/inventories/'
@@ -216,6 +228,7 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
   HouseholdManageRoute: typeof HouseholdManageRoute
+  InventoriesCalendarRoute: typeof InventoriesCalendarRoute
   InventoriesCreateRoute: typeof InventoriesCreateRoute
   ListsCreateRoute: typeof ListsCreateRoute
   InventoriesIndexRoute: typeof InventoriesIndexRoute
@@ -285,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoriesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventories/calendar': {
+      id: '/inventories/calendar'
+      path: '/inventories/calendar'
+      fullPath: '/inventories/calendar'
+      preLoaderRoute: typeof InventoriesCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/household/manage': {
       id: '/household/manage'
       path: '/household/manage'
@@ -344,6 +364,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
   HouseholdManageRoute: HouseholdManageRoute,
+  InventoriesCalendarRoute: InventoriesCalendarRoute,
   InventoriesCreateRoute: InventoriesCreateRoute,
   ListsCreateRoute: ListsCreateRoute,
   InventoriesIndexRoute: InventoriesIndexRoute,

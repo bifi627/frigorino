@@ -1,0 +1,32 @@
+/* Scoped to the page wrapper so FullCalendar's auto-injected base CSS is only adjusted here.
+   The --fc-* variables are bridged to the MUI theme inline on the wrapper (see the page sx). */
+.expiry-calendar .fc-daygrid-event-harness {
+    margin-bottom: 2px; /* vertical gap so overlapping bars read as distinct rows */
+}
+
+.expiry-calendar .fc-event {
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+/* Focus-select: the tapped item stays bright with a white inset ring; the rest dim. */
+.expiry-calendar .cal-selected {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px #fff;
+}
+
+.expiry-calendar .cal-dimmed {
+    opacity: 0.3;
+}
+
+/* Cook-by window active today. */
+.expiry-calendar .cal-active {
+    font-weight: 700;
+}
+
+/* Toolbar chrome nudged toward MUI (no shouty uppercase / heavy shadow). */
+.expiry-calendar .fc .fc-button {
+    text-transform: none;
+    box-shadow: none;
+}
