@@ -43,7 +43,7 @@ Chosen over Schedule-X after building **both** side-by-side against real seeded 
 
 1. **Window length `X`.** The spike hardcoded 3 days. Real options: a fixed global, **per-category via the existing `ExpiryProfile` / `ProductCategory`** domain concepts, or per-item. This is the one decision that touches the domain — the calendar itself is agnostic.
 2. **Entry point & scope.** The spike used a per-inventory route (`/inventories/$id/calendar`) reached from a header button. Alternatives: a tab on the inventory view, or a **household-wide** calendar spanning all inventories (arguably the more useful "what do I cook this week" view).
-3. **What a click does.** Detail dialog (spike) vs navigate-to-edit vs quick actions (mark cooked / re-order). Relates to [[Reverse flow: inventory item → add to shopping list (re-order)]].
+3. **What a click does.** Detail dialog (spike) vs navigate-to-edit vs quick actions (mark cooked / re-order). Relates to [[Reverse flow: inventory item → add to shopping list (re-order)]]. **Resolved (2026-06-05):** select → edit in place via a bottom action bar. See `2026-06-05-calendar-inline-edit-design.md`.
 4. **Production mechanics** (for the plan, not the brainstorm): i18n (spike used hardcoded English; app uses `t()` and tests assert on testids, never translated text), an integration test, FullCalendar chrome → MUI theming, and removing the Schedule-X experiment.
 
 ## Spike artifacts — deleted
