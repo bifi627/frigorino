@@ -29,10 +29,11 @@ import {
 import { useExpiryCalendar } from "../useExpiryCalendar";
 import { useCalendarViewSettings } from "../calendarViewSettings";
 import { calendarLevelColor } from "../calendarColors";
-import {
-    CalendarItemDetailsSheet,
-    type CalendarItemDetail,
-} from "../components/CalendarItemDetailsSheet";
+import { useQueryClient } from "@tanstack/react-query";
+import { getExpiryCalendarQueryKey } from "../../../../lib/api/@tanstack/react-query.gen";
+import type { QuantityDto } from "../../../../lib/api";
+import { useUpdateInventoryItem } from "../../items/useUpdateInventoryItem";
+import { CalendarItemActionBar } from "../components/CalendarItemActionBar";
 import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
 import { CalendarSettingsSheet } from "../components/CalendarSettingsSheet";
 import "../expiryCalendar.css";
@@ -55,10 +56,14 @@ export const ExpiryCalendarPage = () => {
 
     const [settingsOpen, setSettingsOpen] = useState(false);
 
-    // Details for a tapped compact (narrow) bar. null = sheet closed.
-    const [detailItem, setDetailItem] = useState<CalendarItemDetail | null>(
-        null,
-    );
+    // Edit mode for the selected item. Selection (selectedId) can be active without editing.
+    const [editing, setEditing] = useState(false);
+
+    const queryClient = useQueryClient();
+    const updateMutation = useUpdateInventoryItem();
+
+    // The full selected item (incl. quantity, which isn't in the FullCalendar event props).
+    const selectedItem = items?.find((item) => item.id === selectedId) ?? null;
 
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
@@ -106,6 +111,9 @@ export const ExpiryCalendarPage = () => {
             return (
                 <Box
                     data-testid={`cal-event-${arg.event.title}`}
+                    data-selected={
+                        selectedId === props.itemId ? "true" : "false"
+                    }
                     sx={{
                         overflow: "hidden",
                         whiteSpace: "nowrap",
@@ -149,19 +157,44 @@ export const ExpiryCalendarPage = () => {
         );
     };
 
+    const handleSave = async (
+        text: string,
+        quantity: QuantityDto | null,
+        expiryDate: string | null,
+    ) => {
+        if (!selectedItem) {
+            return;
+        }
+        await updateMutation.mutateAsync({
+            path: {
+                householdId,
+                inventoryId: selectedItem.inventoryId,
+                itemId: selectedItem.id,
+            },
+            // Mirrors InventoryViewPage.handleUpdateItem: text always sent; clearQuantity on
+            // an empty quantity; expiryDate is write-through (null clears).
+            body: {
+                text,
+                quantity,
+                clearQuantity: quantity === null,
+                expiryDate,
+            },
+        });
+        // The shared hook invalidates the inventory-items query. The calendar reads a separate
+        // query, so invalidate it here too — an expiry change then moves the bar immediately.
+        await queryClient.invalidateQueries({
+            queryKey: getExpiryCalendarQueryKey({ path: { householdId } }),
+        });
+        // Leave edit mode but keep the item selected/highlighted.
+        setEditing(false);
+    };
+
     const handleEventClick = (info: EventClickArg) => {
         // Stop the wrapper's clear-on-empty handler from firing for this same click.
         info.jsEvent.stopPropagation();
         const props = info.event.extendedProps as ExpiryEventProps;
-        if (props.compact) {
-            // Compact bars can't be meaningfully highlighted → open the details sheet instead.
-            setDetailItem({
-                title: info.event.title,
-                inventoryName: props.inventoryName,
-                expiryDate: props.expiryDate,
-            });
-            return;
-        }
+        // Every bar (compact or wide) now selects + highlights. Switching items leaves edit mode.
+        setEditing(false);
         setSelectedId((prev) => (prev === props.itemId ? null : props.itemId));
     };
 
@@ -249,7 +282,13 @@ export const ExpiryCalendarPage = () => {
                     <Box
                         className="expiry-calendar"
                         data-testid="expiry-calendar"
-                        onClick={() => setSelectedId(null)}
+                        onClick={() => {
+                            // While editing the user must Save or Cancel; a stray grid tap
+                            // shouldn't discard the edit by clearing the selection.
+                            if (!editing) {
+                                setSelectedId(null);
+                            }
+                        }}
                         sx={{
                             "--fc-border-color": theme.palette.divider,
                             "--fc-page-bg-color":
@@ -284,9 +323,13 @@ export const ExpiryCalendarPage = () => {
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
             />
-            <CalendarItemDetailsSheet
-                detail={detailItem}
-                onClose={() => setDetailItem(null)}
+            <CalendarItemActionBar
+                item={selectedItem}
+                editing={editing}
+                onEdit={() => setEditing(true)}
+                onCancelEdit={() => setEditing(false)}
+                onSave={handleSave}
+                isSaving={updateMutation.isPending}
             />
         </>
     );
