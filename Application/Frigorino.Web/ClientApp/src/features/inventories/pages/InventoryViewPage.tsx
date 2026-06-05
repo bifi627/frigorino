@@ -1,4 +1,4 @@
-import { DragIndicator, Edit, Schedule } from "@mui/icons-material";
+import { DragIndicator, Edit, Schedule, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -13,6 +13,7 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
+import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import type {
     CreateInventoryItemRequest,
     InventoryItemResponse,
@@ -56,6 +57,8 @@ export const InventoryViewPage = () => {
     const [editingItem, setEditingItem] =
         useState<InventoryItemResponse | null>(null);
     const [sortMode, setSortMode] = useState<SortMode>(loadSortMode());
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         try {
@@ -111,6 +114,16 @@ export const InventoryViewPage = () => {
             const next =
                 SORT_MODES[(SORT_MODES.indexOf(prev) + 1) % SORT_MODES.length];
             return next;
+        });
+    }, []);
+
+    const handleToggleSearch = useCallback(() => {
+        setSearchOpen((prev) => {
+            // Clear the query when collapsing so the filter resets (ephemeral by design).
+            if (prev) {
+                setSearchQuery("");
+            }
+            return !prev;
         });
     }, []);
 
@@ -188,6 +201,11 @@ export const InventoryViewPage = () => {
     const directActions = [
         { icon: <Edit />, onClick: handleEdit },
         { icon: getSortModeIcon(sortMode), onClick: handleToggleSortMode },
+        {
+            icon: <Search />,
+            onClick: handleToggleSearch,
+            testId: "inventory-search-button",
+        },
     ];
     const menuActions: HeadNavigationAction[] = [];
 
@@ -208,6 +226,15 @@ export const InventoryViewPage = () => {
                 menuActions={menuActions}
             />
 
+            <SearchInputRow
+                open={searchOpen}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onClose={handleToggleSearch}
+                placeholder={t("inventory.searchPlaceholder")}
+                testIdPrefix="inventory-search"
+            />
+
             <InventoryContainer
                 ref={scrollContainerRef}
                 householdId={householdId}
@@ -215,6 +242,7 @@ export const InventoryViewPage = () => {
                 editingItem={editingItem}
                 onEdit={setEditingItem}
                 sortMode={sortMode}
+                searchQuery={searchQuery}
             />
 
             <InventoryFooter
