@@ -48,7 +48,7 @@ export function useItemComposer<TItem extends ComposerItem>({
                     .filter(
                         (item) =>
                             item.id !== editingId &&
-                            item.text.toLowerCase().startsWith(q),
+                            item.text.toLowerCase().includes(q),
                     )
                     .map(
                         (item): Suggestion => ({
