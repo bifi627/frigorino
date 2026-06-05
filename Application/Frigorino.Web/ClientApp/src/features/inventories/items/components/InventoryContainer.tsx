@@ -1,8 +1,10 @@
-import { Container } from "@mui/material";
+import { Container, Paper, Typography } from "@mui/material";
 import { forwardRef } from "react";
+import { useTranslation } from "react-i18next";
 import { featureContentPx } from "../../../../theme";
 import { SortableList } from "../../../../components/sortables/SortableList";
 import type { InventoryItemResponse } from "../../../../lib/api";
+import { matchesQuery } from "../../../../utils/searchUtils";
 import { useDeleteInventoryItem } from "../useDeleteInventoryItem";
 import { useInventoryItems } from "../useInventoryItems";
 import { useReorderInventoryItem } from "../useReorderInventoryItem";
@@ -16,6 +18,7 @@ interface InventoryContainerProps {
     editingItem: InventoryItemResponse | null;
     onEdit: (item: InventoryItemResponse) => void;
     sortMode?: SortMode;
+    searchQuery?: string;
 }
 
 export const InventoryContainer = forwardRef<
@@ -23,7 +26,14 @@ export const InventoryContainer = forwardRef<
     InventoryContainerProps
 >(
     (
-        { householdId, inventoryId, editingItem, onEdit, sortMode = "custom" },
+        {
+            householdId,
+            inventoryId,
+            editingItem,
+            onEdit,
+            sortMode = "custom",
+            searchQuery = "",
+        },
         ref,
     ) => {
         const {
@@ -33,6 +43,15 @@ export const InventoryContainer = forwardRef<
         } = useInventoryItems(householdId, inventoryId);
         const deleteMutation = useDeleteInventoryItem();
         const reorderMutation = useReorderInventoryItem();
+        const { t } = useTranslation();
+
+        const trimmedQuery = searchQuery.trim();
+        const filterActive = trimmedQuery.length > 0;
+        const visibleItems = filterActive
+            ? items.filter((item) => matchesQuery(item.text, trimmedQuery))
+            : items;
+        const showNoMatches =
+            filterActive && !isLoading && !error && visibleItems.length === 0;
 
         return (
             <Container
@@ -46,30 +65,48 @@ export const InventoryContainer = forwardRef<
                     minHeight: 0,
                 }}
             >
-                <SortableList
-                    items={items}
-                    isLoading={isLoading}
-                    error={error}
-                    onReorder={async (itemId, afterId) => {
-                        await reorderMutation.mutateAsync({
-                            path: { householdId, inventoryId, itemId },
-                            body: { afterId },
-                        });
-                    }}
-                    onToggleStatus={async () => {}}
-                    onEdit={onEdit}
-                    onDelete={async (itemId) => {
-                        await deleteMutation.mutateAsync({
-                            path: { householdId, inventoryId, itemId },
-                        });
-                    }}
-                    editingItem={editingItem}
-                    showDragHandles={sortMode === "custom"}
-                    sortMode={sortMode}
-                    renderContent={(item) => (
-                        <InventoryItemContent item={item} />
-                    )}
-                />
+                {showNoMatches ? (
+                    <Paper
+                        elevation={0}
+                        data-testid="inventory-search-no-results"
+                        sx={{
+                            p: 3,
+                            textAlign: "center",
+                            border: "2px dashed",
+                            borderColor: "divider",
+                            mx: 1,
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary">
+                            {t("inventory.noSearchMatches")}
+                        </Typography>
+                    </Paper>
+                ) : (
+                    <SortableList
+                        items={visibleItems}
+                        isLoading={isLoading}
+                        error={error}
+                        onReorder={async (itemId, afterId) => {
+                            await reorderMutation.mutateAsync({
+                                path: { householdId, inventoryId, itemId },
+                                body: { afterId },
+                            });
+                        }}
+                        onToggleStatus={async () => {}}
+                        onEdit={onEdit}
+                        onDelete={async (itemId) => {
+                            await deleteMutation.mutateAsync({
+                                path: { householdId, inventoryId, itemId },
+                            });
+                        }}
+                        editingItem={editingItem}
+                        showDragHandles={sortMode === "custom" && !filterActive}
+                        sortMode={sortMode}
+                        renderContent={(item) => (
+                            <InventoryItemContent item={item} />
+                        )}
+                    />
+                )}
             </Container>
         );
     },

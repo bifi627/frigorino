@@ -1,4 +1,4 @@
-import { ArrowBack, DragHandle, Edit } from "@mui/icons-material";
+import { ArrowBack, DragHandle, Edit, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -14,6 +14,7 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
+import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { ListContainer } from "../items/components/ListContainer";
@@ -37,6 +38,8 @@ export const ListViewPage = () => {
         null,
     );
     const [showDragHandles, setShowDragHandles] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     // True when edit mode was opened via the quantity chip — the composer then starts
     // with the quantity panel expanded.
     const [editOpenQuantity, setEditOpenQuantity] = useState(false);
@@ -102,6 +105,16 @@ export const ListViewPage = () => {
 
     const handleToggleDragHandles = useCallback(() => {
         setShowDragHandles((prev) => !prev);
+    }, []);
+
+    const handleToggleSearch = useCallback(() => {
+        setSearchOpen((prev) => {
+            // Clear the query when collapsing so the filter resets (ephemeral by design).
+            if (prev) {
+                setSearchQuery("");
+            }
+            return !prev;
+        });
     }, []);
 
     const handleAddItem = useCallback(
@@ -295,6 +308,11 @@ export const ListViewPage = () => {
             onClick: handleToggleDragHandles,
             testId: "list-toggle-drag-handles",
         },
+        {
+            icon: <Search />,
+            onClick: handleToggleSearch,
+            testId: "list-search-button",
+        },
     ];
     const menuActions: HeadNavigationAction[] = [];
 
@@ -315,6 +333,15 @@ export const ListViewPage = () => {
                 menuActions={menuActions}
             />
 
+            <SearchInputRow
+                open={searchOpen}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onClose={handleToggleSearch}
+                placeholder={t("lists.searchPlaceholder")}
+                testIdPrefix="list-search"
+            />
+
             <PromoteBar householdId={householdId} listId={listIdNum} />
 
             <ListContainer
@@ -328,6 +355,7 @@ export const ListViewPage = () => {
                 showDragHandles={showDragHandles}
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
+                searchQuery={searchQuery}
             />
 
             <ListFooter
