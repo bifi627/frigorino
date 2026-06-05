@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "../../../../components/dialogs/ConfirmDialog";
 import { PageHeadActionBar } from "../../../../components/shared/PageHeadActionBar";
 import { SearchInputRow } from "../../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../../me/activeHousehold/useCurrentHousehold";
@@ -34,6 +35,7 @@ import { calendarLevelColor } from "../calendarColors";
 import { useQueryClient } from "@tanstack/react-query";
 import { getExpiryCalendarQueryKey } from "../../../../lib/api/@tanstack/react-query.gen";
 import type { QuantityDto } from "../../../../lib/api";
+import { useDeleteInventoryItem } from "../../items/useDeleteInventoryItem";
 import { useUpdateInventoryItem } from "../../items/useUpdateInventoryItem";
 import { CalendarItemActionBar } from "../components/CalendarItemActionBar";
 import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
@@ -73,8 +75,12 @@ export const ExpiryCalendarPage = () => {
     // Edit mode for the selected item. Selection (selectedId) can be active without editing.
     const [editing, setEditing] = useState(false);
 
+    // Delete confirmation for the selected item.
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
     const queryClient = useQueryClient();
     const updateMutation = useUpdateInventoryItem();
+    const deleteMutation = useDeleteInventoryItem();
 
     // The full selected item (incl. quantity, which isn't in the FullCalendar event props).
     const selectedItem = items?.find((item) => item.id === selectedId) ?? null;
@@ -229,6 +235,25 @@ export const ExpiryCalendarPage = () => {
         setEditing(false);
     };
 
+    // Delete the selected item once confirmed. The shared hook surfaces the undo toast and keeps
+    // both the inventory-items and expiry-calendar queries in sync. Drop the selection immediately
+    // so the action bar slides out without waiting for the calendar refetch.
+    const handleConfirmDelete = () => {
+        if (!selectedItem) {
+            return;
+        }
+        deleteMutation.mutate({
+            path: {
+                householdId,
+                inventoryId: selectedItem.inventoryId,
+                itemId: selectedItem.id,
+            },
+        });
+        setConfirmDeleteOpen(false);
+        setEditing(false);
+        setSelectedId(null);
+    };
+
     const handleEventClick = (info: EventClickArg) => {
         // Stop the wrapper's clear-on-empty handler from firing for this same click.
         info.jsEvent.stopPropagation();
@@ -380,9 +405,28 @@ export const ExpiryCalendarPage = () => {
                 item={selectedItem}
                 editing={editing}
                 onEdit={() => setEditing(true)}
+                onDelete={() => setConfirmDeleteOpen(true)}
                 onCancelEdit={() => setEditing(false)}
                 onSave={handleSave}
                 isSaving={updateMutation.isPending}
+            />
+            <ConfirmDialog
+                open={confirmDeleteOpen && selectedItem !== null}
+                onClose={() => setConfirmDeleteOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={t("common.delete")}
+                description={
+                    <>
+                        {t("common.confirmDelete")} "{selectedItem?.text}"?
+                    </>
+                }
+                confirmLabel={t("common.delete")}
+                confirmLabelPending={t("common.deleting")}
+                cancelLabel={t("common.cancel")}
+                isPending={deleteMutation.isPending}
+                confirmTestId="calendar-delete-confirm"
+                cancelTestId="calendar-delete-cancel"
+                maxWidth="xs"
             />
         </>
     );

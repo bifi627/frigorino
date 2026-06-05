@@ -1,5 +1,13 @@
-import { Edit } from "@mui/icons-material";
-import { Box, Button, Paper, Slide, Stack, Typography } from "@mui/material";
+import { Delete, Edit } from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    Paper,
+    Slide,
+    Stack,
+    Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
@@ -23,6 +31,7 @@ interface CalendarItemActionBarProps {
     item: ExpiryCalendarItemResponse | null;
     editing: boolean;
     onEdit: () => void;
+    onDelete: () => void;
     onCancelEdit: () => void;
     onSave: (
         text: string,
@@ -39,6 +48,7 @@ export const CalendarItemActionBar = ({
     item,
     editing,
     onEdit,
+    onDelete,
     onCancelEdit,
     onSave,
     isSaving,
@@ -117,6 +127,15 @@ export const CalendarItemActionBar = ({
                                 {metaLine}
                             </Typography>
                         </Box>
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={onDelete}
+                            aria-label={t("common.delete")}
+                            data-testid="calendar-action-bar-delete"
+                        >
+                            <Delete />
+                        </IconButton>
                         <Button
                             variant="contained"
                             size="small"

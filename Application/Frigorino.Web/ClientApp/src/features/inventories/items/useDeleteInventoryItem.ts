@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     deleteInventoryItemMutation,
+    getExpiryCalendarQueryKey,
     getInventoryItemsQueryKey,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import type { InventoryItemResponse } from "../../../lib/api/types.gen";
@@ -73,6 +74,14 @@ export const useDeleteInventoryItem = () => {
                         householdId: variables.path.householdId,
                         inventoryId: variables.path.inventoryId,
                     },
+                }),
+            );
+            // The expiry calendar reads a separate query; keep it in sync so a delete
+            // (and its undo, which is triggered from inside this hook's toast) is
+            // reflected on the calendar view too.
+            debouncedInvalidate(
+                getExpiryCalendarQueryKey({
+                    path: { householdId: variables.path.householdId },
                 }),
             );
         },
