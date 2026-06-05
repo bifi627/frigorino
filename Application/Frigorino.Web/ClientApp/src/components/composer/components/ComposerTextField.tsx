@@ -119,6 +119,16 @@ export const ComposerTextField = ({
                     <TextField
                         {...params}
                         fullWidth
+                        // Render as a single-row <textarea> rather than an
+                        // <input>. Android keyboards (e.g. SwiftKey) only show
+                        // their autofill toolbar (passwords/cards/addresses) for
+                        // single-line <input> fields; a textarea is never treated
+                        // as autofillable, so this suppresses that bar. Enter is
+                        // already intercepted below to submit (preventDefault), so
+                        // no newline is inserted.
+                        multiline
+                        minRows={1}
+                        maxRows={1}
                         variant="outlined"
                         placeholder={placeholder}
                         disabled={disabled}
