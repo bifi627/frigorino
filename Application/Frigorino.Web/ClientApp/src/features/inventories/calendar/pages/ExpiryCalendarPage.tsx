@@ -1,7 +1,7 @@
 import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg, EventContentArg } from "@fullcalendar/core";
-import { Tune } from "@mui/icons-material";
+import { Search, Tune } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -12,9 +12,10 @@ import {
     useTheme,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeadActionBar } from "../../../../components/shared/PageHeadActionBar";
+import { SearchInputRow } from "../../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../../me/activeHousehold/useCurrentHousehold";
 import { pageContainerSx } from "../../../../theme";
 import {
@@ -26,6 +27,7 @@ import {
     buildExpiryEvents,
     type ExpiryEventProps,
 } from "../expiryCalendarEvents";
+import { matchesQuery } from "../../../../utils/searchUtils";
 import { useExpiryCalendar } from "../useExpiryCalendar";
 import { useCalendarViewSettings } from "../calendarViewSettings";
 import { calendarLevelColor } from "../calendarColors";
@@ -55,6 +57,18 @@ export const ExpiryCalendarPage = () => {
     const [selectedId, setSelectedId] = useState<number | null>(null);
 
     const [settingsOpen, setSettingsOpen] = useState(false);
+
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleToggleSearch = useCallback(() => {
+        setSearchOpen((prev) => {
+            if (prev) {
+                setSearchQuery("");
+            }
+            return !prev;
+        });
+    }, []);
 
     // Edit mode for the selected item. Selection (selectedId) can be active without editing.
     const [editing, setEditing] = useState(false);
@@ -90,14 +104,24 @@ export const ExpiryCalendarPage = () => {
         [theme],
     );
 
+    const trimmedSearch = searchQuery.trim();
+    const searchedItems = useMemo(() => {
+        if (trimmedSearch.length === 0) {
+            return items ?? [];
+        }
+        return (items ?? []).filter((item) =>
+            matchesQuery(item.text, trimmedSearch),
+        );
+    }, [items, trimmedSearch]);
+
     const events = useMemo(
         () =>
-            buildExpiryEvents(items ?? [], todayIsoDate(), levelColor, {
+            buildExpiryEvents(searchedItems, todayIsoDate(), levelColor, {
                 windowDays,
                 fullRunway,
                 levels,
             }),
-        [items, levelColor, windowDays, fullRunway, levels],
+        [searchedItems, levelColor, windowDays, fullRunway, levels],
     );
 
     // Classes drive the focus-select visuals (see expiryCalendar.css).
@@ -241,8 +265,21 @@ export const ExpiryCalendarPage = () => {
                         onClick: () => setSettingsOpen(true),
                         testId: "calendar-settings-button",
                     },
+                    {
+                        icon: <Search />,
+                        onClick: handleToggleSearch,
+                        testId: "calendar-search-button",
+                    },
                 ]}
                 menuActions={[]}
+            />
+            <SearchInputRow
+                open={searchOpen}
+                query={searchQuery}
+                onQueryChange={setSearchQuery}
+                onClose={handleToggleSearch}
+                placeholder={t("inventory.searchPlaceholder")}
+                testIdPrefix="calendar-search"
             />
             <Container maxWidth="sm" sx={pageContainerSx}>
                 <CalendarLevelToggles />
