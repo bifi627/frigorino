@@ -1,4 +1,5 @@
 import {
+    alpha,
     Autocomplete,
     Box,
     createFilterOptions,
@@ -7,6 +8,7 @@ import {
 } from "@mui/material";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { highlightMatch } from "../highlightMatch";
 import type { Suggestion, SuggestionsConfig } from "../types";
 
 interface ComposerTextFieldProps {
@@ -16,7 +18,10 @@ interface ComposerTextFieldProps {
     inputRef: React.RefObject<HTMLInputElement | null>;
     placeholder: string;
     disabled: boolean;
-    errorMessage?: string;
+    /** Inline status under the field (e.g. duplicate notice). */
+    message?: string;
+    /** Color of the inline status: orange notice/block vs green restore. */
+    messageTone?: "warning" | "success";
     suggestions?: SuggestionsConfig;
 }
 
@@ -27,17 +32,19 @@ export const ComposerTextField = ({
     inputRef,
     placeholder,
     disabled,
-    errorMessage,
+    message,
+    messageTone = "warning",
     suggestions,
 }: ComposerTextFieldProps) => {
     const { t } = useTranslation();
     const minChars = suggestions?.minChars ?? 3;
 
+    // Default matchFrom is "any" (substring) — pairs with the contains filter in
+    // useItemComposer so middle/end matches surface and get highlighted.
     const filter = useMemo(
         () =>
             createFilterOptions<Suggestion>({
                 stringify: (option) => option.label,
-                matchFrom: "start",
                 limit: 5,
             }),
         [],
@@ -50,6 +57,9 @@ export const ComposerTextField = ({
                 : [],
         [suggestions, text, minChars],
     );
+
+    const helperColor =
+        messageTone === "success" ? "success.main" : "warning.main";
 
     return (
         <Box sx={{ flex: 1 }}>
@@ -90,29 +100,50 @@ export const ComposerTextField = ({
                         : t("common.typeAtLeastCharacters")
                 }
                 renderOption={(props, option) => (
-                    <Box component="li" {...props} key={option.id}>
+                    <Box
+                        component="li"
+                        {...props}
+                        key={option.id}
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mx: 0.5,
+                            px: 1.5,
+                            py: 1,
+                            borderRadius: 2,
+                            "&:hover, &.Mui-focused": {
+                                bgcolor: (theme) =>
+                                    alpha(theme.palette.primary.main, 0.14),
+                            },
+                        }}
+                    >
                         <Box
                             sx={{
+                                flex: 1,
+                                minWidth: 0,
                                 display: "flex",
-                                flexDirection: "column",
-                                width: "100%",
+                                alignItems: "center",
+                                gap: 0.5,
                             }}
                         >
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Typography variant="body2" component="span">
-                                    {option.label}
-                                </Typography>
-                                {option.badge}
-                            </Box>
-                            {option.secondaryLabel && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{ color: "text.secondary" }}
-                                >
-                                    {option.secondaryLabel}
-                                </Typography>
-                            )}
+                            <Typography variant="body2" component="span" noWrap>
+                                {highlightMatch(option.label, text)}
+                            </Typography>
+                            {option.badge}
                         </Box>
+                        {option.secondaryLabel && (
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    color: "text.disabled",
+                                    whiteSpace: "nowrap",
+                                    flexShrink: 0,
+                                }}
+                            >
+                                {option.secondaryLabel}
+                            </Typography>
+                        )}
                     </Box>
                 )}
                 renderInput={(params) => (
@@ -133,8 +164,7 @@ export const ComposerTextField = ({
                         placeholder={placeholder}
                         disabled={disabled}
                         inputRef={inputRef}
-                        error={Boolean(errorMessage)}
-                        helperText={errorMessage}
+                        helperText={message}
                         onKeyDown={(event) => {
                             if (event.key === "Enter" && !event.shiftKey) {
                                 event.preventDefault();
@@ -153,10 +183,28 @@ export const ComposerTextField = ({
                                     "& .MuiInputBase-input": { py: 1 },
                                 },
                             },
+                            formHelperText: {
+                                sx: { color: helperColor, ml: 1.5, mt: 0.25 },
+                            },
                         }}
                         sx={{ "& .MuiOutlinedInput-root": { p: 0 } }}
                     />
                 )}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            mt: 0.75,
+                            bgcolor: "background.default",
+                            border: "1px solid",
+                            borderColor: (theme) =>
+                                alpha(theme.palette.primary.main, 0.55),
+                            borderRadius: 3,
+                            boxShadow: 8,
+                            overflow: "hidden",
+                        },
+                    },
+                    listbox: { sx: { py: 0.5 } },
+                }}
                 sx={{
                     "& .MuiAutocomplete-popupIndicator": { display: "none" },
                     "& .MuiAutocomplete-clearIndicator": { display: "none" },

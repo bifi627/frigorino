@@ -43,10 +43,14 @@ export const CalendarLevelToggles = () => {
                                       "&:hover": { bgcolor: color },
                                   }
                                 : {
-                                      bgcolor: theme.palette.action.disabledBackground,
+                                      bgcolor:
+                                          theme.palette.action
+                                              .disabledBackground,
                                       color: theme.palette.text.disabled,
                                       "&:hover": {
-                                          bgcolor: theme.palette.action.disabledBackground,
+                                          bgcolor:
+                                              theme.palette.action
+                                                  .disabledBackground,
                                       },
                                   }
                         }
