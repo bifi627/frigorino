@@ -66,7 +66,7 @@ public class ExpiryCalendarSteps(ScenarioContextHolder ctx)
         var input = ctx.Page
             .GetByTestId("calendar-action-bar-composer")
             .GetByTestId("autocomplete-input-textfield")
-            .Locator("input");
+            .Locator("textarea[role='combobox']");
         await input.FillAsync(newText);
         await ctx.Page.GetByTestId("autocomplete-input-submit-button").ClickAsync();
         // The composer collapses on save; wait for it to disappear before asserting.
