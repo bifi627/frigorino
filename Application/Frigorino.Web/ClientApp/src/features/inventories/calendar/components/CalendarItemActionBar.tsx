@@ -5,6 +5,7 @@ import {
     Composer,
     draftToQuantity,
     expiryFeature,
+    formatQuantity,
     quantityComposerFeature,
     quantityToDraft,
     type Completion,
@@ -54,6 +55,17 @@ export const CalendarItemActionBar = ({
           }
         : undefined;
 
+    // info line: inventory · quantity · date — quantity omitted when the item has none.
+    const metaLine = item
+        ? [
+              item.inventoryName,
+              item.quantity ? formatQuantity(t, item.quantity) : null,
+              formatLocalDate(item.expiryDate),
+          ]
+              .filter(Boolean)
+              .join(" · ")
+        : "";
+
     const handleComplete = (r: Completion<typeof features>) => {
         if (r.kind !== "text") {
             return;
@@ -102,8 +114,7 @@ export const CalendarItemActionBar = ({
                                 color="text.secondary"
                                 noWrap
                             >
-                                {item.inventoryName} ·{" "}
-                                {formatLocalDate(item.expiryDate)}
+                                {metaLine}
                             </Typography>
                         </Box>
                         <Button
