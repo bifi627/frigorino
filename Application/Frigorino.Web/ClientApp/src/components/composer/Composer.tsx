@@ -60,6 +60,8 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
         [duplicate, trimmed],
     );
     const blocked = Boolean(dup?.block);
+    const restore = Boolean(dup?.onResolve);
+    const messageTone = dup?.tone ?? "warning";
 
     const modifiersValid = useMemo(
         () =>
@@ -262,12 +264,14 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         // The pill is the input surface now (no outer card), so it
                         // carries the edit/focus highlight border.
                         border: "1px solid",
-                        borderColor: isEditing ? "warning.main" : "primary.200",
+                        borderColor:
+                            isEditing || dup ? "warning.main" : "primary.200",
                         transition: "border-color 0.2s ease",
                         "&:hover, &:focus-within": {
-                            borderColor: isEditing
-                                ? "warning.dark"
-                                : "primary.main",
+                            borderColor:
+                                isEditing || dup
+                                    ? "warning.dark"
+                                    : "primary.main",
                         },
                         // Inline icons read as in-field adornments, not standalone
                         // 44px buttons — overrides the per-feature minWidth/minHeight.
@@ -284,7 +288,8 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         inputRef={inputRef}
                         placeholder={fieldPlaceholder}
                         disabled={disabled}
-                        errorMessage={dup?.message}
+                        message={dup?.message}
+                        messageTone={messageTone}
                         suggestions={suggestions}
                     />
 
@@ -336,7 +341,7 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                         !trimmed || disabled || blocked || !modifiersValid
                     }
                     editing={isEditing}
-                    duplicate={Boolean(dup)}
+                    restore={restore}
                 />
             </Box>
         </Box>
