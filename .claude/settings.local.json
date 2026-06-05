@@ -50,7 +50,10 @@
       "WebFetch(domain:railway.com)",
       "WebFetch(domain:community.bitdefender.com)",
       "WebFetch(domain:developers.openai.com)",
-      "Bash(bash scripts/start-server.sh --project-dir \"C:/Repositories/frigorino\")"
+      "Bash(bash scripts/start-server.sh --project-dir \"C:/Repositories/frigorino\")",
+      "WebFetch(domain:www.nuget.org)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ],
     "deny": [],
     "ask": []

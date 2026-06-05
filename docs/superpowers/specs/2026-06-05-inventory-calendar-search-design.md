@@ -96,9 +96,9 @@ Out of scope (explicitly):
 
 ## Testing
 
-- **Predicate unit test** (frontend has no JS test runner; if the predicate is
-  trivial enough this may be covered by integration only — to be decided in the
-  plan): case-insensitivity, substring match, empty query returns all.
+- **No frontend JS test runner exists** (per CLAUDE.md), so the match predicate
+  is verified through the integration tests below rather than a standalone unit
+  test. It still lives as a small pure helper for clarity and reuse.
 - **Integration (Reqnroll + Playwright):**
   - Inventory: open search, type a query, assert non-matching item testids
     disappear and matching ones remain; assert the drag handle is
