@@ -12,7 +12,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeadActionBar } from "../../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../../me/activeHousehold/useCurrentHousehold";
@@ -65,6 +65,22 @@ export const ExpiryCalendarPage = () => {
     // The full selected item (incl. quantity, which isn't in the FullCalendar event props).
     const selectedItem = items?.find((item) => item.id === selectedId) ?? null;
 
+    // If the selected item leaves the calendar (e.g. its expiry was cleared on save, so it no
+    // longer matches the calendar query, or it was deleted elsewhere), drop the stale selection.
+    // Otherwise selectedId would point at an absent item — dimming every remaining bar with none
+    // highlighted and no action bar to recover from.
+    useEffect(() => {
+        const itemGone =
+            selectedId !== null &&
+            !isLoading &&
+            items !== undefined &&
+            !items.some((item) => item.id === selectedId);
+        if (itemGone) {
+            setSelectedId(null);
+            setEditing(false);
+        }
+    }, [selectedId, items, isLoading]);
+
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
     const levels = useCalendarViewSettings((s) => s.levels);
@@ -106,7 +122,7 @@ export const ExpiryCalendarPage = () => {
         const props = arg.event.extendedProps as ExpiryEventProps;
 
         // Narrow bars (expired markers, near-expiry items) can't fit "name · inventory · date":
-        // render the name only, ellipsized, and surface the rest in the tap-sheet.
+        // render the name only, ellipsized; selecting one surfaces the rest in the action bar.
         if (props.compact) {
             return (
                 <Box
