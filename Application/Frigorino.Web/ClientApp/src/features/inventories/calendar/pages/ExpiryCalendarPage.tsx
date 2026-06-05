@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ConfirmDialog } from "../../../../components/dialogs/ConfirmDialog";
 import { PageHeadActionBar } from "../../../../components/shared/PageHeadActionBar";
 import { SearchInputRow } from "../../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../../me/activeHousehold/useCurrentHousehold";
@@ -73,6 +74,9 @@ export const ExpiryCalendarPage = () => {
 
     // Edit mode for the selected item. Selection (selectedId) can be active without editing.
     const [editing, setEditing] = useState(false);
+
+    // Delete confirmation for the selected item.
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
     const queryClient = useQueryClient();
     const updateMutation = useUpdateInventoryItem();
@@ -231,10 +235,10 @@ export const ExpiryCalendarPage = () => {
         setEditing(false);
     };
 
-    // Delete the selected item. The shared hook surfaces the undo toast and keeps both the
-    // inventory-items and expiry-calendar queries in sync. Drop the selection immediately so
-    // the action bar slides out without waiting for the calendar refetch.
-    const handleDelete = () => {
+    // Delete the selected item once confirmed. The shared hook surfaces the undo toast and keeps
+    // both the inventory-items and expiry-calendar queries in sync. Drop the selection immediately
+    // so the action bar slides out without waiting for the calendar refetch.
+    const handleConfirmDelete = () => {
         if (!selectedItem) {
             return;
         }
@@ -245,6 +249,7 @@ export const ExpiryCalendarPage = () => {
                 itemId: selectedItem.id,
             },
         });
+        setConfirmDeleteOpen(false);
         setEditing(false);
         setSelectedId(null);
     };
@@ -400,10 +405,28 @@ export const ExpiryCalendarPage = () => {
                 item={selectedItem}
                 editing={editing}
                 onEdit={() => setEditing(true)}
-                onDelete={handleDelete}
+                onDelete={() => setConfirmDeleteOpen(true)}
                 onCancelEdit={() => setEditing(false)}
                 onSave={handleSave}
                 isSaving={updateMutation.isPending}
+            />
+            <ConfirmDialog
+                open={confirmDeleteOpen && selectedItem !== null}
+                onClose={() => setConfirmDeleteOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={t("common.delete")}
+                description={
+                    <>
+                        {t("common.confirmDelete")} "{selectedItem?.text}"?
+                    </>
+                }
+                confirmLabel={t("common.delete")}
+                confirmLabelPending={t("common.deleting")}
+                cancelLabel={t("common.cancel")}
+                isPending={deleteMutation.isPending}
+                confirmTestId="calendar-delete-confirm"
+                cancelTestId="calendar-delete-cancel"
+                maxWidth="xs"
             />
         </>
     );
