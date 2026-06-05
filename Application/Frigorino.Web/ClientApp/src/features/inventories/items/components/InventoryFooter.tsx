@@ -63,9 +63,9 @@ export const InventoryFooter = memo(
         );
 
         const onDuplicate = useCallback(
-            (match: InventoryItemResponse): DuplicateResult => ({
-                message: `"${match.text}" ${t("common.alreadyExists")}`,
-                block: true,
+            (): DuplicateResult => ({
+                message: t("common.alreadyInInventory"),
+                tone: "warning",
             }),
             [t],
         );
