@@ -145,6 +145,8 @@
         "category": "Category",
         "expiryDate": "Expiry Date",
         "noItems": "No items in inventory",
+        "searchPlaceholder": "Search items",
+        "noSearchMatches": "No items match your search.",
         "noInventories": "No inventories yet. Create your first inventory!",
         "manageInventory": "Manage your household inventory items",
         "organizeItems": "Organize and track items in your inventory",

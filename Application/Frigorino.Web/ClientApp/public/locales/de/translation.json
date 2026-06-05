@@ -145,6 +145,8 @@
         "category": "Kategorie",
         "expiryDate": "Ablaufdatum",
         "noItems": "Keine Elemente im Lager",
+        "searchPlaceholder": "Artikel suchen",
+        "noSearchMatches": "Keine Artikel entsprechen deiner Suche.",
         "noInventories": "Noch keine Lager. Erstellen Sie Ihr erstes Lager!",
         "manageInventory": "Verwalten Sie Ihre Haushaltsgegenstände",
         "organizeItems": "Organisieren und verfolgen Sie Gegenstände in Ihrem Lager",
