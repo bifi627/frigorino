@@ -24,4 +24,5 @@ load. The active household is still A (kept in the HTTP session + persisted to
 against the link's Household B target. Likely fix: the notification deep-link
 should carry the target household id and switch the active household to it on
 open (or the inventory route should detect the mismatch and switch) before
-issuing the scoped query.
+issuing the scoped query. Root cause is the implicit household-context model —
+see "Household context is implicit (LastActiveHouseholdId)…" in `TECH_DEBT.md`.
