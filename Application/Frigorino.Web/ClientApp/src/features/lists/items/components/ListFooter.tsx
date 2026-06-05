@@ -79,13 +79,15 @@ export const ListFooter = memo(
             (match: ListItemResponse): DuplicateResult => {
                 if (match.status && !editingItem) {
                     return {
-                        message: `"${match.text}" ${t("common.alreadyExists")} (${t("common.completed")})`,
+                        message: t("common.alreadyCompletedRestore"),
                         onResolve: () => onUncheckExisting(match.id),
+                        tone: "success",
                     };
                 }
                 return {
-                    message: `"${match.text}" ${t("common.alreadyExists")}`,
+                    message: t("common.alreadyOnList"),
                     block: true,
+                    tone: "warning",
                 };
             },
             [editingItem, onUncheckExisting, t],
