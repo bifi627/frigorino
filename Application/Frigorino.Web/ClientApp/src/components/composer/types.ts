@@ -90,6 +90,12 @@ export interface DuplicateResult {
     block?: boolean;
     /** When set, hitting send fires this instead of completing (e.g. "uncheck existing"). */
     onResolve?: () => void;
+    /**
+     * Visual tone for the inline message and pill border. "warning" (orange) for
+     * already-exists notices and blocks; "success" (green) for the resolvable
+     * restore case. Defaults to "warning" when omitted.
+     */
+    tone?: "warning" | "success";
 }
 
 export interface DuplicateConfig {
