@@ -1,7 +1,7 @@
 # In-view text search for Inventory & Expiry Calendar
 
 **Date:** 2026-06-05
-**Status:** Design approved, pending implementation plan
+**Status:** Implemented. Extended to the list view (see "Extension: List view" below).
 
 ## Summary
 
@@ -117,3 +117,23 @@ Out of scope (explicitly):
 - **Disable drag while filtering** — avoids partial-list `SortOrder` corruption.
 - **Ephemeral filter** — resets on leaving the view.
 - **Shared `SearchToggle` component** — avoid two divergent implementations.
+
+## Extension: List view
+
+The same in-view search was extended to the Lists view (`ListViewPage` /
+`ListContainer`), reusing `SearchInputRow` + `matchesQuery`. Differences from the
+inventory view:
+
+- **Search spans text + comment.** A list item is matched on its `text` *and*
+  its `comment` joined together, so text-item notes and image/document captions
+  (which live in `comment`) are both searchable. Helper: `searchableText(item) =
+  [item.text, item.comment].filter(Boolean).join(" ")`.
+- **Drag toggle composition.** Lists already have a manual show/hide drag-handles
+  toggle (not a sort mode). Search composes with it: handles render only when the
+  user's toggle is on *and* no filter is active (`showDragHandles && !filterActive`).
+- **Entry point / empty state / ephemeral behavior** mirror the inventory view
+  (`list-search-button` toggle, `list-search-no-results` message, query cleared
+  on collapse).
+- Integration coverage: `ListSearch.feature` (text match, comment match, drag
+  disabled while filtering, no-results). Image-caption matching uses the same
+  `comment` code path verified by the comment-match scenario.
