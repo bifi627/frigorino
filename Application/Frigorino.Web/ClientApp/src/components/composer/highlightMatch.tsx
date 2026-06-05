@@ -22,7 +22,11 @@ export function highlightMatch(label: string, query: string): ReactNode {
     while (index !== -1) {
         if (index > cursor) {
             parts.push(
-                <Box component="span" key={key++} sx={{ color: "text.secondary" }}>
+                <Box
+                    component="span"
+                    key={key++}
+                    sx={{ color: "text.secondary" }}
+                >
                     {label.slice(cursor, index)}
                 </Box>,
             );
@@ -41,7 +45,7 @@ export function highlightMatch(label: string, query: string): ReactNode {
     }
     if (cursor < label.length) {
         parts.push(
-            <Box component="span" key={key++} sx={{ color: "text.secondary" }}>
+            <Box component="span" key={key} sx={{ color: "text.secondary" }}>
                 {label.slice(cursor)}
             </Box>,
         );
