@@ -29,7 +29,7 @@ export const CalendarLevelToggles = () => {
                         key={lvl}
                         label={t(`inventory.calendar.settings.level.${lvl}`)}
                         size="small"
-                        variant={active ? "filled" : "outlined"}
+                        variant="filled"
                         onClick={() => toggleLevel(lvl)}
                         data-testid={`calendar-level-${lvl}`}
                         data-active={active ? "true" : "false"}
@@ -42,7 +42,13 @@ export const CalendarLevelToggles = () => {
                                       ),
                                       "&:hover": { bgcolor: color },
                                   }
-                                : { color, borderColor: color }
+                                : {
+                                      bgcolor: theme.palette.action.disabledBackground,
+                                      color: theme.palette.text.disabled,
+                                      "&:hover": {
+                                          bgcolor: theme.palette.action.disabledBackground,
+                                      },
+                                  }
                         }
                     />
                 );

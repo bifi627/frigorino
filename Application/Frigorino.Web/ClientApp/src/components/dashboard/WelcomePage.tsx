@@ -1,4 +1,4 @@
-import { Add, ChevronRight, ExpandMore } from "@mui/icons-material";
+import { Add, CalendarMonth, ChevronRight, ExpandMore } from "@mui/icons-material";
 import {
     Box,
     Card,
@@ -380,6 +380,21 @@ export const WelcomePage = () => {
                                             gap: 1,
                                         }}
                                     >
+                                        {collection.id === "inventar" && (
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate({
+                                                        to: "/inventories/calendar",
+                                                    });
+                                                }}
+                                                sx={actionButtonSx}
+                                            >
+                                                <CalendarMonth fontSize="small" />
+                                            </IconButton>
+                                        )}
+
                                         <IconButton
                                             size="small"
                                             onClick={(e) => {
