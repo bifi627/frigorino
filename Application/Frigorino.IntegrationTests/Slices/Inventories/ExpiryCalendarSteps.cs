@@ -38,15 +38,40 @@ public class ExpiryCalendarSteps(ScenarioContextHolder ctx)
             .ToHaveAttributeAsync("data-selected", "true");
     }
 
-    [Then("the item details sheet shows {string}")]
-    public async Task ThenTheItemDetailsSheetShows(string itemText)
+    [Then("the calendar action bar shows {string}")]
+    public async Task ThenTheCalendarActionBarShows(string itemText)
     {
-        await Assertions.Expect(
-                ctx.Page.GetByTestId("calendar-item-details-sheet"))
+        await Assertions.Expect(ctx.Page.GetByTestId("calendar-item-action-bar"))
             .ToBeVisibleAsync();
-        await Assertions.Expect(
-                ctx.Page.GetByTestId("calendar-item-details-title"))
+        await Assertions.Expect(ctx.Page.GetByTestId("calendar-action-bar-title"))
             .ToHaveTextAsync(itemText);
+    }
+
+    [When("I tap edit in the calendar action bar")]
+    public async Task WhenITapEditInTheCalendarActionBar()
+    {
+        await ctx.Page.GetByTestId("calendar-action-bar-edit").ClickAsync();
+    }
+
+    [Then("the calendar action bar is in edit mode")]
+    public async Task ThenTheCalendarActionBarIsInEditMode()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("calendar-action-bar-composer"))
+            .ToBeVisibleAsync();
+    }
+
+    [When("I change the item text to {string} and save")]
+    public async Task WhenIChangeTheItemTextToAndSave(string newText)
+    {
+        var input = ctx.Page
+            .GetByTestId("calendar-action-bar-composer")
+            .GetByTestId("autocomplete-input-textfield")
+            .Locator("input");
+        await input.FillAsync(newText);
+        await ctx.Page.GetByTestId("autocomplete-input-submit-button").ClickAsync();
+        // The composer collapses on save; wait for it to disappear before asserting.
+        await Assertions.Expect(ctx.Page.GetByTestId("calendar-action-bar-composer"))
+            .Not.ToBeVisibleAsync();
     }
 
     [When("I turn off the {string} level filter")]

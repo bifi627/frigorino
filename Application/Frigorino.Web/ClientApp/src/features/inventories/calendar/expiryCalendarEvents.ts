@@ -13,8 +13,8 @@ export interface ExpiryEventProps {
     expiryDate: string;
     activeToday: boolean;
     // Bars spanning fewer than COMPACT_SPAN_DAYS are too narrow to render legible inline text
-    // (notably expired 1-day markers). The page renders them name-only and opens a details
-    // sheet on tap instead of the focus-select highlight.
+    // (notably expired 1-day markers). The page renders them name-only; the full details are
+    // surfaced in the action bar on select (the focus-select highlight still applies).
     compact: boolean;
 }
 
@@ -31,7 +31,7 @@ export interface ExpiryCalendarEvent {
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-// Bars shorter than this many days can't fit readable inline text → rendered name-only + tap-sheet.
+// Bars shorter than this many days can't fit readable inline text → rendered name-only.
 const COMPACT_SPAN_DAYS = 4;
 
 function toIsoDate(date: Date): string {
