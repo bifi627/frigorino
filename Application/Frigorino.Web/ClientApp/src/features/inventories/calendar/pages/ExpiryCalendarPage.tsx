@@ -34,6 +34,7 @@ import { calendarLevelColor } from "../calendarColors";
 import { useQueryClient } from "@tanstack/react-query";
 import { getExpiryCalendarQueryKey } from "../../../../lib/api/@tanstack/react-query.gen";
 import type { QuantityDto } from "../../../../lib/api";
+import { useDeleteInventoryItem } from "../../items/useDeleteInventoryItem";
 import { useUpdateInventoryItem } from "../../items/useUpdateInventoryItem";
 import { CalendarItemActionBar } from "../components/CalendarItemActionBar";
 import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
@@ -75,6 +76,7 @@ export const ExpiryCalendarPage = () => {
 
     const queryClient = useQueryClient();
     const updateMutation = useUpdateInventoryItem();
+    const deleteMutation = useDeleteInventoryItem();
 
     // The full selected item (incl. quantity, which isn't in the FullCalendar event props).
     const selectedItem = items?.find((item) => item.id === selectedId) ?? null;
@@ -229,6 +231,24 @@ export const ExpiryCalendarPage = () => {
         setEditing(false);
     };
 
+    // Delete the selected item. The shared hook surfaces the undo toast and keeps both the
+    // inventory-items and expiry-calendar queries in sync. Drop the selection immediately so
+    // the action bar slides out without waiting for the calendar refetch.
+    const handleDelete = () => {
+        if (!selectedItem) {
+            return;
+        }
+        deleteMutation.mutate({
+            path: {
+                householdId,
+                inventoryId: selectedItem.inventoryId,
+                itemId: selectedItem.id,
+            },
+        });
+        setEditing(false);
+        setSelectedId(null);
+    };
+
     const handleEventClick = (info: EventClickArg) => {
         // Stop the wrapper's clear-on-empty handler from firing for this same click.
         info.jsEvent.stopPropagation();
@@ -380,6 +400,7 @@ export const ExpiryCalendarPage = () => {
                 item={selectedItem}
                 editing={editing}
                 onEdit={() => setEditing(true)}
+                onDelete={handleDelete}
                 onCancelEdit={() => setEditing(false)}
                 onSave={handleSave}
                 isSaving={updateMutation.isPending}
