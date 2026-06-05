@@ -201,6 +201,8 @@
         "completed": "Abgeschlossen",
         "pending": "Ausstehend",
         "noItems": "Keine Elemente in dieser Liste",
+        "searchPlaceholder": "Artikel suchen",
+        "noSearchMatches": "Keine Artikel entsprechen deiner Suche.",
         "noLists": "Noch keine Listen. Erstellen Sie Ihre erste Liste!",
         "createNewList": "Neue Einkaufsliste erstellen",
         "shoppingList": "Einkaufsliste",

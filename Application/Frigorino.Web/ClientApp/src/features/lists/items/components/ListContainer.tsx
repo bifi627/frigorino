@@ -1,8 +1,10 @@
-import { Container } from "@mui/material";
+import { Container, Paper, Typography } from "@mui/material";
 import { forwardRef } from "react";
+import { useTranslation } from "react-i18next";
 import { featureContentPx } from "../../../../theme";
 import { SortableList } from "../../../../components/sortables/SortableList";
 import type { ListItemResponse } from "../../../../lib/api";
+import { matchesQuery } from "../../../../utils/searchUtils";
 import { useDeleteListItem } from "../useDeleteListItem";
 import { useListItems } from "../useListItems";
 import { useReorderListItem } from "../useReorderListItem";
@@ -21,7 +23,13 @@ interface ListContainerProps {
     showDragHandles: boolean;
     isExtracting?: boolean;
     extractingItemId?: number | null;
+    searchQuery?: string;
 }
+
+// Items are searched across their text AND comment so both text-item notes and
+// image/document captions (which live in `comment`) are matched.
+const searchableText = (item: ListItemResponse): string =>
+    [item.text, item.comment].filter(Boolean).join(" ");
 
 export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
     (
@@ -35,6 +43,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
             showDragHandles,
             isExtracting,
             extractingItemId,
+            searchQuery = "",
         },
         ref,
     ) => {
@@ -46,6 +55,17 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
         const deleteMutation = useDeleteListItem();
         const toggleMutation = useToggleListItemStatus();
         const reorderMutation = useReorderListItem();
+        const { t } = useTranslation();
+
+        const trimmedQuery = searchQuery.trim();
+        const filterActive = trimmedQuery.length > 0;
+        const visibleItems = filterActive
+            ? items.filter((item) =>
+                  matchesQuery(searchableText(item), trimmedQuery),
+              )
+            : items;
+        const showNoMatches =
+            filterActive && !isLoading && !error && visibleItems.length === 0;
 
         return (
             <Container
@@ -59,41 +79,60 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                     minHeight: 0,
                 }}
             >
-                <SortableList
-                    items={items}
-                    isLoading={isLoading}
-                    error={error}
-                    onReorder={async (itemId, afterId) => {
-                        await reorderMutation.mutateAsync({
-                            path: { householdId, listId, itemId },
-                            body: { afterId },
-                        });
-                    }}
-                    onToggleStatus={async (itemId) => {
-                        await toggleMutation.mutateAsync({
-                            path: { householdId, listId, itemId },
-                        });
-                    }}
-                    onEdit={onEdit}
-                    onDelete={async (itemId) => {
-                        await deleteMutation.mutateAsync({
-                            path: { householdId, listId, itemId },
-                        });
-                    }}
-                    editingItem={editingItem}
-                    showDragHandles={showDragHandles}
-                    showCheckbox={true}
-                    isItemProcessing={(item) =>
-                        Boolean(isExtracting) && item.id === extractingItemId
-                    }
-                    renderContent={(item) => (
-                        <ListItemContent
-                            item={item}
-                            onEditQuantity={() => onEditQuantity(item)}
-                            onEditComment={() => onEditComment(item)}
-                        />
-                    )}
-                />
+                {showNoMatches ? (
+                    <Paper
+                        elevation={0}
+                        data-testid="list-search-no-results"
+                        sx={{
+                            p: 3,
+                            textAlign: "center",
+                            border: "2px dashed",
+                            borderColor: "divider",
+                            mx: 1,
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary">
+                            {t("lists.noSearchMatches")}
+                        </Typography>
+                    </Paper>
+                ) : (
+                    <SortableList
+                        items={visibleItems}
+                        isLoading={isLoading}
+                        error={error}
+                        onReorder={async (itemId, afterId) => {
+                            await reorderMutation.mutateAsync({
+                                path: { householdId, listId, itemId },
+                                body: { afterId },
+                            });
+                        }}
+                        onToggleStatus={async (itemId) => {
+                            await toggleMutation.mutateAsync({
+                                path: { householdId, listId, itemId },
+                            });
+                        }}
+                        onEdit={onEdit}
+                        onDelete={async (itemId) => {
+                            await deleteMutation.mutateAsync({
+                                path: { householdId, listId, itemId },
+                            });
+                        }}
+                        editingItem={editingItem}
+                        showDragHandles={showDragHandles && !filterActive}
+                        showCheckbox={true}
+                        isItemProcessing={(item) =>
+                            Boolean(isExtracting) &&
+                            item.id === extractingItemId
+                        }
+                        renderContent={(item) => (
+                            <ListItemContent
+                                item={item}
+                                onEditQuantity={() => onEditQuantity(item)}
+                                onEditComment={() => onEditComment(item)}
+                            />
+                        )}
+                    />
+                )}
             </Container>
         );
     },

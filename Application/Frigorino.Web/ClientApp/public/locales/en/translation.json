@@ -201,6 +201,8 @@
         "completed": "Completed",
         "pending": "Pending",
         "noItems": "No items in this list",
+        "searchPlaceholder": "Search items",
+        "noSearchMatches": "No items match your search.",
         "noLists": "No lists yet. Create your first list!",
         "createNewList": "Create New Shopping List",
         "shoppingList": "Shopping List",
