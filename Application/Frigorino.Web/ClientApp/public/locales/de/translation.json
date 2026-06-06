@@ -164,6 +164,7 @@
         "searchPlaceholder": "Artikel suchen",
         "noSearchMatches": "Keine Artikel passen zu deiner Suche.",
         "noLists": "Noch keine Listen. Erstelle deine erste Liste!",
+        "showMoreChecked": "{{count}} weitere anzeigen",
         "createNewList": "Neue Einkaufsliste erstellen",
         "shoppingList": "Einkaufsliste",
         "loadingList": "Liste wird geladen...",

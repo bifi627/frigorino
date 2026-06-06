@@ -18,6 +18,7 @@ import {
 import {
     Alert,
     Box,
+    Button,
     CircularProgress,
     Divider,
     List,
@@ -36,6 +37,10 @@ import { SortableListItem } from "./SortableListItem";
 
 // dnd-kit uses string ids; entity ids are number | string | null.
 const idStr = (item: SortableItemInterface) => item.id?.toString();
+
+// Checked items are rarely revisited; render them in pages to keep the DOM small
+// (some lists carry ~1000 checked items, which tanks render on low-spec devices).
+const CHECKED_PAGE_SIZE = 25;
 
 // Minimal interface that sortable items must implement
 export interface SortableItemInterface {
@@ -88,6 +93,10 @@ export const SortableList = <T extends SortableItemInterface>({
 }: SortableListProps<T>) => {
     const { t } = useTranslation();
     const [activeItem, setActiveItem] = useState<T | null>(null);
+    // How many checked items are currently rendered; grows by CHECKED_PAGE_SIZE
+    // when the user taps "Show more". Resets on remount (e.g. navigating away).
+    const [visibleCheckedCount, setVisibleCheckedCount] =
+        useState(CHECKED_PAGE_SIZE);
     // Live drag order: the library reorders this in onDragOver so the rows shift
     // symmetrically as the dragged item crosses each neighbour, and it holds the
     // dropped order until the server/optimistic data resyncs (no snap-back). Null
@@ -178,6 +187,10 @@ export const SortableList = <T extends SortableItemInterface>({
     // What actually renders: the live drag order while dragging, otherwise props.
     const displayUnchecked = dragOrder?.unchecked ?? uncheckedItems;
     const displayChecked = dragOrder?.checked ?? checkedItems;
+
+    // Only the first N checked items are mounted; the rest hide behind "Show more".
+    const visibleChecked = displayChecked.slice(0, visibleCheckedCount);
+    const remainingChecked = displayChecked.length - visibleChecked.length;
 
     // Drop the live order whenever the underlying data changes — including the
     // optimistic update fired by the drop itself, which now matches the dragged
@@ -362,7 +375,7 @@ export const SortableList = <T extends SortableItemInterface>({
                     }}
                 >
                     <SortableContext
-                        items={checkedItemIds}
+                        items={checkedItemIds.slice(0, visibleCheckedCount)}
                         strategy={verticalListSortingStrategy}
                     >
                         <List
@@ -372,7 +385,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                 "& .MuiListItem-root": { mb: 0.5 },
                             }}
                         >
-                            {displayChecked.map((item) => (
+                            {visibleChecked.map((item) => (
                                 <SortableListItem
                                     key={item.id}
                                     item={item}
@@ -392,6 +405,32 @@ export const SortableList = <T extends SortableItemInterface>({
                             ))}
                         </List>
                     </SortableContext>
+                    {remainingChecked > 0 && (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                py: 1,
+                            }}
+                        >
+                            <Button
+                                size="small"
+                                onClick={() =>
+                                    setVisibleCheckedCount(
+                                        (c) => c + CHECKED_PAGE_SIZE,
+                                    )
+                                }
+                                data-testid="show-more-checked-button"
+                            >
+                                {t("lists.showMoreChecked", {
+                                    count: Math.min(
+                                        CHECKED_PAGE_SIZE,
+                                        remainingChecked,
+                                    ),
+                                })}
+                            </Button>
+                        </Box>
+                    )}
                 </Box>
 
                 {/* Empty State */}
