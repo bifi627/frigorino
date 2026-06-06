@@ -35,3 +35,10 @@ should carry the target household id and switch the active household to it on
 open (or the inventory route should detect the mismatch and switch) before
 issuing the scoped query. Root cause is the implicit household-context model —
 see "Household context is implicit (LastActiveHouseholdId)…" in `TECH_DEBT.md`.
+
+## Calendar/date picker is not translated or ignores the user's selected language
+
+The calendar (date picker) does not respect the user's selected language — it
+renders untranslated (month/day names, labels) instead of following the active
+i18next locale (`en`/`de`). The picker's locale needs to be wired to the current
+i18n language so it switches alongside the rest of the UI.
