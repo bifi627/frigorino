@@ -83,6 +83,11 @@ public class PromoteSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I clear the expiry date for {string}")]
     public async Task WhenIClearTheExpiryDateFor(string itemText)
     {
-        await ctx.Page.GetByTestId($"promote-row-expiry-{itemText}").FillAsync("");
+        // Masked DatePicker field: select-all + Delete clears every section. FillAsync("")
+        // does not work on a segmented field.
+        var input = ctx.Page.GetByTestId($"promote-row-expiry-{itemText}");
+        await input.ClickAsync();
+        await input.PressAsync("ControlOrMeta+a");
+        await input.PressAsync("Delete");
     }
 }
