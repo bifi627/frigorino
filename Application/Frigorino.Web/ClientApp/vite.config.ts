@@ -1,7 +1,8 @@
 import { fileURLToPath, URL } from "node:url";
 
+import babel from "@rolldown/plugin-babel";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import plugin from "@vitejs/plugin-react";
+import plugin, { reactCompilerPreset } from "@vitejs/plugin-react";
 import child_process from "child_process";
 import fs from "fs";
 import path from "path";
@@ -96,6 +97,12 @@ export default defineConfig(({ command }) => ({
             exclude: compressionExclude,
         }),
         plugin(),
+        // React Compiler. The oxc-based plugin-react (Vite 8 / Rolldown) transforms via
+        // oxc, not Babel, so the compiler — which only ships as a Babel plugin — runs as a
+        // dedicated Babel pass via @rolldown/plugin-babel. The app targets React 19, the
+        // compiler's native runtime, so no `target`/react-compiler-runtime shim is needed.
+        // Opt out of a file with "use no memo".
+        babel({ presets: [reactCompilerPreset()] }),
     ],
     resolve: {
         alias: {
