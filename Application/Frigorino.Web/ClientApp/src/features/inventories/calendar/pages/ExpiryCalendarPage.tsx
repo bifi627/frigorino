@@ -1,6 +1,7 @@
 import dayGridPlugin from "@fullcalendar/daygrid";
 import FullCalendar from "@fullcalendar/react";
 import type { EventClickArg, EventContentArg } from "@fullcalendar/core";
+import deLocale from "@fullcalendar/core/locales/de";
 import { Search, Tune } from "@mui/icons-material";
 import {
     Alert,
@@ -45,7 +46,7 @@ import "../expiryCalendar.css";
 export const ExpiryCalendarPage = () => {
     const theme = useTheme();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { data: currentHousehold } = useCurrentHousehold();
     const householdId = currentHousehold?.householdId ?? 0;
 
@@ -381,6 +382,11 @@ export const ExpiryCalendarPage = () => {
                             plugins={[dayGridPlugin]}
                             initialView="dayGridMonth"
                             height="auto"
+                            // Localize month/weekday names and the prev/next/today buttons.
+                            // English is built in; German locale data is registered explicitly.
+                            // i18n normalizes to language-only codes (de/en) via load:"languageOnly".
+                            locales={[deLocale]}
+                            locale={i18n.language}
                             firstDay={1}
                             dayMaxEvents={false}
                             dayMaxEventRows={false}
