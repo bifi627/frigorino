@@ -18,6 +18,7 @@ import {
 import {
     Alert,
     Box,
+    Button,
     CircularProgress,
     Divider,
     List,
@@ -36,6 +37,10 @@ import { SortableListItem } from "./SortableListItem";
 
 // dnd-kit uses string ids; entity ids are number | string | null.
 const idStr = (item: SortableItemInterface) => item.id?.toString();
+
+// Checked items are rarely revisited; render them in pages to keep the DOM small
+// (some lists carry ~1000 checked items, which tanks render on low-spec devices).
+const CHECKED_PAGE_SIZE = 25;
 
 // Minimal interface that sortable items must implement
 export interface SortableItemInterface {
@@ -88,14 +93,16 @@ export const SortableList = <T extends SortableItemInterface>({
 }: SortableListProps<T>) => {
     const { t } = useTranslation();
     const [activeItem, setActiveItem] = useState<T | null>(null);
-    // Live drag order: the library reorders this in onDragOver so the rows shift
-    // symmetrically as the dragged item crosses each neighbour, and it holds the
-    // dropped order until the server/optimistic data resyncs (no snap-back). Null
-    // when idle — the list then renders straight from props.
-    const [dragOrder, setDragOrder] = useState<{
-        unchecked: T[];
-        checked: T[];
-    } | null>(null);
+    // How many checked items are currently rendered; grows by CHECKED_PAGE_SIZE
+    // when the user taps "Show more". Resets on remount (e.g. navigating away).
+    const [visibleCheckedCount, setVisibleCheckedCount] =
+        useState(CHECKED_PAGE_SIZE);
+    // Live drag order for the unchecked section: the library reorders this in
+    // onDragOver so the rows shift symmetrically as the dragged item crosses each
+    // neighbour, and it holds the dropped order until the server/optimistic data
+    // resyncs (no snap-back). Null when idle — the list then renders straight from
+    // props. Only unchecked items are draggable, so this is a single flat array.
+    const [dragOrder, setDragOrder] = useState<T[] | null>(null);
     // Guards the resync effect so a data refetch mid-drag (e.g. a previous
     // reorder's debounced invalidation) can't yank dragOrder out from under the
     // pointer. A ref, not state, so flipping it never triggers a render.
@@ -176,8 +183,13 @@ export const SortableList = <T extends SortableItemInterface>({
     }, [items, sortMode, skipInternalSort]);
 
     // What actually renders: the live drag order while dragging, otherwise props.
-    const displayUnchecked = dragOrder?.unchecked ?? uncheckedItems;
-    const displayChecked = dragOrder?.checked ?? checkedItems;
+    // Checked items never drag, so they always render straight from props.
+    const displayUnchecked = dragOrder ?? uncheckedItems;
+    const displayChecked = checkedItems;
+
+    // Only the first N checked items are mounted; the rest hide behind "Show more".
+    const visibleChecked = displayChecked.slice(0, visibleCheckedCount);
+    const remainingChecked = displayChecked.length - visibleChecked.length;
 
     // Drop the live order whenever the underlying data changes — including the
     // optimistic update fired by the drop itself, which now matches the dragged
@@ -189,44 +201,29 @@ export const SortableList = <T extends SortableItemInterface>({
         }
     }, [items]);
 
-    const sectionOf = useCallback(
-        (order: { unchecked: T[]; checked: T[] }, id: string) =>
-            order.unchecked.some((item) => idStr(item) === id)
-                ? "unchecked"
-                : "checked",
-        [],
-    );
-
     const handleDragStart = useCallback(
         (event: DragStartEvent) => {
             const item = items.find((item) => idStr(item) === event.active.id);
             setActiveItem(item || null);
-            setDragOrder({ unchecked: uncheckedItems, checked: checkedItems });
+            setDragOrder(uncheckedItems);
             isDraggingRef.current = true;
         },
-        [items, uncheckedItems, checkedItems],
+        [items, uncheckedItems],
     );
 
-    const handleDragOver = useCallback(
-        (event: DragOverEvent) => {
-            const { active, over } = event;
-            if (!over || active.id === over.id) return;
+    const handleDragOver = useCallback((event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
 
-            setDragOrder((prev) => {
-                if (!prev) return prev;
-                const key = sectionOf(prev, active.id.toString());
-                const section = prev[key];
-                const from = section.findIndex(
-                    (item) => idStr(item) === active.id,
-                );
-                const to = section.findIndex((item) => idStr(item) === over.id);
-                // Skip when the pointer is over the other section or nothing moved.
-                if (from === -1 || to === -1 || from === to) return prev;
-                return { ...prev, [key]: arrayMove(section, from, to) };
-            });
-        },
-        [sectionOf],
-    );
+        setDragOrder((prev) => {
+            if (!prev) return prev;
+            const from = prev.findIndex((item) => idStr(item) === active.id);
+            const to = prev.findIndex((item) => idStr(item) === over.id);
+            // Skip when nothing moved (over.id can be a non-item, e.g. a gap).
+            if (from === -1 || to === -1 || from === to) return prev;
+            return arrayMove(prev, from, to);
+        });
+    }, []);
 
     const handleDragEnd = useCallback(
         (event: DragEndEvent) => {
@@ -240,10 +237,8 @@ export const SortableList = <T extends SortableItemInterface>({
             }
 
             // Persist the order the user actually sees: afterId is the item now
-            // directly above the dragged one in its section (0 = top of section).
-            const key = sectionOf(dragOrder, active.id.toString());
-            const section = dragOrder[key];
-            const index = section.findIndex(
+            // directly above the dragged one (0 = top of the unchecked section).
+            const index = dragOrder.findIndex(
                 (item) => idStr(item) === active.id,
             );
             if (index === -1) {
@@ -251,12 +246,12 @@ export const SortableList = <T extends SortableItemInterface>({
                 return;
             }
 
-            const afterId = index > 0 ? Number(section[index - 1].id) : 0;
+            const afterId = index > 0 ? Number(dragOrder[index - 1].id) : 0;
             // Keep dragOrder in place — the resync effect clears it once the
             // optimistic update lands, avoiding a flash back to the old order.
             void onReorder(Number(active.id), afterId);
         },
-        [dragOrder, sectionOf, onReorder],
+        [dragOrder, onReorder],
     );
 
     const handleEditItem = useCallback(
@@ -284,11 +279,6 @@ export const SortableList = <T extends SortableItemInterface>({
     const uncheckedItemIds = useMemo(
         () => displayUnchecked.map((item) => idStr(item) || "0"),
         [displayUnchecked],
-    );
-
-    const checkedItemIds = useMemo(
-        () => displayChecked.map((item) => idStr(item) || "0"),
-        [displayChecked],
     );
 
     if (isLoading) {
@@ -361,37 +351,58 @@ export const SortableList = <T extends SortableItemInterface>({
                         bgcolor: "success.25",
                     }}
                 >
-                    <SortableContext
-                        items={checkedItemIds}
-                        strategy={verticalListSortingStrategy}
+                    {/* Checked items are never reordered, so they render as plain
+                        (non-sortable) rows — no SortableContext/useSortable. This
+                        keeps the DOM and dnd-kit registration cost down on lists
+                        with hundreds of checked items. */}
+                    <List
+                        data-section="checked-items"
+                        sx={{
+                            py: 0,
+                            "& .MuiListItem-root": { mb: 0.5 },
+                        }}
                     >
-                        <List
-                            data-section="checked-items"
+                        {visibleChecked.map((item) => (
+                            <SortableListItem
+                                key={item.id}
+                                item={item}
+                                onToggleStatus={handleToggleStatus}
+                                onEdit={handleEditItem}
+                                onDelete={handleDeleteItem}
+                                isEditing={externalEditingItem?.id === item.id}
+                                isProcessing={isItemProcessing?.(item) ?? false}
+                                showCheckbox={showCheckbox}
+                                showDragHandles={false}
+                                renderContent={renderContent}
+                            />
+                        ))}
+                    </List>
+                    {remainingChecked > 0 && (
+                        <Box
                             sx={{
-                                py: 0,
-                                "& .MuiListItem-root": { mb: 0.5 },
+                                display: "flex",
+                                justifyContent: "center",
+                                py: 1,
                             }}
                         >
-                            {displayChecked.map((item) => (
-                                <SortableListItem
-                                    key={item.id}
-                                    item={item}
-                                    onToggleStatus={handleToggleStatus}
-                                    onEdit={handleEditItem}
-                                    onDelete={handleDeleteItem}
-                                    isEditing={
-                                        externalEditingItem?.id === item.id
-                                    }
-                                    isProcessing={
-                                        isItemProcessing?.(item) ?? false
-                                    }
-                                    showCheckbox={showCheckbox}
-                                    showDragHandles={showDragHandles}
-                                    renderContent={renderContent}
-                                />
-                            ))}
-                        </List>
-                    </SortableContext>
+                            <Button
+                                size="small"
+                                onClick={() =>
+                                    setVisibleCheckedCount(
+                                        (c) => c + CHECKED_PAGE_SIZE,
+                                    )
+                                }
+                                data-testid="show-more-checked-button"
+                            >
+                                {t("lists.showMoreChecked", {
+                                    count: Math.min(
+                                        CHECKED_PAGE_SIZE,
+                                        remainingChecked,
+                                    ),
+                                })}
+                            </Button>
+                        </Box>
+                    )}
                 </Box>
 
                 {/* Empty State */}
