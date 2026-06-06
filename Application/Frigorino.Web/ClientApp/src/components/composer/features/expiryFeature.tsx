@@ -1,9 +1,10 @@
 /* eslint-disable react-refresh/only-export-components -- this module exports a feature
    descriptor (non-component) alongside local presentational components. */
-import { CalendarToday, Clear, Today } from "@mui/icons-material";
-import { Box, Chip, IconButton, TextField } from "@mui/material";
+import { CalendarToday } from "@mui/icons-material";
+import { Box, Chip, IconButton } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { parseLocalDate, todayIsoDate } from "../../../utils/dateUtils";
+import { parseLocalDate } from "../../../utils/dateUtils";
+import { ExpiryDatePicker } from "../../ExpiryDatePicker";
 import { defineModifier } from "../defineFeature";
 import type { FeatureSlot } from "../types";
 
@@ -58,43 +59,15 @@ const ExpiryPanel = ({
     setValue,
     disabled,
 }: FeatureSlot<string | null>) => {
-    const { t } = useTranslation();
     return (
-        <Box
-            sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                width: "100%",
-                p: 1,
-            }}
-            onClick={(e) => e.stopPropagation()}
-        >
-            <TextField
+        <Box sx={{ width: "100%", p: 1 }} onClick={(e) => e.stopPropagation()}>
+            <ExpiryDatePicker
                 fullWidth
-                variant="outlined"
-                placeholder={t("common.date")}
-                type="date"
-                value={value ?? ""}
-                onChange={(e) => setValue(e.target.value || null)}
+                value={value}
+                onChange={setValue}
                 disabled={disabled}
-                size="small"
+                dataTestId="composer-expiry-input"
             />
-            <IconButton
-                onClick={() => setValue(todayIsoDate())}
-                title={t("common.setToday")}
-                sx={{ minWidth: 44, minHeight: 44 }}
-            >
-                <Today fontSize="small" />
-            </IconButton>
-            <IconButton
-                onClick={() => setValue(null)}
-                disabled={!value}
-                title={t("common.clear")}
-                sx={{ minWidth: 44, minHeight: 44 }}
-            >
-                <Clear fontSize="small" />
-            </IconButton>
         </Box>
     );
 };
