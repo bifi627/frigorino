@@ -34,8 +34,9 @@ button in one component.
 
 ### 1. Dependencies (caret-minor, per the project pinning rule)
 
-- `@mui/x-date-pickers` `^8.x` (current major).
-- `date-fns` `^4.x` — the date adapter.
+- `@mui/x-date-pickers` `^9.4.0` — verified current `latest`; its peer deps accept
+  `@mui/material ^9` (the project's version), `date-fns ^4`, and React 19.
+- `date-fns` `^4.4.0` — the date adapter.
   - Chosen over dayjs/luxon/moment: tree-shakeable pure functions, matches the existing
     `Intl` / `parseLocalDate` style in `dateUtils.ts`, no global mutation.
 
