@@ -43,8 +43,14 @@ public class ComposerSteps(ScenarioContextHolder ctx)
         // parts = [yyyy, MM, dd] -> "MMddyyyy".
         var parts = isoDate.Split('-');
         var digits = $"{parts[1]}{parts[2]}{parts[0]}";
-        await ctx.Page.GetByTestId("composer-expiry-input").ClickAsync();
+        var field = ctx.Page.GetByTestId("composer-expiry-input");
+        await field.ClickAsync();
         await ctx.Page.Keyboard.TypeAsync(digits);
+        // Confirm every section landed (focus could miss the first section, or a digit drop)
+        // before moving on — the value-bearing <input> holds the localized MM/dd/yyyy string.
+        await Assertions
+            .Expect(field.Locator("input"))
+            .ToHaveValueAsync($"{parts[1]}/{parts[2]}/{parts[0]}");
     }
 
     [When("I start editing the item")]
