@@ -69,6 +69,18 @@ export function todayIsoDate(): string {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+// Date -> "YYYY-MM-DD" in LOCAL time, the inverse of parseLocalDate. Returns null for a
+// null/invalid Date (e.g. a half-typed value from a date picker field), so callers can keep
+// emitting null until the user finishes a valid date. Local-time on purpose — never UTC,
+// which would shift the day in non-UTC timezones (same reasoning as todayIsoDate).
+export function formatIsoDate(date: Date | null): string | null {
+    if (date === null || Number.isNaN(date.getTime())) {
+        return null;
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 // Whole-day difference between an expiry calendar date and today, both anchored at local midnight.
 // Math.round absorbs the ±1h DST wobble so boundaries land on exact day counts.
 function diffInDays(expiryDate: string): number {

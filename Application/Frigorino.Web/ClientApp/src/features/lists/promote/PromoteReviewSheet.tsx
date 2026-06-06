@@ -24,6 +24,7 @@ import {
 } from "../../../components/composer";
 import type { QuantityUnit } from "../../../lib/api";
 import type { PendingPromotionResponse } from "../../../lib/api/types.gen";
+import { ExpiryDatePicker } from "../../../components/ExpiryDatePicker";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
 import { getExpiryInfo } from "../../../utils/dateUtils";
 import { usePendingPromotions } from "./usePendingPromotions";
@@ -406,25 +407,18 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                         </TextField>
                     </Stack>
                 )}
-                <TextField
+                <ExpiryDatePicker
                     fullWidth
-                    size="small"
-                    type="date"
+                    value={draft.expiry || null}
+                    onChange={(v) => onChange({ expiry: v ?? "" })}
                     label={t("promote.expiry")}
-                    value={draft.expiry}
-                    onChange={(e) => onChange({ expiry: e.target.value })}
                     error={expiryMissing}
                     helperText={
                         expiryMissing
                             ? t("promote.expiryRequired")
                             : info?.humanReadable || " "
                     }
-                    slotProps={{
-                        inputLabel: { shrink: true },
-                        htmlInput: {
-                            "data-testid": `promote-row-expiry-${entry.text}`,
-                        },
-                    }}
+                    dataTestId={`promote-row-expiry-${entry.text}`}
                 />
             </Stack>
         </Box>

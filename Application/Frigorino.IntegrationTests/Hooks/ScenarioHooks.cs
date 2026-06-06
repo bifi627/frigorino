@@ -25,6 +25,11 @@ public class ScenarioHooks(ScenarioContextHolder ctx, TestUserContext userContex
         {
             BaseURL = factory.BaseAddress,
             IgnoreHTTPSErrors = true,
+            // Pin the browser locale so the app's i18n language detection is deterministic
+            // across host machines (a German dev box otherwise runs the suite in German).
+            // English fixes the MUI X date field mask to MM/dd/yyyy, which the date-entry
+            // steps rely on.
+            Locale = "en-US",
         });
 
         // Bypass Firebase auth guard: inject a fake user before any page JS runs

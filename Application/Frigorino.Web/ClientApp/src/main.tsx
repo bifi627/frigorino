@@ -41,6 +41,7 @@ import {
     ThemeProvider,
 } from "@mui/material";
 import { Toaster } from "sonner";
+import { AppLocalizationProvider } from "./common/AppLocalizationProvider";
 import { routeTree } from "./routeTree.gen";
 import { appTheme } from "./theme";
 
@@ -73,22 +74,24 @@ createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={appTheme}>
                 <CssBaseline />
-                <Suspense
-                    fallback={
-                        <Box
-                            sx={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                minHeight: "100vh",
-                            }}
-                        >
-                            <CircularProgress />
-                        </Box>
-                    }
-                >
-                    <RouterProvider router={router} />
-                </Suspense>
+                <AppLocalizationProvider>
+                    <Suspense
+                        fallback={
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    minHeight: "100vh",
+                                }}
+                            >
+                                <CircularProgress />
+                            </Box>
+                        }
+                    >
+                        <RouterProvider router={router} />
+                    </Suspense>
+                </AppLocalizationProvider>
                 {/* Theme sonner to match the app: dark surfaces, green action
                     button, and the close button pulled inline to the right instead
                     of floating at the top-left corner. Driven by theme tokens (this
