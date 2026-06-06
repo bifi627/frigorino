@@ -53,7 +53,8 @@
       "Bash(bash scripts/start-server.sh --project-dir \"C:/Repositories/frigorino\")",
       "WebFetch(domain:www.nuget.org)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git fetch *)"
     ],
     "deny": [],
     "ask": []
