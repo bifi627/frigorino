@@ -1,5 +1,5 @@
+import { Box } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import type { InputHTMLAttributes } from "react";
 import { formatIsoDate, parseLocalDate } from "../utils/dateUtils";
 
 interface ExpiryDatePickerProps {
@@ -12,7 +12,12 @@ interface ExpiryDatePickerProps {
     error?: boolean;
     helperText?: string;
     fullWidth?: boolean;
-    /** Forwarded to the underlying <input> so Playwright can target/type into it. */
+    /**
+     * Test handle placed on the wrapping element. The MUI X field renders its value into a
+     * hidden, aria-hidden <input> while editing happens in a separate visible "sections"
+     * container, so a testid on the input itself isn't clickable — Playwright clicks this
+     * wrapper to focus the field, then types.
+     */
     dataTestId?: string;
 }
 
@@ -30,29 +35,26 @@ export const ExpiryDatePicker = ({
     dataTestId,
 }: ExpiryDatePickerProps) => {
     const dateValue = value ? parseLocalDate(value) : null;
-    // data-* attributes are valid on the rendered <input> at runtime, but React's typed
-    // htmlInput slot (InputHTMLAttributes) doesn't model them outside JSX — hence the cast.
-    const htmlInput = dataTestId
-        ? ({
-              "data-testid": dataTestId,
-          } as unknown as InputHTMLAttributes<HTMLInputElement>)
-        : undefined;
     return (
-        <DatePicker
-            label={label}
-            value={dateValue}
-            disabled={disabled}
-            onChange={(next) => onChange(formatIsoDate(next))}
-            slotProps={{
-                field: { clearable: true },
-                textField: {
-                    fullWidth,
-                    size: "small",
-                    error,
-                    helperText,
-                    slotProps: { htmlInput },
-                },
-            }}
-        />
+        <Box
+            data-testid={dataTestId}
+            sx={{ width: fullWidth ? "100%" : undefined }}
+        >
+            <DatePicker
+                label={label}
+                value={dateValue}
+                disabled={disabled}
+                onChange={(next) => onChange(formatIsoDate(next))}
+                slotProps={{
+                    field: { clearable: true },
+                    textField: {
+                        fullWidth,
+                        size: "small",
+                        error,
+                        helperText,
+                    },
+                }}
+            />
+        </Box>
     );
 };

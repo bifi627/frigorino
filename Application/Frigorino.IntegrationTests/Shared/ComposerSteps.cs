@@ -37,14 +37,14 @@ public class ComposerSteps(ScenarioContextHolder ctx)
     [When("I set the expiry date to {string}")]
     public async Task WhenISetTheExpiryDateTo(string isoDate)
     {
-        // The MUI X DatePicker renders a masked, segmented field (MM/dd/yyyy in the en test
-        // env), not a raw native date input — so type the digits in locale order rather than
-        // FillAsync-ing the ISO string. parts = [yyyy, MM, dd] -> "MMddyyyy".
+        // The MUI X DatePicker renders a masked, segmented field (MM/dd/yyyy in the en-US test
+        // locale), not a raw native date input — so click the wrapper to focus the field and
+        // type the digits in locale order rather than FillAsync-ing the ISO string.
+        // parts = [yyyy, MM, dd] -> "MMddyyyy".
         var parts = isoDate.Split('-');
         var digits = $"{parts[1]}{parts[2]}{parts[0]}";
-        var input = ctx.Page.GetByTestId("composer-expiry-input");
-        await input.ClickAsync();
-        await input.PressSequentiallyAsync(digits);
+        await ctx.Page.GetByTestId("composer-expiry-input").ClickAsync();
+        await ctx.Page.Keyboard.TypeAsync(digits);
     }
 
     [When("I start editing the item")]
