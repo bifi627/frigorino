@@ -14,22 +14,30 @@ export default tseslint.config([
         extends: [
             js.configs.recommended,
             tseslint.configs.recommended,
+            // Frigorino is on React Compiler (vite.config.ts), so enable the full
+            // react-hooks v7 rule set — the compiler rules (use-memo,
+            // preserve-manual-memoization, set-state-in-effect, immutability, …)
+            // catch the Rules-of-React violations the compiler can't safely optimize.
+            reactHooks.configs.flat["recommended-latest"],
             reactRefresh.configs.vite({ allowExportNames: ["Route"] }),
             eslintConfigPrettier,
         ],
-        plugins: { "react-hooks": reactHooks },
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
         },
         rules: {
-            // eslint-plugin-react-hooks v7's `flat.recommended` now bundles 14
-            // React Compiler rules (use-memo, preserve-manual-memoization,
-            // set-state-in-effect, etc.) that flag legitimate non-compiler code.
-            // Frigorino isn't on React Compiler, so enable just the two stable
-            // hooks rules. Re-evaluate when adopting the compiler.
-            "react-hooks/rules-of-hooks": "error",
-            "react-hooks/exhaustive-deps": "warn",
+            // TEMPORARY (see TECH_DEBT.md "React Compiler lint cleanup"): downgraded
+            // from the recommended-latest `error` to `warn` for the three rules the
+            // existing code currently trips, so CI stays green while React Compiler is
+            // adopted. None affect runtime correctness — the compiler still emits a
+            // correct bundle (set-state-in-effect is advisory; preserve-manual-memoization
+            // /use-memo just make the compiler conservatively skip those spots). The
+            // correctness-critical rules (purity, immutability, refs, set-state-in-render)
+            // stay at `error`. Flip these back to `error` once the listed sites are fixed.
+            "react-hooks/set-state-in-effect": "warn",
+            "react-hooks/preserve-manual-memoization": "warn",
+            "react-hooks/use-memo": "warn",
         },
     },
     {
