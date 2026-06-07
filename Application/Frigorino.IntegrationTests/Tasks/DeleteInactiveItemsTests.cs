@@ -75,11 +75,13 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             await db.SaveChangesAsync();
 
             // Timestamps set before Add are preserved (the SaveChanges override only stamps when default).
+            // Distinct Rank per active item in a section: the partial unique index
+            // (ListId, Status, Rank WHERE IsActive) rejects two active items sharing the default "".
             db.ListItems.AddRange(
                 new ListItem { ListId = list.Id, Text = "inactive", IsActive = false, Status = false, CreatedAt = now.AddDays(-1), UpdatedAt = now.AddDays(-1) },
-                new ListItem { ListId = list.Id, Text = "stale done", IsActive = true, Status = true, CreatedAt = now.AddDays(-40), UpdatedAt = now.AddDays(-31) },
-                new ListItem { ListId = list.Id, Text = "recent done", IsActive = true, Status = true, CreatedAt = now.AddDays(-2), UpdatedAt = now.AddDays(-2) },
-                new ListItem { ListId = list.Id, Text = "open old", IsActive = true, Status = false, CreatedAt = now.AddDays(-100), UpdatedAt = now.AddDays(-100) });
+                new ListItem { ListId = list.Id, Text = "stale done", IsActive = true, Status = true, Rank = "a0", CreatedAt = now.AddDays(-40), UpdatedAt = now.AddDays(-31) },
+                new ListItem { ListId = list.Id, Text = "recent done", IsActive = true, Status = true, Rank = "a1", CreatedAt = now.AddDays(-2), UpdatedAt = now.AddDays(-2) },
+                new ListItem { ListId = list.Id, Text = "open old", IsActive = true, Status = false, Rank = "a0", CreatedAt = now.AddDays(-100), UpdatedAt = now.AddDays(-100) });
             await db.SaveChangesAsync();
 
             // Inactive household WITH active children — exercises the FK cascade path: deleting the

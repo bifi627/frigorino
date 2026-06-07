@@ -38,6 +38,18 @@ Feature: List Items API
     Then the API response status is 200
     And the API items of "Weekly Groceries" appear in order: "Milk, Eggs, Bread"
 
+  # Regression: the old integer SortOrder collapsed to a duplicate after repeated inserts into one
+  # slot, so the order "wouldn't stick" on refetch. Fractional-index ranks never collapse.
+  Scenario: Repeated reorders into the same slot persist across refetch
+    Given there is a list named "Weekly Groceries" with item "A"
+    And the list "Weekly Groceries" also has item "B"
+    And the list "Weekly Groceries" also has item "C"
+    And the list "Weekly Groceries" also has item "D"
+    When I PATCH "D" after "A" in "Weekly Groceries" via the API
+    And I PATCH "C" after "A" in "Weekly Groceries" via the API
+    And I PATCH "B" after "A" in "Weekly Groceries" via the API
+    Then the API items of "Weekly Groceries" appear in order: "A, B, C, D"
+
   Scenario: Toggling an item back to unchecked places it below other unchecked items
     Given there is a list named "Weekly Groceries" with item "Milk"
     And the list "Weekly Groceries" also has item "Bread"
