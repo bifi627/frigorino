@@ -45,7 +45,6 @@ const CHECKED_PAGE_SIZE = 25;
 // Minimal interface that sortable items must implement
 export interface SortableItemInterface {
     id?: number | string | null;
-    sortOrder?: number | null;
     status?: boolean; // For grouping checked/unchecked items
     [key: string]: unknown; // Index signature required for generic compatibility
 }
@@ -132,10 +131,10 @@ export const SortableList = <T extends SortableItemInterface>({
             }
 
             if (sortMode === "custom" || !sortMode) {
-                // Use existing sortOrder sorting
-                return itemsToSort.sort(
-                    (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0),
-                );
+                // Trust the server-provided order: items arrive already sorted by their
+                // fractional-index Rank (+ Id tiebreaker). Optimistic reorders splice the cached
+                // array into the new visual order, so array order is authoritative here.
+                return itemsToSort;
             } else if (sortMode === "expiryDateAsc") {
                 // Sort by expiry date ascending (earliest first), null dates last
                 return itemsToSort.sort((a, b) => {

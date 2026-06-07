@@ -25,14 +25,6 @@ export const useCreateListItem = () => {
             const previousItems =
                 queryClient.getQueryData<ListItemResponse[]>(queryKey);
 
-            // Append below the last unchecked item to match the server's AddItem semantics
-            // (List.ComputeAppendSortOrder: last + DefaultGap). Falls back to a sentinel so the
-            // item appears at the bottom of unchecked when the cache is empty.
-            const lastUncheckedSortOrder =
-                previousItems
-                    ?.filter((i) => !i.status)
-                    .reduce((max, i) => Math.max(max, i.sortOrder), 0) ?? 0;
-
             const tempId = Date.now();
             const optimisticItem: ListItemResponse = {
                 id: tempId,
@@ -41,7 +33,10 @@ export const useCreateListItem = () => {
                 comment: variables.body.comment ?? null,
                 quantity: null,
                 status: false,
-                sortOrder: lastUncheckedSortOrder + 1,
+                // Placeholder rank — rendering trusts array order (the item is appended at the
+                // end, i.e. bottom of unchecked, matching the server's append). The authoritative
+                // rank arrives with the create response and replaces this row in onSuccess.
+                rank: "",
                 listId: variables.path.listId,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),

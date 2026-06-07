@@ -1,8 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-    computeAppendSortOrder,
-    computeReorderSortOrder,
-} from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     getItemsQueryKey,
@@ -29,30 +25,35 @@ export const useReorderListItem = () => {
             const previousItems =
                 queryClient.getQueryData<ListItemResponse[]>(queryKey);
 
-            // Optimistic mirror of server math; see common/sortOrder.ts.
+            // The server mints the authoritative rank; optimistically we just move the dragged
+            // element to its new array position (visual order only). The real rank arrives on
+            // refetch and reconciles.
             queryClient.setQueryData<ListItemResponse[]>(queryKey, (old) => {
                 if (!old) return old;
-                const movedItem = old.find(
-                    (i) => i.id === variables.path.itemId,
-                );
-                if (!movedItem) return old;
+                const moved = old.find((i) => i.id === variables.path.itemId);
+                if (!moved) return old;
 
-                const section = old.filter(
-                    (i) =>
-                        i.status === movedItem.status && i.id !== movedItem.id,
+                const others = old.filter((i) => i.id !== moved.id);
+                const afterId = variables.body.afterId;
+                if (!afterId) {
+                    // Top of the moved item's status section.
+                    const firstSameStatus = others.findIndex(
+                        (i) => i.status === moved.status,
+                    );
+                    const insertAt =
+                        firstSameStatus === -1
+                            ? others.length
+                            : firstSameStatus;
+                    others.splice(insertAt, 0, moved);
+                    return others;
+                }
+                const anchorIdx = others.findIndex((i) => i.id === afterId);
+                others.splice(
+                    anchorIdx === -1 ? others.length : anchorIdx + 1,
+                    0,
+                    moved,
                 );
-
-                const newSortOrder = computeReorderSortOrder({
-                    section,
-                    afterId: variables.body.afterId,
-                    emptyDefault: computeAppendSortOrder([], movedItem.status),
-                });
-
-                return old.map((i) =>
-                    i.id === movedItem.id
-                        ? { ...i, sortOrder: newSortOrder }
-                        : i,
-                );
+                return others;
             });
 
             return { previousItems };

@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { computeAppendSortOrder } from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     getItemsQueryKey,
@@ -30,26 +29,34 @@ export const useToggleListItemStatus = () => {
             const previousItems =
                 queryClient.getQueryData<ListItemResponse[]>(queryKey);
 
-            // Optimistic mirror of server math; see common/sortOrder.ts.
+            // The server mints the authoritative rank; optimistically we flip the status and move
+            // the item to mirror the server's placement — checked → top of checked section,
+            // unchecked → bottom of unchecked section. The real rank arrives on refetch.
             queryClient.setQueryData<ListItemResponse[]>(queryKey, (old) => {
                 if (!old) return old;
-                const movedItem = old.find(
-                    (i) => i.id === variables.path.itemId,
-                );
-                if (!movedItem) return old;
+                const moved = old.find((i) => i.id === variables.path.itemId);
+                if (!moved) return old;
 
-                const newStatus = !movedItem.status;
-                const targetSection = old.filter((i) => i.status === newStatus);
-                const newSortOrder = computeAppendSortOrder(
-                    targetSection,
-                    newStatus,
-                );
-
-                return old.map((i) =>
-                    i.id === movedItem.id
-                        ? { ...i, status: newStatus, sortOrder: newSortOrder }
-                        : i,
-                );
+                const newStatus = !moved.status;
+                const updated = { ...moved, status: newStatus };
+                const others = old.filter((i) => i.id !== moved.id);
+                if (newStatus) {
+                    // Checked: prepend above the first checked item.
+                    const firstChecked = others.findIndex((i) => i.status);
+                    others.splice(
+                        firstChecked === -1 ? others.length : firstChecked,
+                        0,
+                        updated,
+                    );
+                } else {
+                    // Unchecked: append after the last unchecked item.
+                    let lastUnchecked = -1;
+                    others.forEach((i, idx) => {
+                        if (!i.status) lastUnchecked = idx;
+                    });
+                    others.splice(lastUnchecked + 1, 0, updated);
+                }
+                return others;
             });
 
             return { previousItems };

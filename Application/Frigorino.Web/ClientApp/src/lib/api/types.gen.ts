@@ -93,7 +93,7 @@ export type InventoryItemResponse = {
     text: string;
     quantity: null | QuantityDto;
     expiryDate: null | string;
-    sortOrder: number;
+    rank: string;
     createdAt: string;
     updatedAt: string;
     isExpiring: boolean;
@@ -129,7 +129,7 @@ export type ListItemResponse = {
     comment: null | string;
     quantity: null | QuantityDto;
     status: boolean;
-    sortOrder: number;
+    rank: string;
     createdAt: string;
     updatedAt: string;
     type: ListItemType;
@@ -1099,32 +1099,6 @@ export type ReorderItemResponses = {
 
 export type ReorderItemResponse = ReorderItemResponses[keyof ReorderItemResponses];
 
-export type CompactItemsData = {
-    body?: never;
-    path: {
-        householdId: number;
-        listId: number;
-    };
-    query?: never;
-    url: '/api/household/{householdId}/lists/{listId}/items/compact';
-};
-
-export type CompactItemsErrors = {
-    /**
-     * Not Found
-     */
-    404: unknown;
-};
-
-export type CompactItemsResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type CompactItemsResponse = CompactItemsResponses[keyof CompactItemsResponses];
-
 export type GetInventoriesData = {
     body?: never;
     path: {
@@ -1469,32 +1443,6 @@ export type ReorderInventoryItemResponses = {
 };
 
 export type ReorderInventoryItemResponse = ReorderInventoryItemResponses[keyof ReorderInventoryItemResponses];
-
-export type CompactInventoryItemsData = {
-    body?: never;
-    path: {
-        householdId: number;
-        inventoryId: number;
-    };
-    query?: never;
-    url: '/api/household/{householdId}/inventories/{inventoryId}/items/compact';
-};
-
-export type CompactInventoryItemsErrors = {
-    /**
-     * Not Found
-     */
-    404: unknown;
-};
-
-export type CompactInventoryItemsResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type CompactInventoryItemsResponse = CompactInventoryItemsResponses[keyof CompactInventoryItemsResponses];
 
 export type GetInventorySettingsData = {
     body?: never;
