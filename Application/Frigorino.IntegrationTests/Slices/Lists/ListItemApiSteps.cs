@@ -33,13 +33,6 @@ public class ListItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryRestoreListItemAsync(listId, itemId);
     }
 
-    [When("I POST compact for {string} via the API")]
-    public async Task WhenIPostCompactForViaTheApi(string listName)
-    {
-        var listId = ctx.ListIds[listName];
-        ctx.LastApiResponse = await api.TryCompactListItemsAsync(listId);
-    }
-
     [When("I PUT an all-null update to {string} in {string} via the API")]
     public async Task WhenIPutAnAllNullUpdateToViaTheApi(string itemText, string listName)
     {

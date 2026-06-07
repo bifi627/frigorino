@@ -22,14 +22,6 @@ Feature: List Items API
     Then the API response status is 204
     And the API response when getting items of "Weekly Groceries" omits "Milk"
 
-  Scenario: Compacting items preserves the existing order while renumbering
-    Given there is a list named "Weekly Groceries" with item "Milk"
-    And the list "Weekly Groceries" also has item "Bread"
-    And the list "Weekly Groceries" also has item "Eggs"
-    When I POST compact for "Weekly Groceries" via the API
-    Then the API response status is 204
-    And the API items of "Weekly Groceries" appear in order: "Milk, Bread, Eggs"
-
   Scenario: Reordering an item to the top of section via the API
     Given there is a list named "Weekly Groceries" with item "Milk"
     And the list "Weekly Groceries" also has item "Bread"

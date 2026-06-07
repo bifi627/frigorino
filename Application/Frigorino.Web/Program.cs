@@ -354,7 +354,6 @@ listItems.MapDeleteItem();
 listItems.MapRestoreItem();
 listItems.MapToggleItemStatus();
 listItems.MapReorderItem();
-listItems.MapCompactItems();
 
 var inventories = app.MapGroup("/api/household/{householdId:int}/inventories")
     .RequireAuthorization()
@@ -375,7 +374,6 @@ inventoryItems.MapUpdateInventoryItem();
 inventoryItems.MapDeleteInventoryItem();
 inventoryItems.MapRestoreInventoryItem();
 inventoryItems.MapReorderInventoryItem();
-inventoryItems.MapCompactInventoryItems();
 
 var inventorySettings = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/settings")
     .RequireAuthorization()

@@ -54,8 +54,7 @@ namespace Frigorino.Test.Domain
         public void ToggleItemStatus_Uncheck_ClearsPromotionState()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", status: true,
-                sortOrder: SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap);
+            var item = AddSeed(list, "Milk", status: true, rank: "a0");
             item.PromotionExpiryHandling = ExpiryHandling.AiRecommendsShelfLife;
             item.PromotionSuggestedExpiry = new DateOnly(2026, 6, 20);
             item.PromotionResolvedAt = new DateTime(2026, 6, 3, 0, 0, 0, DateTimeKind.Utc);
@@ -130,7 +129,7 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private ListItem AddSeed(List list, string text, bool status = false, int? sortOrder = null)
+        private ListItem AddSeed(List list, string text, bool status = false, string? rank = null)
         {
             var item = new ListItem
             {
@@ -138,9 +137,8 @@ namespace Frigorino.Test.Domain
                 ListId = list.Id,
                 Text = text,
                 Status = status,
-                SortOrder = sortOrder ?? (status
-                    ? SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap
-                    : SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap),
+                Rank = rank ?? FractionalIndex.GenerateKeyBetween(
+                    list.ListItems.Where(i => i.Status == status).Select(i => i.Rank).LastOrDefault(), null),
                 CreatedAt = DateTime.UtcNow.AddMinutes(-1),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-1),
                 IsActive = true,

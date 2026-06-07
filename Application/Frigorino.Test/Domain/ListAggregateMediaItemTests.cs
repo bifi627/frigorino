@@ -52,7 +52,7 @@ namespace Frigorino.Test.Domain
             Assert.Equal(1024, item.FileSizeBytes);
             Assert.False(item.Status);
             Assert.True(item.IsActive);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, item.SortOrder);
+            Assert.Equal("a0", item.Rank);
         }
 
         [Fact]
@@ -289,7 +289,7 @@ namespace Frigorino.Test.Domain
         // ------- lifecycle uniformity -------
 
         [Fact]
-        public void MediaItem_TogglesReordersCompacts_LikeTextItems()
+        public void MediaItem_TogglesAndReorders_LikeTextItems()
         {
             var list = NewList();
             var media = list.AddMediaItem(ListItemType.Image, null, ImageFile()).Value;
@@ -297,7 +297,6 @@ namespace Frigorino.Test.Domain
 
             Assert.True(list.ToggleItemStatus(media.Id).IsSuccess);
             Assert.True(media.Status);
-            Assert.True(list.CompactItems().IsSuccess);
             Assert.True(list.ReorderItem(media.Id, 0).IsSuccess);
         }
 

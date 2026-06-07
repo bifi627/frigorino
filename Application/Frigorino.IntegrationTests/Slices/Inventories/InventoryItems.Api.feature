@@ -22,14 +22,6 @@ Feature: Inventory Items API
     Then the API response status is 204
     And the API response when getting items of inventory "Pantry" omits "Flour"
 
-  Scenario: Compacting inventory items preserves the existing order while renumbering
-    Given there is an inventory named "Pantry" with item "Flour"
-    And the inventory "Pantry" also has item "Sugar"
-    And the inventory "Pantry" also has item "Salt"
-    When I POST compact for inventory "Pantry" via the API
-    Then the API response status is 204
-    And the API items of inventory "Pantry" appear in order: "Flour, Sugar, Salt"
-
   Scenario: Reordering an inventory item to the top of section via the API
     Given there is an inventory named "Pantry" with item "Flour"
     And the inventory "Pantry" also has item "Sugar"

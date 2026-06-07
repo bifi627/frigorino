@@ -490,44 +490,6 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        // Legacy integer-SortOrder rebalancer. Dead under fractional indexing (which never
-        // exhausts); removed together with SortOrderCalculator and the /compact slices in the
-        // follow-up cleanup task. Kept transiently so the slice that calls it still compiles.
-        public Result CompactItems()
-        {
-            var uncheckedItems = ListItems
-                .Where(i => i.IsActive && !i.Status)
-                .OrderBy(i => i.SortOrder)
-                .ToList();
-            var checkedItems = ListItems
-                .Where(i => i.IsActive && i.Status)
-                .OrderBy(i => i.SortOrder)
-                .ToList();
-
-            if (uncheckedItems.Count == 0 && checkedItems.Count == 0)
-            {
-                return Result.Ok();
-            }
-
-            var (uncheckedOrders, checkedOrders) = SortOrderCalculator.GenerateCompactedSortOrders(
-                uncheckedItems.Count,
-                checkedItems.Count);
-
-            var now = DateTime.UtcNow;
-            for (int i = 0; i < uncheckedItems.Count; i++)
-            {
-                uncheckedItems[i].SortOrder = uncheckedOrders[i];
-                uncheckedItems[i].UpdatedAt = now;
-            }
-            for (int i = 0; i < checkedItems.Count; i++)
-            {
-                checkedItems[i].SortOrder = checkedOrders[i];
-                checkedItems[i].UpdatedAt = now;
-            }
-
-            return Result.Ok();
-        }
-
         // empty/whitespace comment is normalized to null; otherwise trimmed.
         private static string? NormalizeComment(string? comment)
         {

@@ -1402,42 +1402,6 @@
         }
       }
     },
-    "/api/household/{householdId}/lists/{listId}/items/compact": {
-      "post": {
-        "tags": [
-          "ListItems"
-        ],
-        "operationId": "CompactItems",
-        "parameters": [
-          {
-            "name": "householdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "listId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
     "/api/household/{householdId}/inventories": {
       "post": {
         "tags": [
@@ -2037,42 +2001,6 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/api/household/{householdId}/inventories/{inventoryId}/items/compact": {
-      "post": {
-        "tags": [
-          "InventoryItems"
-        ],
-        "operationId": "CompactInventoryItems",
-        "parameters": [
-          {
-            "name": "householdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "inventoryId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
           },
           "404": {
             "description": "Not Found"
