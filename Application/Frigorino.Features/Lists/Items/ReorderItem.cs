@@ -37,28 +37,37 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var list = await db.Lists
-                .Include(l => l.ListItems)
-                .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-            if (list is null)
+            // Reorder mints a Rank from current neighbours; a concurrent same-slot reorder can
+            // collide on the partial unique index. RankRetry reloads fresh state and re-mints.
+            var response = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                return TypedResults.NotFound();
-            }
+                db.ChangeTracker.Clear();
 
-            var result = list.ReorderItem(itemId, request.AfterId);
-            if (result.IsFailed)
-            {
-                var first = result.Errors[0];
-                if (first is EntityNotFoundError)
+                var list = await db.Lists
+                    .Include(l => l.ListItems)
+                    .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                if (list is null)
                 {
-                    return TypedResults.NotFound();
+                    return (ListItemResponse?)null;
                 }
-                throw new InvalidOperationException(
-                    $"ReorderItem cannot map error of type {first.GetType().Name}.");
-            }
 
-            await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(ListItemResponse.From(result.Value));
+                var result = list.ReorderItem(itemId, request.AfterId);
+                if (result.IsFailed)
+                {
+                    var first = result.Errors[0];
+                    if (first is EntityNotFoundError)
+                    {
+                        return null;
+                    }
+                    throw new InvalidOperationException(
+                        $"ReorderItem cannot map error of type {first.GetType().Name}.");
+                }
+
+                await db.SaveChangesAsync(ct);
+                return ListItemResponse.From(result.Value);
+            });
+
+            return response is null ? TypedResults.NotFound() : TypedResults.Ok(response);
         }
     }
 }

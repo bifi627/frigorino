@@ -1,6 +1,7 @@
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -40,37 +41,60 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var list = await db.Lists
-                .Include(l => l.ListItems)
-                .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-            if (list is null)
+            var analysis = ItemTextRouter.Analyze(request.Text);
+
+            // AddItem mints a Rank by appending after the last unchecked item; a concurrent append
+            // can collide on the partial unique index. RankRetry reloads fresh state and re-mints.
+            // The extraction enqueue (a side effect) runs only AFTER the save commits, so a retried
+            // save never double-enqueues.
+            var outcome = await RankRetry.SaveWithRetryAsync(async () =>
+            {
+                db.ChangeTracker.Clear();
+
+                var list = await db.Lists
+                    .Include(l => l.ListItems)
+                    .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                if (list is null)
+                {
+                    return new CreateOutcome(null, NotFound: true, Problem: null);
+                }
+
+                // The item is created with no quantity; if the text needs extraction the async LLM job
+                // fills in the quantity (and strips the name) afterwards.
+                var result = list.AddItem(analysis.CleanName, null, request.Comment);
+                if (result.IsFailed)
+                {
+                    return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                }
+
+                await db.SaveChangesAsync(ct);
+
+                // Tell the client whether an async extraction was enqueued (the only route that does is
+                // NeedsExtraction) so its poll keys off this single signal rather than re-deriving a digit gate.
+                var resp = ListItemResponse.From(result.Value) with
+                {
+                    ExtractionPending = analysis.Route == ItemTextRoute.NeedsExtraction,
+                };
+                return new CreateOutcome(resp, NotFound: false, Problem: null);
+            });
+
+            if (outcome.NotFound)
             {
                 return TypedResults.NotFound();
             }
-
-            var analysis = ItemTextRouter.Analyze(request.Text);
-
-            // The item is created with no quantity; if the text needs extraction the async LLM job
-            // fills in the quantity (and strips the name) afterwards.
-            var result = list.AddItem(analysis.CleanName, null, request.Comment);
-            if (result.IsFailed)
+            if (outcome.Problem is not null)
             {
-                return result.ToValidationProblem();
+                return outcome.Problem;
             }
 
-            await db.SaveChangesAsync(ct);
+            var response = outcome.Response!;
+            quantityTrigger.OnItemRouted(householdId, listId, response.Id, analysis);
 
-            quantityTrigger.OnItemRouted(householdId, listId, result.Value.Id, analysis);
-
-            // Tell the client whether an async extraction was enqueued (the only route that does is
-            // NeedsExtraction) so its poll keys off this single signal rather than re-deriving a digit gate.
-            var response = ListItemResponse.From(result.Value) with
-            {
-                ExtractionPending = analysis.Route == ItemTextRoute.NeedsExtraction,
-            };
             return TypedResults.Created(
-                $"/api/household/{householdId}/lists/{listId}/items/{result.Value.Id}",
+                $"/api/household/{householdId}/lists/{listId}/items/{response.Id}",
                 response);
         }
+
+        private sealed record CreateOutcome(ListItemResponse? Response, bool NotFound, ValidationProblem? Problem);
     }
 }

@@ -2,6 +2,7 @@ using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -36,49 +37,58 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var list = await db.Lists
-                .Include(l => l.ListItems)
-                .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-            if (list is null)
+            // Toggling status re-mints the item's Rank into the destination section; a concurrent
+            // toggle/append can collide on the partial unique index. RankRetry reloads fresh state
+            // and re-mints. The product lookup is read-only and safe to repeat on retry.
+            var response = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                return TypedResults.NotFound();
-            }
+                db.ChangeTracker.Clear();
 
-            var result = list.ToggleItemStatus(itemId);
-            if (result.IsFailed)
-            {
-                var first = result.Errors[0];
-                if (first is EntityNotFoundError)
+                var list = await db.Lists
+                    .Include(l => l.ListItems)
+                    .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                if (list is null)
                 {
-                    return TypedResults.NotFound();
+                    return (ListItemResponse?)null;
                 }
-                throw new InvalidOperationException(
-                    $"ToggleItemStatus cannot map error of type {first.GetType().Name}.");
-            }
 
-            // Only when the item is now checked DONE do we look up its product (one indexed point
-            // lookup on the unique (HouseholdId, NormalizedName)) and capture a promote suggestion.
-            // The suggestion is persisted on the item (shared, durable batch) AND returned in the
-            // response. Un-checking clears promotion state in the aggregate (no lookup needed).
-            PromoteSuggestion? suggestion = null;
-            if (result.Value.Status)
-            {
-                var normalized = ProductName.Normalize(result.Value.Text);
-                var product = await db.Products
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(
-                        p => p.HouseholdId == householdId && p.NormalizedName == normalized, ct);
-                var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                suggestion = PromoteSuggestion.For(product, today);
+                var result = list.ToggleItemStatus(itemId);
+                if (result.IsFailed)
+                {
+                    var first = result.Errors[0];
+                    if (first is EntityNotFoundError)
+                    {
+                        return null;
+                    }
+                    throw new InvalidOperationException(
+                        $"ToggleItemStatus cannot map error of type {first.GetType().Name}.");
+                }
 
-                list.ApplyPromotionSuggestion(
-                    result.Value.Id, suggestion?.ExpiryHandling, suggestion?.SuggestedExpiry);
-            }
+                // Only when the item is now checked DONE do we look up its product (one indexed point
+                // lookup on the unique (HouseholdId, NormalizedName)) and capture a promote suggestion.
+                // The suggestion is persisted on the item (shared, durable batch) AND returned in the
+                // response. Un-checking clears promotion state in the aggregate (no lookup needed).
+                PromoteSuggestion? suggestion = null;
+                if (result.Value.Status)
+                {
+                    var normalized = ProductName.Normalize(result.Value.Text);
+                    var product = await db.Products
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            p => p.HouseholdId == householdId && p.NormalizedName == normalized, ct);
+                    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                    suggestion = PromoteSuggestion.For(product, today);
 
-            await db.SaveChangesAsync(ct);
+                    list.ApplyPromotionSuggestion(
+                        result.Value.Id, suggestion?.ExpiryHandling, suggestion?.SuggestedExpiry);
+                }
 
-            var response = ListItemResponse.From(result.Value) with { Promote = suggestion };
-            return TypedResults.Ok(response);
+                await db.SaveChangesAsync(ct);
+
+                return ListItemResponse.From(result.Value) with { Promote = suggestion };
+            });
+
+            return response is null ? TypedResults.NotFound() : TypedResults.Ok(response);
         }
     }
 }

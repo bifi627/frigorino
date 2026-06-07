@@ -3,6 +3,7 @@ using Frigorino.Domain.Entities;
 using Frigorino.Domain.Files;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -92,18 +93,46 @@ namespace Frigorino.Features.Lists.Items
                     storageKey, thumbnailKey, processed.Value.ContentType,
                     file.FileName, processed.Value.FullResSizeBytes);
 
-                var result = list.AddMediaItem(type, caption, stored);
-                if (result.IsFailed)
+                // AddMediaItem mints a Rank (append after the last unchecked item); a concurrent append
+                // can collide on the partial unique index. RankRetry reloads fresh state and re-mints —
+                // only the EF insert is retried; the blobs are already stored above and not re-uploaded.
+                var outcome = await RankRetry.SaveWithRetryAsync(async () =>
+                {
+                    db.ChangeTracker.Clear();
+
+                    var freshList = await db.Lists
+                        .Include(l => l.ListItems)
+                        .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                    if (freshList is null)
+                    {
+                        return new MediaOutcome(null, NotFound: true, Problem: null);
+                    }
+
+                    var result = freshList.AddMediaItem(type, caption, stored);
+                    if (result.IsFailed)
+                    {
+                        return new MediaOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                    }
+
+                    await db.SaveChangesAsync(ct);
+                    return new MediaOutcome(ListItemResponse.From(result.Value), NotFound: false, Problem: null);
+                });
+
+                if (outcome.NotFound)
                 {
                     await CompensateAsync(storage, storageKey, thumbnailKey, logger);
-                    return result.ToValidationProblem();
+                    return TypedResults.NotFound();
+                }
+                if (outcome.Problem is not null)
+                {
+                    await CompensateAsync(storage, storageKey, thumbnailKey, logger);
+                    return outcome.Problem;
                 }
 
-                await db.SaveChangesAsync(ct);
-
+                var response = outcome.Response!;
                 return TypedResults.Created(
-                    $"/api/household/{householdId}/lists/{listId}/items/{result.Value.Id}",
-                    ListItemResponse.From(result.Value));
+                    $"/api/household/{householdId}/lists/{listId}/items/{response.Id}",
+                    response);
             }
             catch
             {
@@ -111,6 +140,8 @@ namespace Frigorino.Features.Lists.Items
                 throw;
             }
         }
+
+        private sealed record MediaOutcome(ListItemResponse? Response, bool NotFound, ValidationProblem? Problem);
 
         // Best-effort cleanup of just-uploaded blobs; deletes each key independently so one failure can't
         // orphan the other blob or mask the original error. Null/empty keys (save never happened) are skipped.

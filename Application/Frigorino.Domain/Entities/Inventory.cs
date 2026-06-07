@@ -243,6 +243,23 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        // Re-mints a just-restored item's rank when its original rank collides with a live item
+        // (something took its old slot while it was deleted). Re-places it at the end of the
+        // section so the restore still succeeds; only used on the unique-violation retry path.
+        public Result<InventoryItem> ReplaceRestoredItemRank(int itemId)
+        {
+            var item = InventoryItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<InventoryItem>(
+                    new EntityNotFoundError($"Inventory item {itemId} not found."));
+            }
+
+            item.Rank = ComputeAppendRank();
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
         // AfterItemId == 0 means "move to the top of the section". An afterItemId that doesn't
         // resolve to an active sibling silently falls back to top-of-section — preserves the
         // legacy InventoryItemService wire contract the frontend's optimistic UI depends on.

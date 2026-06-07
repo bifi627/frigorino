@@ -37,28 +37,37 @@ namespace Frigorino.Features.Inventories.Items
                 return TypedResults.NotFound();
             }
 
-            var inventory = await db.Inventories
-                .Include(i => i.InventoryItems)
-                .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
-            if (inventory is null)
+            // Reorder mints a Rank from current neighbours; a concurrent same-slot reorder can
+            // collide on the partial unique index. RankRetry reloads fresh state and re-mints.
+            var response = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                return TypedResults.NotFound();
-            }
+                db.ChangeTracker.Clear();
 
-            var result = inventory.ReorderItem(itemId, request.AfterId);
-            if (result.IsFailed)
-            {
-                var first = result.Errors[0];
-                if (first is EntityNotFoundError)
+                var inventory = await db.Inventories
+                    .Include(i => i.InventoryItems)
+                    .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
+                if (inventory is null)
                 {
-                    return TypedResults.NotFound();
+                    return (InventoryItemResponse?)null;
                 }
-                throw new InvalidOperationException(
-                    $"ReorderInventoryItem cannot map error of type {first.GetType().Name}.");
-            }
 
-            await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(InventoryItemResponse.From(result.Value));
+                var result = inventory.ReorderItem(itemId, request.AfterId);
+                if (result.IsFailed)
+                {
+                    var first = result.Errors[0];
+                    if (first is EntityNotFoundError)
+                    {
+                        return null;
+                    }
+                    throw new InvalidOperationException(
+                        $"ReorderInventoryItem cannot map error of type {first.GetType().Name}.");
+                }
+
+                await db.SaveChangesAsync(ct);
+                return InventoryItemResponse.From(result.Value);
+            });
+
+            return response is null ? TypedResults.NotFound() : TypedResults.Ok(response);
         }
     }
 }
