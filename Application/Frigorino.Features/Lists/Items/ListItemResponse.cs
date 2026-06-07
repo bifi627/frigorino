@@ -11,7 +11,7 @@ namespace Frigorino.Features.Lists.Items
         string? Comment,
         QuantityDto? Quantity,
         bool Status,
-        int SortOrder,
+        string Rank,
         DateTime CreatedAt,
         DateTime UpdatedAt,
         // Item type — Text (default) | Image | Document. Serialized as its string name.
@@ -36,7 +36,7 @@ namespace Frigorino.Features.Lists.Items
                     ? null
                     : new QuantityDto(item.QuantityValue.Value, item.QuantityUnit!.Value),
                 item.Status,
-                item.SortOrder,
+                item.Rank,
                 item.CreatedAt,
                 item.UpdatedAt,
                 item.Type,
@@ -60,7 +60,7 @@ namespace Frigorino.Features.Lists.Items
                 ? null
                 : new QuantityDto(i.QuantityValue.Value, i.QuantityUnit!.Value),
             i.Status,
-            i.SortOrder,
+            i.Rank,
             i.CreatedAt,
             i.UpdatedAt,
             i.Type,

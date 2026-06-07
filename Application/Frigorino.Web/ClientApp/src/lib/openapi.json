@@ -2864,7 +2864,7 @@
           "text",
           "quantity",
           "expiryDate",
-          "sortOrder",
+          "rank",
           "createdAt",
           "updatedAt",
           "isExpiring"
@@ -2899,9 +2899,8 @@
             ],
             "format": "date"
           },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
+          "rank": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
@@ -3009,7 +3008,7 @@
           "comment",
           "quantity",
           "status",
-          "sortOrder",
+          "rank",
           "createdAt",
           "updatedAt",
           "type",
@@ -3047,9 +3046,8 @@
           "status": {
             "type": "boolean"
           },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
+          "rank": {
+            "type": "string"
           },
           "createdAt": {
             "type": "string",

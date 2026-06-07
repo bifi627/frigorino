@@ -57,7 +57,8 @@ namespace Frigorino.Features.Lists.Promote
                             && i.Status
                             && i.PromotionExpiryHandling != null
                             && i.PromotionResolvedAt == null)
-                .OrderBy(i => i.SortOrder)
+                .OrderBy(i => i.Rank)
+                .ThenBy(i => i.Id)
                 .Select(i => new PendingPromotionResponse(
                     i.Id,
                     i.Text,
