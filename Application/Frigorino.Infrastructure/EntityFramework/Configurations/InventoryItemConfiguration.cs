@@ -26,6 +26,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(ii => ii.SortOrder)
                 .IsRequired();
 
+            builder.Property(ii => ii.Rank)
+                .HasColumnType("text")
+                .UseCollation("C") // byte-ordinal; matches FractionalIndex's ordinal comparison
+                .IsRequired();
+
             builder.Property(ii => ii.ExpiryDate);
 
             builder.Property(ii => ii.InventoryId)
@@ -56,6 +61,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.HasIndex(ii => new { ii.InventoryId, ii.IsActive });
             builder.HasIndex(ii => new { ii.ExpiryDate, ii.IsActive });
             builder.HasIndex(ii => new { ii.InventoryId, ii.SortOrder });
+            // Ordered fetch + concurrent-reorder collision guard (active rows only).
+            builder.HasIndex(ii => new { ii.InventoryId, ii.Rank })
+                .IsUnique()
+                .HasFilter("\"IsActive\"")
+                .HasDatabaseName("UX_InventoryItems_InventoryId_Rank_Active");
         }
     }
 }
