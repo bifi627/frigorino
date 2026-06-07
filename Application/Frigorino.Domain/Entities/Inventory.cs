@@ -137,11 +137,12 @@ namespace Frigorino.Domain.Entities
 
         // ------- InventoryItem coordination -------
         //
-        // Item-level operations live on Inventory because sort-order is a multi-row invariant of
-        // the aggregate (single section in the unchecked range 1M..9M — items have no status flag,
-        // unlike ListItem). Items intentionally have no role gate: any active household member can
-        // add / update / reorder / delete / compact, matching the legacy InventoryItemService
-        // behaviour. The handler enforces membership; the aggregate doesn't take callerRole.
+        // Item-level operations live on Inventory because ordering is a multi-row invariant of the
+        // aggregate. Order is a server-minted fractional-index string Rank (see FractionalIndex),
+        // a single section — items have no status flag, unlike ListItem. Items intentionally have
+        // no role gate: any active household member can add / update / reorder / delete, matching
+        // the legacy InventoryItemService behaviour. The handler enforces membership; the aggregate
+        // doesn't take callerRole.
 
         public Result<InventoryItem> AddItem(string text, Quantity? quantity, DateOnly? expiryDate)
         {
@@ -159,7 +160,7 @@ namespace Frigorino.Domain.Entities
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 ExpiryDate = expiryDate,
-                SortOrder = ComputeAppendSortOrder(),
+                Rank = ComputeAppendRank(),
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
@@ -261,42 +262,40 @@ namespace Frigorino.Domain.Entities
 
             var section = InventoryItems
                 .Where(i => i.IsActive && i.Id != item.Id)
-                .OrderBy(i => i.SortOrder)
+                .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
 
             var afterItem = afterItemId == 0
                 ? null
                 : section.FirstOrDefault(i => i.Id == afterItemId);
             var beforeItem = afterItem is not null
-                ? section.FirstOrDefault(i => i.SortOrder > afterItem.SortOrder)
+                ? section.FirstOrDefault(i => string.CompareOrdinal(i.Rank, afterItem.Rank) > 0)
                 : null;
 
-            int newSortOrder;
+            string newRank;
             if (afterItem is null)
             {
-                if (section.Count == 0)
-                {
-                    newSortOrder = SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap;
-                }
-                else
-                {
-                    newSortOrder = section[0].SortOrder - SortOrderCalculator.DefaultGap;
-                }
+                newRank = section.Count == 0
+                    ? FractionalIndex.GenerateKeyBetween(null, null)
+                    : FractionalIndex.GenerateKeyBetween(null, section[0].Rank);
             }
             else if (beforeItem is null)
             {
-                newSortOrder = afterItem.SortOrder + SortOrderCalculator.DefaultGap;
+                newRank = FractionalIndex.GenerateKeyBetween(afterItem.Rank, null);
             }
             else
             {
-                newSortOrder = afterItem.SortOrder + (beforeItem.SortOrder - afterItem.SortOrder) / 2;
+                newRank = FractionalIndex.GenerateKeyBetween(afterItem.Rank, beforeItem.Rank);
             }
 
-            item.SortOrder = newSortOrder;
+            item.Rank = newRank;
             item.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(item);
         }
 
+        // Legacy integer-SortOrder rebalancer. Dead under fractional indexing (which never
+        // exhausts); removed together with SortOrderCalculator and the /compact slices in the
+        // follow-up cleanup task. Kept transiently so the slice that calls it still compiles.
         public Result CompactItems()
         {
             var activeItems = InventoryItems
@@ -342,22 +341,19 @@ namespace Frigorino.Domain.Entities
             return errors;
         }
 
-        // Returns the sort order for a freshly placed item: single section in the unchecked
-        // range. Mirrors List.ComputeAppendSortOrder but without the status branch — inventory
-        // items have no checked/unchecked split.
-        private int ComputeAppendSortOrder()
+        // Returns the rank for a freshly placed item: append after the last item in the single
+        // section. Mirrors List.ComputeAppendRank but without the status branch — inventory items
+        // have no checked/unchecked split.
+        private string ComputeAppendRank()
         {
             var section = InventoryItems
                 .Where(i => i.IsActive)
-                .OrderBy(i => i.SortOrder)
+                .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
 
-            if (section.Count == 0)
-            {
-                return SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap;
-            }
-
-            return section[^1].SortOrder + SortOrderCalculator.DefaultGap;
+            return section.Count == 0
+                ? FractionalIndex.GenerateKeyBetween(null, null)
+                : FractionalIndex.GenerateKeyBetween(section[^1].Rank, null);
         }
     }
 }
