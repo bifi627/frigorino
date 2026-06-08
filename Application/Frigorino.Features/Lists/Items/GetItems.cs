@@ -43,7 +43,8 @@ namespace Frigorino.Features.Lists.Items
             var response = await db.ListItems
                 .Where(i => i.ListId == listId && i.IsActive)
                 .OrderBy(i => i.Status)
-                .ThenBy(i => i.SortOrder)
+                .ThenBy(i => i.Rank)
+                .ThenBy(i => i.Id)
                 .Select(ListItemResponse.ToProjection)
                 .ToArrayAsync(ct);
 

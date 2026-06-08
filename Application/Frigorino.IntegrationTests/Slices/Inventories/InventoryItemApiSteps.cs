@@ -33,13 +33,6 @@ public class InventoryItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryRestoreInventoryItemAsync(inventoryId, itemId);
     }
 
-    [When("I POST compact for inventory {string} via the API")]
-    public async Task WhenIPostCompactForInventoryViaTheApi(string inventoryName)
-    {
-        var inventoryId = ctx.InventoryIds[inventoryName];
-        ctx.LastApiResponse = await api.TryCompactInventoryItemsAsync(inventoryId);
-    }
-
     [When("I PATCH {string} to the top of inventory {string} via the API")]
     public async Task WhenIPatchToTheTopOfInventoryViaTheApi(string itemText, string inventoryName)
     {

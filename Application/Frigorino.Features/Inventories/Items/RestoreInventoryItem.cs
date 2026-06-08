@@ -1,6 +1,7 @@
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -35,28 +36,45 @@ namespace Frigorino.Features.Inventories.Items
                 return TypedResults.NotFound();
             }
 
-            var inventory = await db.Inventories
-                .Include(i => i.InventoryItems)
-                .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
-            if (inventory is null)
+            // Restore reactivates the item with its ORIGINAL rank to preserve its undo position.
+            // If a live item took that slot while it was deleted, the partial unique index rejects
+            // it; on that retry we re-mint to the end of the section so the restore still succeeds.
+            var attemptedReplace = false;
+            var response = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                return TypedResults.NotFound();
-            }
+                db.ChangeTracker.Clear();
 
-            var result = inventory.RestoreItem(itemId);
-            if (result.IsFailed)
-            {
-                var first = result.Errors[0];
-                if (first is EntityNotFoundError)
+                var inventory = await db.Inventories
+                    .Include(i => i.InventoryItems)
+                    .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
+                if (inventory is null)
                 {
-                    return TypedResults.NotFound();
+                    return (InventoryItemResponse?)null;
                 }
-                throw new InvalidOperationException(
-                    $"RestoreInventoryItem cannot map error of type {first.GetType().Name}.");
-            }
 
-            await db.SaveChangesAsync(ct);
-            return TypedResults.Ok(InventoryItemResponse.From(result.Value));
+                var result = inventory.RestoreItem(itemId);
+                if (result.IsFailed)
+                {
+                    var first = result.Errors[0];
+                    if (first is EntityNotFoundError)
+                    {
+                        return null;
+                    }
+                    throw new InvalidOperationException(
+                        $"RestoreInventoryItem cannot map error of type {first.GetType().Name}.");
+                }
+
+                if (attemptedReplace)
+                {
+                    inventory.ReplaceRestoredItemRank(itemId);
+                }
+                attemptedReplace = true;
+
+                await db.SaveChangesAsync(ct);
+                return InventoryItemResponse.From(result.Value);
+            });
+
+            return response is null ? TypedResults.NotFound() : TypedResults.Ok(response);
         }
     }
 }

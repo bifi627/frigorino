@@ -1,8 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-    computeAppendSortOrder,
-    computeReorderSortOrder,
-} from "../../../common/sortOrder";
 import { useDebouncedInvalidation } from "../../../hooks/useDebouncedInvalidation";
 import {
     getInventoryItemsQueryKey,
@@ -29,30 +25,32 @@ export const useReorderInventoryItem = () => {
             const previousItems =
                 queryClient.getQueryData<InventoryItemResponse[]>(queryKey);
 
-            // Optimistic mirror of server math; see common/sortOrder.ts.
-            // Inventory has a single section — treat it as the "unchecked" range.
+            // The server mints the authoritative rank; optimistically we just move the dragged
+            // element to its new array position (single section — no status split). The real rank
+            // arrives on refetch and reconciles.
             queryClient.setQueryData<InventoryItemResponse[]>(
                 queryKey,
                 (old) => {
                     if (!old) return old;
-                    const movedItem = old.find(
+                    const moved = old.find(
                         (i) => i.id === variables.path.itemId,
                     );
-                    if (!movedItem) return old;
+                    if (!moved) return old;
 
-                    const section = old.filter((i) => i.id !== movedItem.id);
-
-                    const newSortOrder = computeReorderSortOrder({
-                        section,
-                        afterId: variables.body.afterId,
-                        emptyDefault: computeAppendSortOrder([], false),
-                    });
-
-                    return old.map((i) =>
-                        i.id === movedItem.id
-                            ? { ...i, sortOrder: newSortOrder }
-                            : i,
+                    const others = old.filter((i) => i.id !== moved.id);
+                    const afterId = variables.body.afterId;
+                    if (!afterId) {
+                        // Top of the single section.
+                        others.unshift(moved);
+                        return others;
+                    }
+                    const anchorIdx = others.findIndex((i) => i.id === afterId);
+                    others.splice(
+                        anchorIdx === -1 ? others.length : anchorIdx + 1,
+                        0,
+                        moved,
                     );
+                    return others;
                 },
             );
 

@@ -131,11 +131,12 @@ namespace Frigorino.Domain.Entities
 
         // ------- ListItem coordination -------
         //
-        // Item-level operations live on List because sort-order is a multi-row invariant of the
-        // aggregate (two parallel ranges per list — unchecked 1M..9M, checked 10M..19M). Items
+        // Item-level operations live on List because ordering is a multi-row invariant of the
+        // aggregate. Order is a server-minted fractional-index string Rank (see FractionalIndex),
+        // scoped per (List, Status) — two independent sections, unchecked and checked. Items
         // intentionally have no role gate: any active household member can add / toggle /
-        // reorder / delete / compact, matching the collaborative grocery-list UX. The handler
-        // enforces membership; the aggregate doesn't take callerRole.
+        // reorder / delete, matching the collaborative grocery-list UX. The handler enforces
+        // membership; the aggregate doesn't take callerRole.
 
         public Result<ListItem> AddItem(string text, Quantity? quantity = null, string? comment = null)
         {
@@ -155,7 +156,7 @@ namespace Frigorino.Domain.Entities
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 Status = false,
-                SortOrder = ComputeAppendSortOrder(targetStatus: false),
+                Rank = ComputeAppendRank(targetStatus: false),
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
@@ -237,7 +238,7 @@ namespace Frigorino.Domain.Entities
                 OriginalFileName = file.OriginalFileName,
                 FileSizeBytes = file.SizeBytes,
                 Status = false,
-                SortOrder = ComputeAppendSortOrder(targetStatus: false),
+                Rank = ComputeAppendRank(targetStatus: false),
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
@@ -287,7 +288,7 @@ namespace Frigorino.Domain.Entities
 
             if (status.HasValue && item.Status != status.Value)
             {
-                item.SortOrder = ComputeAppendSortOrder(targetStatus: status.Value);
+                item.Rank = ComputeAppendRank(targetStatus: status.Value);
                 item.Status = status.Value;
             }
 
@@ -371,6 +372,23 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        // Re-mints a just-restored item's rank when its original rank collides with a live item
+        // (something took its old slot while it was deleted). Re-places it at the end of its
+        // section so the restore still succeeds; only used on the unique-violation retry path.
+        public Result<ListItem> ReplaceRestoredItemRank(int itemId)
+        {
+            var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
+            if (item is null)
+            {
+                return Result.Fail<ListItem>(
+                    new EntityNotFoundError($"List item {itemId} not found."));
+            }
+
+            item.Rank = ComputeAppendRank(item.Status);
+            item.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(item);
+        }
+
         public Result<ListItem> ToggleItemStatus(int itemId)
         {
             var item = ListItems.FirstOrDefault(i => i.Id == itemId && i.IsActive);
@@ -381,7 +399,7 @@ namespace Frigorino.Domain.Entities
             }
 
             var newStatus = !item.Status;
-            item.SortOrder = ComputeAppendSortOrder(targetStatus: newStatus);
+            item.Rank = ComputeAppendRank(targetStatus: newStatus);
             item.Status = newStatus;
 
             // Unchecking retracts any promotion candidacy/resolution so a later re-check is a clean
@@ -458,77 +476,35 @@ namespace Frigorino.Domain.Entities
 
             var section = ListItems
                 .Where(i => i.IsActive && i.Status == item.Status && i.Id != item.Id)
-                .OrderBy(i => i.SortOrder)
+                .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
 
             var afterItem = afterItemId == 0
                 ? null
                 : section.FirstOrDefault(i => i.Id == afterItemId);
             var beforeItem = afterItem is not null
-                ? section.FirstOrDefault(i => i.SortOrder > afterItem.SortOrder)
+                ? section.FirstOrDefault(i => string.CompareOrdinal(i.Rank, afterItem.Rank) > 0)
                 : null;
 
-            int newSortOrder;
+            string newRank;
             if (afterItem is null)
             {
-                if (section.Count == 0)
-                {
-                    newSortOrder = item.Status
-                        ? SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap
-                        : SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap;
-                }
-                else
-                {
-                    newSortOrder = section[0].SortOrder - SortOrderCalculator.DefaultGap;
-                }
+                newRank = section.Count == 0
+                    ? FractionalIndex.GenerateKeyBetween(null, null)
+                    : FractionalIndex.GenerateKeyBetween(null, section[0].Rank);
             }
             else if (beforeItem is null)
             {
-                newSortOrder = afterItem.SortOrder + SortOrderCalculator.DefaultGap;
+                newRank = FractionalIndex.GenerateKeyBetween(afterItem.Rank, null);
             }
             else
             {
-                newSortOrder = afterItem.SortOrder + (beforeItem.SortOrder - afterItem.SortOrder) / 2;
+                newRank = FractionalIndex.GenerateKeyBetween(afterItem.Rank, beforeItem.Rank);
             }
 
-            item.SortOrder = newSortOrder;
+            item.Rank = newRank;
             item.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(item);
-        }
-
-        public Result CompactItems()
-        {
-            var uncheckedItems = ListItems
-                .Where(i => i.IsActive && !i.Status)
-                .OrderBy(i => i.SortOrder)
-                .ToList();
-            var checkedItems = ListItems
-                .Where(i => i.IsActive && i.Status)
-                .OrderBy(i => i.SortOrder)
-                .ToList();
-
-            if (uncheckedItems.Count == 0 && checkedItems.Count == 0)
-            {
-                return Result.Ok();
-            }
-
-            var (uncheckedOrders, checkedOrders) = SortOrderCalculator.GenerateCompactedSortOrders(
-                uncheckedItems.Count,
-                checkedItems.Count);
-
-            var now = DateTime.UtcNow;
-            for (int i = 0; i < uncheckedItems.Count; i++)
-            {
-                uncheckedItems[i].SortOrder = uncheckedOrders[i];
-                uncheckedItems[i].UpdatedAt = now;
-            }
-            for (int i = 0; i < checkedItems.Count; i++)
-            {
-                checkedItems[i].SortOrder = checkedOrders[i];
-                checkedItems[i].UpdatedAt = now;
-            }
-
-            return Result.Ok();
         }
 
         // empty/whitespace comment is normalized to null; otherwise trimmed.
@@ -568,31 +544,25 @@ namespace Frigorino.Domain.Entities
             return errors;
         }
 
-        // Returns the sort order for a freshly placed item in `targetStatus`'s section:
-        //   - empty section: MinRange + DefaultGap
-        //   - unchecked: last + DefaultGap (append below the last existing unchecked)
-        //   - checked  : first - DefaultGap (prepend above the first existing checked)
-        // Mirrors the section-anchored branches of SortOrderCalculator but skips the calculator's
-        // multi-branch generality (which exists for the legacy Inventory layer's per-position
-        // inserts and is on its way out with that migration).
-        private int ComputeAppendSortOrder(bool targetStatus)
+        // Returns the rank for a freshly placed item in `targetStatus`'s section:
+        //   - unchecked: append after the last unchecked  (key between last and null)
+        //   - checked  : prepend above the first checked    (key between null and first)
+        //   - empty section: GenerateKeyBetween(null, null)
+        private string ComputeAppendRank(bool targetStatus)
         {
             var section = ListItems
                 .Where(i => i.IsActive && i.Status == targetStatus)
-                .OrderBy(i => i.SortOrder)
+                .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
 
             if (section.Count == 0)
             {
-                return (targetStatus
-                    ? SortOrderCalculator.CheckedMinRange
-                    : SortOrderCalculator.UncheckedMinRange)
-                    + SortOrderCalculator.DefaultGap;
+                return FractionalIndex.GenerateKeyBetween(null, null);
             }
 
             return targetStatus
-                ? section[0].SortOrder - SortOrderCalculator.DefaultGap
-                : section[^1].SortOrder + SortOrderCalculator.DefaultGap;
+                ? FractionalIndex.GenerateKeyBetween(null, section[0].Rank)
+                : FractionalIndex.GenerateKeyBetween(section[^1].Rank, null);
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Frigorino.Features.Inventories.Items
         string Text,
         QuantityDto? Quantity,
         DateOnly? ExpiryDate,
-        int SortOrder,
+        string Rank,
         DateTime CreatedAt,
         DateTime UpdatedAt,
         bool IsExpiring)
@@ -25,7 +25,7 @@ namespace Frigorino.Features.Inventories.Items
                     ? null
                     : new QuantityDto(item.QuantityValue.Value, item.QuantityUnit!.Value),
                 item.ExpiryDate,
-                item.SortOrder,
+                item.Rank,
                 item.CreatedAt,
                 item.UpdatedAt,
                 item.ExpiryDate.HasValue && item.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(InventoryResponse.ExpiringWithinDays));
@@ -41,7 +41,7 @@ namespace Frigorino.Features.Inventories.Items
                 ? null
                 : new QuantityDto(i.QuantityValue.Value, i.QuantityUnit!.Value),
             i.ExpiryDate,
-            i.SortOrder,
+            i.Rank,
             i.CreatedAt,
             i.UpdatedAt,
             i.ExpiryDate.HasValue && i.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(InventoryResponse.ExpiringWithinDays));

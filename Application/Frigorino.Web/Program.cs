@@ -212,6 +212,13 @@ if (!isBuildTimeOpenApi)
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     await context.Database.MigrateAsync();
+
+    // One-time expand-phase backfill of the new fractional-index Rank from the legacy SortOrder.
+    // Idempotent (guarded on Rank IS NULL); a no-op once every row is filled. Removed in the
+    // deferred contract cleanup once stage + prod are confirmed populated.
+    var backfillLogger = services.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("RankBackfill");
+    await Frigorino.Infrastructure.Services.RankBackfill.RunAsync(context, backfillLogger);
 }
 
 // Configure middleware pipeline
@@ -354,7 +361,6 @@ listItems.MapDeleteItem();
 listItems.MapRestoreItem();
 listItems.MapToggleItemStatus();
 listItems.MapReorderItem();
-listItems.MapCompactItems();
 
 var inventories = app.MapGroup("/api/household/{householdId:int}/inventories")
     .RequireAuthorization()
@@ -375,7 +381,6 @@ inventoryItems.MapUpdateInventoryItem();
 inventoryItems.MapDeleteInventoryItem();
 inventoryItems.MapRestoreInventoryItem();
 inventoryItems.MapReorderInventoryItem();
-inventoryItems.MapCompactInventoryItems();
 
 var inventorySettings = app.MapGroup("/api/household/{householdId:int}/inventories/{inventoryId:int}/settings")
     .RequireAuthorization()

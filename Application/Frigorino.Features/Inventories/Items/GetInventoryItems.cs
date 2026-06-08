@@ -42,8 +42,8 @@ namespace Frigorino.Features.Inventories.Items
 
             var response = await db.InventoryItems
                 .Where(i => i.InventoryId == inventoryId && i.IsActive)
-                .OrderBy(i => i.SortOrder)
-                .ThenByDescending(i => i.CreatedAt)
+                .OrderBy(i => i.Rank)
+                .ThenBy(i => i.Id)
                 .Select(InventoryItemResponse.ToProjection)
                 .ToArrayAsync(ct);
 

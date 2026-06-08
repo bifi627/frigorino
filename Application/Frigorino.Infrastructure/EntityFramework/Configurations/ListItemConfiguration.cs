@@ -60,6 +60,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(li => li.SortOrder)
                 .IsRequired();
 
+            builder.Property(li => li.Rank)
+                .HasColumnType("text")
+                .UseCollation("C") // byte-ordinal; matches FractionalIndex's ordinal comparison
+                .IsRequired();
+
             builder.Property(li => li.CreatedAt)
                 .IsRequired();
 
@@ -85,6 +90,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.HasIndex(li => new { li.ListId, li.IsActive });
             // Supports the pending-promotion count (GetList) and the pending-promotions detail read.
             builder.HasIndex(li => new { li.ListId, li.Status, li.PromotionResolvedAt });
+            // Ordered fetch + concurrent-reorder collision guard (active rows only).
+            builder.HasIndex(li => new { li.ListId, li.Status, li.Rank })
+                .IsUnique()
+                .HasFilter("\"IsActive\"")
+                .HasDatabaseName("UX_ListItems_ListId_Status_Rank_Active");
         }
     }
 }

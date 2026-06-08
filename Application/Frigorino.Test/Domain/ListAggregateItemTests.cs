@@ -16,14 +16,14 @@ namespace Frigorino.Test.Domain
         // ------- AddItem -------
 
         [Fact]
-        public void AddItem_FirstItem_GetsBaseSortOrder()
+        public void AddItem_FirstItem_GetsBaseRank()
         {
             var list = NewList();
 
             var result = list.AddItem("Milk");
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, result.Value.SortOrder);
+            Assert.Equal("a0", result.Value.Rank);
             Assert.False(result.Value.Status);
             Assert.True(result.Value.IsActive);
             Assert.Equal(list.Id, result.Value.ListId);
@@ -33,14 +33,14 @@ namespace Frigorino.Test.Domain
         public void AddItem_AppendsBelowLastUnchecked()
         {
             var list = NewList();
-            list.AddItem("Milk");
-            list.AddItem("Eggs");
+            var first = list.AddItem("Milk").Value;
+            var second = list.AddItem("Eggs").Value;
 
             var third = list.AddItem("Bread");
 
             Assert.True(third.IsSuccess);
-            var expected = SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap * 3;
-            Assert.Equal(expected, third.Value.SortOrder);
+            Assert.True(string.CompareOrdinal(first.Rank, second.Rank) < 0);
+            Assert.True(string.CompareOrdinal(second.Rank, third.Value.Rank) < 0);
         }
 
         [Fact]
@@ -125,24 +125,22 @@ namespace Frigorino.Test.Domain
         }
 
         // ------- ToggleItemStatus into a populated checked section -------
-        // Covers the asymmetric "checked-section prepends" branch of ComputeAppendSortOrder
-        // (first - DefaultGap), which the empty-section toggle tests don't exercise.
+        // Covers the asymmetric "checked-section prepends" branch of ComputeAppendRank
+        // (key before the first checked), which the empty-section toggle tests don't exercise.
 
         [Fact]
         public void ToggleItemStatus_UncheckedToChecked_WithExistingChecked_PrependsAboveFirstChecked()
         {
             var list = NewList();
-            var firstChecked = AddSeed(list, "Bread", status: true,
-                sortOrder: SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap);
-            AddSeed(list, "Eggs", status: true,
-                sortOrder: SortOrderCalculator.CheckedMinRange + (2 * SortOrderCalculator.DefaultGap));
+            var firstChecked = AddSeed(list, "Bread", status: true, rank: "a1");
+            AddSeed(list, "Eggs", status: true, rank: "a2");
             var moving = AddSeed(list, "Milk");
 
             var result = list.ToggleItemStatus(moving.Id);
 
             Assert.True(result.IsSuccess);
             Assert.True(moving.Status);
-            Assert.Equal(firstChecked.SortOrder - SortOrderCalculator.DefaultGap, moving.SortOrder);
+            Assert.True(string.CompareOrdinal(moving.Rank, firstChecked.Rank) < 0);
         }
 
         // ------- UpdateItem -------
@@ -248,32 +246,34 @@ namespace Frigorino.Test.Domain
 
             Assert.True(result.IsSuccess);
             Assert.True(item.Status);
-            Assert.Equal(SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap, item.SortOrder);
+            // Empty checked section → base key.
+            Assert.Equal("a0", item.Rank);
         }
 
         [Fact]
         public void UpdateItem_StatusChangeToUnchecked_MovesToUncheckedSection()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", status: true, sortOrder: SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap);
+            var item = AddSeed(list, "Milk", status: true, rank: "a0");
 
             var result = list.UpdateItem(item.Id, text: null, quantity: null, clearQuantity: false, status: false);
 
             Assert.True(result.IsSuccess);
             Assert.False(item.Status);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, item.SortOrder);
+            // Empty unchecked section → base key.
+            Assert.Equal("a0", item.Rank);
         }
 
         [Fact]
-        public void UpdateItem_StatusUnchanged_KeepsSortOrder()
+        public void UpdateItem_StatusUnchanged_KeepsRank()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", sortOrder: 1_234_567);
+            var item = AddSeed(list, "Milk", rank: "a5");
 
             var result = list.UpdateItem(item.Id, "Renamed", null, clearQuantity: false, status: false);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(1_234_567, item.SortOrder);
+            Assert.Equal("a5", item.Rank);
         }
 
         [Fact]
@@ -500,16 +500,16 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void RestoreItem_PreservesOriginalSortOrder()
+        public void RestoreItem_PreservesOriginalRank()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", sortOrder: 1_234_567);
+            var item = AddSeed(list, "Milk", rank: "a5");
             item.IsActive = false;
 
             var result = list.RestoreItem(item.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(1_234_567, item.SortOrder);
+            Assert.Equal("a5", item.Rank);
         }
 
         [Fact]
@@ -547,20 +547,22 @@ namespace Frigorino.Test.Domain
 
             Assert.True(result.IsSuccess);
             Assert.True(item.Status);
-            Assert.Equal(SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap, item.SortOrder);
+            // Empty checked section → base key.
+            Assert.Equal("a0", item.Rank);
         }
 
         [Fact]
         public void ToggleItemStatus_CheckedToUnchecked_MovesToUncheckedSection()
         {
             var list = NewList();
-            var item = AddSeed(list, "Milk", status: true, sortOrder: SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap);
+            var item = AddSeed(list, "Milk", status: true, rank: "a0");
 
             var result = list.ToggleItemStatus(item.Id);
 
             Assert.True(result.IsSuccess);
             Assert.False(item.Status);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, item.SortOrder);
+            // Empty unchecked section → base key.
+            Assert.Equal("a0", item.Rank);
         }
 
         [Fact]
@@ -577,62 +579,63 @@ namespace Frigorino.Test.Domain
         // ------- ReorderItem -------
 
         [Fact]
-        public void ReorderItem_MoveToTop_FromAfterIdZero()
+        public void ReorderItem_MoveToTop_FromAfterIdZero_RanksBeforeFirst()
         {
             var list = NewList();
-            var item1 = AddSeed(list, "Milk", sortOrder: 1_010_000);
-            var item2 = AddSeed(list, "Eggs", sortOrder: 1_020_000);
-            var item3 = AddSeed(list, "Bread", sortOrder: 1_030_000);
+            var item1 = AddSeed(list, "Milk", rank: "a1");
+            AddSeed(list, "Eggs", rank: "a2");
+            var item3 = AddSeed(list, "Bread", rank: "a3");
 
             var result = list.ReorderItem(item3.Id, afterItemId: 0);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(item1.SortOrder - SortOrderCalculator.DefaultGap, item3.SortOrder);
+            Assert.True(string.CompareOrdinal(item3.Rank, item1.Rank) < 0);
         }
 
         [Fact]
-        public void ReorderItem_MidpointBetweenTwoItems()
+        public void ReorderItem_MidpointBetweenTwoItems_ProducesKeyStrictlyBetween()
         {
             var list = NewList();
-            var item1 = AddSeed(list, "Milk", sortOrder: 100_000);
-            var item2 = AddSeed(list, "Eggs", sortOrder: 102_000);
-            var item3 = AddSeed(list, "Bread", sortOrder: 104_000);
+            var item1 = AddSeed(list, "Milk", rank: "a0");
+            var item2 = AddSeed(list, "Eggs", rank: "a1");
+            var item3 = AddSeed(list, "Bread", rank: "a2");
 
             var result = list.ReorderItem(item3.Id, afterItemId: item1.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(101_000, item3.SortOrder);
+            Assert.True(string.CompareOrdinal(item1.Rank, item3.Rank) < 0);
+            Assert.True(string.CompareOrdinal(item3.Rank, item2.Rank) < 0);
         }
 
         [Fact]
-        public void ReorderItem_AfterIsLastInSection_AppendsWithGap()
+        public void ReorderItem_AfterLastInSection_RanksAfterLast()
         {
             var list = NewList();
-            var item1 = AddSeed(list, "Milk", sortOrder: 100_000);
-            var item2 = AddSeed(list, "Eggs", sortOrder: 102_000);
-            var item3 = AddSeed(list, "Bread", sortOrder: 104_000);
+            var item1 = AddSeed(list, "Milk", rank: "a0");
+            AddSeed(list, "Eggs", rank: "a1");
+            var item3 = AddSeed(list, "Bread", rank: "a2");
 
-            // Move item1 after item3 (so item3 is "last" relative to item1 going below it).
+            // Move item1 after item3 (the last in section); item1 now ranks after item3.
             var result = list.ReorderItem(item1.Id, afterItemId: item3.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(item3.SortOrder + SortOrderCalculator.DefaultGap, item1.SortOrder);
+            Assert.True(string.CompareOrdinal(item3.Rank, item1.Rank) < 0);
         }
 
         [Fact]
         public void ReorderItem_AfterIdInDifferentSection_FallsBackToTopOfOwnSection()
         {
             var list = NewList();
-            var checkedItem = AddSeed(list, "Milk", status: true, sortOrder: 10_010_000);
-            var unchecked1 = AddSeed(list, "Eggs", sortOrder: 1_010_000);
-            var unchecked2 = AddSeed(list, "Bread", sortOrder: 1_020_000);
+            var checkedItem = AddSeed(list, "Milk", status: true, rank: "a0");
+            var unchecked1 = AddSeed(list, "Eggs", rank: "a1");
+            var unchecked2 = AddSeed(list, "Bread", rank: "a2");
 
             // Try to anchor unchecked2 against a checked item — legacy silently moves to top
             // of unchecked2's own section.
             var result = list.ReorderItem(unchecked2.Id, afterItemId: checkedItem.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(unchecked1.SortOrder - SortOrderCalculator.DefaultGap, unchecked2.SortOrder);
+            Assert.True(string.CompareOrdinal(unchecked2.Rank, unchecked1.Rank) < 0);
         }
 
         [Fact]
@@ -646,63 +649,25 @@ namespace Frigorino.Test.Domain
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
         }
 
-        // ------- CompactItems -------
-
         [Fact]
-        public void CompactItems_RewritesSortOrdersWithCleanGaps()
+        public void ManyReordersIntoSameShrinkingSlot_NeverCollide()
         {
             var list = NewList();
-            var item1 = AddSeed(list, "Milk", sortOrder: 100_001);
-            var item2 = AddSeed(list, "Eggs", sortOrder: 100_002);
-            var item3 = AddSeed(list, "Bread", status: true, sortOrder: 200_777);
+            var top = AddSeed(list, "Top", rank: "a0");
+            AddSeed(list, "Bottom", rank: "a1");
 
-            var result = list.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange, item1.SortOrder);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, item2.SortOrder);
-            Assert.Equal(SortOrderCalculator.CheckedMinRange, item3.SortOrder);
-        }
-
-        [Fact]
-        public void CompactItems_EmptyList_NoOp()
-        {
-            var list = NewList();
-
-            var result = list.CompactItems();
-
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
-        public void CompactItems_PreservesSeparationBetweenSections()
-        {
-            var list = NewList();
-            AddSeed(list, "A", sortOrder: 100);
-            AddSeed(list, "B", sortOrder: 200);
-            AddSeed(list, "C", status: true, sortOrder: 300);
-            AddSeed(list, "D", status: true, sortOrder: 400);
-
-            var result = list.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            var maxUnchecked = list.ListItems.Where(i => !i.Status).Max(i => i.SortOrder);
-            var minChecked = list.ListItems.Where(i => i.Status).Min(i => i.SortOrder);
-            Assert.True(maxUnchecked < minChecked);
-        }
-
-        [Fact]
-        public void CompactItems_SkipsInactiveItems()
-        {
-            var list = NewList();
-            AddSeed(list, "Active", sortOrder: 100_000);
-            var inactive = AddSeed(list, "Inactive", sortOrder: 99);
-            inactive.IsActive = false;
-
-            var result = list.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            Assert.Equal(99, inactive.SortOrder);
+            // Repeatedly drop a fresh item into the same slot just below `top`; the gap shrinks each
+            // time but a distinct key is always available (the old integer scheme collapsed to a
+            // duplicate SortOrder after ~13 drops, which is the bug this whole change fixes).
+            var ranks = new HashSet<string> { top.Rank };
+            for (var i = 0; i < 20; i++)
+            {
+                var mover = AddSeed(list, $"Mover{i}");
+                var r = list.ReorderItem(mover.Id, afterItemId: top.Id);
+                Assert.True(r.IsSuccess);
+                Assert.True(string.CompareOrdinal(top.Rank, mover.Rank) < 0);
+                Assert.True(ranks.Add(mover.Rank), $"collision at iteration {i}: {mover.Rank}");
+            }
         }
 
         // ------- Helpers -------
@@ -723,7 +688,7 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private ListItem AddSeed(List list, string text, Quantity? quantity = null, bool status = false, int? sortOrder = null)
+        private ListItem AddSeed(List list, string text, Quantity? quantity = null, bool status = false, string? rank = null)
         {
             var item = new ListItem
             {
@@ -733,9 +698,8 @@ namespace Frigorino.Test.Domain
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 Status = status,
-                SortOrder = sortOrder ?? (status
-                    ? SortOrderCalculator.CheckedMinRange + SortOrderCalculator.DefaultGap
-                    : SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap),
+                Rank = rank ?? FractionalIndex.GenerateKeyBetween(
+                    list.ListItems.Where(i => i.Status == status).Select(i => i.Rank).LastOrDefault(), null),
                 CreatedAt = DateTime.UtcNow.AddMinutes(-1),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-1),
                 IsActive = true,

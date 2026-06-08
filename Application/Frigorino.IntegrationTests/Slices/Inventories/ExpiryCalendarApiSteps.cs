@@ -1,5 +1,6 @@
 using Frigorino.Domain.Entities;
 using Frigorino.Infrastructure.EntityFramework;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Frigorino.IntegrationTests.Slices.Inventories;
@@ -62,14 +63,18 @@ public class ExpiryCalendarApiSteps(ScenarioContextHolder ctx, TestApiClient api
             ctx.InventoryIds[inventoryName] = inventoryId;
         }
 
-        db.InventoryItems.Add(new InventoryItem
+        // Route through the aggregate so the item gets a properly-minted fractional-index Rank
+        // (a hand-set entity would default Rank to "", colliding on the partial unique index when
+        // a second item is seeded into the same inventory).
+        var inventory = await db.Inventories
+            .Include(i => i.InventoryItems)
+            .FirstAsync(i => i.Id == inventoryId);
+        var add = inventory.AddItem(itemText, null, expiry);
+        if (add.IsFailed)
         {
-            InventoryId = inventoryId,
-            Text = itemText,
-            ExpiryDate = expiry,
-            SortOrder = 0,
-            IsActive = true,
-        });
+            throw new InvalidOperationException(
+                $"Seed failed for item '{itemText}': {string.Join(", ", add.Errors.Select(e => e.Message))}");
+        }
         await db.SaveChangesAsync();
     }
 }

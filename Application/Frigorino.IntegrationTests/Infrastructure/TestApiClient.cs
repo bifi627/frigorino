@@ -153,13 +153,6 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryCompactListItemsAsync(int listId, int? householdId = null)
-    {
-        var targetHouseholdId = householdId ?? ctx.HouseholdId;
-        return ctx.BrowserContext.APIRequest.PostAsync(
-            $"/api/household/{targetHouseholdId}/lists/{listId}/items/compact",
-            new APIRequestContextOptions { Headers = AuthHeaders });
-    }
 
     public Task<IAPIResponse> TryUpdateListItemAsync(int listId, int itemId, string? text, string? quantity, bool? status, int? householdId = null, string? comment = null)
     {
@@ -322,13 +315,6 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryCompactInventoryItemsAsync(int inventoryId, int? householdId = null)
-    {
-        var targetHouseholdId = householdId ?? ctx.HouseholdId;
-        return ctx.BrowserContext.APIRequest.PostAsync(
-            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/items/compact",
-            new APIRequestContextOptions { Headers = AuthHeaders });
-    }
 
     public Task<IAPIResponse> TryReorderInventoryItemAsync(int inventoryId, int itemId, int afterId, int? householdId = null)
     {

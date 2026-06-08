@@ -17,14 +17,14 @@ namespace Frigorino.Test.Domain
         // ------- AddItem -------
 
         [Fact]
-        public void AddItem_FirstItem_GetsBaseSortOrder()
+        public void AddItem_FirstItem_GetsBaseRank()
         {
             var inventory = NewInventory();
 
             var result = inventory.AddItem("Flour", null, null);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, result.Value.SortOrder);
+            Assert.Equal("a0", result.Value.Rank);
             Assert.True(result.Value.IsActive);
             Assert.Equal(inventory.Id, result.Value.InventoryId);
         }
@@ -33,14 +33,14 @@ namespace Frigorino.Test.Domain
         public void AddItem_AppendsBelowLast()
         {
             var inventory = NewInventory();
-            inventory.AddItem("Flour", null, null);
-            inventory.AddItem("Sugar", Quantity.Create(1, QuantityUnit.Kilogram).Value, null);
+            var first = inventory.AddItem("Flour", null, null).Value;
+            var second = inventory.AddItem("Sugar", Quantity.Create(1, QuantityUnit.Kilogram).Value, null).Value;
 
             var third = inventory.AddItem("Salt", null, null);
 
             Assert.True(third.IsSuccess);
-            var expected = SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap * 3;
-            Assert.Equal(expected, third.Value.SortOrder);
+            Assert.True(string.CompareOrdinal(first.Rank, second.Rank) < 0);
+            Assert.True(string.CompareOrdinal(second.Rank, third.Value.Rank) < 0);
         }
 
         [Fact]
@@ -329,16 +329,16 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void RestoreItem_PreservesOriginalSortOrder()
+        public void RestoreItem_PreservesOriginalRank()
         {
             var inventory = NewInventory();
-            var item = AddSeed(inventory, "Flour", sortOrder: 1_234_567);
+            var item = AddSeed(inventory, "Flour", rank: "a5");
             item.IsActive = false;
 
             var result = inventory.RestoreItem(item.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(1_234_567, item.SortOrder);
+            Assert.Equal("a5", item.Rank);
         }
 
         [Fact]
@@ -367,71 +367,72 @@ namespace Frigorino.Test.Domain
         // ------- ReorderItem -------
 
         [Fact]
-        public void ReorderItem_MoveToTop_FromAfterIdZero()
+        public void ReorderItem_MoveToTop_FromAfterIdZero_RanksBeforeFirst()
         {
             var inventory = NewInventory();
-            var item1 = AddSeed(inventory, "Flour", sortOrder: 1_010_000);
-            AddSeed(inventory, "Sugar", sortOrder: 1_020_000);
-            var item3 = AddSeed(inventory, "Salt", sortOrder: 1_030_000);
+            var item1 = AddSeed(inventory, "Flour", rank: "a1");
+            AddSeed(inventory, "Sugar", rank: "a2");
+            var item3 = AddSeed(inventory, "Salt", rank: "a3");
 
             var result = inventory.ReorderItem(item3.Id, afterItemId: 0);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(item1.SortOrder - SortOrderCalculator.DefaultGap, item3.SortOrder);
+            Assert.True(string.CompareOrdinal(item3.Rank, item1.Rank) < 0);
         }
 
         [Fact]
-        public void ReorderItem_MidpointBetweenTwoItems()
+        public void ReorderItem_MidpointBetweenTwoItems_ProducesKeyStrictlyBetween()
         {
             var inventory = NewInventory();
-            var item1 = AddSeed(inventory, "Flour", sortOrder: 100_000);
-            AddSeed(inventory, "Sugar", sortOrder: 102_000);
-            var item3 = AddSeed(inventory, "Salt", sortOrder: 104_000);
+            var item1 = AddSeed(inventory, "Flour", rank: "a0");
+            var item2 = AddSeed(inventory, "Sugar", rank: "a1");
+            var item3 = AddSeed(inventory, "Salt", rank: "a2");
 
             var result = inventory.ReorderItem(item3.Id, afterItemId: item1.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(101_000, item3.SortOrder);
+            Assert.True(string.CompareOrdinal(item1.Rank, item3.Rank) < 0);
+            Assert.True(string.CompareOrdinal(item3.Rank, item2.Rank) < 0);
         }
 
         [Fact]
-        public void ReorderItem_AfterIsLast_AppendsWithGap()
+        public void ReorderItem_AfterIsLast_RanksAfterLast()
         {
             var inventory = NewInventory();
-            var item1 = AddSeed(inventory, "Flour", sortOrder: 100_000);
-            AddSeed(inventory, "Sugar", sortOrder: 102_000);
-            var item3 = AddSeed(inventory, "Salt", sortOrder: 104_000);
+            var item1 = AddSeed(inventory, "Flour", rank: "a0");
+            AddSeed(inventory, "Sugar", rank: "a1");
+            var item3 = AddSeed(inventory, "Salt", rank: "a2");
 
             var result = inventory.ReorderItem(item1.Id, afterItemId: item3.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(item3.SortOrder + SortOrderCalculator.DefaultGap, item1.SortOrder);
+            Assert.True(string.CompareOrdinal(item3.Rank, item1.Rank) < 0);
         }
 
         [Fact]
         public void ReorderItem_UnknownAfterId_FallsBackToTopOfSection()
         {
             var inventory = NewInventory();
-            var item1 = AddSeed(inventory, "Flour", sortOrder: 1_010_000);
-            var item2 = AddSeed(inventory, "Sugar", sortOrder: 1_020_000);
+            var item1 = AddSeed(inventory, "Flour", rank: "a1");
+            var item2 = AddSeed(inventory, "Sugar", rank: "a2");
 
             // afterItemId points to a non-existent item — legacy silently moves to top.
             var result = inventory.ReorderItem(item2.Id, afterItemId: 99_999);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(item1.SortOrder - SortOrderCalculator.DefaultGap, item2.SortOrder);
+            Assert.True(string.CompareOrdinal(item2.Rank, item1.Rank) < 0);
         }
 
         [Fact]
         public void ReorderItem_SelfAnchor_NoOp()
         {
             var inventory = NewInventory();
-            var item = AddSeed(inventory, "Flour", sortOrder: 1_010_000);
+            var item = AddSeed(inventory, "Flour", rank: "a1");
 
             var result = inventory.ReorderItem(item.Id, afterItemId: item.Id);
 
             Assert.True(result.IsSuccess);
-            Assert.Equal(1_010_000, item.SortOrder);
+            Assert.Equal("a1", item.Rank);
         }
 
         [Fact]
@@ -445,61 +446,25 @@ namespace Frigorino.Test.Domain
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
         }
 
-        // ------- CompactItems -------
-
         [Fact]
-        public void CompactItems_RewritesSortOrdersWithCleanGaps()
+        public void ManyReordersIntoSameShrinkingSlot_NeverCollide()
         {
             var inventory = NewInventory();
-            var item1 = AddSeed(inventory, "Flour", sortOrder: 100_001);
-            var item2 = AddSeed(inventory, "Sugar", sortOrder: 100_002);
-            var item3 = AddSeed(inventory, "Salt", sortOrder: 200_777);
+            var top = AddSeed(inventory, "Top", rank: "a0");
+            AddSeed(inventory, "Bottom", rank: "a1");
 
-            var result = inventory.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange, item1.SortOrder);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap, item2.SortOrder);
-            Assert.Equal(SortOrderCalculator.UncheckedMinRange + 2 * SortOrderCalculator.DefaultGap, item3.SortOrder);
-        }
-
-        [Fact]
-        public void CompactItems_EmptyInventory_NoOp()
-        {
-            var inventory = NewInventory();
-
-            var result = inventory.CompactItems();
-
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
-        public void CompactItems_PreservesOrder()
-        {
-            var inventory = NewInventory();
-            var first = AddSeed(inventory, "Flour", sortOrder: 50);
-            var second = AddSeed(inventory, "Sugar", sortOrder: 200);
-            var third = AddSeed(inventory, "Salt", sortOrder: 999);
-
-            var result = inventory.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            Assert.True(first.SortOrder < second.SortOrder);
-            Assert.True(second.SortOrder < third.SortOrder);
-        }
-
-        [Fact]
-        public void CompactItems_SkipsInactiveItems()
-        {
-            var inventory = NewInventory();
-            AddSeed(inventory, "Active", sortOrder: 100_000);
-            var inactive = AddSeed(inventory, "Inactive", sortOrder: 99);
-            inactive.IsActive = false;
-
-            var result = inventory.CompactItems();
-
-            Assert.True(result.IsSuccess);
-            Assert.Equal(99, inactive.SortOrder);
+            // Repeatedly drop a fresh item into the same slot just below `top`; the gap shrinks each
+            // time but a distinct key is always available (the old integer scheme collapsed to a
+            // duplicate SortOrder after ~13 drops, which is the bug this whole change fixes).
+            var ranks = new HashSet<string> { top.Rank };
+            for (var i = 0; i < 20; i++)
+            {
+                var mover = AddSeed(inventory, $"Mover{i}");
+                var r = inventory.ReorderItem(mover.Id, afterItemId: top.Id);
+                Assert.True(r.IsSuccess);
+                Assert.True(string.CompareOrdinal(top.Rank, mover.Rank) < 0);
+                Assert.True(ranks.Add(mover.Rank), $"collision at iteration {i}: {mover.Rank}");
+            }
         }
 
         // ------- Helpers -------
@@ -520,7 +485,7 @@ namespace Frigorino.Test.Domain
 
         private int _nextItemId = 100;
 
-        private InventoryItem AddSeed(Inventory inventory, string text, Quantity? quantity = null, DateOnly? expiryDate = null, int? sortOrder = null)
+        private InventoryItem AddSeed(Inventory inventory, string text, Quantity? quantity = null, DateOnly? expiryDate = null, string? rank = null)
         {
             var item = new InventoryItem
             {
@@ -530,7 +495,8 @@ namespace Frigorino.Test.Domain
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
                 ExpiryDate = expiryDate,
-                SortOrder = sortOrder ?? SortOrderCalculator.UncheckedMinRange + SortOrderCalculator.DefaultGap,
+                Rank = rank ?? FractionalIndex.GenerateKeyBetween(
+                    inventory.InventoryItems.Select(i => i.Rank).LastOrDefault(), null),
                 CreatedAt = DateTime.UtcNow.AddMinutes(-1),
                 UpdatedAt = DateTime.UtcNow.AddMinutes(-1),
                 IsActive = true,

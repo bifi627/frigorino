@@ -1,6 +1,7 @@
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -40,14 +41,6 @@ namespace Frigorino.Features.Inventories.Items
                 return TypedResults.NotFound();
             }
 
-            var inventory = await db.Inventories
-                .Include(i => i.InventoryItems)
-                .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
-            if (inventory is null)
-            {
-                return TypedResults.NotFound();
-            }
-
             Quantity? quantity = null;
             if (request.Quantity is not null)
             {
@@ -59,18 +52,45 @@ namespace Frigorino.Features.Inventories.Items
                 quantity = parsed.Value;
             }
 
-            var result = inventory.AddItem(request.Text, quantity, request.ExpiryDate);
-            if (result.IsFailed)
+            // AddItem mints a Rank by appending after the last item; a concurrent append can collide
+            // on the partial unique index. RankRetry reloads fresh state and re-mints.
+            var outcome = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                return result.ToValidationProblem();
+                db.ChangeTracker.Clear();
+
+                var inventory = await db.Inventories
+                    .Include(i => i.InventoryItems)
+                    .FirstOrDefaultAsync(i => i.Id == inventoryId && i.HouseholdId == householdId && i.IsActive, ct);
+                if (inventory is null)
+                {
+                    return new CreateOutcome(null, NotFound: true, Problem: null);
+                }
+
+                var result = inventory.AddItem(request.Text, quantity, request.ExpiryDate);
+                if (result.IsFailed)
+                {
+                    return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                }
+
+                await db.SaveChangesAsync(ct);
+                return new CreateOutcome(InventoryItemResponse.From(result.Value), NotFound: false, Problem: null);
+            });
+
+            if (outcome.NotFound)
+            {
+                return TypedResults.NotFound();
+            }
+            if (outcome.Problem is not null)
+            {
+                return outcome.Problem;
             }
 
-            await db.SaveChangesAsync(ct);
-
-            var response = InventoryItemResponse.From(result.Value);
+            var response = outcome.Response!;
             return TypedResults.Created(
-                $"/api/household/{householdId}/inventories/{inventoryId}/items/{result.Value.Id}",
+                $"/api/household/{householdId}/inventories/{inventoryId}/items/{response.Id}",
                 response);
         }
+
+        private sealed record CreateOutcome(InventoryItemResponse? Response, bool NotFound, ValidationProblem? Problem);
     }
 }

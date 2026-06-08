@@ -2,6 +2,7 @@ using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
+using Frigorino.Features.Items;
 using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
@@ -43,14 +44,6 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var list = await db.Lists
-                .Include(l => l.ListItems)
-                .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-            if (list is null)
-            {
-                return TypedResults.NotFound();
-            }
-
             Quantity? quantity = null;
             if (request.Quantity is not null)
             {
@@ -75,25 +68,54 @@ namespace Frigorino.Features.Lists.Items
                 analysis = ItemTextRouter.Analyze(request.Text);
             }
 
-            var result = list.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.Status, request.Comment);
-            if (result.IsFailed)
+            // A status flip re-mints the item's Rank, which can collide on the partial unique index.
+            // RankRetry reloads fresh state and re-mints. The extraction enqueue runs only after the
+            // save commits, so a retried save never double-enqueues.
+            var outcome = await RankRetry.SaveWithRetryAsync(async () =>
             {
-                var first = result.Errors[0];
-                if (first is EntityNotFoundError)
-                {
-                    return TypedResults.NotFound();
-                }
-                return result.ToValidationProblem();
-            }
+                db.ChangeTracker.Clear();
 
-            await db.SaveChangesAsync(ct);
+                var list = await db.Lists
+                    .Include(l => l.ListItems)
+                    .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                if (list is null)
+                {
+                    return new UpdateOutcome(null, NotFound: true, Problem: null);
+                }
+
+                var result = list.UpdateItem(itemId, request.Text, quantity, request.ClearQuantity ?? false, request.Status, request.Comment);
+                if (result.IsFailed)
+                {
+                    var first = result.Errors[0];
+                    if (first is EntityNotFoundError)
+                    {
+                        return new UpdateOutcome(null, NotFound: true, Problem: null);
+                    }
+                    return new UpdateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                }
+
+                await db.SaveChangesAsync(ct);
+
+                return new UpdateOutcome(ListItemResponse.From(result.Value), NotFound: false, Problem: null);
+            });
+
+            if (outcome.NotFound)
+            {
+                return TypedResults.NotFound();
+            }
+            if (outcome.Problem is not null)
+            {
+                return outcome.Problem;
+            }
 
             if (analysis is ItemTextAnalysis routed)
             {
                 quantityTrigger.OnItemRouted(householdId, listId, itemId, routed);
             }
 
-            return TypedResults.Ok(ListItemResponse.From(result.Value));
+            return TypedResults.Ok(outcome.Response!);
         }
+
+        private sealed record UpdateOutcome(ListItemResponse? Response, bool NotFound, ValidationProblem? Problem);
     }
 }
