@@ -11,8 +11,11 @@ namespace Frigorino.Infrastructure.Services
     // concern that retired the old RecalculateSortOrderTask sweep. Runs at startup before serving;
     // a no-op once every row has a Rank. Removed in the deferred cleanup once stage+prod are filled.
     //
-    // The Rank column is nullable at the DB level (the model marks it required), so the "needs
-    // backfill" guard compares via EF.Property<string?> to read the real DB nullability.
+    // The "needs backfill" guard MUST use raw SQL: the Rank column is nullable at the DB level
+    // during the expand phase, but the EF model maps it required (.IsRequired()), so a LINQ
+    // `Rank == null` predicate is optimized by SqlNullabilityProcessor to `WHERE FALSE` (it prunes
+    // IS NULL on a column the model declares non-nullable) — which would make the guard always skip
+    // and the backfill never run. Raw SQL bypasses that and asks the actual column.
     public static class RankBackfill
     {
         public static async Task RunAsync(ApplicationDbContext db, ILogger logger, CancellationToken ct = default)
@@ -21,9 +24,19 @@ namespace Frigorino.Infrastructure.Services
             await BackfillInventoryItemsAsync(db, logger, ct);
         }
 
+        // True when at least one active-or-inactive row in `table` still has a NULL Rank.
+        // Table names are internal constants (EF default mappings), never user input.
+        private static async Task<bool> HasNullRankAsync(ApplicationDbContext db, string table, CancellationToken ct)
+        {
+            var count = await db.Database
+                .SqlQueryRaw<int>($"SELECT COUNT(*)::int AS \"Value\" FROM \"{table}\" WHERE \"Rank\" IS NULL")
+                .SingleAsync(ct);
+            return count > 0;
+        }
+
         private static async Task BackfillListItemsAsync(ApplicationDbContext db, ILogger logger, CancellationToken ct)
         {
-            if (!await db.ListItems.AnyAsync(i => EF.Property<string?>(i, nameof(ListItem.Rank)) == null, ct))
+            if (!await HasNullRankAsync(db, "ListItems", ct))
             {
                 return;
             }
@@ -53,7 +66,7 @@ namespace Frigorino.Infrastructure.Services
 
         private static async Task BackfillInventoryItemsAsync(ApplicationDbContext db, ILogger logger, CancellationToken ct)
         {
-            if (!await db.InventoryItems.AnyAsync(i => EF.Property<string?>(i, nameof(InventoryItem.Rank)) == null, ct))
+            if (!await HasNullRankAsync(db, "InventoryItems", ct))
             {
                 return;
             }
