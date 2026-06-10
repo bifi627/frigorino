@@ -21,7 +21,6 @@ namespace Frigorino.Test.Features
                 ContentType = "image/webp",
                 FileSizeBytes = 1234,
                 Status = false,
-                SortOrder = 1000,
             };
 
             var dto = ListItemResponse.From(item);

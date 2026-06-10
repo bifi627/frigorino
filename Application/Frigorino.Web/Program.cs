@@ -212,13 +212,6 @@ if (!isBuildTimeOpenApi)
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     await context.Database.MigrateAsync();
-
-    // One-time expand-phase backfill of the new fractional-index Rank from the legacy SortOrder.
-    // Idempotent (guarded on Rank IS NULL); a no-op once every row is filled. Removed in the
-    // deferred contract cleanup once stage + prod are confirmed populated.
-    var backfillLogger = services.GetRequiredService<ILoggerFactory>()
-        .CreateLogger("RankBackfill");
-    await Frigorino.Infrastructure.Services.RankBackfill.RunAsync(context, backfillLogger);
 }
 
 // Configure middleware pipeline
