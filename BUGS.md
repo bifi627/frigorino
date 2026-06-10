@@ -14,15 +14,6 @@ focused. Likely fix if confirmed: surface foreground messages as an in-app toast
 
 Deferred from the expiry-notifications feature work (testing feedback item #4).
 
-## Inventory promotion sheet blocks quantity entry when source item had no quantity
-
-When a list item was created without a quantity (e.g. "Apples"), the promotion
-sheet used to promote it to inventory does not allow the user to enter a quantity.
-The intended flow: user lists "Apples" without specifying how many, buys 5 in the
-store, opens the promotion sheet, types 5, and promotes "5 Apples" to inventory.
-The sheet should always render a quantity input, pre-filled with the extracted
-value if one exists and empty/placeholder otherwise.
-
 ## Inventory fails to load when opening a notification for a non-active household
 
 With multiple households: if you receive an expiry notification for Household B
