@@ -50,6 +50,29 @@ Feature: Promote checked items to inventory (SPA)
     Then the promote bar shows 1 item
     And the promote sheet is not visible
 
+  Scenario: A row whose source had no quantity still accepts one, and it lands in inventory
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    And there is an inventory named "Fridge"
+    And the product "milk" is in the catalog
+    When I open the list "Weekly Groceries"
+    And I toggle "Milk" as done
+    And I open the promote review sheet
+    Then the promote row "Milk" shows a quantity input
+    When I enter quantity "5" for "Milk" in the promote sheet
+    And I add the selected promote items
+    And I open the inventory "Fridge"
+    Then the inventory item "Milk" shows quantity "5"
+
+  Scenario: An invalid quantity blocks adding
+    Given there is a list named "Weekly Groceries" with item "Milk"
+    And there is an inventory named "Fridge"
+    And the product "milk" is in the catalog
+    When I open the list "Weekly Groceries"
+    And I toggle "Milk" as done
+    And I open the promote review sheet
+    And I enter quantity "abc" for "Milk" in the promote sheet
+    Then the promote add button is disabled
+
   Scenario: A selected row with no expiry date blocks adding
     Given there is a list named "Weekly Groceries" with item "Milk"
     And there is an inventory named "Fridge"

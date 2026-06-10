@@ -80,6 +80,23 @@ public class PromoteSteps(ScenarioContextHolder ctx, TestApiClient api)
             .Not.ToBeVisibleAsync();
     }
 
+    [Then("the promote row {string} shows a quantity input")]
+    public async Task ThenThePromoteRowShowsAQuantityInput(string itemText)
+    {
+        // Regression guard: the input must render even when the source list item had no
+        // quantity — otherwise you can't record what you actually bought.
+        await Assertions.Expect(ctx.Page.GetByTestId($"promote-row-quantity-value-{itemText}"))
+            .ToBeVisibleAsync();
+    }
+
+    [When("I enter quantity {string} for {string} in the promote sheet")]
+    public async Task WhenIEnterQuantityForInThePromoteSheet(string quantity, string itemText)
+    {
+        // The value field is a plain text TextField (testid is on the htmlInput), so Fill works
+        // directly — unlike the masked DatePicker or the unit Select.
+        await ctx.Page.GetByTestId($"promote-row-quantity-value-{itemText}").FillAsync(quantity);
+    }
+
     [When("I clear the expiry date for {string}")]
     public async Task WhenIClearTheExpiryDateFor(string itemText)
     {

@@ -353,60 +353,62 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                 </IconButton>
             </Stack>
             <Stack spacing={1} sx={{ mt: 1 }}>
-                {entry.quantity && (
-                    <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{ alignItems: "center" }}
-                    >
-                        <TextField
-                            size="small"
-                            type="text"
-                            label={t("common.quantity")}
-                            value={draft.quantity.value}
-                            onChange={(e) =>
-                                onChange({
-                                    quantity: {
-                                        ...draft.quantity,
-                                        value: e.target.value,
-                                    },
-                                })
-                            }
-                            error={!isDraftValid(draft.quantity)}
-                            slotProps={{
-                                inputLabel: { shrink: true },
-                                htmlInput: {
-                                    inputMode: "decimal",
-                                    "data-testid": `promote-row-quantity-value-${entry.text}`,
+                {/* Always editable: an item listed without a quantity ("Apples") can still get
+                    one here — you may have bought a specific count. Pre-filled when the source
+                    had a value, empty (with placeholder) otherwise. */}
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center" }}
+                >
+                    <TextField
+                        size="small"
+                        type="text"
+                        label={t("common.quantity")}
+                        placeholder={t("common.quantity")}
+                        value={draft.quantity.value}
+                        onChange={(e) =>
+                            onChange({
+                                quantity: {
+                                    ...draft.quantity,
+                                    value: e.target.value,
                                 },
-                            }}
-                            sx={{ width: 90 }}
-                        />
-                        <TextField
-                            select
-                            size="small"
-                            label={t("common.unit")}
-                            value={draft.quantity.unit}
-                            onChange={(e) =>
-                                onChange({
-                                    quantity: {
-                                        ...draft.quantity,
-                                        unit: e.target.value as QuantityUnit,
-                                    },
-                                })
-                            }
-                            data-testid={`promote-row-quantity-unit-${entry.text}`}
-                            slotProps={{ inputLabel: { shrink: true } }}
-                            sx={{ flex: 1, minWidth: 120 }}
-                        >
-                            {QUANTITY_UNIT_VALUES.map((u) => (
-                                <MenuItem key={u} value={u}>
-                                    {unitLabel(t, u)}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Stack>
-                )}
+                            })
+                        }
+                        error={!isDraftValid(draft.quantity)}
+                        slotProps={{
+                            inputLabel: { shrink: true },
+                            htmlInput: {
+                                inputMode: "decimal",
+                                "data-testid": `promote-row-quantity-value-${entry.text}`,
+                            },
+                        }}
+                        sx={{ width: 90 }}
+                    />
+                    <TextField
+                        select
+                        size="small"
+                        label={t("common.unit")}
+                        value={draft.quantity.unit}
+                        onChange={(e) =>
+                            onChange({
+                                quantity: {
+                                    ...draft.quantity,
+                                    unit: e.target.value as QuantityUnit,
+                                },
+                            })
+                        }
+                        data-testid={`promote-row-quantity-unit-${entry.text}`}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                        sx={{ flex: 1, minWidth: 120 }}
+                    >
+                        {QUANTITY_UNIT_VALUES.map((u) => (
+                            <MenuItem key={u} value={u}>
+                                {unitLabel(t, u)}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Stack>
                 <ExpiryDatePicker
                     fullWidth
                     value={draft.expiry || null}
