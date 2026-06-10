@@ -127,6 +127,89 @@ namespace Frigorino.Test.Infrastructure
         }
 
         [Fact]
+        public async Task ExecuteAsync_RunsItemsConcurrently()
+        {
+            var (service, queue) = Build();
+            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var started = new CountdownEvent(3);
+
+            await service.StartAsync(CancellationToken.None);
+            for (var i = 0; i < 3; i++)
+            {
+                queue.TryEnqueue(async (_, ct) =>
+                {
+                    started.Signal();
+                    await gate.Task.WaitAsync(ct);
+                });
+            }
+
+            // A serial drain would block on item 1's gate and never start items 2 and 3. The
+            // concurrent drain starts all three before any completes.
+            Assert.True(started.Wait(TimeSpan.FromSeconds(5)));
+
+            gate.SetResult();
+            await service.StopAsync(CancellationToken.None);
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_BoundsConcurrencyToMaxConcurrency()
+        {
+            var (service, queue) = Build();
+            var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reachedMax = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var sync = new object();
+            var current = 0;
+            var peak = 0;
+
+            await service.StartAsync(CancellationToken.None);
+            // Enqueue more than the pool can run at once; the surplus must wait for a free slot.
+            var total = QueuedHostedService.MaxConcurrency + 3;
+            for (var i = 0; i < total; i++)
+            {
+                queue.TryEnqueue(async (_, ct) =>
+                {
+                    lock (sync)
+                    {
+                        current++;
+                        peak = Math.Max(peak, current);
+                        if (current == QueuedHostedService.MaxConcurrency)
+                        {
+                            reachedMax.TrySetResult();
+                        }
+                    }
+
+                    try
+                    {
+                        await gate.Task.WaitAsync(ct);
+                    }
+                    finally
+                    {
+                        lock (sync)
+                        {
+                            current--;
+                        }
+                    }
+                });
+            }
+
+            await reachedMax.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            // Give any (incorrectly admitted) surplus item a window to start before reading the peak.
+            await Task.Delay(200);
+
+            int observedPeak;
+            lock (sync)
+            {
+                observedPeak = peak;
+            }
+
+            // Exactly MaxConcurrency ran at once — no more (bound held) and no fewer (pool filled).
+            Assert.Equal(QueuedHostedService.MaxConcurrency, observedPeak);
+
+            gate.SetResult();
+            await service.StopAsync(CancellationToken.None);
+        }
+
+        [Fact]
         public async Task StopAsync_CompletesCleanly()
         {
             var (service, _) = Build();
