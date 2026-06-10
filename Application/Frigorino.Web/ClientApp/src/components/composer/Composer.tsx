@@ -204,7 +204,29 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                 cursor: "text",
             }}
         >
-            {isEditing && editing && <EditHeader label={editing.label} />}
+            {isEditing && editing && (
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 0.5,
+                    }}
+                >
+                    <EditHeader label={editing.label} />
+                    <IconButton
+                        onClick={handleCancelEdit}
+                        aria-label={t("common.cancel")}
+                        size="small"
+                        sx={{
+                            color: "text.secondary",
+                            "&:hover": { bgcolor: "action.hover" },
+                        }}
+                    >
+                        <Close fontSize="small" />
+                    </IconButton>
+                </Box>
+            )}
 
             {chipFeatures.length > 0 && (
                 <Box
@@ -319,21 +341,6 @@ export function Composer<const F extends readonly AnyFeature[] = []>({
                             </Box>
                         ))}
                 </Box>
-
-                {isEditing && (
-                    <IconButton
-                        onClick={handleCancelEdit}
-                        aria-label={t("common.cancel")}
-                        sx={{
-                            minWidth: 44,
-                            minHeight: 44,
-                            color: "text.secondary",
-                            "&:hover": { bgcolor: "action.hover" },
-                        }}
-                    >
-                        <Close />
-                    </IconButton>
-                )}
 
                 <SendButton
                     onClick={completeText}

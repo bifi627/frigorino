@@ -1,6 +1,6 @@
 import { Alert, Stack, TextField, Typography } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/dialogs/ConfirmDialog";
 import { useDeleteList } from "../useDeleteList";
@@ -25,9 +25,12 @@ export const DeleteListConfirmDialog = ({
     const [confirmationText, setConfirmationText] = useState("");
     const deleteListMutation = useDeleteList();
 
-    useEffect(() => {
-        if (!open) setConfirmationText("");
-    }, [open]);
+    // Clear the typed confirmation on every close path — cancel, backdrop and escape all funnel
+    // through onClose — so the next open starts empty (replaces a reset-on-close effect).
+    const handleClose = () => {
+        setConfirmationText("");
+        onClose();
+    };
 
     const handleConfirm = () => {
         if (confirmationText !== listName) return;
@@ -35,7 +38,7 @@ export const DeleteListConfirmDialog = ({
             { path: { householdId, listId } },
             {
                 onSuccess: () => {
-                    onClose();
+                    handleClose();
                     navigate({ to: "/" });
                 },
             },
@@ -48,7 +51,7 @@ export const DeleteListConfirmDialog = ({
     return (
         <ConfirmDialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             onConfirm={handleConfirm}
             title={t("lists.deleteList")}
             description={

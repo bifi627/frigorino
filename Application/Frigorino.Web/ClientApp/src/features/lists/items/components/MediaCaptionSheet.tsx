@@ -11,7 +11,7 @@ import {
     Skeleton,
     TextField,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
 import type { ListItemResponse } from "../../../../lib/api";
@@ -37,12 +37,9 @@ export function MediaCaptionSheet({
     onClose,
 }: Props) {
     const { t } = useTranslation();
-    const [caption, setCaption] = useState("");
-
-    // Reseed the field whenever a new item is opened.
-    useEffect(() => {
-        setCaption(item?.comment ?? "");
-    }, [item?.id, item?.comment]);
+    // Seeded from the item's existing caption on mount. The parent keys this sheet by item id, so
+    // opening a different media item remounts and reseeds — no reset-in-effect.
+    const [caption, setCaption] = useState(item?.comment ?? "");
 
     const {
         data: url,

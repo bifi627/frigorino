@@ -1,5 +1,5 @@
 import { Card, CardContent, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useHouseholdSettings } from "../useHouseholdSettings";
@@ -10,17 +10,42 @@ interface Props {
     canManage: boolean;
 }
 
-export function HouseholdSettingsCard({ householdId, canManage }: Props) {
-    const { t } = useTranslation();
-    const { data } = useHouseholdSettings(householdId);
-    const updateSettings = useUpdateHouseholdSettings();
-    const [value, setValue] = useState("");
+type HouseholdSettings = NonNullable<
+    ReturnType<typeof useHouseholdSettings>["data"]
+>;
 
-    useEffect(() => {
-        if (data) {
-            setValue(String(data.checkedItemRetentionDays));
-        }
-    }, [data]);
+export function HouseholdSettingsCard({ householdId, canManage }: Props) {
+    const { data } = useHouseholdSettings(householdId);
+
+    // Remount the inner form once settings load so the field seeds from server data via a
+    // useState initializer (instead of a reset-in-effect). Keyed on load state — not on data
+    // identity — so a background refetch doesn't clobber an in-progress edit.
+    return (
+        <HouseholdSettingsCardInner
+            key={data ? "ready" : "loading"}
+            householdId={householdId}
+            canManage={canManage}
+            data={data}
+        />
+    );
+}
+
+interface InnerProps {
+    householdId: number;
+    canManage: boolean;
+    data: HouseholdSettings | undefined;
+}
+
+function HouseholdSettingsCardInner({
+    householdId,
+    canManage,
+    data,
+}: InnerProps) {
+    const { t } = useTranslation();
+    const updateSettings = useUpdateHouseholdSettings();
+    const [value, setValue] = useState(() =>
+        data ? String(data.checkedItemRetentionDays) : "",
+    );
 
     const commit = async () => {
         const days = Number(value);

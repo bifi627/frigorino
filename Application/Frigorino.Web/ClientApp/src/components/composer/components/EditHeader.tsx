@@ -6,8 +6,8 @@ interface EditHeaderProps {
     label?: string;
 }
 
-// Slim left-aligned edit cue. Cancel lives in the input row (on the send-button
-// axis), so this is label-only — a compact marker, not a full-width bar.
+// Slim left-aligned edit cue — a compact marker, not a full-width bar. The Composer
+// lays this out in a row with the cancel (×) button pushed to the far right.
 export const EditHeader = ({ label }: EditHeaderProps) => {
     const { t } = useTranslation();
     return (

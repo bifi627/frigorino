@@ -110,7 +110,11 @@ export const ListEditPage = () => {
                 menuActions={menuActions}
             />
             <Container maxWidth="md" sx={pageContainerSx}>
-                <EditListForm householdId={householdId} list={list} />
+                <EditListForm
+                    key={list.id}
+                    householdId={householdId}
+                    list={list}
+                />
 
                 {list.id && (
                     <DeleteListConfirmDialog

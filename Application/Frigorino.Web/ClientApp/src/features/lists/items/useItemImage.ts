@@ -45,6 +45,10 @@ export const useItemImage = (
     const [url, setUrl] = useState<string>();
     useEffect(() => {
         if (!blob) {
+            // The object URL is a browser resource that must be created AND revoked inside one
+            // effect (the StrictMode contract above); deriving it in render or useMemo would
+            // outlive the cleanup that revoked it and hand back a dead URL.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUrl(undefined);
             return;
         }

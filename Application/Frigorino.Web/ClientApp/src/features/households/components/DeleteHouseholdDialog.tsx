@@ -1,5 +1,5 @@
 import { Box, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/dialogs/ConfirmDialog";
 import { useDeleteHousehold } from "../useDeleteHousehold";
@@ -21,17 +21,18 @@ export const DeleteHouseholdDialog = ({
     const [confirmationText, setConfirmationText] = useState("");
     const deleteHouseholdMutation = useDeleteHousehold();
 
-    useEffect(() => {
-        if (!open) {
-            setConfirmationText("");
-        }
-    }, [open]);
+    // Clear the typed confirmation on every close path — cancel, backdrop and escape all funnel
+    // through onClose — so the next open starts empty (replaces a reset-on-close effect).
+    const handleClose = () => {
+        setConfirmationText("");
+        onClose();
+    };
 
     const handleConfirm = () => {
         if (confirmationText === householdName) {
             deleteHouseholdMutation.mutate(
                 { path: { id: householdId } },
-                { onSuccess: onClose },
+                { onSuccess: handleClose },
             );
         }
     };
@@ -42,7 +43,7 @@ export const DeleteHouseholdDialog = ({
     return (
         <ConfirmDialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             onConfirm={handleConfirm}
             title={t("household.deleteHousehold")}
             description={

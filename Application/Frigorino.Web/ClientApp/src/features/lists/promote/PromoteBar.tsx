@@ -1,7 +1,7 @@
 import { Inventory2Outlined } from "@mui/icons-material";
 import { Button, Paper, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { featureContentPx } from "../../../theme";
 import { useList } from "../useList";
@@ -13,22 +13,39 @@ interface PromoteBarProps {
 }
 
 // Sits between the list header and the scrolling item list. Visible only while this list has
-// pending promote candidates (perishables checked off but not yet added to inventory).
+// pending promote candidates (perishables checked off but not yet added to inventory). When the
+// count drops to zero the inner unmounts, which resets its `open` state — so the next time
+// candidates appear the review sheet starts closed (no reset-in-effect needed).
 export const PromoteBar = ({ householdId, listId }: PromoteBarProps) => {
-    const { t } = useTranslation();
     const { data: list } = useList(householdId, listId);
     const count = list?.pendingPromotionCount ?? 0;
-    const [open, setOpen] = useState(false);
-
-    useEffect(() => {
-        if (count === 0) {
-            setOpen(false);
-        }
-    }, [count]);
 
     if (count === 0) {
         return null;
     }
+
+    return (
+        <PromoteBarInner
+            householdId={householdId}
+            listId={listId}
+            count={count}
+        />
+    );
+};
+
+interface PromoteBarInnerProps {
+    householdId: number;
+    listId: number;
+    count: number;
+}
+
+const PromoteBarInner = ({
+    householdId,
+    listId,
+    count,
+}: PromoteBarInnerProps) => {
+    const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
 
     return (
         <>
