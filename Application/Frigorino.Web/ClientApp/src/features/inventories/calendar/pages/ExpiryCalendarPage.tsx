@@ -13,7 +13,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../../components/dialogs/ConfirmDialog";
 import { PageHeadActionBar } from "../../../../components/shared/PageHeadActionBar";
@@ -86,21 +86,12 @@ export const ExpiryCalendarPage = () => {
     // The full selected item (incl. quantity, which isn't in the FullCalendar event props).
     const selectedItem = items?.find((item) => item.id === selectedId) ?? null;
 
-    // If the selected item leaves the calendar (e.g. its expiry was cleared on save, so it no
-    // longer matches the calendar query, or it was deleted elsewhere), drop the stale selection.
-    // Otherwise selectedId would point at an absent item — dimming every remaining bar with none
-    // highlighted and no action bar to recover from.
-    useEffect(() => {
-        const itemGone =
-            selectedId !== null &&
-            !isLoading &&
-            items !== undefined &&
-            !items.some((item) => item.id === selectedId);
-        if (itemGone) {
-            setSelectedId(null);
-            setEditing(false);
-        }
-    }, [selectedId, items, isLoading]);
+    // A selection only counts while its item is still on the calendar — an expiry edit (which can
+    // drop it from the calendar query) or a delete elsewhere can make it vanish. Deriving the
+    // effective selection keeps the highlight/dim and the action bar consistent without a
+    // reset-in-effect that reconciles selectedId whenever `items` changes.
+    const effectiveSelectedId = selectedItem?.id ?? null;
+    const effectiveEditing = editing && selectedItem !== null;
 
     const windowDays = useCalendarViewSettings((s) => s.windowDays);
     const fullRunway = useCalendarViewSettings((s) => s.fullRunway);
@@ -138,9 +129,11 @@ export const ExpiryCalendarPage = () => {
         if (props.activeToday) {
             classes.push("cal-active");
         }
-        if (selectedId !== null) {
+        if (effectiveSelectedId !== null) {
             classes.push(
-                selectedId === props.itemId ? "cal-selected" : "cal-dimmed",
+                effectiveSelectedId === props.itemId
+                    ? "cal-selected"
+                    : "cal-dimmed",
             );
         }
         return classes;
@@ -159,7 +152,7 @@ export const ExpiryCalendarPage = () => {
                 <Box
                     data-testid={`cal-event-${arg.event.title}`}
                     data-selected={
-                        selectedId === props.itemId ? "true" : "false"
+                        effectiveSelectedId === props.itemId ? "true" : "false"
                     }
                     sx={{
                         overflow: "hidden",
@@ -175,7 +168,7 @@ export const ExpiryCalendarPage = () => {
             );
         }
 
-        const isSelected = selectedId === props.itemId;
+        const isSelected = effectiveSelectedId === props.itemId;
         return (
             <Box
                 data-testid={`cal-event-${arg.event.title}`}
@@ -364,7 +357,7 @@ export const ExpiryCalendarPage = () => {
                         onClick={() => {
                             // While editing the user must Save or Cancel; a stray grid tap
                             // shouldn't discard the edit by clearing the selection.
-                            if (!editing) {
+                            if (!effectiveEditing) {
                                 setSelectedId(null);
                             }
                         }}
@@ -409,7 +402,7 @@ export const ExpiryCalendarPage = () => {
             />
             <CalendarItemActionBar
                 item={selectedItem}
-                editing={editing}
+                editing={effectiveEditing}
                 onEdit={() => setEditing(true)}
                 onDelete={() => setConfirmDeleteOpen(true)}
                 onCancelEdit={() => setEditing(false)}

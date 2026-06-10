@@ -164,7 +164,7 @@ export const InventoryViewPage = () => {
                 setEditingItem(null);
             }
         },
-        [editingItem?.id, updateMutation, householdId, inventoryId],
+        [editingItem, updateMutation, householdId, inventoryId],
     );
 
     if (!householdId) {

@@ -28,6 +28,9 @@ export function MediaPreviewSheet({
     onClose,
 }: Props) {
     const { t } = useTranslation();
+    // Caption starts empty and stays for the life of this preview. The parent keys the sheet by
+    // whether a file is open, so each newly-attached file mounts a fresh sheet (empty caption) while
+    // a failed send keeps the same instance — preserving the typed caption for a retry.
     const [caption, setCaption] = useState("");
 
     // Local object URL for the picked file (no server round-trip for the preview). createObjectURL
@@ -36,6 +39,10 @@ export function MediaPreviewSheet({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     useEffect(() => {
         if (!file) {
+            // The object URL is a browser resource that must be created AND revoked inside one
+            // effect (the StrictMode contract above); deriving it in render or useMemo would
+            // outlive the cleanup that revoked it and hand back a dead URL.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setPreviewUrl(null);
             return;
         }
@@ -44,11 +51,6 @@ export function MediaPreviewSheet({
         return () => {
             URL.revokeObjectURL(objectUrl);
         };
-    }, [file]);
-
-    // Reset caption whenever a new file is opened.
-    useEffect(() => {
-        setCaption("");
     }, [file]);
 
     return (

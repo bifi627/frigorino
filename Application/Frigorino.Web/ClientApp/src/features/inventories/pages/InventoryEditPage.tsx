@@ -114,6 +114,7 @@ export const InventoryEditPage = () => {
             />
             <Container maxWidth="md" sx={pageContainerSx}>
                 <EditInventoryForm
+                    key={inventory.id}
                     householdId={householdId}
                     inventory={inventory}
                 />

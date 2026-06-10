@@ -1,6 +1,6 @@
 import { Alert, Stack, TextField, Typography } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ConfirmDialog } from "../../../components/dialogs/ConfirmDialog";
 import { useDeleteInventory } from "../useDeleteInventory";
@@ -25,9 +25,12 @@ export const DeleteInventoryConfirmDialog = ({
     const [confirmationText, setConfirmationText] = useState("");
     const deleteInventoryMutation = useDeleteInventory();
 
-    useEffect(() => {
-        if (!open) setConfirmationText("");
-    }, [open]);
+    // Clear the typed confirmation on every close path — cancel, backdrop and escape all funnel
+    // through onClose — so the next open starts empty (replaces a reset-on-close effect).
+    const handleClose = () => {
+        setConfirmationText("");
+        onClose();
+    };
 
     const handleConfirm = () => {
         if (confirmationText !== inventoryName) return;
@@ -35,7 +38,7 @@ export const DeleteInventoryConfirmDialog = ({
             { path: { householdId, inventoryId } },
             {
                 onSuccess: () => {
-                    onClose();
+                    handleClose();
                     navigate({ to: "/" });
                 },
             },
@@ -48,7 +51,7 @@ export const DeleteInventoryConfirmDialog = ({
     return (
         <ConfirmDialog
             open={open}
-            onClose={onClose}
+            onClose={handleClose}
             onConfirm={handleConfirm}
             title={t("inventory.deleteInventory")}
             description={

@@ -8,7 +8,7 @@ import {
     TextField,
 } from "@mui/material";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ListResponse } from "../../../lib/api";
 import { useUpdateList } from "../useUpdateList";
@@ -22,11 +22,9 @@ export const EditListForm = ({ householdId, list }: EditListFormProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const updateListMutation = useUpdateList();
+    // Seeded once on mount. The parent keys this form by list.id, so switching to a different list
+    // remounts and reseeds — no reset-on-prop effect (which would also clobber in-progress edits).
     const [editedName, setEditedName] = useState(list.name || "");
-
-    useEffect(() => {
-        setEditedName(list.name || "");
-    }, [list.name]);
 
     const isFormValid = editedName.trim().length > 0;
     const isPending = updateListMutation.isPending;

@@ -166,7 +166,7 @@ export const ListViewPage = () => {
                 setEditingItem(null);
             }
         },
-        [editingItem?.id, updateMutation, householdId, listIdNum],
+        [editingItem, updateMutation, householdId, listIdNum],
     );
 
     const handleEditItem = useCallback((item: ListItemResponse) => {
@@ -373,6 +373,7 @@ export const ListViewPage = () => {
             />
 
             <MediaPreviewSheet
+                key={pendingFile ? "open" : "closed"}
                 file={pendingFile}
                 isUploading={createMediaMutation.isPending}
                 onSend={handleSendMedia}
@@ -380,6 +381,7 @@ export const ListViewPage = () => {
             />
 
             <MediaCaptionSheet
+                key={editingMediaItem?.id ?? "closed"}
                 householdId={householdId}
                 item={editingMediaItem}
                 isSaving={updateMutation.isPending}

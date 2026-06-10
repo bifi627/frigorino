@@ -8,7 +8,7 @@ import {
     TextField,
 } from "@mui/material";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { InventoryResponse } from "../../../lib/api";
 import { useUpdateInventory } from "../useUpdateInventory";
@@ -25,11 +25,9 @@ export const EditInventoryForm = ({
     const { t } = useTranslation();
     const router = useRouter();
     const updateInventoryMutation = useUpdateInventory();
+    // Seeded once on mount. The parent keys this form by inventory.id, so switching to a different
+    // inventory remounts and reseeds — no reset-on-prop effect (which would also clobber edits).
     const [editedName, setEditedName] = useState(inventory.name || "");
-
-    useEffect(() => {
-        setEditedName(inventory.name || "");
-    }, [inventory.name]);
 
     const isFormValid = editedName.trim().length > 0;
     const isPending = updateInventoryMutation.isPending;

@@ -26,19 +26,6 @@ export default tseslint.config([
             ecmaVersion: 2020,
             globals: globals.browser,
         },
-        rules: {
-            // TEMPORARY (see TECH_DEBT.md "React Compiler lint cleanup"): downgraded
-            // from the recommended-latest `error` to `warn` for the three rules the
-            // existing code currently trips, so CI stays green while React Compiler is
-            // adopted. None affect runtime correctness — the compiler still emits a
-            // correct bundle (set-state-in-effect is advisory; preserve-manual-memoization
-            // /use-memo just make the compiler conservatively skip those spots). The
-            // correctness-critical rules (purity, immutability, refs, set-state-in-render)
-            // stay at `error`. Flip these back to `error` once the listed sites are fixed.
-            "react-hooks/set-state-in-effect": "warn",
-            "react-hooks/preserve-manual-memoization": "warn",
-            "react-hooks/use-memo": "warn",
-        },
     },
     {
         // TanStack Router file-routing convention: each route exports `Route`

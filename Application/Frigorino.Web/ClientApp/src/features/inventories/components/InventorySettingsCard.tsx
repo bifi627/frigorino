@@ -7,7 +7,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useUserSettings } from "../../settings/useUserSettings";
@@ -19,27 +19,52 @@ interface Props {
     inventoryId: number;
 }
 
+type InventoryNotification = NonNullable<
+    ReturnType<typeof useMyInventoryNotification>["data"]
+>;
+
 export function InventorySettingsCard({ householdId, inventoryId }: Props) {
-    const { t } = useTranslation();
     const { data } = useMyInventoryNotification(householdId, inventoryId);
+
+    // Remount the inner form once the notification settings load so the controls seed from server
+    // data via useState initializers (instead of a reset-in-effect). Keyed on load state — not on
+    // data identity — so a background refetch doesn't clobber an in-progress edit.
+    return (
+        <InventorySettingsCardInner
+            key={data ? "ready" : "loading"}
+            householdId={householdId}
+            inventoryId={inventoryId}
+            data={data}
+        />
+    );
+}
+
+interface InnerProps {
+    householdId: number;
+    inventoryId: number;
+    data: InventoryNotification | undefined;
+}
+
+function InventorySettingsCardInner({
+    householdId,
+    inventoryId,
+    data,
+}: InnerProps) {
+    const { t } = useTranslation();
     const { data: userSettings, isSuccess: userSettingsLoaded } =
         useUserSettings();
     const globalNotificationsEnabled =
         userSettings?.expiryNotificationsEnabled ?? false;
     const update = useUpdateMyInventoryNotification();
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [override, setOverride] = useState(false);
-    const [value, setValue] = useState("7");
-
-    useEffect(() => {
-        if (data) {
-            setNotificationsEnabled(data.enabled);
-            setOverride(data.leadDays !== null);
-            if (data.leadDays !== null) {
-                setValue(String(data.leadDays));
-            }
-        }
-    }, [data]);
+    const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
+        data ? data.enabled : true,
+    );
+    const [override, setOverride] = useState(() =>
+        data ? data.leadDays !== null : false,
+    );
+    const [value, setValue] = useState(() =>
+        data && data.leadDays !== null ? String(data.leadDays) : "7",
+    );
 
     const save = async (enabled: boolean, leadDays: number | null) => {
         try {

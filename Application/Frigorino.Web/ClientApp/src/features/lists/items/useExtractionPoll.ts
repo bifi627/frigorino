@@ -32,6 +32,10 @@ export const useExtractionPoll = (
 
     useEffect(() => {
         if (!pollable) {
+            // `active` is a timer-driven window (the single timing authority described above): it
+            // opens synchronously when a pollable item arrives and is closed by the deadline timer
+            // below — genuine synchronization with an external system (the timer), not derivable.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setActive(false);
             return;
         }
@@ -56,6 +60,9 @@ export const useExtractionPoll = (
     useEffect(() => {
         const item = query.data;
         if (!item?.quantity) return;
+        // Close the timer-driven window the moment the extracted quantity lands (the effect's real
+        // job is the cache patch below) — synchronizing `active` with the arrival of external data.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActive(false); // quantity landed — close the window immediately
         queryClient.setQueryData<ListItemResponse[]>(
             getItemsQueryKey({ path: { householdId, listId } }),
