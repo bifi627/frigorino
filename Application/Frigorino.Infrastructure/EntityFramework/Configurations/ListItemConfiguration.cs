@@ -57,9 +57,6 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            builder.Property(li => li.SortOrder)
-                .IsRequired();
-
             builder.Property(li => li.Rank)
                 .HasColumnType("text")
                 .UseCollation("C") // byte-ordinal; matches FractionalIndex's ordinal comparison
@@ -83,10 +80,8 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
 
             // Indexes for performance
             builder.HasIndex(li => li.ListId);
-            builder.HasIndex(li => li.SortOrder);
             builder.HasIndex(li => li.Status);
             builder.HasIndex(li => li.IsActive);
-            builder.HasIndex(li => new { li.ListId, li.Status, li.SortOrder }); // Composite index for sorting
             builder.HasIndex(li => new { li.ListId, li.IsActive });
             // Supports the pending-promotion count (GetList) and the pending-promotions detail read.
             builder.HasIndex(li => new { li.ListId, li.Status, li.PromotionResolvedAt });

@@ -23,9 +23,6 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             // QuantityUnit is a nullable enum — EF maps it to a nullable integer column.
             builder.Property(ii => ii.QuantityUnit);
 
-            builder.Property(ii => ii.SortOrder)
-                .IsRequired();
-
             builder.Property(ii => ii.Rank)
                 .HasColumnType("text")
                 .UseCollation("C") // byte-ordinal; matches FractionalIndex's ordinal comparison
@@ -57,10 +54,8 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.HasIndex(ii => ii.IsActive);
             builder.HasIndex(ii => ii.CreatedAt);
             builder.HasIndex(ii => ii.ExpiryDate);
-            builder.HasIndex(ii => ii.SortOrder);
             builder.HasIndex(ii => new { ii.InventoryId, ii.IsActive });
             builder.HasIndex(ii => new { ii.ExpiryDate, ii.IsActive });
-            builder.HasIndex(ii => new { ii.InventoryId, ii.SortOrder });
             // Ordered fetch + concurrent-reorder collision guard (active rows only).
             builder.HasIndex(ii => new { ii.InventoryId, ii.Rank })
                 .IsUnique()

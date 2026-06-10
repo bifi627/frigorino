@@ -19,10 +19,8 @@ namespace Frigorino.Domain.Entities
         public decimal? QuantityValue { get; set; }
         public QuantityUnit? QuantityUnit { get; set; }
         public DateOnly? ExpiryDate { get; set; }
-        public int SortOrder { get; set; }
 
         // Lexicographic ordering key (fractional index). Opaque, server-minted, never shown in UI.
-        // Replaces SortOrder; SortOrder is retained as a dead column until the deferred cleanup.
         public string Rank { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
