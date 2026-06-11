@@ -55,7 +55,7 @@
     "devDependencies": {
         "@babel/core": "^7.29.7",
         "@eslint/js": "^10.0.1",
-        "@hey-api/openapi-ts": "^0.97.2",
+        "@hey-api/openapi-ts": "^0.98.1",
         "@rolldown/plugin-babel": "^0.2.3",
         "@tanstack/router-generator": "^1.167.10",
         "@tanstack/router-plugin": "^1.168.11",
