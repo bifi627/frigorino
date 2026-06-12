@@ -5,6 +5,7 @@ using Frigorino.Features.Households;
 using Frigorino.Features.Households.Blueprints;
 using Frigorino.Features.Households.Members;
 using Frigorino.Features.Households.Settings;
+using Frigorino.Features.Lists.Blueprints;
 using Frigorino.Features.Inventories;
 using Frigorino.Features.Inventories.Items;
 using Frigorino.Features.Inventories.Notifications;
@@ -348,6 +349,7 @@ lists.MapDeleteList();
 lists.MapGetPendingPromotions();
 lists.MapPromoteListItems();
 lists.MapSkipPromotion();
+lists.MapApplyBlueprint();
 
 var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int}/items")
     .RequireAuthorization()
