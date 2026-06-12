@@ -29,6 +29,8 @@ export const ALL_AISLES: ProductCategory[] = [
     "Pet",
 ];
 
-// i18n key for an aisle's display name (e.g. "blueprints.aisles.Produce").
-export const aisleLabelKey = (category: ProductCategory): string =>
-    `blueprints.aisles.${category}`;
+// i18n key for an aisle's display name (e.g. "blueprints.aisles.Produce"). The precise
+// template-literal return type keeps it assignable to react-i18next's typed `t()` keys.
+export const aisleLabelKey = (
+    category: ProductCategory,
+): `blueprints.aisles.${ProductCategory}` => `blueprints.aisles.${category}`;

@@ -20,6 +20,7 @@ import { Route as InventoriesCreateRouteImport } from './routes/inventories/crea
 import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
 import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
+import { Route as HouseholdBlueprintsRouteImport } from './routes/household/blueprints'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
 import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
@@ -81,6 +82,11 @@ const HouseholdCreateRoute = HouseholdCreateRouteImport.update({
   path: '/household/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HouseholdBlueprintsRoute = HouseholdBlueprintsRouteImport.update({
+  id: '/household/blueprints',
+  path: '/household/blueprints',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
+  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
+  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
+  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -171,6 +180,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/onboarding'
     | '/auth/login'
+    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/onboarding'
     | '/auth/login'
+    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/onboarding'
     | '/auth/login'
+    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -226,6 +238,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   OnboardingRoute: typeof OnboardingRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  HouseholdBlueprintsRoute: typeof HouseholdBlueprintsRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
   HouseholdManageRoute: typeof HouseholdManageRoute
   InventoriesCalendarRoute: typeof InventoriesCalendarRoute
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HouseholdCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/household/blueprints': {
+      id: '/household/blueprints'
+      path: '/household/blueprints'
+      fullPath: '/household/blueprints'
+      preLoaderRoute: typeof HouseholdBlueprintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
@@ -362,6 +382,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   OnboardingRoute: OnboardingRoute,
   AuthLoginRoute: AuthLoginRoute,
+  HouseholdBlueprintsRoute: HouseholdBlueprintsRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
   HouseholdManageRoute: HouseholdManageRoute,
   InventoriesCalendarRoute: InventoriesCalendarRoute,
