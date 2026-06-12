@@ -15,6 +15,15 @@ export type AddMemberRequest = {
     role: null | HouseholdRole;
 };
 
+export type ApplyBlueprintRequest = {
+    blueprintId: number;
+};
+
+export type CreateBlueprintRequest = {
+    name: string;
+    categories: Array<ProductCategory>;
+};
+
 export type CreateHouseholdRequest = {
     name: string;
     description: null | string;
@@ -176,6 +185,8 @@ export type PendingPromotionResponse = {
     suggestedExpiry: null | string;
 };
 
+export type ProductCategory = 'Unknown' | 'Other' | 'Produce' | 'Bakery' | 'Meat' | 'Fish' | 'DairyAndEggs' | 'Cheese' | 'DeliAndColdCuts' | 'Frozen' | 'Pantry' | 'CannedGoods' | 'Sauces' | 'OilsAndVinegar' | 'Spices' | 'Cereal' | 'Spreads' | 'Snacks' | 'Sweets' | 'Beverages' | 'Alcohol' | 'HouseholdAndCleaning' | 'HealthAndBeauty' | 'Baby' | 'Pet';
+
 export type PromoteEntry = {
     listItemId: number;
     quantity: null | QuantityDto;
@@ -217,6 +228,17 @@ export type SetActiveHouseholdRequest = {
 
 export type SkipPromotionRequest = {
     listItemIds: Array<number>;
+};
+
+export type SortBlueprintResponse = {
+    id: number;
+    name: string;
+    categories: Array<ProductCategory>;
+};
+
+export type UpdateBlueprintRequest = {
+    name: string;
+    categories: Array<ProductCategory>;
 };
 
 export type UpdateHouseholdSettingsRequest = {
@@ -549,6 +571,132 @@ export type UpdateHouseholdSettingsResponses = {
 
 export type UpdateHouseholdSettingsResponse = UpdateHouseholdSettingsResponses[keyof UpdateHouseholdSettingsResponses];
 
+export type GetBlueprintsData = {
+    body?: never;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints';
+};
+
+export type GetBlueprintsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetBlueprintsResponses = {
+    /**
+     * OK
+     */
+    200: Array<SortBlueprintResponse>;
+};
+
+export type GetBlueprintsResponse = GetBlueprintsResponses[keyof GetBlueprintsResponses];
+
+export type CreateBlueprintData = {
+    body: CreateBlueprintRequest;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints';
+};
+
+export type CreateBlueprintErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type CreateBlueprintError = CreateBlueprintErrors[keyof CreateBlueprintErrors];
+
+export type CreateBlueprintResponses = {
+    /**
+     * OK
+     */
+    200: SortBlueprintResponse;
+};
+
+export type CreateBlueprintResponse = CreateBlueprintResponses[keyof CreateBlueprintResponses];
+
+export type DeleteBlueprintData = {
+    body?: never;
+    path: {
+        householdId: number;
+        blueprintId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints/{blueprintId}';
+};
+
+export type DeleteBlueprintErrors = {
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteBlueprintResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteBlueprintResponse = DeleteBlueprintResponses[keyof DeleteBlueprintResponses];
+
+export type UpdateBlueprintData = {
+    body: UpdateBlueprintRequest;
+    path: {
+        householdId: number;
+        blueprintId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints/{blueprintId}';
+};
+
+export type UpdateBlueprintErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateBlueprintError = UpdateBlueprintErrors[keyof UpdateBlueprintErrors];
+
+export type UpdateBlueprintResponses = {
+    /**
+     * OK
+     */
+    200: SortBlueprintResponse;
+};
+
+export type UpdateBlueprintResponse = UpdateBlueprintResponses[keyof UpdateBlueprintResponses];
+
 export type GetListsData = {
     body?: never;
     path: {
@@ -780,6 +928,32 @@ export type SkipPromotionResponses = {
 };
 
 export type SkipPromotionResponse = SkipPromotionResponses[keyof SkipPromotionResponses];
+
+export type ApplyBlueprintData = {
+    body: ApplyBlueprintRequest;
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/apply-blueprint';
+};
+
+export type ApplyBlueprintErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type ApplyBlueprintResponses = {
+    /**
+     * OK
+     */
+    200: Array<ListItemResponse>;
+};
+
+export type ApplyBlueprintResponse = ApplyBlueprintResponses[keyof ApplyBlueprintResponses];
 
 export type GetItemsData = {
     body?: never;
