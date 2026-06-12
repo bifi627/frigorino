@@ -19,9 +19,17 @@ interface Props {
     listId: number;
 }
 
-export function ApplyBlueprintDialog({ open, onClose, householdId, listId }: Props) {
+export function ApplyBlueprintDialog({
+    open,
+    onClose,
+    householdId,
+    listId,
+}: Props) {
     const { t } = useTranslation();
-    const { data: blueprints } = useSortBlueprints(householdId, open && householdId > 0);
+    const { data: blueprints } = useSortBlueprints(
+        householdId,
+        open && householdId > 0,
+    );
     const apply = useApplyBlueprint();
 
     const handlePick = async (blueprintId: number) => {
@@ -47,7 +55,11 @@ export function ApplyBlueprintDialog({ open, onClose, householdId, listId }: Pro
             <DialogTitle>{t("blueprints.pickBlueprint")}</DialogTitle>
             <DialogContent>
                 {(blueprints ?? []).length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ py: 2 }}
+                    >
                         {t("blueprints.noBlueprintsToApply")}
                     </Typography>
                 ) : (

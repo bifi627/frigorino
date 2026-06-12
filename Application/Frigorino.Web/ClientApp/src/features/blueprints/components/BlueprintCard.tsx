@@ -29,7 +29,12 @@ interface Props {
     onCreated?: () => void;
 }
 
-export function BlueprintCard({ householdId, canManage, blueprint, onCreated }: Props) {
+export function BlueprintCard({
+    householdId,
+    canManage,
+    blueprint,
+    onCreated,
+}: Props) {
     const { t } = useTranslation();
     const create = useCreateSortBlueprint();
     const update = useUpdateSortBlueprint();
@@ -41,7 +46,8 @@ export function BlueprintCard({ householdId, canManage, blueprint, onCreated }: 
     );
 
     const isSaving = create.isPending || update.isPending;
-    const canSave = canManage && name.trim().length > 0 && included.length > 0 && !isSaving;
+    const canSave =
+        canManage && name.trim().length > 0 && included.length > 0 && !isSaving;
 
     const handleSave = async () => {
         try {
@@ -93,9 +99,17 @@ export function BlueprintCard({ householdId, canManage, blueprint, onCreated }: 
     };
 
     return (
-        <Card elevation={2} sx={{ mb: { xs: 2, sm: 3 } }} data-testid="blueprint-card">
+        <Card
+            elevation={2}
+            sx={{ mb: { xs: 2, sm: 3 } }}
+            data-testid="blueprint-card"
+        >
             <CardContent>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center" }}
+                >
                     <TextField
                         fullWidth
                         size="small"
@@ -105,7 +119,9 @@ export function BlueprintCard({ householdId, canManage, blueprint, onCreated }: 
                         disabled={!canManage || isSaving}
                         onChange={(e) => setName(e.target.value)}
                         slotProps={{
-                            htmlInput: { "data-testid": "blueprint-name-input" },
+                            htmlInput: {
+                                "data-testid": "blueprint-name-input",
+                            },
                         }}
                     />
                     {blueprint && canManage && (
@@ -140,7 +156,13 @@ export function BlueprintCard({ householdId, canManage, blueprint, onCreated }: 
                 />
 
                 {canManage && (
-                    <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+                    <Box
+                        sx={{
+                            mt: 2,
+                            display: "flex",
+                            justifyContent: "flex-end",
+                        }}
+                    >
                         <Button
                             variant="contained"
                             startIcon={<Save />}

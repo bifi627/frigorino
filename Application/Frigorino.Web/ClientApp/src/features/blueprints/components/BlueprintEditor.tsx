@@ -45,8 +45,14 @@ function IncludedAisleRow({
     disabled?: boolean;
 }) {
     const { t } = useTranslation();
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-        useSortable({ id: category, disabled });
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: category, disabled });
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -77,18 +83,27 @@ function IncludedAisleRow({
                 disabled={disabled}
                 sx={{ cursor: disabled ? "default" : "grab" }}
             >
-                <DragHandle fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />
+                <DragHandle
+                    fontSize="small"
+                    sx={{ mr: 1, color: "text.secondary" }}
+                />
                 <ListItemText primary={t(aisleLabelKey(category))} />
             </ListItemButton>
         </ListItem>
     );
 }
 
-export function BlueprintEditor({ included, onChange, disabled = false }: Props) {
+export function BlueprintEditor({
+    included,
+    onChange,
+    disabled = false,
+}: Props) {
     const { t } = useTranslation();
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+        useSensor(TouchSensor, {
+            activationConstraint: { delay: 200, tolerance: 5 },
+        }),
     );
     const available = ALL_AISLES.filter((c) => !included.includes(c));
 
@@ -122,15 +137,25 @@ export function BlueprintEditor({ included, onChange, disabled = false }: Props)
                     collisionDetection={closestCenter}
                     onDragEnd={handleDragEnd}
                 >
-                    <SortableContext items={included} strategy={verticalListSortingStrategy}>
-                        <List data-testid="blueprint-included-list" sx={{ py: 0 }}>
+                    <SortableContext
+                        items={included}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <List
+                            data-testid="blueprint-included-list"
+                            sx={{ py: 0 }}
+                        >
                             {included.map((category) => (
                                 <IncludedAisleRow
                                     key={category}
                                     category={category}
                                     disabled={disabled}
                                     onRemove={() =>
-                                        onChange(included.filter((c) => c !== category))
+                                        onChange(
+                                            included.filter(
+                                                (c) => c !== category,
+                                            ),
+                                        )
                                     }
                                 />
                             ))}
@@ -153,7 +178,9 @@ export function BlueprintEditor({ included, onChange, disabled = false }: Props)
                             <IconButton
                                 edge="end"
                                 disabled={disabled}
-                                onClick={() => onChange([...included, category])}
+                                onClick={() =>
+                                    onChange([...included, category])
+                                }
                                 data-testid={`blueprint-add-${category}`}
                             >
                                 <Add />
@@ -164,7 +191,9 @@ export function BlueprintEditor({ included, onChange, disabled = false }: Props)
                             disabled={disabled}
                             onClick={() => onChange([...included, category])}
                         >
-                            <ListItemText primary={t(aisleLabelKey(category))} />
+                            <ListItemText
+                                primary={t(aisleLabelKey(category))}
+                            />
                         </ListItemButton>
                     </ListItem>
                 ))}

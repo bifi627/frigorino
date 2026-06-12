@@ -1,5 +1,12 @@
 import { Add } from "@mui/icons-material";
-import { Alert, Box, Button, Container, Skeleton, Typography } from "@mui/material";
+import {
+    Alert,
+    Box,
+    Button,
+    Container,
+    Skeleton,
+    Typography,
+} from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
@@ -17,12 +24,11 @@ export function BlueprintsPage() {
 
     const householdId = currentHousehold?.householdId ?? 0;
     const role = currentHousehold?.role;
-    const canManage = !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
+    const canManage =
+        !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
 
-    const { data: blueprints, isLoading: blueprintsLoading } = useSortBlueprints(
-        householdId,
-        householdId > 0,
-    );
+    const { data: blueprints, isLoading: blueprintsLoading } =
+        useSortBlueprints(householdId, householdId > 0);
 
     if (isLoading || (householdId > 0 && blueprintsLoading)) {
         return (
@@ -35,7 +41,9 @@ export function BlueprintsPage() {
     if (error || !hasActiveHousehold || householdId <= 0) {
         return (
             <Container maxWidth="md" sx={pageContainerSx}>
-                <Alert severity="info">{t("common.createOrSelectHouseholdFirst")}</Alert>
+                <Alert severity="info">
+                    {t("common.createOrSelectHouseholdFirst")}
+                </Alert>
             </Container>
         );
     }
@@ -50,7 +58,11 @@ export function BlueprintsPage() {
                 menuActions={[]}
             />
             <Container maxWidth="md" sx={pageContainerSx}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                >
                     {t("blueprints.manageHint")}
                 </Typography>
 
@@ -73,7 +85,13 @@ export function BlueprintsPage() {
                 )}
 
                 {canManage && !showDraft && (
-                    <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            mt: 2,
+                        }}
+                    >
                         <Button
                             variant="outlined"
                             startIcon={<Add />}
