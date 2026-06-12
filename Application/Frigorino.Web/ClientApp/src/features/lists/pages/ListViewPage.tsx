@@ -1,4 +1,4 @@
-import { ArrowBack, DragHandle, Edit, Search } from "@mui/icons-material";
+import { ArrowBack, DragHandle, Edit, Search, Sort } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -17,6 +17,7 @@ import {
 import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import type { ListItemResponse, QuantityDto } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
+import { ApplyBlueprintDialog } from "../../blueprints/components/ApplyBlueprintDialog";
 import { ListContainer } from "../items/components/ListContainer";
 import { ListFooter } from "../items/components/ListFooter";
 import { MediaCaptionSheet } from "../items/components/MediaCaptionSheet";
@@ -38,6 +39,7 @@ export const ListViewPage = () => {
         null,
     );
     const [showDragHandles, setShowDragHandles] = useState(false);
+    const [sortDialogOpen, setSortDialogOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     // True when edit mode was opened via the quantity chip — the composer then starts
@@ -314,7 +316,14 @@ export const ListViewPage = () => {
             testId: "list-search-button",
         },
     ];
-    const menuActions: HeadNavigationAction[] = [];
+    const menuActions: HeadNavigationAction[] = [
+        {
+            text: t("blueprints.sortByCategory"),
+            icon: <Sort fontSize="small" />,
+            onClick: () => setSortDialogOpen(true),
+            testId: "list-sort-by-category",
+        },
+    ];
 
     return (
         <Box
@@ -387,6 +396,13 @@ export const ListViewPage = () => {
                 isSaving={updateMutation.isPending}
                 onSave={handleSaveCaption}
                 onClose={() => setEditingMediaItem(null)}
+            />
+
+            <ApplyBlueprintDialog
+                open={sortDialogOpen}
+                onClose={() => setSortDialogOpen(false)}
+                householdId={householdId}
+                listId={listIdNum}
             />
         </Box>
     );
