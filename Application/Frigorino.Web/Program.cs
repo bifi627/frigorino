@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Households.Blueprints;
 using Frigorino.Features.Households.Members;
 using Frigorino.Features.Households.Settings;
 using Frigorino.Features.Inventories;
@@ -327,6 +328,14 @@ var householdSettings = app.MapGroup("/api/household/{householdId:int}/settings"
     .WithTags("HouseholdSettings");
 householdSettings.MapGetHouseholdSettings();
 householdSettings.MapUpdateHouseholdSettings();
+
+var blueprints = app.MapGroup("/api/household/{householdId:int}/blueprints")
+    .RequireAuthorization()
+    .WithTags("Blueprints");
+blueprints.MapGetBlueprints();
+blueprints.MapCreateBlueprint();
+blueprints.MapUpdateBlueprint();
+blueprints.MapDeleteBlueprint();
 
 var lists = app.MapGroup("/api/household/{householdId:int}/lists")
     .RequireAuthorization()
