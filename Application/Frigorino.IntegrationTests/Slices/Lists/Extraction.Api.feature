@@ -12,7 +12,7 @@ Feature: Inline Quantity Extraction API
     Given there is a list named "Weekly Groceries"
     When I POST an item with text "1l milk" to "Weekly Groceries" via the API
     Then the list item eventually has text "milk" with quantity 1 unit 3
-    And the product "milk" is categorized as "Food"
+    And the product "milk" is categorized as "DairyAndEggs"
 
   Scenario: A non-digit task is not extracted but is still classified
     Given there is a list named "Weekly Groceries"

@@ -11,7 +11,7 @@ public class PromoteSuggestionTests
     private static Product ProductWith(ExpiryHandling handling, int? shelfLifeDays)
     {
         var classification = new ProductClassification(
-            ProductCategory.Food, ExpiryProfile.Create(handling, shelfLifeDays).Value);
+            ProductCategory.DairyAndEggs, ExpiryProfile.Create(handling, shelfLifeDays).Value);
         return Product.Create(1, "milk", classification, classifierVersion: 1).Value;
     }
 
