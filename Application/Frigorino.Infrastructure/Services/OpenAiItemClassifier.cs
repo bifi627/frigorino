@@ -14,7 +14,7 @@ namespace Frigorino.Infrastructure.Services
     public class OpenAiItemClassifier : IItemClassifier
     {
         // Bump when the prompt or schema changes to force re-classification on the next reference.
-        public int Version => 1;
+        public int Version => 2;
 
         // The strict Structured Outputs schema. Enum values and the shelf-life bounds are
         // interpolated from the domain types so they can't silently drift from ProductCategory /
@@ -51,11 +51,32 @@ namespace Frigorino.Infrastructure.Services
         private static readonly string SystemPrompt =
             "You classify a single item a user wrote on a household list. Items are usually groceries or household supplies, but may be anything (e.g. a reminder, or a non-consumable object).\n" +
             "In 'reasoning', briefly justify your choice in one short sentence always in english not matter the input language.\n" +
-            "Set 'productCategory' to exactly one of:\n" +
-            "- Unknown: anything you do not recognize as an item (e. g. nonsense text, placeholders, invalid characters, emotes)\n" +
-            "- Food: edible/drinkable groceries (e.g. milk/Milch, bananas/Bananen, bread/Brot).\n" +
-            "- HouseholdSupply: non-food consumables you restock (e.g. dish soap/Spülmittel, batteries/Batterien, paper towels/Küchenrolle).\n" +
-            "- Other: anything not stocked as a food/household consumable (e.g. a task like 'call dentist'/'Zahnarzt anrufen', or a one-off object).\n" +
+            "Set 'productCategory' to exactly one supermarket aisle — pick the single aisle where the item is normally shopped/stored:\n" +
+            "- Unknown: you cannot classify it (nonsense text, placeholders, invalid characters, emotes).\n" +
+            "- Other: a recognized thing that is NOT a stocked grocery/household good (e.g. a task like 'call dentist'/'Zahnarzt anrufen', or a one-off object).\n" +
+            "- Produce: fresh fruit & vegetables (e.g. bananas/Bananen, lettuce/Salat, apples/Äpfel).\n" +
+            "- Bakery: bread & baked goods (e.g. bread/Brot, rolls/Brötchen, croissants).\n" +
+            "- Meat: fresh or packaged meat & poultry (e.g. chicken/Hähnchen, mince/Hackfleisch).\n" +
+            "- Fish: fresh or packaged fish & seafood (e.g. salmon/Lachs, shrimp/Garnelen).\n" +
+            "- DairyAndEggs: milk, butter, yogurt, eggs (e.g. milk/Milch, yogurt/Joghurt, eggs/Eier).\n" +
+            "- Cheese: cheese of any kind (e.g. Gouda, cream cheese/Frischkäse, Parmesan).\n" +
+            "- DeliAndColdCuts: chilled sausage, sliced cold cuts, deli counter (e.g. ham/Schinken, salami/Salami, Aufschnitt).\n" +
+            "- Frozen: frozen foods (e.g. frozen pizza/Tiefkühlpizza, ice cream/Eis, frozen vegetables/TK-Gemüse).\n" +
+            "- Pantry: dry shelf-stable staples (e.g. pasta/Nudeln, rice/Reis, flour/Mehl, sugar/Zucker).\n" +
+            "- CannedGoods: canned or jarred goods (e.g. canned tomatoes/Dosentomaten, beans/Bohnen, corn/Mais).\n" +
+            "- Sauces: sauces, dressings & pastes (e.g. ketchup/Ketchup, pasta sauce/Passata, mayonnaise/Mayonnaise, pesto/Pesto).\n" +
+            "- OilsAndVinegar: cooking oils & vinegar (e.g. olive oil/Olivenöl, sunflower oil/Sonnenblumenöl, vinegar/Essig).\n" +
+            "- Spices: spices, salt & baking aids (e.g. salt/Salz, pepper/Pfeffer, cinnamon/Zimt, baking powder/Backpulver).\n" +
+            "- Cereal: breakfast cereal & oats (e.g. muesli/Müsli, oats/Haferflocken, cornflakes/Cornflakes).\n" +
+            "- Spreads: sweet or savoury spreads (e.g. jam/Marmelade, Nutella, honey/Honig, peanut butter/Erdnussbutter).\n" +
+            "- Snacks: savoury snacks (e.g. chips/Chips, pretzels/Brezeln, crackers/Cracker, nuts/Nüsse).\n" +
+            "- Sweets: confectionery (e.g. chocolate/Schokolade, gummy bears/Gummibärchen, candy/Bonbons).\n" +
+            "- Beverages: non-alcoholic drinks (e.g. water/Wasser, juice/Saft, soda/Limonade, coffee/Kaffee, tea/Tee).\n" +
+            "- Alcohol: alcoholic drinks (e.g. beer/Bier, wine/Wein, spirits/Schnaps).\n" +
+            "- HouseholdAndCleaning: cleaning & household supplies (e.g. dish soap/Spülmittel, paper towels/Küchenrolle, batteries/Batterien).\n" +
+            "- HealthAndBeauty: personal care, health & cosmetics (e.g. toothpaste/Zahnpasta, shampoo/Shampoo, plasters/Pflaster).\n" +
+            "- Baby: baby food & baby care (e.g. baby food/Babybrei, diapers/Windeln, baby wipes/Feuchttücher).\n" +
+            "- Pet: pet supplies & pet food (e.g. dog food/Hundefutter, cat litter/Katzenstreu).\n" +
             "Set 'expiryHandling' to exactly one of:\n" +
             "- Unknown: anything you do not recognize as an item (e. g. nonsense text, placeholders, invalid characters, emotes)\n" +
             "- NonPerishable: effectively never expires (e.g. salt/Salz, sugar/Zucker, dish soap/Spülmittel). defaultShelfLifeDays = null.\n" +
@@ -104,14 +125,14 @@ namespace Frigorino.Infrastructure.Services
             {
                 var completion = await _client.CompleteChatAsync(messages, Options, ct);
 
-                // Refusal or empty content → treat as Other/non-perishable rather than failing the job.
+                // Refusal or empty content → treat as Unknown/non-perishable rather than failing the job.
                 if (completion.Value.Content.Count == 0
                     || string.IsNullOrWhiteSpace(completion.Value.Content[0].Text))
                 {
                     _logger.LogWarning(
-                        "Classifier returned no usable content for '{Name}'; defaulting to Other/non-perishable.",
+                        "Classifier returned no usable content for '{Name}'; defaulting to Unknown/non-perishable.",
                         normalizedName);
-                    return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
+                    return Result.Ok(new ProductClassification(ProductCategory.Unknown, ExpiryProfile.NonPerishable));
                 }
 
                 var dto = JsonSerializer.Deserialize<ClassifierResponse>(completion.Value.Content[0].Text, JsonOptions);
@@ -128,7 +149,7 @@ namespace Frigorino.Infrastructure.Services
                 if (dto is null || profile.IsFailed)
                 {
                     // Model produced a schema-valid-but-semantically-inconsistent combination; be safe.
-                    return Result.Ok(new ProductClassification(ProductCategory.Other, ExpiryProfile.NonPerishable));
+                    return Result.Ok(new ProductClassification(ProductCategory.Unknown, ExpiryProfile.NonPerishable));
                 }
 
 

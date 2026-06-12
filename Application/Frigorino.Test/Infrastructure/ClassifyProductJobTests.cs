@@ -44,7 +44,7 @@ namespace Frigorino.Test.Infrastructure
 
         private static Result<ProductClassification> AiResult(int days) =>
             Result.Ok(new ProductClassification(
-                ProductCategory.Food, ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value));
+                ProductCategory.DairyAndEggs, ExpiryProfile.Create(ExpiryHandling.AiRecommendsShelfLife, days).Value));
 
         [Fact]
         public async Task Run_NewName_ClassifiesAndInserts()
@@ -60,7 +60,7 @@ namespace Frigorino.Test.Infrastructure
             using var verify = NewContext(dbName);
             var product = await verify.Products.SingleAsync();
             Assert.Equal("milk", product.NormalizedName);
-            Assert.Equal(ProductCategory.Food, product.ClassificationProductCategory);
+            Assert.Equal(ProductCategory.DairyAndEggs, product.ClassificationProductCategory);
             Assert.Equal(ExpiryHandling.AiRecommendsShelfLife, product.ClassificationExpiryHandling);
             Assert.Equal(7, product.ClassificationShelfLifeDays);
             Assert.Equal(1, product.ClassifierVersion);
