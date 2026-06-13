@@ -55,3 +55,17 @@ truncation on the title, or the actions lacking `flex-shrink: 0`). Confirm
 whether this is one shared row/header component reused by both lists and
 inventories or duplicated per surface, then decide between truncating (ellipsis)
 vs. wrapping the title while keeping the actions pinned and reachable.
+
+## Calendar view sorts by expiry in the wrong direction
+
+Reported by users: in the calendar view, items appear to be ordered with the
+furthest-away expiry first; the expected behaviour is the reverse — items with
+the soonest (lowest) expiration should sit at the top, so the most urgent items
+are seen first. The reporter is not fully certain of the current direction
+("I think it's the other way round"), so the first step is to confirm the
+existing sort order before flipping it. Investigation deferred.
+
+Places to check: the calendar view's item ordering — likely a sort comparator on
+the expiry date that needs its direction reversed (ascending by expiry date so
+nearest-due is first). Verify whether any already-expired items belong above or
+below upcoming ones once the order is corrected.
