@@ -3009,6 +3009,16 @@
               "null",
               "string"
             ]
+          },
+          "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
           }
         }
       },
