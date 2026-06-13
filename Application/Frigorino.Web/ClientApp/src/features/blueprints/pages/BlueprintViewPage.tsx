@@ -158,9 +158,11 @@ export const BlueprintViewPage = () => {
                 title={blueprint.name}
                 section="blueprints"
                 maxWidth="md"
-                directActions={[
+                directActions={[]}
+                menuActions={[
                     {
-                        icon: <Edit />,
+                        text: t("common.edit"),
+                        icon: <Edit fontSize="small" />,
                         onClick: () =>
                             navigate({
                                 to: "/household/blueprints/$blueprintId/edit",
@@ -171,7 +173,7 @@ export const BlueprintViewPage = () => {
                         testId: "blueprint-edit-title",
                     },
                 ]}
-                menuActions={[]}
+                menuButtonTestId="blueprint-header-menu-toggle"
             />
             <Container maxWidth="md" sx={pageContainerSx}>
                 <BlueprintArranger

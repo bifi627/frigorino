@@ -102,7 +102,10 @@ export const PageHeadActionBar = memo(
                             gap: 2,
                         }}
                     >
-                        <IconButton onClick={handleBack} sx={{ p: 1 }}>
+                        <IconButton
+                            onClick={handleBack}
+                            sx={{ p: 1, flexShrink: 0 }}
+                        >
                             <ArrowBack />
                         </IconButton>
                         {SectionIcon && (
@@ -120,11 +123,17 @@ export const PageHeadActionBar = memo(
                                 <SectionIcon />
                             </Box>
                         )}
-                        <Box sx={{ flex: 1 }}>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                minWidth: 0,
+                                wordBreak: "break-word",
+                            }}
+                        >
                             <Typography
                                 variant="h5"
                                 component="h1"
-                                sx={{ fontWeight: 600, mb: 0.5 }}
+                                sx={{ fontWeight: 600, mb: subtitle ? 0.5 : 0 }}
                             >
                                 {title}
                             </Typography>
@@ -140,7 +149,14 @@ export const PageHeadActionBar = memo(
                                 </Typography>
                             )}
                         </Box>
-                        <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                gap: 1,
+                                ml: "auto",
+                                flexShrink: 0,
+                            }}
+                        >
                             {directActions.map((action, index) => (
                                 <IconButton
                                     key={index}

@@ -18,6 +18,7 @@ public class ListSearchSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I open the list search")]
     public async Task WhenIOpenTheListSearch()
     {
+        await ctx.Page.GetByTestId("list-header-menu-toggle").ClickAsync();
         await ctx.Page.GetByTestId("list-search-button").ClickAsync();
     }
 

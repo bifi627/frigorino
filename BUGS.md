@@ -26,17 +26,3 @@ should carry the target household id and switch the active household to it on
 open (or the inventory route should detect the mismatch and switch) before
 issuing the scoped query. Root cause is the implicit household-context model —
 see "Household context is implicit (LastActiveHouseholdId)…" in `TECH_DEBT.md`.
-
-## Long list/inventory titles overflow and push the action buttons off-screen
-
-Reported by users: when a list or inventory has a long title, the title text
-does not wrap or truncate within its row — it expands the layout and shoves the
-trailing action buttons (e.g. edit/delete/overflow menu) off the visible screen,
-making them unreachable. Investigation deferred.
-
-Places to check: the list/inventory row or card header where the title sits
-alongside the action buttons (likely a flex row missing `min-width: 0` /
-truncation on the title, or the actions lacking `flex-shrink: 0`). Confirm
-whether this is one shared row/header component reused by both lists and
-inventories or duplicated per surface, then decide between truncating (ellipsis)
-vs. wrapping the title while keeping the actions pinned and reachable.

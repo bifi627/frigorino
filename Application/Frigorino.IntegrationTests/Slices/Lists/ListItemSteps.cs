@@ -75,7 +75,14 @@ public class ListItemSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I enable drag handles")]
     public async Task WhenIEnableDragHandles()
     {
+        await ctx.Page.GetByTestId("list-header-menu-toggle").ClickAsync();
         await ctx.Page.GetByTestId("list-toggle-drag-handles").ClickAsync();
+        // The overflow menu's invisible backdrop covers the viewport during its close
+        // transition. The "I drag" step dispatches raw Mouse events (no actionability
+        // check), so a lingering backdrop would swallow the mouse-down and dnd-kit would
+        // never activate. Wait for the backdrop to detach before continuing.
+        await ctx.Page.Locator(".MuiBackdrop-root")
+            .WaitForAsync(new() { State = WaitForSelectorState.Detached });
         // Wait for at least one drag handle to render so the next "I drag" step doesn't race
         // the toggle re-render.
         await ctx.Page.Locator("[data-testid^='drag-handle-item-']").First.WaitForAsync();

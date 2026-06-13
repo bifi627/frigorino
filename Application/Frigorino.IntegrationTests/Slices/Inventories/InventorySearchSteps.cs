@@ -6,6 +6,7 @@ public class InventorySearchSteps(ScenarioContextHolder ctx)
     [When("I open the inventory search")]
     public async Task WhenIOpenTheInventorySearch()
     {
+        await ctx.Page.GetByTestId("inventory-header-menu-toggle").ClickAsync();
         await ctx.Page.GetByTestId("inventory-search-button").ClickAsync();
     }
 

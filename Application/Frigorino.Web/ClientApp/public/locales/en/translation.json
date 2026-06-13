@@ -114,6 +114,10 @@
         "removeFromHousehold": "Remove from household"
     },
     "inventory": {
+        "sortOrder": "Sort order",
+        "sortManual": "Manual order",
+        "sortExpiryAsc": "Soonest expiry first",
+        "sortExpiryDesc": "Latest expiry first",
         "createInventory": "Create inventory",
         "createNewInventory": "Create new inventory",
         "inventoryName": "Inventory name",
@@ -160,6 +164,7 @@
         }
     },
     "lists": {
+        "reorderItems": "Reorder items",
         "createList": "Create list",
         "editList": "Edit list",
         "deleteList": "Delete list",
