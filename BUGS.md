@@ -41,3 +41,17 @@ that shows an expiry countdown. Confirm whether the gap is in a shared
 relative-time formatter (single root cause across all surfaces) or duplicated
 per-surface logic, then reproduce with a far-future expiry to pin the threshold
 before fixing.
+
+## Long list/inventory titles overflow and push the action buttons off-screen
+
+Reported by users: when a list or inventory has a long title, the title text
+does not wrap or truncate within its row — it expands the layout and shoves the
+trailing action buttons (e.g. edit/delete/overflow menu) off the visible screen,
+making them unreachable. Investigation deferred.
+
+Places to check: the list/inventory row or card header where the title sits
+alongside the action buttons (likely a flex row missing `min-width: 0` /
+truncation on the title, or the actions lacking `flex-shrink: 0`). Confirm
+whether this is one shared row/header component reused by both lists and
+inventories or duplicated per surface, then decide between truncating (ellipsis)
+vs. wrapping the title while keeping the actions pinned and reachable.
