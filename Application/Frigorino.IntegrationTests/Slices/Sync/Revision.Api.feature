@@ -57,6 +57,20 @@ Feature: Resource revision tokens
     And I capture the revision of inventory "Fridge" via the API
     Then the two captured revisions differ
 
+  Scenario: Deleting an inventory item changes the inventory revision token
+    Given there is an inventory named "Fridge" with item "Cheese"
+    When I capture the revision of inventory "Fridge" via the API
+    And I DELETE the inventory item "Cheese" in "Fridge" via the API
+    And I capture the revision of inventory "Fridge" via the API
+    Then the two captured revisions differ
+
+  Scenario: Non-member cannot read an inventory revision
+    Given I am logged in as "alice"
+    And an existing household "Other" owned by "bob" that I am not a member of
+    And "bob" has created an inventory named "BobsFridge"
+    When I GET the revision of inventory "BobsFridge" via the API
+    Then the API response status is 404
+
   Scenario: Adding a perishable item changes the calendar revision token
     Given an inventory "Fridge" has an item "Yogurt" expiring in 3 days
     When I capture the expiry-calendar revision via the API

@@ -14,7 +14,7 @@ namespace Frigorino.Features.Inventories
     {
         public static IEndpointRouteBuilder MapGetInventoryRevision(this IEndpointRouteBuilder app)
         {
-            app.MapGet("{inventoryId:int}/revision", Handle)
+            app.MapGet("/{inventoryId:int}/revision", Handle)
                .WithName("GetInventoryRevision")
                .Produces<RevisionResponse>(StatusCodes.Status200OK)
                .Produces(StatusCodes.Status404NotFound);

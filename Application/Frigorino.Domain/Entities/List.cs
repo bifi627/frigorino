@@ -337,7 +337,20 @@ namespace Frigorino.Domain.Entities
                 return Result.Fail<ListItem>(errors);
             }
 
-            item.Text = cleanName.Trim();
+            // Extraction can resolve to the item's current state (e.g. a quantity-less name the user
+            // already typed cleanly). Applying it would be a no-op except for the UpdatedAt bump, which
+            // would spuriously move the revision sync-token and trigger a redundant refetch for every
+            // viewer. Skip the write entirely when nothing actually changed.
+            var trimmed = cleanName.Trim();
+            var unchanged = item.Text == trimmed
+                && item.QuantityValue == quantity?.Value
+                && item.QuantityUnit == quantity?.Unit;
+            if (unchanged)
+            {
+                return Result.Ok(item);
+            }
+
+            item.Text = trimmed;
             item.QuantityValue = quantity?.Value;
             item.QuantityUnit = quantity?.Unit;
             item.UpdatedAt = DateTime.UtcNow;

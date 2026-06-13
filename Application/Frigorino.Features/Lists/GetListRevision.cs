@@ -14,7 +14,7 @@ namespace Frigorino.Features.Lists
     {
         public static IEndpointRouteBuilder MapGetListRevision(this IEndpointRouteBuilder app)
         {
-            app.MapGet("{listId:int}/revision", Handle)
+            app.MapGet("/{listId:int}/revision", Handle)
                .WithName("GetListRevision")
                .Produces<RevisionResponse>(StatusCodes.Status200OK)
                .Produces(StatusCodes.Status404NotFound);

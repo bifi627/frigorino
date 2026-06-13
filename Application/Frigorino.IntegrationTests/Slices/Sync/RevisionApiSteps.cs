@@ -77,6 +77,13 @@ public class RevisionApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryGetListRevisionAsync(listId);
     }
 
+    [When("I GET the revision of inventory {string} via the API")]
+    public async Task WhenIGetTheRevisionOfInventory(string inventoryName)
+    {
+        var inventoryId = ctx.InventoryIds[inventoryName];
+        ctx.LastApiResponse = await api.TryGetInventoryRevisionAsync(inventoryId);
+    }
+
     [Then("the two captured revisions differ")]
     public void ThenTheTwoCapturedRevisionsDiffer()
     {
