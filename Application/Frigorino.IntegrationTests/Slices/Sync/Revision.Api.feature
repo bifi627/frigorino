@@ -36,3 +36,23 @@ Feature: Resource revision tokens
     And "bob" has created a list named "BobsList"
     When I GET the revision of list "BobsList" via the API
     Then the API response status is 404
+
+  Scenario: A no-op read returns the same inventory revision token
+    Given an inventory "Fridge" has an item "Cheese" with no expiry
+    When I capture the revision of inventory "Fridge" via the API
+    And I capture the revision of inventory "Fridge" via the API
+    Then the two captured revisions are equal
+
+  Scenario: Adding an item changes the inventory revision token
+    Given an inventory "Fridge" has an item "Cheese" with no expiry
+    When I capture the revision of inventory "Fridge" via the API
+    And an inventory "Fridge" has an item "Butter" with no expiry
+    And I capture the revision of inventory "Fridge" via the API
+    Then the two captured revisions differ
+
+  Scenario: Editing an item's text changes the inventory revision token
+    Given an inventory "Fridge" has an item "Cheese" with no expiry
+    When I capture the revision of inventory "Fridge" via the API
+    And I edit the text of item "Cheese" in inventory "Fridge" to "Gouda" via the database
+    And I capture the revision of inventory "Fridge" via the API
+    Then the two captured revisions differ

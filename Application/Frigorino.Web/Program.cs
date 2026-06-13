@@ -376,6 +376,7 @@ inventories.MapCreateInventory();
 inventories.MapGetInventories();
 inventories.MapGetExpiryCalendar();
 inventories.MapGetInventory();
+inventories.MapGetInventoryRevision();
 inventories.MapUpdateInventory();
 inventories.MapDeleteInventory();
 
