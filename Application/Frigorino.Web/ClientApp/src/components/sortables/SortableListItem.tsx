@@ -1,4 +1,4 @@
-import { Delete, Edit, MoreVert } from "@mui/icons-material";
+import { AddShoppingCart, Delete, Edit, MoreVert } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
@@ -19,6 +19,8 @@ export interface SortableListItemProps<T extends SortableItemInterface> {
     onToggleStatus: (itemId: number) => void;
     onEdit: (item: T) => void;
     onDelete: (itemId: number) => void;
+    /** When provided, shows an "Add to list" menu entry (used for inventory rows). */
+    onAddToList?: (item: T) => void;
     isDragging?: boolean;
     isEditing?: boolean;
     /** Background async work is happening on this row — shows a pulsing accent border. */
@@ -33,6 +35,7 @@ function SortableListItemComponent<T extends SortableItemInterface>({
     onToggleStatus,
     onEdit,
     onDelete,
+    onAddToList,
     isDragging = false,
     isEditing = false,
     isProcessing = false,
@@ -60,6 +63,11 @@ function SortableListItemComponent<T extends SortableItemInterface>({
         onEdit(item);
         handleMenuClose();
     }, [onEdit, item, handleMenuClose]);
+
+    const handleAddToList = useCallback(() => {
+        onAddToList?.(item);
+        handleMenuClose();
+    }, [onAddToList, item, handleMenuClose]);
 
     const handleDelete = useCallback(() => {
         if (item.id) {
@@ -197,6 +205,18 @@ function SortableListItemComponent<T extends SortableItemInterface>({
                             horizontal: "right",
                         }}
                     >
+                        {onAddToList && (
+                            <MenuItem
+                                onClick={handleAddToList}
+                                data-testid="add-to-list-button"
+                            >
+                                <AddShoppingCart
+                                    fontSize="small"
+                                    sx={{ mr: 1 }}
+                                />
+                                {t("reorder.addToList")}
+                            </MenuItem>
+                        )}
                         <MenuItem
                             onClick={handleEdit}
                             data-testid="edit-item-button"
