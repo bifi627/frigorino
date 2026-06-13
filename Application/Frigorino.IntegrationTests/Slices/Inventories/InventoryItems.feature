@@ -39,6 +39,9 @@ Feature: Inventory Items
     And I click delete from the inventory item menu
     Then "Flour" no longer appears in the inventory
 
+  # Ignored: recurring timing flake on the undo-delete toast (sonner auto-dismiss
+  # race). The hover-to-pin mitigation in ToastSteps reduced but did not eliminate it.
+  @ignore
   Scenario: Undo restores a deleted inventory item via the toast
     Given there is an inventory named "Pantry" with item "Flour"
     When I open the inventory "Pantry"
