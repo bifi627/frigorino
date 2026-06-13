@@ -24,6 +24,7 @@ import { InventoryContainer } from "../items/components/InventoryContainer";
 import { InventoryFooter } from "../items/components/InventoryFooter";
 import { useCreateInventoryItem } from "../items/useCreateInventoryItem";
 import { useInventoryItems } from "../items/useInventoryItems";
+import { useInventoryRevision } from "../items/useInventoryRevision";
 import { useUpdateInventoryItem } from "../items/useUpdateInventoryItem";
 import { useInventory } from "../useInventory";
 
@@ -82,6 +83,7 @@ export const InventoryViewPage = () => {
         inventoryId,
         !!inventory,
     );
+    useInventoryRevision(householdId, inventoryId);
 
     const createMutation = useCreateInventoryItem();
     const updateMutation = useUpdateInventoryItem();
