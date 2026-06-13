@@ -41,6 +41,8 @@ import { useUpdateInventoryItem } from "../../items/useUpdateInventoryItem";
 import { CalendarItemActionBar } from "../components/CalendarItemActionBar";
 import { CalendarLevelToggles } from "../components/CalendarLevelToggles";
 import { CalendarSettingsSheet } from "../components/CalendarSettingsSheet";
+import { ReorderSheet } from "../../reorder/ReorderSheet";
+import { useHouseholdLists } from "../../../lists/useHouseholdLists";
 import "../expiryCalendar.css";
 
 export const ExpiryCalendarPage = () => {
@@ -78,6 +80,15 @@ export const ExpiryCalendarPage = () => {
 
     // Delete confirmation for the selected item.
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+    // Re-order sheet (add the selected item to a shopping list) — only offered when the
+    // household has at least one list to add to.
+    const [reorderOpen, setReorderOpen] = useState(false);
+    const { data: lists = [] } = useHouseholdLists(
+        householdId,
+        householdId > 0,
+    );
+    const canReorder = lists.length > 0;
 
     const queryClient = useQueryClient();
     const updateMutation = useUpdateInventoryItem();
@@ -405,9 +416,18 @@ export const ExpiryCalendarPage = () => {
                 editing={effectiveEditing}
                 onEdit={() => setEditing(true)}
                 onDelete={() => setConfirmDeleteOpen(true)}
+                onAddToList={
+                    canReorder ? () => setReorderOpen(true) : undefined
+                }
                 onCancelEdit={() => setEditing(false)}
                 onSave={handleSave}
                 isSaving={updateMutation.isPending}
+            />
+            <ReorderSheet
+                open={reorderOpen && selectedItem !== null}
+                onClose={() => setReorderOpen(false)}
+                householdId={householdId}
+                item={selectedItem}
             />
             <ConfirmDialog
                 open={confirmDeleteOpen && selectedItem !== null}

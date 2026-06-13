@@ -20,15 +20,22 @@ import {
     quantityToDraft,
     type QuantityDraft,
 } from "../../../components/composer";
-import type { InventoryItemResponse } from "../../../lib/api";
+import type { QuantityDto } from "../../../lib/api";
 import { useCreateListItem } from "../../lists/items/useCreateListItem";
 import { useHouseholdLists } from "../../lists/useHouseholdLists";
+
+// Minimal shape the sheet needs — satisfied by both an inventory item and a
+// calendar item, so either view can open the re-order sheet.
+export interface ReorderableItem {
+    text: string;
+    quantity: QuantityDto | null;
+}
 
 interface ReorderSheetProps {
     open: boolean;
     onClose: () => void;
     householdId: number;
-    item: InventoryItemResponse | null;
+    item: ReorderableItem | null;
 }
 
 // Single-item mirror of the promote review sheet, retargeted at a shopping list. Pre-fills the
@@ -129,6 +136,24 @@ export const ReorderSheet = ({
                 </Stack>
 
                 <Stack spacing={2} sx={{ mt: 2 }}>
+                    {lists.length > 1 && (
+                        <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            label={t("reorder.targetList")}
+                            value={targetId ?? ""}
+                            onChange={(e) => setListId(Number(e.target.value))}
+                            data-testid="reorder-list-picker"
+                        >
+                            {lists.map((l) => (
+                                <MenuItem key={l.id} value={l.id}>
+                                    {l.name}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    )}
+
                     <TextField
                         fullWidth
                         size="small"
@@ -147,24 +172,6 @@ export const ReorderSheet = ({
                         valueTestId="reorder-quantity-value"
                         unitTestId="reorder-quantity-unit"
                     />
-
-                    {lists.length > 1 && (
-                        <TextField
-                            select
-                            fullWidth
-                            size="small"
-                            label={t("reorder.targetList")}
-                            value={targetId ?? ""}
-                            onChange={(e) => setListId(Number(e.target.value))}
-                            data-testid="reorder-list-picker"
-                        >
-                            {lists.map((l) => (
-                                <MenuItem key={l.id} value={l.id}>
-                                    {l.name}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    )}
 
                     <Button
                         fullWidth

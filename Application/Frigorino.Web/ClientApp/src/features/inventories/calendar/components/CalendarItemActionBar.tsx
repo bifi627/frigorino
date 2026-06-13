@@ -1,4 +1,4 @@
-import { Delete, Edit } from "@mui/icons-material";
+import { AddShoppingCart, Delete, Edit } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -32,6 +32,9 @@ interface CalendarItemActionBarProps {
     editing: boolean;
     onEdit: () => void;
     onDelete: () => void;
+    // Optional re-order action — adds the item to a shopping list. Omitted when the household
+    // has no lists, in which case the icon button is not rendered.
+    onAddToList?: () => void;
     onCancelEdit: () => void;
     onSave: (
         text: string,
@@ -49,6 +52,7 @@ export const CalendarItemActionBar = ({
     editing,
     onEdit,
     onDelete,
+    onAddToList,
     onCancelEdit,
     onSave,
     isSaving,
@@ -127,6 +131,17 @@ export const CalendarItemActionBar = ({
                                 {metaLine}
                             </Typography>
                         </Box>
+                        {onAddToList && (
+                            <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={onAddToList}
+                                aria-label={t("reorder.addToList")}
+                                data-testid="calendar-action-bar-add-to-list"
+                            >
+                                <AddShoppingCart />
+                            </IconButton>
+                        )}
                         <IconButton
                             size="small"
                             color="error"
