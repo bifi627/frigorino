@@ -69,3 +69,16 @@ Places to check: the calendar view's item ordering — likely a sort comparator 
 the expiry date that needs its direction reversed (ascending by expiry date so
 nearest-due is first). Verify whether any already-expired items belong above or
 below upcoming ones once the order is corrected.
+
+## Blueprint list items lack visual separation
+
+Reported by users: items in the blueprint list are not visually separated from
+one another, making the list hard to scan. They should match the look and feel
+of the list/inventory views, where each item sits in its own box/card. The fix
+is a styling alignment — give blueprint items the same boxed/card treatment used
+elsewhere. Investigation deferred.
+
+Places to check: the blueprint list rendering vs. the list/inventory item
+components. Prefer reusing the existing shared item card/surface (per the theme,
+`<Card>` / `<Paper variant="outlined">` rather than a hand-rolled `<Box>`) so the
+separation is consistent rather than re-implemented for blueprints.
