@@ -29,6 +29,7 @@ export const sectionColors = {
     lists: "#5A92CB", // blue
     inventory: "#4BA1A1", // teal
     recipes: "#D18A77", // warm coral
+    blueprints: "#8E7CC3", // muted violet — distinct from the lists blue
 } as const;
 
 export type SectionKey = keyof typeof sectionColors;

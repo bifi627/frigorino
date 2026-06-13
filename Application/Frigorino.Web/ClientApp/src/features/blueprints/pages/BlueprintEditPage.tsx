@@ -105,7 +105,7 @@ export const BlueprintEditPage = () => {
         <>
             <PageHeadActionBar
                 title={t("blueprints.editTitle")}
-                section="household"
+                section="blueprints"
                 maxWidth="md"
                 directActions={[]}
                 menuActions={menuActions}

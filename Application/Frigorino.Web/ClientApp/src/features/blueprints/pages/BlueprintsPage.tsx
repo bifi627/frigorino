@@ -130,7 +130,7 @@ export function BlueprintsPage() {
         <>
             <PageHeadActionBar
                 title={t("blueprints.manage")}
-                section="household"
+                section="blueprints"
                 maxWidth="md"
                 directActions={[
                     {

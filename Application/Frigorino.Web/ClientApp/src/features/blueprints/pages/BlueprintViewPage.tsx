@@ -156,7 +156,7 @@ export const BlueprintViewPage = () => {
         <>
             <PageHeadActionBar
                 title={blueprint.name}
-                section="household"
+                section="blueprints"
                 maxWidth="md"
                 directActions={[
                     {
