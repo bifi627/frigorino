@@ -53,6 +53,24 @@ public class RevisionApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         await db.SaveChangesAsync();
     }
 
+    [When("I rename the list {string} to {string} via the database")]
+    public async Task WhenIRenameTheListViaTheDatabase(string listName, string newName)
+    {
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var listId = ctx.ListIds[listName];
+        var list = await db.Lists.FirstAsync(l => l.Id == listId);
+        list.Name = newName;
+        await db.SaveChangesAsync();
+    }
+
+    [When("I GET the revision of list {string} via the API")]
+    public async Task WhenIGetTheRevisionOfList(string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryGetListRevisionAsync(listId);
+    }
+
     [Then("the two captured revisions differ")]
     public void ThenTheTwoCapturedRevisionsDiffer()
     {
