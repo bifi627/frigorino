@@ -98,11 +98,14 @@ export const PageHeadActionBar = memo(
                     <Box
                         sx={{
                             display: "flex",
-                            alignItems: "center",
+                            alignItems: "flex-start",
                             gap: 2,
                         }}
                     >
-                        <IconButton onClick={handleBack} sx={{ p: 1 }}>
+                        <IconButton
+                            onClick={handleBack}
+                            sx={{ p: 1, flexShrink: 0 }}
+                        >
                             <ArrowBack />
                         </IconButton>
                         {SectionIcon && (
@@ -120,7 +123,7 @@ export const PageHeadActionBar = memo(
                                 <SectionIcon />
                             </Box>
                         )}
-                        <Box sx={{ flex: 1 }}>
+                        <Box sx={{ flex: 1, minWidth: 0, wordBreak: "break-word" }}>
                             <Typography
                                 variant="h5"
                                 component="h1"
@@ -140,7 +143,14 @@ export const PageHeadActionBar = memo(
                                 </Typography>
                             )}
                         </Box>
-                        <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                gap: 1,
+                                ml: "auto",
+                                flexShrink: 0,
+                            }}
+                        >
                             {directActions.map((action, index) => (
                                 <IconButton
                                     key={index}
