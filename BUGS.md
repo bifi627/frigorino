@@ -82,19 +82,3 @@ Places to check: the blueprint list rendering vs. the list/inventory item
 components. Prefer reusing the existing shared item card/surface (per the theme,
 `<Card>` / `<Paper variant="outlined">` rather than a hand-rolled `<Box>`) so the
 separation is consistent rather than re-implemented for blueprints.
-
-## Flaky integration tests — known undo-toast timing flake
-
-The integration suite has a known intermittent failure around the undo-delete
-toast: the test interacts with the toast in a window where its auto-dismiss
-timer can swallow the action, so the run flakes depending on timing. The ask is
-to remove (or otherwise stabilise) the flaky test(s) so the suite is reliable.
-Investigation deferred.
-
-Places to check: `Frigorino.IntegrationTests/Shared/ToastSteps.cs` and the
-undo-delete-toast scenarios that use it. Git history shows this area has been
-deflaked more than once (e.g. "test: deflake undo-delete-toast integration
-tests"), so it is recurring — before simply deleting, confirm whether the flake
-is the toast's auto-dismiss race again and decide between removing the test
-versus pinning the timer (hover-to-hold) so coverage is kept without the
-flakiness.
