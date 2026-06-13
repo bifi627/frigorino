@@ -41,7 +41,10 @@ export const ReorderSheet = ({
     item,
 }: ReorderSheetProps) => {
     const { t } = useTranslation();
-    const { data: lists = [] } = useHouseholdLists(householdId, householdId > 0);
+    const { data: lists = [] } = useHouseholdLists(
+        householdId,
+        householdId > 0,
+    );
     const createItem = useCreateListItem();
 
     const [name, setName] = useState("");
