@@ -303,20 +303,26 @@ export const ListViewPage = () => {
         );
     }
 
-    const directActions = [
-        { icon: <Edit />, onClick: handleEdit },
+    const directActions: HeadNavigationAction[] = [];
+    const menuActions: HeadNavigationAction[] = [
         {
-            icon: <DragHandle />,
+            text: t("common.edit"),
+            icon: <Edit fontSize="small" />,
+            onClick: handleEdit,
+            testId: "list-edit-button",
+        },
+        {
+            text: t("lists.reorderItems"),
+            icon: <DragHandle fontSize="small" />,
             onClick: handleToggleDragHandles,
             testId: "list-toggle-drag-handles",
         },
         {
-            icon: <Search />,
+            text: t("common.search"),
+            icon: <Search fontSize="small" />,
             onClick: handleToggleSearch,
             testId: "list-search-button",
         },
-    ];
-    const menuActions: HeadNavigationAction[] = [
         {
             text: t("blueprints.sortByCategory"),
             icon: <Sort fontSize="small" />,
@@ -340,6 +346,7 @@ export const ListViewPage = () => {
                 section="lists"
                 directActions={directActions}
                 menuActions={menuActions}
+                menuButtonTestId="list-header-menu-toggle"
             />
 
             <SearchInputRow
