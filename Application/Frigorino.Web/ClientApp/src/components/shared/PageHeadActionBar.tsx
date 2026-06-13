@@ -98,7 +98,7 @@ export const PageHeadActionBar = memo(
                     <Box
                         sx={{
                             display: "flex",
-                            alignItems: "flex-start",
+                            alignItems: "center",
                             gap: 2,
                         }}
                     >
@@ -123,7 +123,13 @@ export const PageHeadActionBar = memo(
                                 <SectionIcon />
                             </Box>
                         )}
-                        <Box sx={{ flex: 1, minWidth: 0, wordBreak: "break-word" }}>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                minWidth: 0,
+                                wordBreak: "break-word",
+                            }}
+                        >
                             <Typography
                                 variant="h5"
                                 component="h1"
