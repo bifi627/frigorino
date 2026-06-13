@@ -114,6 +114,10 @@
         "removeFromHousehold": "Aus dem Haushalt entfernen"
     },
     "inventory": {
+        "sortOrder": "Sortierung",
+        "sortManual": "Manuelle Reihenfolge",
+        "sortExpiryAsc": "Bald ablaufende zuerst",
+        "sortExpiryDesc": "Spät ablaufende zuerst",
         "createInventory": "Vorrat erstellen",
         "createNewInventory": "Neuen Vorrat erstellen",
         "inventoryName": "Vorratsname",
@@ -160,6 +164,7 @@
         }
     },
     "lists": {
+        "reorderItems": "Einträge umsortieren",
         "createList": "Liste erstellen",
         "editList": "Liste bearbeiten",
         "deleteList": "Liste löschen",
