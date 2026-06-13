@@ -130,12 +130,29 @@ export const InventoryViewPage = () => {
     const getSortModeIcon = (mode: SortMode) => {
         switch (mode) {
             case "expiryDateAsc":
-                return <Schedule />;
+                return <Schedule fontSize="small" />;
             case "expiryDateDesc":
-                return <Schedule style={{ transform: "scaleY(-1)" }} />;
+                return (
+                    <Schedule
+                        fontSize="small"
+                        style={{ transform: "scaleY(-1)" }}
+                    />
+                );
             case "custom":
             default:
-                return <DragIndicator />;
+                return <DragIndicator fontSize="small" />;
+        }
+    };
+
+    const getSortModeLabel = (mode: SortMode) => {
+        switch (mode) {
+            case "expiryDateAsc":
+                return t("inventory.sortExpiryAsc");
+            case "expiryDateDesc":
+                return t("inventory.sortExpiryDesc");
+            case "custom":
+            default:
+                return t("inventory.sortManual");
         }
     };
 
@@ -198,16 +215,28 @@ export const InventoryViewPage = () => {
         );
     }
 
-    const directActions = [
-        { icon: <Edit />, onClick: handleEdit },
-        { icon: getSortModeIcon(sortMode), onClick: handleToggleSortMode },
+    const directActions: HeadNavigationAction[] = [];
+    const menuActions: HeadNavigationAction[] = [
         {
-            icon: <Search />,
+            text: t("common.edit"),
+            icon: <Edit fontSize="small" />,
+            onClick: handleEdit,
+            testId: "inventory-edit-button",
+        },
+        {
+            text: t("inventory.sortOrder"),
+            secondaryText: getSortModeLabel(sortMode),
+            icon: getSortModeIcon(sortMode),
+            onClick: handleToggleSortMode,
+            testId: "inventory-sort-toggle",
+        },
+        {
+            text: t("common.search"),
+            icon: <Search fontSize="small" />,
             onClick: handleToggleSearch,
             testId: "inventory-search-button",
         },
     ];
-    const menuActions: HeadNavigationAction[] = [];
 
     return (
         <Box
@@ -224,6 +253,7 @@ export const InventoryViewPage = () => {
                 section="inventory"
                 directActions={directActions}
                 menuActions={menuActions}
+                menuButtonTestId="inventory-header-menu-toggle"
             />
 
             <SearchInputRow
