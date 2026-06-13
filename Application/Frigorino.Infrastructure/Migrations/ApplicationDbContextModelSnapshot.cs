@@ -17,7 +17,7 @@ namespace Frigorino.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -490,6 +490,56 @@ namespace Frigorino.Infrastructure.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HouseholdId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId", "IsActive");
+
+                    b.ToTable("SortBlueprints");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprintCategory", b =>
+                {
+                    b.Property<int>("BlueprintId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BlueprintId", "Category");
+
+                    b.ToTable("SortBlueprintCategories");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.User", b =>
                 {
                     b.Property<string>("ExternalId")
@@ -752,6 +802,28 @@ namespace Frigorino.Infrastructure.Migrations
                     b.Navigation("Household");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Household");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprintCategory", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.SortBlueprint", "Blueprint")
+                        .WithMany("Categories")
+                        .HasForeignKey("BlueprintId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Blueprint");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.User", b =>
                 {
                     b.HasOne("Frigorino.Domain.Entities.Household", "LastActiveHousehold")
@@ -820,6 +892,11 @@ namespace Frigorino.Infrastructure.Migrations
             modelBuilder.Entity("Frigorino.Domain.Entities.List", b =>
                 {
                     b.Navigation("ListItems");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>
+                {
+                    b.Navigation("Categories");
                 });
 
             modelBuilder.Entity("Frigorino.Domain.Entities.User", b =>

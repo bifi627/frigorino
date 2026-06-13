@@ -220,6 +220,28 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    // ---- Sort blueprints ----
+
+    public async Task<int> CreateBlueprintAsync(string name, IEnumerable<string> categories)
+    {
+        var json = await PostAsync(
+            $"/api/household/{ctx.HouseholdId}/blueprints",
+            new { name, categories });
+        return json.GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryApplyBlueprintAsync(int listId, int blueprintId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/apply-blueprint",
+            new APIRequestContextOptions
+            {
+                DataObject = new { blueprintId },
+                Headers = AuthHeaders,
+            });
+    }
+
     public async Task<int> CreateInventoryAsync(string name)
     {
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/inventories", new { name });

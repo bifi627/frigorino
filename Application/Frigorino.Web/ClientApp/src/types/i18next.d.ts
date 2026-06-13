@@ -16,6 +16,7 @@ declare module "i18next" {
                 quantityUnits: Record<string, string>;
                 promote: Record<string, string>;
                 settings: Record<string, string>;
+                blueprints: Record<string, string>;
             };
         };
     }

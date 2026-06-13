@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addMember, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getExpiryCalendar, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getLists, getMembers, getMyInventoryNotification, getPendingPromotions, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, promoteListItems, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreInventoryItem, restoreItem, setActiveHousehold, skipPromotion, toggleItemStatus, unregisterFcmToken, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
-import type { AddMemberData, AddMemberError, AddMemberResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetExpiryCalendarData, GetExpiryCalendarResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetPendingPromotionsData, GetPendingPromotionsResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PromoteListItemsData, PromoteListItemsError, PromoteListItemsResponse2, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, SkipPromotionData, SkipPromotionResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
+import { addMember, applyBlueprint, createBlueprint, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, deleteBlueprint, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, getActiveHousehold, getApiAuthMe, getApiDemo, getBlueprint, getBlueprints, getExpiryCalendar, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getLists, getMembers, getMyInventoryNotification, getPendingPromotions, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, promoteListItems, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, restoreBlueprint, restoreInventoryItem, restoreItem, setActiveHousehold, skipPromotion, toggleItemStatus, unregisterFcmToken, updateBlueprint, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
+import type { AddMemberData, AddMemberError, AddMemberResponse, ApplyBlueprintData, ApplyBlueprintResponse, CreateBlueprintData, CreateBlueprintError, CreateBlueprintResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, DeleteBlueprintData, DeleteBlueprintResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetBlueprintData, GetBlueprintResponse, GetBlueprintsData, GetBlueprintsResponse, GetExpiryCalendarData, GetExpiryCalendarResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetPendingPromotionsData, GetPendingPromotionsResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PromoteListItemsData, PromoteListItemsError, PromoteListItemsResponse2, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, RestoreBlueprintData, RestoreBlueprintResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, SkipPromotionData, SkipPromotionResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateBlueprintData, UpdateBlueprintError, UpdateBlueprintResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -168,6 +168,92 @@ export const updateHouseholdSettingsMutation = (options?: Partial<Options<Update
     return mutationOptions;
 };
 
+export const getBlueprintsQueryKey = (options: Options<GetBlueprintsData>) => createQueryKey('getBlueprints', options, false, ['Blueprints']);
+
+export const getBlueprintsOptions = (options: Options<GetBlueprintsData>) => queryOptions<GetBlueprintsResponse, DefaultError, GetBlueprintsResponse, ReturnType<typeof getBlueprintsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getBlueprints({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getBlueprintsQueryKey(options)
+});
+
+export const createBlueprintMutation = (options?: Partial<Options<CreateBlueprintData>>): UseMutationOptions<CreateBlueprintResponse, CreateBlueprintError, Options<CreateBlueprintData>> => {
+    const mutationOptions: UseMutationOptions<CreateBlueprintResponse, CreateBlueprintError, Options<CreateBlueprintData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createBlueprint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteBlueprintMutation = (options?: Partial<Options<DeleteBlueprintData>>): UseMutationOptions<DeleteBlueprintResponse, DefaultError, Options<DeleteBlueprintData>> => {
+    const mutationOptions: UseMutationOptions<DeleteBlueprintResponse, DefaultError, Options<DeleteBlueprintData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteBlueprint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getBlueprintQueryKey = (options: Options<GetBlueprintData>) => createQueryKey('getBlueprint', options, false, ['Blueprints']);
+
+export const getBlueprintOptions = (options: Options<GetBlueprintData>) => queryOptions<GetBlueprintResponse, DefaultError, GetBlueprintResponse, ReturnType<typeof getBlueprintQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getBlueprint({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getBlueprintQueryKey(options)
+});
+
+export const updateBlueprintMutation = (options?: Partial<Options<UpdateBlueprintData>>): UseMutationOptions<UpdateBlueprintResponse, UpdateBlueprintError, Options<UpdateBlueprintData>> => {
+    const mutationOptions: UseMutationOptions<UpdateBlueprintResponse, UpdateBlueprintError, Options<UpdateBlueprintData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateBlueprint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const restoreBlueprintMutation = (options?: Partial<Options<RestoreBlueprintData>>): UseMutationOptions<RestoreBlueprintResponse, DefaultError, Options<RestoreBlueprintData>> => {
+    const mutationOptions: UseMutationOptions<RestoreBlueprintResponse, DefaultError, Options<RestoreBlueprintData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await restoreBlueprint({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const getListsQueryKey = (options: Options<GetListsData>) => createQueryKey('getLists', options, false, ['Lists']);
 
 export const getListsOptions = (options: Options<GetListsData>) => queryOptions<GetListsResponse, DefaultError, GetListsResponse, ReturnType<typeof getListsQueryKey>>({
@@ -273,6 +359,20 @@ export const skipPromotionMutation = (options?: Partial<Options<SkipPromotionDat
     const mutationOptions: UseMutationOptions<SkipPromotionResponse, DefaultError, Options<SkipPromotionData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await skipPromotion({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const applyBlueprintMutation = (options?: Partial<Options<ApplyBlueprintData>>): UseMutationOptions<ApplyBlueprintResponse, DefaultError, Options<ApplyBlueprintData>> => {
+    const mutationOptions: UseMutationOptions<ApplyBlueprintResponse, DefaultError, Options<ApplyBlueprintData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await applyBlueprint({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

@@ -21,6 +21,8 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<Product> Products { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
         public DbSet<HouseholdSettings> HouseholdSettings { get; set; }
+        public DbSet<SortBlueprint> SortBlueprints { get; set; }
+        public DbSet<SortBlueprintCategory> SortBlueprintCategories { get; set; }
         public DbSet<InventorySettings> InventorySettings { get; set; }
         public DbSet<FcmToken> FcmTokens { get; set; }
         public DbSet<NotificationDispatch> NotificationDispatches { get; set; }
@@ -110,6 +112,12 @@ namespace Frigorino.Infrastructure.EntityFramework
                         householdSettings.UpdatedAt = now;
                     }
 
+                    if (entry.Entity is SortBlueprint sortBlueprintAdded && sortBlueprintAdded.CreatedAt == default)
+                    {
+                        sortBlueprintAdded.CreatedAt = now;
+                        sortBlueprintAdded.UpdatedAt = now;
+                    }
+
                     if (entry.Entity is InventorySettings inventorySettings && inventorySettings.CreatedAt == default)
                     {
                         inventorySettings.CreatedAt = now;
@@ -168,6 +176,11 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is HouseholdSettings householdSettings)
                     {
                         householdSettings.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is SortBlueprint sortBlueprintModified)
+                    {
+                        sortBlueprintModified.UpdatedAt = now;
                     }
 
                     if (entry.Entity is InventorySettings inventorySettings)

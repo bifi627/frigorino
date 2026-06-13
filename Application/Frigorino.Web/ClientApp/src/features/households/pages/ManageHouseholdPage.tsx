@@ -1,7 +1,8 @@
-import { Delete } from "@mui/icons-material";
-import { Alert, Box, Container, Skeleton } from "@mui/material";
+import { Delete, Sort } from "@mui/icons-material";
+import { Alert, Box, Button, Container, Skeleton } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
@@ -116,6 +117,18 @@ export function ManageHouseholdPage() {
                     householdId={currentHousehold.householdId}
                     canManage={canManageSettings}
                 />
+
+                <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                    <Button
+                        component={Link}
+                        to="/household/blueprints"
+                        variant="outlined"
+                        startIcon={<Sort />}
+                        data-testid="household-manage-blueprints-link"
+                    >
+                        {t("blueprints.manage")}
+                    </Button>
+                </Box>
 
                 <DeleteHouseholdDialog
                     open={deleteDialogOpen}

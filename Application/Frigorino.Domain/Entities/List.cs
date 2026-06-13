@@ -507,6 +507,49 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        // Bulk re-rank of the unchecked section: re-mints Rank so items land in exactly
+        // orderedUncheckedItemIds order. The id set MUST equal the current active unchecked ids
+        // (the apply handler builds it from the same loaded aggregate). The checked section is
+        // untouched. New ranks are generated strictly ABOVE the current max unchecked rank so no
+        // intermediate row update collides with a still-present old rank on the partial unique
+        // index (ListId, Status, Rank) during the multi-row save.
+        public Result ApplyOrder(IReadOnlyList<int> orderedUncheckedItemIds)
+        {
+            var uncheckedItems = ListItems
+                .Where(i => i.IsActive && !i.Status)
+                .ToList();
+
+            var currentIds = uncheckedItems.Select(i => i.Id).ToHashSet();
+            var givenIds = orderedUncheckedItemIds.ToHashSet();
+            var idsMatch = givenIds.Count == orderedUncheckedItemIds.Count && currentIds.SetEquals(givenIds);
+            if (!idsMatch)
+            {
+                return Result.Fail(
+                    new Error("Ordered ids must match the list's active unchecked items exactly.")
+                        .WithMetadata("Property", string.Empty));
+            }
+
+            if (uncheckedItems.Count == 0)
+            {
+                return Result.Ok();
+            }
+
+            var maxRank = uncheckedItems
+                .OrderBy(i => i.Rank, StringComparer.Ordinal)
+                .Last()
+                .Rank;
+            var ranks = FractionalIndex.GenerateKeysBetween(maxRank, null, uncheckedItems.Count);
+            var byId = uncheckedItems.ToDictionary(i => i.Id);
+            var now = DateTime.UtcNow;
+            for (var i = 0; i < orderedUncheckedItemIds.Count; i++)
+            {
+                var item = byId[orderedUncheckedItemIds[i]];
+                item.Rank = ranks[i];
+                item.UpdatedAt = now;
+            }
+            return Result.Ok();
+        }
+
         // empty/whitespace comment is normalized to null; otherwise trimmed.
         private static string? NormalizeComment(string? comment)
         {

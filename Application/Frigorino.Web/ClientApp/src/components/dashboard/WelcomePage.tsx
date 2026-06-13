@@ -125,6 +125,7 @@ export const WelcomePage = () => {
     const ListsIcon = sectionIcons.lists;
     const InventoryIcon = sectionIcons.inventory;
     const RecipesIcon = sectionIcons.recipes;
+    const BlueprintsIcon = sectionIcons.blueprints;
 
     const collections = [
         {
@@ -397,6 +398,21 @@ export const WelcomePage = () => {
                                                 sx={actionButtonSx}
                                             >
                                                 <CalendarMonth fontSize="small" />
+                                            </IconButton>
+                                        )}
+
+                                        {collection.id === "einkaufslisten" && (
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate({
+                                                        to: "/household/blueprints",
+                                                    });
+                                                }}
+                                                sx={actionButtonSx}
+                                            >
+                                                <BlueprintsIcon fontSize="small" />
                                             </IconButton>
                                         )}
 

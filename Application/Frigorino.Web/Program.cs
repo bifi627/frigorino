@@ -2,8 +2,10 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
+using Frigorino.Features.Households.Blueprints;
 using Frigorino.Features.Households.Members;
 using Frigorino.Features.Households.Settings;
+using Frigorino.Features.Lists.Blueprints;
 using Frigorino.Features.Inventories;
 using Frigorino.Features.Inventories.Items;
 using Frigorino.Features.Inventories.Notifications;
@@ -328,6 +330,16 @@ var householdSettings = app.MapGroup("/api/household/{householdId:int}/settings"
 householdSettings.MapGetHouseholdSettings();
 householdSettings.MapUpdateHouseholdSettings();
 
+var blueprints = app.MapGroup("/api/household/{householdId:int}/blueprints")
+    .RequireAuthorization()
+    .WithTags("Blueprints");
+blueprints.MapGetBlueprints();
+blueprints.MapGetBlueprint();
+blueprints.MapCreateBlueprint();
+blueprints.MapUpdateBlueprint();
+blueprints.MapDeleteBlueprint();
+blueprints.MapRestoreBlueprint();
+
 var lists = app.MapGroup("/api/household/{householdId:int}/lists")
     .RequireAuthorization()
     .WithTags("Lists");
@@ -339,6 +351,7 @@ lists.MapDeleteList();
 lists.MapGetPendingPromotions();
 lists.MapPromoteListItems();
 lists.MapSkipPromotion();
+lists.MapApplyBlueprint();
 
 var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int}/items")
     .RequireAuthorization()
