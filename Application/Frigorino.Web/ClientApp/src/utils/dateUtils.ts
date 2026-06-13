@@ -149,10 +149,23 @@ export function getExpiryInfo(
             color,
             isOverdue: false,
         };
+    } else if (diffDays < 365) {
+        // 30 days up to a year: months read cleaner than "in 14 weeks".
+        const months = Math.round(diffDays / 30);
+        return {
+            humanReadable: `${t("common.expires")} ${t("common.in")} ${months} ${months > 1 ? t("common.months") : t("common.month")}`,
+            color,
+            isOverdue: false,
+        };
     }
 
-    // More than 30 days - relative weeks get noisy; the caller falls back to the date.
-    return { humanReadable: "", color, isOverdue: false };
+    // A year or more out - the terminal unit, so the label is never blank for a valid date.
+    const years = Math.round(diffDays / 365);
+    return {
+        humanReadable: `${t("common.expires")} ${t("common.in")} ${years} ${years > 1 ? t("common.years") : t("common.year")}`,
+        color,
+        isOverdue: false,
+    };
 }
 
 export function getExpiryColor(expiryDate: string) {
