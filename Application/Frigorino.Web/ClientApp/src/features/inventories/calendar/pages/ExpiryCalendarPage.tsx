@@ -400,6 +400,13 @@ export const ExpiryCalendarPage = () => {
                                 right: "",
                             }}
                             events={events}
+                            // Stack the soonest-expiring item on top (most urgent first).
+                            // FullCalendar's default order (start, then -duration) puts the
+                            // longest bar — i.e. the furthest-away expiry — on top once near-term
+                            // bars clamp to a common start, which reads as the wrong direction.
+                            // `expiryDate` is an ISO string in extendedProps, so ascending string
+                            // order is chronological: nearest-due first.
+                            eventOrder="expiryDate"
                             eventContent={renderEventContent}
                             eventClassNames={eventClassNames}
                             eventClick={handleEventClick}
