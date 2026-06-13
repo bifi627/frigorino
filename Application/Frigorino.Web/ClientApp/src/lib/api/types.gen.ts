@@ -611,10 +611,6 @@ export type CreateBlueprintErrors = {
      */
     400: HttpValidationProblemDetails;
     /**
-     * Forbidden
-     */
-    403: unknown;
-    /**
      * Not Found
      */
     404: unknown;
@@ -642,10 +638,6 @@ export type DeleteBlueprintData = {
 };
 
 export type DeleteBlueprintErrors = {
-    /**
-     * Forbidden
-     */
-    403: unknown;
     /**
      * Not Found
      */
@@ -677,10 +669,6 @@ export type UpdateBlueprintErrors = {
      */
     400: HttpValidationProblemDetails;
     /**
-     * Forbidden
-     */
-    403: unknown;
-    /**
      * Not Found
      */
     404: unknown;
@@ -696,6 +684,32 @@ export type UpdateBlueprintResponses = {
 };
 
 export type UpdateBlueprintResponse = UpdateBlueprintResponses[keyof UpdateBlueprintResponses];
+
+export type RestoreBlueprintData = {
+    body?: never;
+    path: {
+        householdId: number;
+        blueprintId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints/{blueprintId}/restore';
+};
+
+export type RestoreBlueprintErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreBlueprintResponses = {
+    /**
+     * OK
+     */
+    200: SortBlueprintResponse;
+};
+
+export type RestoreBlueprintResponse = RestoreBlueprintResponses[keyof RestoreBlueprintResponses];
 
 export type GetListsData = {
     body?: never;

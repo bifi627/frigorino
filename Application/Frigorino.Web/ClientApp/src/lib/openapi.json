@@ -475,9 +475,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden"
           }
         }
       }
@@ -541,9 +538,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "Forbidden"
           }
         }
       },
@@ -578,9 +572,49 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/blueprints/{blueprintId}/restore": {
+      "post": {
+        "tags": [
+          "Blueprints"
+        ],
+        "operationId": "RestoreBlueprint",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           },
-          "403": {
-            "description": "Forbidden"
+          {
+            "name": "blueprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SortBlueprintResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }

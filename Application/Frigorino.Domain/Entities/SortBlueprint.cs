@@ -1,13 +1,13 @@
 using FluentResults;
-using Frigorino.Domain.Errors;
 using Frigorino.Domain.Products;
 
 namespace Frigorino.Domain.Entities
 {
     // Household-scoped, named ordered subset of supermarket aisles ("walk-order"). Applying a
-    // blueprint to a list reorders the list's unchecked items by these category ranks. Curated
-    // and reordered by Owner/Admin; any member may apply one. Sentinels (Unknown/Other) can never
-    // be ranked — items in those categories (or unclassified) sink to the bottom on apply.
+    // blueprint to a list reorders the list's unchecked items by these category ranks. Any
+    // household member may curate, reorder and apply blueprints (no role gate). Sentinels
+    // (Unknown/Other) can never be ranked — items in those categories (or unclassified) sink
+    // to the bottom on apply.
     public class SortBlueprint
     {
         // Shares List.NameMaxLength's width so no new column-width constant / migration churn.
@@ -38,14 +38,8 @@ namespace Frigorino.Domain.Entities
         public ICollection<SortBlueprintCategory> Categories { get; set; } = new List<SortBlueprintCategory>();
 
         public static Result<SortBlueprint> Create(
-            int householdId, string name, IReadOnlyList<ProductCategory> orderedCategories, HouseholdRole callerRole)
+            int householdId, string name, IReadOnlyList<ProductCategory> orderedCategories)
         {
-            if (!callerRole.CanManageSettings())
-            {
-                return Result.Fail<SortBlueprint>(
-                    new AccessDeniedError("Only an owner or admin can manage sort blueprints."));
-            }
-
             var errors = Validate(householdId, name, orderedCategories);
             if (errors.Count > 0)
             {
@@ -62,13 +56,8 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(blueprint);
         }
 
-        public Result Update(string name, IReadOnlyList<ProductCategory> orderedCategories, HouseholdRole callerRole)
+        public Result Update(string name, IReadOnlyList<ProductCategory> orderedCategories)
         {
-            if (!callerRole.CanManageSettings())
-            {
-                return Result.Fail(new AccessDeniedError("Only an owner or admin can manage sort blueprints."));
-            }
-
             var errors = Validate(HouseholdId, name, orderedCategories);
             if (errors.Count > 0)
             {
@@ -81,14 +70,18 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
-        public Result SoftDelete(HouseholdRole callerRole)
+        public Result SoftDelete()
         {
-            if (!callerRole.CanManageSettings())
-            {
-                return Result.Fail(new AccessDeniedError("Only an owner or admin can manage sort blueprints."));
-            }
-
             IsActive = false;
+            UpdatedAt = DateTime.UtcNow;
+            return Result.Ok();
+        }
+
+        // Undo a soft-delete (powers the delete toast's "Undo" action). Reactivates in place;
+        // no rank concerns — blueprints carry no per-section uniqueness like list items do.
+        public Result Restore()
+        {
+            IsActive = true;
             UpdatedAt = DateTime.UtcNow;
             return Result.Ok();
         }

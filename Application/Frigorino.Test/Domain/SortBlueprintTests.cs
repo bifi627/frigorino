@@ -1,5 +1,4 @@
 using Frigorino.Domain.Entities;
-using Frigorino.Domain.Errors;
 using Frigorino.Domain.Products;
 
 namespace Frigorino.Test.Domain
@@ -16,7 +15,7 @@ namespace Frigorino.Test.Domain
         [Fact]
         public void Create_Valid_BuildsOrderedCategories()
         {
-            var result = SortBlueprint.Create(HouseholdId, " My Store ", ValidOrder, HouseholdRole.Admin);
+            var result = SortBlueprint.Create(HouseholdId, " My Store ", ValidOrder);
 
             Assert.True(result.IsSuccess);
             var blueprint = result.Value;
@@ -30,18 +29,9 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void Create_Member_FailsWithAccessDenied()
-        {
-            var result = SortBlueprint.Create(HouseholdId, "Store", ValidOrder, HouseholdRole.Member);
-
-            Assert.True(result.IsFailed);
-            Assert.True(result.HasError<AccessDeniedError>());
-        }
-
-        [Fact]
         public void Create_BlankName_Fails()
         {
-            var result = SortBlueprint.Create(HouseholdId, "   ", ValidOrder, HouseholdRole.Admin);
+            var result = SortBlueprint.Create(HouseholdId, "   ", ValidOrder);
 
             Assert.True(result.IsFailed);
         }
@@ -49,7 +39,7 @@ namespace Frigorino.Test.Domain
         [Fact]
         public void Create_EmptyCategories_Fails()
         {
-            var result = SortBlueprint.Create(HouseholdId, "Store", Array.Empty<ProductCategory>(), HouseholdRole.Admin);
+            var result = SortBlueprint.Create(HouseholdId, "Store", Array.Empty<ProductCategory>());
 
             Assert.True(result.IsFailed);
         }
@@ -59,7 +49,7 @@ namespace Frigorino.Test.Domain
         {
             var dupes = new[] { ProductCategory.Produce, ProductCategory.Produce };
 
-            var result = SortBlueprint.Create(HouseholdId, "Store", dupes, HouseholdRole.Admin);
+            var result = SortBlueprint.Create(HouseholdId, "Store", dupes);
 
             Assert.True(result.IsFailed);
         }
@@ -69,7 +59,7 @@ namespace Frigorino.Test.Domain
         {
             var withSentinel = new[] { ProductCategory.Produce, ProductCategory.Other };
 
-            var result = SortBlueprint.Create(HouseholdId, "Store", withSentinel, HouseholdRole.Admin);
+            var result = SortBlueprint.Create(HouseholdId, "Store", withSentinel);
 
             Assert.True(result.IsFailed);
         }
@@ -77,9 +67,9 @@ namespace Frigorino.Test.Domain
         [Fact]
         public void Update_Valid_ReplacesNameAndCategories()
         {
-            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder, HouseholdRole.Owner).Value;
+            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder).Value;
 
-            var result = blueprint.Update("Renamed", new[] { ProductCategory.Bakery, ProductCategory.Produce }, HouseholdRole.Owner);
+            var result = blueprint.Update("Renamed", new[] { ProductCategory.Bakery, ProductCategory.Produce });
 
             Assert.True(result.IsSuccess);
             Assert.Equal("Renamed", blueprint.Name);
@@ -87,26 +77,22 @@ namespace Frigorino.Test.Domain
         }
 
         [Fact]
-        public void Update_Member_FailsWithAccessDenied()
+        public void SoftDelete_Deactivates()
         {
-            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder, HouseholdRole.Owner).Value;
+            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder).Value;
 
-            var result = blueprint.Update("Renamed", ValidOrder, HouseholdRole.Member);
-
-            Assert.True(result.IsFailed);
-            Assert.True(result.HasError<AccessDeniedError>());
+            Assert.True(blueprint.SoftDelete().IsSuccess);
+            Assert.False(blueprint.IsActive);
         }
 
         [Fact]
-        public void SoftDelete_Admin_DeactivatesAndIsGated()
+        public void Restore_Reactivates()
         {
-            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder, HouseholdRole.Owner).Value;
+            var blueprint = SortBlueprint.Create(HouseholdId, "Store", ValidOrder).Value;
+            blueprint.SoftDelete();
 
-            Assert.True(blueprint.SoftDelete(HouseholdRole.Member).IsFailed);
+            Assert.True(blueprint.Restore().IsSuccess);
             Assert.True(blueprint.IsActive);
-
-            Assert.True(blueprint.SoftDelete(HouseholdRole.Admin).IsSuccess);
-            Assert.False(blueprint.IsActive);
         }
 
         [Fact]

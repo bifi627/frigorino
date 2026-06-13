@@ -32,10 +32,12 @@ namespace Frigorino.Features.Households.Blueprints
                 return TypedResults.NotFound();
             }
 
-            // Lazy seed: first read for a household with no blueprints mints the starter so the
-            // feature works on first tap (and existing households get it too). Idempotent.
-            var anyExist = await db.SortBlueprints.AnyAsync(b => b.HouseholdId == householdId && b.IsActive, ct);
-            if (!anyExist)
+            // Lazy seed: the very first read for a household that has NEVER had a blueprint mints
+            // the starter so the feature works on first tap (existing households get it too). The
+            // guard counts soft-deleted rows too, so deleting every blueprint is a valid end state
+            // and the delete-then-undo flow can't race a re-seed into a duplicate default.
+            var everExisted = await db.SortBlueprints.AnyAsync(b => b.HouseholdId == householdId, ct);
+            if (!everExisted)
             {
                 db.SortBlueprints.Add(SortBlueprint.CreateDefault(householdId));
                 await db.SaveChangesAsync(ct);

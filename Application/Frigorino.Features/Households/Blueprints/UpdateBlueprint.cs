@@ -1,4 +1,3 @@
-using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
 using Frigorino.Features.Results;
@@ -21,12 +20,11 @@ namespace Frigorino.Features.Households.Blueprints
                .WithName("UpdateBlueprint")
                .Produces<SortBlueprintResponse>()
                .Produces(StatusCodes.Status404NotFound)
-               .Produces(StatusCodes.Status403Forbidden)
                .ProducesValidationProblem();
             return app;
         }
 
-        private static async Task<Results<Ok<SortBlueprintResponse>, NotFound, ForbidHttpResult, ValidationProblem>> Handle(
+        private static async Task<Results<Ok<SortBlueprintResponse>, NotFound, ValidationProblem>> Handle(
             int householdId,
             int blueprintId,
             UpdateBlueprintRequest request,
@@ -50,13 +48,9 @@ namespace Frigorino.Features.Households.Blueprints
             }
 
             var categories = request.Categories ?? Array.Empty<ProductCategory>();
-            var result = blueprint.Update(request.Name ?? string.Empty, categories, membership.Role);
+            var result = blueprint.Update(request.Name ?? string.Empty, categories);
             if (result.IsFailed)
             {
-                if (result.Errors[0] is AccessDeniedError)
-                {
-                    return TypedResults.Forbid();
-                }
                 return result.ToValidationProblem();
             }
 
