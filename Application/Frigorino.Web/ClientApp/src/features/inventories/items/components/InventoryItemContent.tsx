@@ -98,37 +98,34 @@ export function InventoryItemContent({ item }: Props) {
 
                         {/* Right side - Human readable date with tooltip and mobile support */}
                         <Box>
-                            {item.expiryDate &&
-                                getExpiryInfo(item.expiryDate, translateKey)
-                                    .humanReadable && (
-                                    <Tooltip
-                                        title={`${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`}
-                                        arrow
+                            {item.expiryDate && (
+                                <Tooltip
+                                    title={`${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`}
+                                    arrow
+                                >
+                                    <Typography
+                                        variant="caption"
+                                        onClick={handleDateClick}
+                                        sx={{
+                                            color: "text.secondary",
+                                            cursor: "pointer",
+                                            userSelect: "none",
+                                            "&:hover": {
+                                                color: "text.primary",
+                                            },
+                                            "&:active": {
+                                                color: "text.primary",
+                                            },
+                                        }}
                                     >
-                                        <Typography
-                                            variant="caption"
-                                            onClick={handleDateClick}
-                                            sx={{
-                                                color: "text.secondary",
-                                                cursor: "pointer",
-                                                userSelect: "none",
-                                                "&:hover": {
-                                                    color: "text.primary",
-                                                },
-                                                "&:active": {
-                                                    color: "text.primary",
-                                                },
-                                            }}
-                                        >
-                                            {
-                                                getExpiryInfo(
-                                                    item.expiryDate,
-                                                    translateKey,
-                                                ).humanReadable
-                                            }
-                                        </Typography>
-                                    </Tooltip>
-                                )}
+                                        {getExpiryInfo(
+                                            item.expiryDate,
+                                            translateKey,
+                                        ).humanReadable ||
+                                            formatLocalDate(item.expiryDate)}
+                                    </Typography>
+                                </Tooltip>
+                            )}
                         </Box>
                     </Box>
                 }

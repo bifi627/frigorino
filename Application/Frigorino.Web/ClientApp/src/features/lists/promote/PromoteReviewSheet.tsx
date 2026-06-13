@@ -24,7 +24,7 @@ import type { PendingPromotionResponse } from "../../../lib/api/types.gen";
 import { ExpiryDatePicker } from "../../../components/ExpiryDatePicker";
 import { QuantityDraftFields } from "../../../components/common/QuantityDraftFields";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
-import { getExpiryInfo } from "../../../utils/dateUtils";
+import { formatLocalDate, getExpiryInfo } from "../../../utils/dateUtils";
 import { usePendingPromotions } from "./usePendingPromotions";
 import { usePromoteListItems } from "./usePromoteListItems";
 import { useSkipPromotion } from "./useSkipPromotion";
@@ -369,7 +369,10 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                     helperText={
                         expiryMissing
                             ? t("promote.expiryRequired")
-                            : info?.humanReadable || " "
+                            : info?.humanReadable ||
+                              (draft.expiry
+                                  ? formatLocalDate(draft.expiry)
+                                  : " ")
                     }
                     dataTestId={`promote-row-expiry-${entry.text}`}
                 />
