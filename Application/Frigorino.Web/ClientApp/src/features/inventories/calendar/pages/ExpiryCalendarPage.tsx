@@ -31,6 +31,7 @@ import {
 } from "../expiryCalendarEvents";
 import { matchesQuery } from "../../../../utils/searchUtils";
 import { useExpiryCalendar } from "../useExpiryCalendar";
+import { useCalendarRevision } from "../useCalendarRevision";
 import { useCalendarViewSettings } from "../calendarViewSettings";
 import { calendarLevelColor } from "../calendarColors";
 import { useQueryClient } from "@tanstack/react-query";
@@ -57,6 +58,7 @@ export const ExpiryCalendarPage = () => {
         isLoading,
         error,
     } = useExpiryCalendar(householdId, householdId > 0);
+    useCalendarRevision(householdId);
 
     // Single-select focus: the tapped item is highlighted, the rest dim. null = nothing selected.
     const [selectedId, setSelectedId] = useState<number | null>(null);
