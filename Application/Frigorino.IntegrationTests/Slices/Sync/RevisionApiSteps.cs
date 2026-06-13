@@ -64,6 +64,12 @@ public class RevisionApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         await db.SaveChangesAsync();
     }
 
+    [When("I GET the expiry-calendar revision via the API")]
+    public async Task WhenIGetTheExpiryCalendarRevision()
+    {
+        ctx.LastApiResponse = await api.TryGetExpiryCalendarRevisionAsync();
+    }
+
     [When("I GET the revision of list {string} via the API")]
     public async Task WhenIGetTheRevisionOfList(string listName)
     {

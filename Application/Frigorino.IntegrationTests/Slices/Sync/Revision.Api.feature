@@ -56,3 +56,24 @@ Feature: Resource revision tokens
     And I edit the text of item "Cheese" in inventory "Fridge" to "Gouda" via the database
     And I capture the revision of inventory "Fridge" via the API
     Then the two captured revisions differ
+
+  Scenario: Adding a perishable item changes the calendar revision token
+    Given an inventory "Fridge" has an item "Yogurt" expiring in 3 days
+    When I capture the expiry-calendar revision via the API
+    And an inventory "Fridge" has an item "Milk" expiring in 5 days
+    And I capture the expiry-calendar revision via the API
+    Then the two captured revisions differ
+
+  Scenario: Editing a non-perishable item does not change the calendar revision token
+    Given an inventory "Fridge" has an item "Yogurt" expiring in 3 days
+    And an inventory "Fridge" has an item "Salt" with no expiry
+    When I capture the expiry-calendar revision via the API
+    And I edit the text of item "Salt" in inventory "Fridge" to "Sea Salt" via the database
+    And I capture the expiry-calendar revision via the API
+    Then the two captured revisions are equal
+
+  Scenario: Non-member cannot read the calendar revision
+    Given I am logged in as "alice"
+    And an existing household "Other" owned by "bob" that I am not a member of
+    When I GET the expiry-calendar revision via the API
+    Then the API response status is 404

@@ -1104,6 +1104,49 @@
         }
       }
     },
+    "/api/household/{householdId}/lists/{listId}/revision": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "GetListRevision",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/lists/{listId}/items": {
       "get": {
         "tags": [
@@ -1854,6 +1897,40 @@
         }
       }
     },
+    "/api/household/{householdId}/inventories/calendar/revision": {
+      "get": {
+        "tags": [
+          "Inventories"
+        ],
+        "operationId": "GetExpiryCalendarRevision",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/inventories/{inventoryId}": {
       "get": {
         "tags": [
@@ -1994,6 +2071,49 @@
           },
           "403": {
             "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/inventories/{inventoryId}/revision": {
+      "get": {
+        "tags": [
+          "Inventories"
+        ],
+        "operationId": "GetInventoryRevision",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "inventoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }
@@ -3775,6 +3895,17 @@
           "afterId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "RevisionResponse": {
+        "required": [
+          "rev"
+        ],
+        "type": "object",
+        "properties": {
+          "rev": {
+            "type": "string"
           }
         }
       },
