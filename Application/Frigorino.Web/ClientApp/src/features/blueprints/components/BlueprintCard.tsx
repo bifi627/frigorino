@@ -4,12 +4,13 @@ import {
     Button,
     Card,
     CardContent,
+    CircularProgress,
     IconButton,
     Stack,
     TextField,
     Tooltip,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type {
@@ -23,18 +24,17 @@ import { BlueprintEditor } from "./BlueprintEditor";
 
 interface Props {
     householdId: number;
-    canManage: boolean;
     // Existing blueprint, or null for an unsaved draft (create flow).
     blueprint: SortBlueprintResponse | null;
     onCreated?: () => void;
 }
 
-export function BlueprintCard({
-    householdId,
-    canManage,
-    blueprint,
-    onCreated,
-}: Props) {
+// Existing blueprints persist implicitly: renaming, reordering, adding or removing aisles
+// auto-saves after a short debounce. Only a brand-new draft keeps an explicit Create button,
+// since there is nothing to update until the row exists.
+const AUTO_SAVE_DELAY_MS = 600;
+
+export function BlueprintCard({ householdId, blueprint, onCreated }: Props) {
     const { t } = useTranslation();
     const create = useCreateSortBlueprint();
     const update = useUpdateSortBlueprint();
@@ -45,25 +45,58 @@ export function BlueprintCard({
         blueprint?.categories ?? [],
     );
 
-    const isSaving = create.isPending || update.isPending;
-    const canSave =
-        canManage && name.trim().length > 0 && included.length > 0 && !isSaving;
+    const blueprintId = blueprint?.id;
+    const canCreate =
+        name.trim().length > 0 && included.length > 0 && !create.isPending;
 
-    const handleSave = async () => {
+    // Debounced auto-save for an existing blueprint. We compare against the last-persisted
+    // snapshot (rather than a "skip first render" flag, which double-fires under StrictMode):
+    // the prop-hydrated state matches the snapshot, so mounting never saves — only genuine
+    // edits diverge and persist. While the state is momentarily invalid (blank name / no
+    // aisles) we hold off, since the backend rejects those.
+    const saveBlueprint = update.mutateAsync;
+    const lastSaved = useRef(
+        JSON.stringify({
+            name: (blueprint?.name ?? "").trim(),
+            categories: blueprint?.categories ?? [],
+        }),
+    );
+    useEffect(() => {
+        if (blueprintId == null) {
+            return;
+        }
+        const trimmed = name.trim();
+        if (trimmed.length === 0 || included.length === 0) {
+            return;
+        }
+        const snapshot = JSON.stringify({
+            name: trimmed,
+            categories: included,
+        });
+        if (snapshot === lastSaved.current) {
+            return;
+        }
+        const handle = window.setTimeout(() => {
+            saveBlueprint({
+                path: { householdId, blueprintId },
+                body: { name: trimmed, categories: included },
+            })
+                .then(() => {
+                    lastSaved.current = snapshot;
+                })
+                .catch(() => toast.error(t("blueprints.saveFailed")));
+        }, AUTO_SAVE_DELAY_MS);
+        return () => window.clearTimeout(handle);
+    }, [name, included, blueprintId, householdId, saveBlueprint, t]);
+
+    const handleCreate = async () => {
         try {
-            if (blueprint) {
-                await update.mutateAsync({
-                    path: { householdId, blueprintId: blueprint.id },
-                    body: { name: name.trim(), categories: included },
-                });
-            } else {
-                await create.mutateAsync({
-                    path: { householdId },
-                    body: { name: name.trim(), categories: included },
-                });
-                onCreated?.();
-            }
+            await create.mutateAsync({
+                path: { householdId },
+                body: { name: name.trim(), categories: included },
+            });
             toast.success(t("blueprints.saved"));
+            onCreated?.();
         } catch {
             toast.error(t("blueprints.saveFailed"));
         }
@@ -89,10 +122,10 @@ export function BlueprintCard({
             return;
         }
         try {
+            // The hook surfaces the "deleted" toast with an Undo action on success.
             await remove.mutateAsync({
                 path: { householdId, blueprintId: blueprint.id },
             });
-            toast.success(t("blueprints.deleted"));
         } catch {
             toast.error(t("blueprints.deleteFailed"));
         }
@@ -116,7 +149,7 @@ export function BlueprintCard({
                         label={t("blueprints.nameLabel")}
                         placeholder={t("blueprints.namePlaceholder")}
                         value={name}
-                        disabled={!canManage || isSaving}
+                        disabled={create.isPending}
                         onChange={(e) => setName(e.target.value)}
                         slotProps={{
                             htmlInput: {
@@ -124,12 +157,18 @@ export function BlueprintCard({
                             },
                         }}
                     />
-                    {blueprint && canManage && (
+                    {blueprint && (
                         <>
+                            {update.isPending && (
+                                <CircularProgress
+                                    size={18}
+                                    data-testid="blueprint-saving"
+                                />
+                            )}
                             <Tooltip title={t("blueprints.duplicate")}>
                                 <IconButton
                                     onClick={handleDuplicate}
-                                    disabled={isSaving}
+                                    disabled={create.isPending}
                                     data-testid="blueprint-duplicate"
                                 >
                                     <ContentCopy />
@@ -152,10 +191,10 @@ export function BlueprintCard({
                 <BlueprintEditor
                     included={included}
                     onChange={setIncluded}
-                    disabled={!canManage || isSaving}
+                    disabled={create.isPending}
                 />
 
-                {canManage && (
+                {!blueprint && (
                     <Box
                         sx={{
                             mt: 2,
@@ -166,8 +205,8 @@ export function BlueprintCard({
                         <Button
                             variant="contained"
                             startIcon={<Save />}
-                            disabled={!canSave}
-                            onClick={handleSave}
+                            disabled={!canCreate}
+                            onClick={handleCreate}
                             data-testid="blueprint-save"
                         >
                             {t("blueprints.save")}

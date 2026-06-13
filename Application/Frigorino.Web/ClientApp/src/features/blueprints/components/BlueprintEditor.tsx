@@ -59,6 +59,11 @@ function IncludedAisleRow({
         opacity: isDragging ? 0.5 : 1,
     };
 
+    // Listeners live on the dedicated handle only (not the whole row), and that handle sets
+    // `touch-action: none` — without it the browser claims the touch for scrolling and the
+    // TouchSensor never activates, which is why dragging worked on desktop but not on mobile.
+    const dragHandleProps = disabled ? {} : { ...attributes, ...listeners };
+
     return (
         <ListItem
             ref={setNodeRef}
@@ -77,18 +82,26 @@ function IncludedAisleRow({
                 </IconButton>
             }
         >
-            <ListItemButton
-                {...attributes}
-                {...listeners}
-                disabled={disabled}
-                sx={{ cursor: disabled ? "default" : "grab" }}
+            <Box
+                {...dragHandleProps}
+                data-testid={`blueprint-drag-${category}`}
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 48,
+                    height: 48,
+                    cursor: disabled ? "default" : "grab",
+                    color: "text.secondary",
+                    touchAction: "none",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    WebkitTouchCallout: "none",
+                }}
             >
-                <DragHandle
-                    fontSize="small"
-                    sx={{ mr: 1, color: "text.secondary" }}
-                />
-                <ListItemText primary={t(aisleLabelKey(category))} />
-            </ListItemButton>
+                <DragHandle fontSize="small" />
+            </Box>
+            <ListItemText primary={t(aisleLabelKey(category))} />
         </ListItem>
     );
 }

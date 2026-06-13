@@ -11,7 +11,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { pageContainerSx } from "../../../theme";
-import { HouseholdRoleValue, roleRank } from "../../households/householdRole";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { BlueprintCard } from "../components/BlueprintCard";
 import { useSortBlueprints } from "../useSortBlueprints";
@@ -23,9 +22,6 @@ export function BlueprintsPage() {
     const [showDraft, setShowDraft] = useState(false);
 
     const householdId = currentHousehold?.householdId ?? 0;
-    const role = currentHousehold?.role;
-    const canManage =
-        !!role && roleRank[role] >= roleRank[HouseholdRoleValue.Admin];
 
     const { data: blueprints, isLoading: blueprintsLoading } =
         useSortBlueprints(householdId, householdId > 0);
@@ -70,7 +66,6 @@ export function BlueprintsPage() {
                     <BlueprintCard
                         key={blueprint.id}
                         householdId={householdId}
-                        canManage={canManage}
                         blueprint={blueprint}
                     />
                 ))}
@@ -78,13 +73,12 @@ export function BlueprintsPage() {
                 {showDraft && (
                     <BlueprintCard
                         householdId={householdId}
-                        canManage={canManage}
                         blueprint={null}
                         onCreated={() => setShowDraft(false)}
                     />
                 )}
 
-                {canManage && !showDraft && (
+                {!showDraft && (
                     <Box
                         sx={{
                             display: "flex",
