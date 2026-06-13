@@ -18,13 +18,11 @@ import {
     draftToQuantity,
     isDraftValid,
     quantityToDraft,
-    QUANTITY_UNIT_VALUES,
-    unitLabel,
     type QuantityDraft,
 } from "../../../components/composer";
-import type { QuantityUnit } from "../../../lib/api";
 import type { PendingPromotionResponse } from "../../../lib/api/types.gen";
 import { ExpiryDatePicker } from "../../../components/ExpiryDatePicker";
+import { QuantityDraftFields } from "../../../components/common/QuantityDraftFields";
 import { useHouseholdInventories } from "../../inventories/useHouseholdInventories";
 import { getExpiryInfo } from "../../../utils/dateUtils";
 import { usePendingPromotions } from "./usePendingPromotions";
@@ -356,59 +354,12 @@ const PromoteRow = ({ entry, draft, onChange, onOmit }: PromoteRowProps) => {
                 {/* Always editable: an item listed without a quantity ("Apples") can still get
                     one here — you may have bought a specific count. Pre-filled when the source
                     had a value, empty (with placeholder) otherwise. */}
-                <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: "center" }}
-                >
-                    <TextField
-                        size="small"
-                        type="text"
-                        label={t("common.quantity")}
-                        placeholder={t("common.quantity")}
-                        value={draft.quantity.value}
-                        onChange={(e) =>
-                            onChange({
-                                quantity: {
-                                    ...draft.quantity,
-                                    value: e.target.value,
-                                },
-                            })
-                        }
-                        error={!isDraftValid(draft.quantity)}
-                        slotProps={{
-                            inputLabel: { shrink: true },
-                            htmlInput: {
-                                inputMode: "decimal",
-                                "data-testid": `promote-row-quantity-value-${entry.text}`,
-                            },
-                        }}
-                        sx={{ width: 90 }}
-                    />
-                    <TextField
-                        select
-                        size="small"
-                        label={t("common.unit")}
-                        value={draft.quantity.unit}
-                        onChange={(e) =>
-                            onChange({
-                                quantity: {
-                                    ...draft.quantity,
-                                    unit: e.target.value as QuantityUnit,
-                                },
-                            })
-                        }
-                        data-testid={`promote-row-quantity-unit-${entry.text}`}
-                        slotProps={{ inputLabel: { shrink: true } }}
-                        sx={{ flex: 1, minWidth: 120 }}
-                    >
-                        {QUANTITY_UNIT_VALUES.map((u) => (
-                            <MenuItem key={u} value={u}>
-                                {unitLabel(t, u)}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                </Stack>
+                <QuantityDraftFields
+                    draft={draft.quantity}
+                    onChange={(quantity) => onChange({ quantity })}
+                    valueTestId={`promote-row-quantity-value-${entry.text}`}
+                    unitTestId={`promote-row-quantity-unit-${entry.text}`}
+                />
                 <ExpiryDatePicker
                     fullWidth
                     value={draft.expiry || null}

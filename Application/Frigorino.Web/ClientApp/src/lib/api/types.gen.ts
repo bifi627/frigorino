@@ -43,6 +43,7 @@ export type CreateInventoryRequest = {
 export type CreateItemRequest = {
     text: string;
     comment: null | string;
+    quantity?: null | QuantityDto;
 };
 
 export type CreateListRequest = {

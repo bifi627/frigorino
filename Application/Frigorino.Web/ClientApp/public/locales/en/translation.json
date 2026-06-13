@@ -215,6 +215,14 @@
         "added_one": "Added {{count}} item to {{inventory}}",
         "added_other": "Added {{count}} items to {{inventory}}"
     },
+    "reorder": {
+        "addToList": "Add to list",
+        "sheetTitle": "Add to a list",
+        "name": "Item",
+        "targetList": "List",
+        "add": "Add to {{list}}",
+        "added": "Added {{name}} to {{list}}"
+    },
     "navigation": {
         "inventory": "Inventory"
     },

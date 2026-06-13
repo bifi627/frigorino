@@ -60,6 +60,8 @@ export interface SortableListProps<T extends SortableItemInterface> {
     onToggleStatus: (itemId: number) => Promise<void>;
     onEdit: (item: T) => void;
     onDelete: (itemId: number) => Promise<void>;
+    /** Optional per-item action; forwarded to each row's menu. */
+    onAddToList?: (item: T) => void;
 
     // UI props
     editingItem?: T | null;
@@ -82,6 +84,7 @@ export const SortableList = <T extends SortableItemInterface>({
     onToggleStatus,
     onEdit,
     onDelete,
+    onAddToList,
     editingItem: externalEditingItem,
     showDragHandles = false,
     showCheckbox = false,
@@ -325,6 +328,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                     onToggleStatus={handleToggleStatus}
                                     onEdit={handleEditItem}
                                     onDelete={handleDeleteItem}
+                                    onAddToList={onAddToList}
                                     isEditing={
                                         externalEditingItem?.id === item.id
                                     }
@@ -368,6 +372,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                 onToggleStatus={handleToggleStatus}
                                 onEdit={handleEditItem}
                                 onDelete={handleDeleteItem}
+                                onAddToList={onAddToList}
                                 isEditing={externalEditingItem?.id === item.id}
                                 isProcessing={isItemProcessing?.(item) ?? false}
                                 showCheckbox={showCheckbox}

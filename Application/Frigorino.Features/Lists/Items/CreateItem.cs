@@ -2,6 +2,7 @@ using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
 using Frigorino.Features.Items;
+using Frigorino.Features.Quantities;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.AspNetCore.Builder;
@@ -12,7 +13,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Lists.Items
 {
-    public sealed record CreateItemRequest(string Text, string? Comment);
+    // Quantity is optional. When supplied (the inventory → list re-order path), it is written
+    // directly and text routing / async extraction is skipped. When null, the text is routed
+    // exactly as before and the quantity (if any) is filled in by the async extraction job.
+    public sealed record CreateItemRequest(string Text, string? Comment, QuantityDto? Quantity = null);
 
     public static class CreateItemEndpoint
     {
@@ -26,7 +30,7 @@ namespace Frigorino.Features.Lists.Items
             return app;
         }
 
-        private static async Task<Results<Created<ListItemResponse>, NotFound, ValidationProblem>> Handle(
+        public static async Task<Results<Created<ListItemResponse>, NotFound, ValidationProblem>> Handle(
             int householdId,
             int listId,
             CreateItemRequest request,
@@ -41,42 +45,72 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var analysis = ItemTextRouter.Analyze(request.Text);
-
             // AddItem mints a Rank by appending after the last unchecked item; a concurrent append
             // can collide on the partial unique index. RankRetry reloads fresh state and re-mints.
-            // The extraction enqueue (a side effect) runs only AFTER the save commits, so a retried
-            // save never double-enqueues.
-            var outcome = await RankRetry.SaveWithRetryAsync(async () =>
+            async Task<CreateOutcome> SaveItemAsync(string name, Quantity? quantity, bool extractionPending)
             {
-                db.ChangeTracker.Clear();
-
-                var list = await db.Lists
-                    .Include(l => l.ListItems)
-                    .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-                if (list is null)
+                return await RankRetry.SaveWithRetryAsync(async () =>
                 {
-                    return new CreateOutcome(null, NotFound: true, Problem: null);
+                    db.ChangeTracker.Clear();
+
+                    var list = await db.Lists
+                        .Include(l => l.ListItems)
+                        .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+                    if (list is null)
+                    {
+                        return new CreateOutcome(null, NotFound: true, Problem: null);
+                    }
+
+                    var result = list.AddItem(name, quantity, request.Comment);
+                    if (result.IsFailed)
+                    {
+                        return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                    }
+
+                    await db.SaveChangesAsync(ct);
+
+                    var resp = ListItemResponse.From(result.Value) with
+                    {
+                        ExtractionPending = extractionPending,
+                    };
+                    return new CreateOutcome(resp, NotFound: false, Problem: null);
+                });
+            }
+
+            // Re-order path: a structured quantity was supplied (carried over from an inventory item).
+            // Write it directly and skip routing / extraction — there is nothing to extract.
+            if (request.Quantity is not null)
+            {
+                var parsed = Quantity.Create(request.Quantity.Value, request.Quantity.Unit);
+                if (parsed.IsFailed)
+                {
+                    return parsed.ToValidationProblem();
                 }
 
-                // The item is created with no quantity; if the text needs extraction the async LLM job
-                // fills in the quantity (and strips the name) afterwards.
-                var result = list.AddItem(analysis.CleanName, null, request.Comment);
-                if (result.IsFailed)
+                var directOutcome = await SaveItemAsync(request.Text, parsed.Value, extractionPending: false);
+                if (directOutcome.NotFound)
                 {
-                    return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
+                    return TypedResults.NotFound();
+                }
+                if (directOutcome.Problem is not null)
+                {
+                    return directOutcome.Problem;
                 }
 
-                await db.SaveChangesAsync(ct);
+                var directResponse = directOutcome.Response!;
+                return TypedResults.Created(
+                    $"/api/household/{householdId}/lists/{listId}/items/{directResponse.Id}",
+                    directResponse);
+            }
 
-                // Tell the client whether an async extraction was enqueued (the only route that does is
-                // NeedsExtraction) so its poll keys off this single signal rather than re-deriving a digit gate.
-                var resp = ListItemResponse.From(result.Value) with
-                {
-                    ExtractionPending = analysis.Route == ItemTextRoute.NeedsExtraction,
-                };
-                return new CreateOutcome(resp, NotFound: false, Problem: null);
-            });
+            var analysis = ItemTextRouter.Analyze(request.Text);
+
+            // The item is created with no quantity; if the text needs extraction the async LLM job
+            // fills in the quantity (and strips the name) afterwards.
+            var outcome = await SaveItemAsync(
+                analysis.CleanName,
+                quantity: null,
+                extractionPending: analysis.Route == ItemTextRoute.NeedsExtraction);
 
             if (outcome.NotFound)
             {
@@ -88,6 +122,7 @@ namespace Frigorino.Features.Lists.Items
             }
 
             var response = outcome.Response!;
+            // Tell the client whether an async extraction was enqueued so its poll keys off this signal.
             quantityTrigger.OnItemRouted(householdId, listId, response.Id, analysis);
 
             return TypedResults.Created(
