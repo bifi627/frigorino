@@ -19,6 +19,14 @@ interface UseRevisionInvalidationParams {
     // True when a LOCAL mutation targeting this resource is in flight. Its own optimistic update plus
     // onSettled invalidation are authoritative, so we must NOT clobber it with a remote refetch.
     isLocalMutation: (variables: unknown) => boolean;
+    // Whether to advance the baseline when an invalidation is suppressed by an in-flight local
+    // mutation. Default true: safe when the suppressing mutation re-invalidates THIS SAME data query
+    // on settle (list/inventory items), so a coincident remote change is picked up for free and
+    // advancing avoids a redundant double-fetch. The calendar passes false: an inventory-item
+    // mutation re-invalidates the inventory-items query, NOT the calendar query, so advancing here
+    // would drop a coincident remote calendar change. Keeping the baseline lets the next tick (after
+    // the local mutation settles) catch it, at the cost of at most one redundant calendar refetch.
+    advanceBaselineWhenSuppressed?: boolean;
 }
 
 // Compares each incoming opaque revision token to the last one seen. On a change it invalidates the
@@ -29,6 +37,7 @@ export const useRevisionInvalidation = ({
     rev,
     dataQueryKey,
     isLocalMutation,
+    advanceBaselineWhenSuppressed = true,
 }: UseRevisionInvalidationParams) => {
     const queryClient = useQueryClient();
     const lastRev = useRef<string | null>(null);
@@ -61,10 +70,14 @@ export const useRevisionInvalidation = ({
         if (!localMutating) {
             queryClient.invalidateQueries({ queryKey: dataQueryKey });
         }
-        // Advance the baseline regardless of whether we invalidated — this is the fix that prevents a
-        // redundant double-fetch once a local mutation settles.
-        lastRev.current = rev;
+        // Advance the baseline when we invalidated, or when the caller opts to advance even on
+        // suppression (the default — prevents a redundant double-fetch once a local mutation settles
+        // for queries whose own mutation re-invalidates them). When suppressed AND the caller opted
+        // out (calendar), keep the baseline so the next tick re-detects the change and catches up.
+        if (!localMutating || advanceBaselineWhenSuppressed) {
+            lastRev.current = rev;
+        }
         // dataQueryKey is a fresh array each render; when rev is unchanged the early-return above makes
         // the re-run a no-op, so it is safe to depend on.
-    }, [rev, queryClient, dataQueryKey]);
+    }, [rev, queryClient, dataQueryKey, advanceBaselineWhenSuppressed]);
 };

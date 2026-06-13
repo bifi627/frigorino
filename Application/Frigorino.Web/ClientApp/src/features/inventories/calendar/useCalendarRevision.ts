@@ -27,5 +27,9 @@ export const useCalendarRevision = (householdId: number) => {
         isLocalMutation: (variables) =>
             (variables as { path?: { inventoryId?: number } } | undefined)?.path
                 ?.inventoryId != null,
+        // An in-flight inventory-item mutation re-invalidates the inventory-items query, NOT this
+        // household-wide calendar query — so advancing the baseline on suppression would drop a
+        // coincident remote calendar change. Opt out: re-detect it on the next tick after settle.
+        advanceBaselineWhenSuppressed: false,
     });
 };
