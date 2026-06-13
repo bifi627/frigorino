@@ -26,30 +26,3 @@ should carry the target household id and switch the active household to it on
 open (or the inventory route should detect the mismatch and switch) before
 issuing the scoped query. Root cause is the implicit household-context model —
 see "Household context is implicit (LastActiveHouseholdId)…" in `TECH_DEBT.md`.
-
-## Calendar view sorts by expiry in the wrong direction
-
-Reported by users: in the calendar view, items appear to be ordered with the
-furthest-away expiry first; the expected behaviour is the reverse — items with
-the soonest (lowest) expiration should sit at the top, so the most urgent items
-are seen first. The reporter is not fully certain of the current direction
-("I think it's the other way round"), so the first step is to confirm the
-existing sort order before flipping it. Investigation deferred.
-
-Places to check: the calendar view's item ordering — likely a sort comparator on
-the expiry date that needs its direction reversed (ascending by expiry date so
-nearest-due is first). Verify whether any already-expired items belong above or
-below upcoming ones once the order is corrected.
-
-## Blueprint list items lack visual separation
-
-Reported by users: items in the blueprint list are not visually separated from
-one another, making the list hard to scan. They should match the look and feel
-of the list/inventory views, where each item sits in its own box/card. The fix
-is a styling alignment — give blueprint items the same boxed/card treatment used
-elsewhere. Investigation deferred.
-
-Places to check: the blueprint list rendering vs. the list/inventory item
-components. Prefer reusing the existing shared item card/surface (per the theme,
-`<Card>` / `<Paper variant="outlined">` rather than a hand-rolled `<Box>`) so the
-separation is consistent rather than re-implemented for blueprints.

@@ -65,44 +65,50 @@ function IncludedAisleRow({
     const dragHandleProps = disabled ? {} : { ...attributes, ...listeners };
 
     return (
-        <ListItem
+        <Paper
             ref={setNodeRef}
             style={style}
+            component="li"
+            variant="outlined"
             data-testid={`blueprint-included-${category}`}
-            disablePadding
-            sx={{ mb: 0.5 }}
-            secondaryAction={
-                <IconButton
-                    edge="end"
-                    onClick={onRemove}
-                    disabled={disabled}
-                    data-testid={`blueprint-remove-${category}`}
-                >
-                    <RemoveCircleOutlined />
-                </IconButton>
-            }
+            sx={{ mb: 0.5, listStyle: "none" }}
         >
-            <Box
-                {...dragHandleProps}
-                data-testid={`blueprint-drag-${category}`}
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minWidth: 48,
-                    height: 48,
-                    cursor: disabled ? "default" : "grab",
-                    color: "text.secondary",
-                    touchAction: "none",
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                    WebkitTouchCallout: "none",
-                }}
+            <ListItem
+                component="div"
+                disablePadding
+                secondaryAction={
+                    <IconButton
+                        edge="end"
+                        onClick={onRemove}
+                        disabled={disabled}
+                        data-testid={`blueprint-remove-${category}`}
+                    >
+                        <RemoveCircleOutlined />
+                    </IconButton>
+                }
             >
-                <DragHandle fontSize="small" />
-            </Box>
-            <ListItemText primary={t(aisleLabelKey(category))} />
-        </ListItem>
+                <Box
+                    {...dragHandleProps}
+                    data-testid={`blueprint-drag-${category}`}
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: 48,
+                        height: 48,
+                        cursor: disabled ? "default" : "grab",
+                        color: "text.secondary",
+                        touchAction: "none",
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                        WebkitTouchCallout: "none",
+                    }}
+                >
+                    <DragHandle fontSize="small" />
+                </Box>
+                <ListItemText primary={t(aisleLabelKey(category))} />
+            </ListItem>
+        </Paper>
     );
 }
 
@@ -182,33 +188,41 @@ export function BlueprintEditor({
             </Typography>
             <List data-testid="blueprint-available-list" sx={{ py: 0 }}>
                 {available.map((category) => (
-                    <ListItem
+                    <Paper
                         key={category}
+                        component="li"
+                        variant="outlined"
                         data-testid={`blueprint-available-${category}`}
-                        disablePadding
-                        sx={{ mb: 0.5 }}
-                        secondaryAction={
-                            <IconButton
-                                edge="end"
+                        sx={{ mb: 0.5, listStyle: "none", overflow: "hidden" }}
+                    >
+                        <ListItem
+                            component="div"
+                            disablePadding
+                            secondaryAction={
+                                <IconButton
+                                    edge="end"
+                                    disabled={disabled}
+                                    onClick={() =>
+                                        onChange([...included, category])
+                                    }
+                                    data-testid={`blueprint-add-${category}`}
+                                >
+                                    <Add />
+                                </IconButton>
+                            }
+                        >
+                            <ListItemButton
                                 disabled={disabled}
                                 onClick={() =>
                                     onChange([...included, category])
                                 }
-                                data-testid={`blueprint-add-${category}`}
                             >
-                                <Add />
-                            </IconButton>
-                        }
-                    >
-                        <ListItemButton
-                            disabled={disabled}
-                            onClick={() => onChange([...included, category])}
-                        >
-                            <ListItemText
-                                primary={t(aisleLabelKey(category))}
-                            />
-                        </ListItemButton>
-                    </ListItem>
+                                <ListItemText
+                                    primary={t(aisleLabelKey(category))}
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    </Paper>
                 ))}
             </List>
         </Box>
