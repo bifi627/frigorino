@@ -15,6 +15,7 @@ declare module "i18next" {
                 onboarding: Record<string, string>;
                 quantityUnits: Record<string, string>;
                 promote: Record<string, string>;
+                reorder: Record<string, string>;
                 settings: Record<string, string>;
                 blueprints: Record<string, string>;
             };
