@@ -334,6 +334,7 @@ var blueprints = app.MapGroup("/api/household/{householdId:int}/blueprints")
     .RequireAuthorization()
     .WithTags("Blueprints");
 blueprints.MapGetBlueprints();
+blueprints.MapGetBlueprint();
 blueprints.MapCreateBlueprint();
 blueprints.MapUpdateBlueprint();
 blueprints.MapDeleteBlueprint();

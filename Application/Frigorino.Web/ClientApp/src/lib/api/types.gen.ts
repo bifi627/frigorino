@@ -653,6 +653,32 @@ export type DeleteBlueprintResponses = {
 
 export type DeleteBlueprintResponse = DeleteBlueprintResponses[keyof DeleteBlueprintResponses];
 
+export type GetBlueprintData = {
+    body?: never;
+    path: {
+        householdId: number;
+        blueprintId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/blueprints/{blueprintId}';
+};
+
+export type GetBlueprintErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetBlueprintResponses = {
+    /**
+     * OK
+     */
+    200: SortBlueprintResponse;
+};
+
+export type GetBlueprintResponse = GetBlueprintResponses[keyof GetBlueprintResponses];
+
 export type UpdateBlueprintData = {
     body: UpdateBlueprintRequest;
     path: {
