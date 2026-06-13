@@ -133,7 +133,7 @@ export const PageHeadActionBar = memo(
                             <Typography
                                 variant="h5"
                                 component="h1"
-                                sx={{ fontWeight: 600, mb: 0.5 }}
+                                sx={{ fontWeight: 600, mb: subtitle ? 0.5 : 0 }}
                             >
                                 {title}
                             </Typography>
