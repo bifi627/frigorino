@@ -284,6 +284,30 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    public Task<IAPIResponse> TryGetListRevisionAsync(int listId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/revision",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetInventoryRevisionAsync(int inventoryId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/{inventoryId}/revision",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetExpiryCalendarRevisionAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/inventories/calendar/revision",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     // Quantity is a structured QuantityDto on the wire ({ value, unit }). The seed helper takes a
     // plain number string (e.g. "5") and sends it as that many Pieces; null = no quantity.
     public async Task<int> CreateInventoryItemAsync(int inventoryId, string text, string? quantity = null)

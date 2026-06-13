@@ -9,6 +9,7 @@ namespace Frigorino.IntegrationTests.Slices.Inventories;
 public class ExpiryCalendarApiSteps(ScenarioContextHolder ctx, TestApiClient api)
 {
     [Given("an inventory {string} has an item {string} expiring in {int} days")]
+    [When("an inventory {string} has an item {string} expiring in {int} days")]
     public async Task GivenAnInventoryHasAnItemExpiringInDays(string inventoryName, string itemText, int days)
     {
         var expiry = DateOnly.FromDateTime(DateTime.UtcNow.Date).AddDays(days);
@@ -16,6 +17,7 @@ public class ExpiryCalendarApiSteps(ScenarioContextHolder ctx, TestApiClient api
     }
 
     [Given("an inventory {string} has an item {string} with no expiry")]
+    [When("an inventory {string} has an item {string} with no expiry")]
     public async Task GivenAnInventoryHasAnItemWithNoExpiry(string inventoryName, string itemText)
     {
         await SeedItemAsync(inventoryName, itemText, null);

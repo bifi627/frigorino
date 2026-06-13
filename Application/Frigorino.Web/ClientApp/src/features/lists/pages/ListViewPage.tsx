@@ -28,6 +28,7 @@ import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
 import { useExtractionPoll } from "../items/useExtractionPoll";
+import { useListRevision } from "../items/useListRevision";
 import { useList } from "../useList";
 import { PromoteBar } from "../promote/PromoteBar";
 
@@ -69,6 +70,7 @@ export const ListViewPage = () => {
     } = useList(householdId, listIdNum, householdId > 0);
 
     const { data: items = [] } = useListItems(householdId, listIdNum);
+    useListRevision(householdId, listIdNum);
 
     const createMutation = useCreateListItem();
     const updateMutation = useUpdateListItem();

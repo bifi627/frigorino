@@ -352,6 +352,7 @@ lists.MapGetPendingPromotions();
 lists.MapPromoteListItems();
 lists.MapSkipPromotion();
 lists.MapApplyBlueprint();
+lists.MapGetListRevision();
 
 var listItems = app.MapGroup("/api/household/{householdId:int}/lists/{listId:int}/items")
     .RequireAuthorization()
@@ -374,7 +375,9 @@ var inventories = app.MapGroup("/api/household/{householdId:int}/inventories")
 inventories.MapCreateInventory();
 inventories.MapGetInventories();
 inventories.MapGetExpiryCalendar();
+inventories.MapGetExpiryCalendarRevision();
 inventories.MapGetInventory();
+inventories.MapGetInventoryRevision();
 inventories.MapUpdateInventory();
 inventories.MapDeleteInventory();
 

@@ -439,6 +439,36 @@ namespace Frigorino.Test.Domain
             Assert.IsType<EntityNotFoundError>(result.Errors[0]);
         }
 
+        [Fact]
+        public void ApplyExtractedQuantity_NoChange_DoesNotBumpUpdatedAt()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "milk");
+            var sentinel = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            item.UpdatedAt = sentinel;
+
+            // Extraction yielded the identical clean name and no quantity — a true no-op.
+            var result = list.ApplyExtractedQuantity(item.Id, "milk", quantity: null);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(sentinel, item.UpdatedAt);
+        }
+
+        [Fact]
+        public void ApplyExtractedQuantity_RealChange_BumpsUpdatedAt()
+        {
+            var list = NewList();
+            var item = AddSeed(list, "20 apples");
+            var sentinel = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            item.UpdatedAt = sentinel;
+
+            var result = list.ApplyExtractedQuantity(item.Id, "apples",
+                Quantity.Create(20, QuantityUnit.Piece).Value);
+
+            Assert.True(result.IsSuccess);
+            Assert.NotEqual(sentinel, item.UpdatedAt);
+        }
+
         // ------- RemoveItem -------
 
         [Fact]

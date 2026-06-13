@@ -223,6 +223,10 @@ export type ReorderItemRequest = {
     afterId: number;
 };
 
+export type RevisionResponse = {
+    rev: string;
+};
+
 export type SetActiveHouseholdRequest = {
     householdId: number;
 };
@@ -996,6 +1000,32 @@ export type ApplyBlueprintResponses = {
 
 export type ApplyBlueprintResponse = ApplyBlueprintResponses[keyof ApplyBlueprintResponses];
 
+export type GetListRevisionData = {
+    body?: never;
+    path: {
+        householdId: number;
+        listId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/lists/{listId}/revision';
+};
+
+export type GetListRevisionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetListRevisionResponses = {
+    /**
+     * OK
+     */
+    200: RevisionResponse;
+};
+
+export type GetListRevisionResponse = GetListRevisionResponses[keyof GetListRevisionResponses];
+
 export type GetItemsData = {
     body?: never;
     path: {
@@ -1395,6 +1425,31 @@ export type GetExpiryCalendarResponses = {
 
 export type GetExpiryCalendarResponse = GetExpiryCalendarResponses[keyof GetExpiryCalendarResponses];
 
+export type GetExpiryCalendarRevisionData = {
+    body?: never;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/calendar/revision';
+};
+
+export type GetExpiryCalendarRevisionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetExpiryCalendarRevisionResponses = {
+    /**
+     * OK
+     */
+    200: RevisionResponse;
+};
+
+export type GetExpiryCalendarRevisionResponse = GetExpiryCalendarRevisionResponses[keyof GetExpiryCalendarRevisionResponses];
+
 export type DeleteInventoryData = {
     body?: never;
     path: {
@@ -1486,6 +1541,32 @@ export type UpdateInventoryResponses = {
 };
 
 export type UpdateInventoryResponse = UpdateInventoryResponses[keyof UpdateInventoryResponses];
+
+export type GetInventoryRevisionData = {
+    body?: never;
+    path: {
+        householdId: number;
+        inventoryId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/inventories/{inventoryId}/revision';
+};
+
+export type GetInventoryRevisionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetInventoryRevisionResponses = {
+    /**
+     * OK
+     */
+    200: RevisionResponse;
+};
+
+export type GetInventoryRevisionResponse = GetInventoryRevisionResponses[keyof GetInventoryRevisionResponses];
 
 export type GetInventoryItemsData = {
     body?: never;
