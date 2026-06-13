@@ -34,4 +34,22 @@ public class ReorderSteps(ScenarioContextHolder ctx, TestApiClient api)
             .ToList();
         Assert.Contains(itemText, texts);
     }
+
+    [Then("the list {string} item {string} carries quantity {string} {string}")]
+    public async Task ThenTheListItemCarriesQuantity(string listName, string itemText, string value, string unit)
+    {
+        var listId = ctx.ListIds[listName];
+        var response = await api.TryGetListItemsAsync(listId);
+        Assert.Equal(200, response.Status);
+        var items = (await response.JsonAsync())!.Value;
+        var item = items.EnumerateArray()
+            .Single(i => i.GetProperty("text").GetString() == itemText);
+        // Proves the structured quantity crossed over the whole chain (sheet draft → request
+        // body → direct AddItem) rather than being dropped or re-derived via text extraction.
+        var quantity = item.GetProperty("quantity");
+        Assert.Equal(
+            decimal.Parse(value, System.Globalization.CultureInfo.InvariantCulture),
+            quantity.GetProperty("value").GetDecimal());
+        Assert.Equal(unit, quantity.GetProperty("unit").GetString());
+    }
 }

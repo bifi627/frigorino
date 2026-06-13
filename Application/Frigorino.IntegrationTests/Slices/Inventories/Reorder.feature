@@ -11,4 +11,5 @@ Feature: Re-order an inventory item back to a shopping list (SPA)
     And I click add to list from the inventory item menu
     And I confirm the re-order
     Then the list "Weekly Groceries" contains an item "Milk"
+    And the list "Weekly Groceries" item "Milk" carries quantity "2" "Piece"
     And the inventory "Fridge" contains an item "Milk"
