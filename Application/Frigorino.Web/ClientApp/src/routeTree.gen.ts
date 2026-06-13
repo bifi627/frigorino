@@ -20,12 +20,15 @@ import { Route as InventoriesCreateRouteImport } from './routes/inventories/crea
 import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
 import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
-import { Route as HouseholdBlueprintsRouteImport } from './routes/household/blueprints'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as HouseholdBlueprintsIndexRouteImport } from './routes/household/blueprints/index'
 import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
 import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
 import { Route as InventoriesInventoryIdViewRouteImport } from './routes/inventories/$inventoryId/view'
 import { Route as InventoriesInventoryIdEditRouteImport } from './routes/inventories/$inventoryId/edit'
+import { Route as HouseholdBlueprintsCreateRouteImport } from './routes/household/blueprints/create'
+import { Route as HouseholdBlueprintsBlueprintIdViewRouteImport } from './routes/household/blueprints/$blueprintId/view'
+import { Route as HouseholdBlueprintsBlueprintIdEditRouteImport } from './routes/household/blueprints/$blueprintId/edit'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -82,16 +85,17 @@ const HouseholdCreateRoute = HouseholdCreateRouteImport.update({
   path: '/household/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HouseholdBlueprintsRoute = HouseholdBlueprintsRouteImport.update({
-  id: '/household/blueprints',
-  path: '/household/blueprints',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HouseholdBlueprintsIndexRoute =
+  HouseholdBlueprintsIndexRouteImport.update({
+    id: '/household/blueprints/',
+    path: '/household/blueprints/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ListsListIdViewRoute = ListsListIdViewRouteImport.update({
   id: '/lists/$listId/view',
   path: '/lists/$listId/view',
@@ -114,13 +118,30 @@ const InventoriesInventoryIdEditRoute =
     path: '/inventories/$inventoryId/edit',
     getParentRoute: () => rootRouteImport,
   } as any)
+const HouseholdBlueprintsCreateRoute =
+  HouseholdBlueprintsCreateRouteImport.update({
+    id: '/household/blueprints/create',
+    path: '/household/blueprints/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const HouseholdBlueprintsBlueprintIdViewRoute =
+  HouseholdBlueprintsBlueprintIdViewRouteImport.update({
+    id: '/household/blueprints/$blueprintId/view',
+    path: '/household/blueprints/$blueprintId/view',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const HouseholdBlueprintsBlueprintIdEditRoute =
+  HouseholdBlueprintsBlueprintIdEditRouteImport.update({
+    id: '/household/blueprints/$blueprintId/edit',
+    path: '/household/blueprints/$blueprintId/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
-  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -129,17 +150,20 @@ export interface FileRoutesByFullPath {
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/household/blueprints/': typeof HouseholdBlueprintsIndexRoute
+  '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
+  '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
-  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -148,10 +172,14 @@ export interface FileRoutesByTo {
   '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/household/blueprints': typeof HouseholdBlueprintsIndexRoute
+  '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
+  '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,7 +187,6 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/login': typeof AuthLoginRoute
-  '/household/blueprints': typeof HouseholdBlueprintsRoute
   '/household/create': typeof HouseholdCreateRoute
   '/household/manage': typeof HouseholdManageRoute
   '/inventories/calendar': typeof InventoriesCalendarRoute
@@ -168,10 +195,14 @@ export interface FileRoutesById {
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/household/blueprints/': typeof HouseholdBlueprintsIndexRoute
+  '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
+  '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,7 +211,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/onboarding'
     | '/auth/login'
-    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -189,17 +219,20 @@ export interface FileRouteTypes {
     | '/inventories/'
     | '/lists/'
     | '/settings/'
+    | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/household/blueprints/'
+    | '/household/blueprints/$blueprintId/edit'
+    | '/household/blueprints/$blueprintId/view'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/onboarding'
     | '/auth/login'
-    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -208,17 +241,20 @@ export interface FileRouteTypes {
     | '/inventories'
     | '/lists'
     | '/settings'
+    | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/household/blueprints'
+    | '/household/blueprints/$blueprintId/edit'
+    | '/household/blueprints/$blueprintId/view'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/onboarding'
     | '/auth/login'
-    | '/household/blueprints'
     | '/household/create'
     | '/household/manage'
     | '/inventories/calendar'
@@ -227,10 +263,14 @@ export interface FileRouteTypes {
     | '/inventories/'
     | '/lists/'
     | '/settings/'
+    | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/household/blueprints/'
+    | '/household/blueprints/$blueprintId/edit'
+    | '/household/blueprints/$blueprintId/view'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -238,7 +278,6 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   OnboardingRoute: typeof OnboardingRoute
   AuthLoginRoute: typeof AuthLoginRoute
-  HouseholdBlueprintsRoute: typeof HouseholdBlueprintsRoute
   HouseholdCreateRoute: typeof HouseholdCreateRoute
   HouseholdManageRoute: typeof HouseholdManageRoute
   InventoriesCalendarRoute: typeof InventoriesCalendarRoute
@@ -247,10 +286,14 @@ export interface RootRouteChildren {
   InventoriesIndexRoute: typeof InventoriesIndexRoute
   ListsIndexRoute: typeof ListsIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  HouseholdBlueprintsCreateRoute: typeof HouseholdBlueprintsCreateRoute
   InventoriesInventoryIdEditRoute: typeof InventoriesInventoryIdEditRoute
   InventoriesInventoryIdViewRoute: typeof InventoriesInventoryIdViewRoute
   ListsListIdEditRoute: typeof ListsListIdEditRoute
   ListsListIdViewRoute: typeof ListsListIdViewRoute
+  HouseholdBlueprintsIndexRoute: typeof HouseholdBlueprintsIndexRoute
+  HouseholdBlueprintsBlueprintIdEditRoute: typeof HouseholdBlueprintsBlueprintIdEditRoute
+  HouseholdBlueprintsBlueprintIdViewRoute: typeof HouseholdBlueprintsBlueprintIdViewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -332,18 +375,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HouseholdCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/household/blueprints': {
-      id: '/household/blueprints'
-      path: '/household/blueprints'
-      fullPath: '/household/blueprints'
-      preLoaderRoute: typeof HouseholdBlueprintsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/blueprints/': {
+      id: '/household/blueprints/'
+      path: '/household/blueprints'
+      fullPath: '/household/blueprints/'
+      preLoaderRoute: typeof HouseholdBlueprintsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/$listId/view': {
@@ -374,6 +417,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoriesInventoryIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/household/blueprints/create': {
+      id: '/household/blueprints/create'
+      path: '/household/blueprints/create'
+      fullPath: '/household/blueprints/create'
+      preLoaderRoute: typeof HouseholdBlueprintsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/blueprints/$blueprintId/view': {
+      id: '/household/blueprints/$blueprintId/view'
+      path: '/household/blueprints/$blueprintId/view'
+      fullPath: '/household/blueprints/$blueprintId/view'
+      preLoaderRoute: typeof HouseholdBlueprintsBlueprintIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/blueprints/$blueprintId/edit': {
+      id: '/household/blueprints/$blueprintId/edit'
+      path: '/household/blueprints/$blueprintId/edit'
+      fullPath: '/household/blueprints/$blueprintId/edit'
+      preLoaderRoute: typeof HouseholdBlueprintsBlueprintIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -382,7 +446,6 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   OnboardingRoute: OnboardingRoute,
   AuthLoginRoute: AuthLoginRoute,
-  HouseholdBlueprintsRoute: HouseholdBlueprintsRoute,
   HouseholdCreateRoute: HouseholdCreateRoute,
   HouseholdManageRoute: HouseholdManageRoute,
   InventoriesCalendarRoute: InventoriesCalendarRoute,
@@ -391,10 +454,16 @@ const rootRouteChildren: RootRouteChildren = {
   InventoriesIndexRoute: InventoriesIndexRoute,
   ListsIndexRoute: ListsIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  HouseholdBlueprintsCreateRoute: HouseholdBlueprintsCreateRoute,
   InventoriesInventoryIdEditRoute: InventoriesInventoryIdEditRoute,
   InventoriesInventoryIdViewRoute: InventoriesInventoryIdViewRoute,
   ListsListIdEditRoute: ListsListIdEditRoute,
   ListsListIdViewRoute: ListsListIdViewRoute,
+  HouseholdBlueprintsIndexRoute: HouseholdBlueprintsIndexRoute,
+  HouseholdBlueprintsBlueprintIdEditRoute:
+    HouseholdBlueprintsBlueprintIdEditRoute,
+  HouseholdBlueprintsBlueprintIdViewRoute:
+    HouseholdBlueprintsBlueprintIdViewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
