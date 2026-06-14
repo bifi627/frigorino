@@ -28,6 +28,7 @@ import { HouseholdSwitcher } from "../../features/me/activeHousehold/components/
 import { useCurrentHousehold } from "../../features/me/activeHousehold/useCurrentHousehold";
 import { useHouseholdInventories } from "../../features/inventories/useHouseholdInventories";
 import { useHouseholdLists } from "../../features/lists/useHouseholdLists";
+import { useHouseholdRecipes } from "../../features/recipes/useHouseholdRecipes";
 import { useLongPress } from "../../hooks/useLongPress";
 import {
     formatLocalDate,
@@ -91,6 +92,11 @@ export const WelcomePage = () => {
             currentHousehold?.householdId || 0,
             !!currentHousehold?.householdId,
         );
+    const { data: recipes = [], isLoading: recipesLoading } =
+        useHouseholdRecipes(
+            currentHousehold?.householdId || 0,
+            !!currentHousehold?.householdId,
+        );
 
     const handleCreateHousehold = () => {
         navigate({ to: "/household/create" });
@@ -114,8 +120,7 @@ export const WelcomePage = () => {
                 navigate({ to: "/inventories/create" });
                 break;
             case "rezepte":
-                // TODO: Implement recipe add functionality
-                window.console.log("Add new recipe");
+                navigate({ to: "/recipes/create" });
                 break;
             default:
                 window.console.log(`Add new item to ${collectionId}`);
@@ -210,14 +215,30 @@ export const WelcomePage = () => {
             label: t("dashboard.recipes"),
             icon: <RecipesIcon />,
             color: sectionColors.recipes,
-            items: [
-                {
-                    name: t("dashboard.comingSoon"),
-                    count: "",
-                    status: t("dashboard.recipeManagementLater"),
-                    id: 0,
-                },
-            ],
+            items: recipesLoading
+                ? [
+                      {
+                          name: t("common.loading"),
+                          count: "",
+                          status: "Loading",
+                          id: 0,
+                      },
+                  ]
+                : recipes.length > 0
+                  ? recipes.map((recipe) => ({
+                        name: recipe.name || t("recipes.untitledRecipe"),
+                        count: `${recipe.itemCount || 0} ${t("dashboard.items")}`,
+                        status: t("common.current"),
+                        id: recipe.id,
+                    }))
+                  : [
+                        {
+                            name: t("recipes.noRecipesYet"),
+                            count: "",
+                            status: t("recipes.createFirstRecipe"),
+                            id: 0,
+                        },
+                    ],
         },
     ];
 
@@ -287,11 +308,10 @@ export const WelcomePage = () => {
 
             <Stack spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 3, sm: 4 } }}>
                 {collections.map((collection) => {
-                    // Only lists and inventory have expandable item previews;
-                    // recipes is a placeholder card with nothing to reveal.
                     const isExpandable =
                         collection.id === "einkaufslisten" ||
-                        collection.id === "inventar";
+                        collection.id === "inventar" ||
+                        collection.id === "rezepte";
                     const isExpanded =
                         expandedSections.includes(collection.id) &&
                         isExpandable;
@@ -441,6 +461,12 @@ export const WelcomePage = () => {
                                                     navigate({
                                                         to: "/inventories",
                                                     });
+                                                } else if (
+                                                    collection.id === "rezepte"
+                                                ) {
+                                                    navigate({
+                                                        to: "/recipes",
+                                                    });
                                                 }
                                             }}
                                             sx={actionButtonSx}
@@ -463,6 +489,8 @@ export const WelcomePage = () => {
                                                     "einkaufslisten" &&
                                                     item.id) ||
                                                 (collection.id === "inventar" &&
+                                                    item.id) ||
+                                                (collection.id === "rezepte" &&
                                                     item.id);
                                             return (
                                                 <ListItem
@@ -502,6 +530,18 @@ export const WelcomePage = () => {
                                                                           to: "/inventories/$inventoryId/view",
                                                                           params: {
                                                                               inventoryId:
+                                                                                  item.id?.toString() ??
+                                                                                  "",
+                                                                          },
+                                                                      });
+                                                                  } else if (
+                                                                      collection.id ===
+                                                                      "rezepte"
+                                                                  ) {
+                                                                      navigate({
+                                                                          to: "/recipes/$recipeId/view",
+                                                                          params: {
+                                                                              recipeId:
                                                                                   item.id?.toString() ??
                                                                                   "",
                                                                           },
