@@ -471,4 +471,88 @@ public class TestApiClient(ScenarioContextHolder ctx)
         var json = await PostAsync($"/api/household/{ctx.HouseholdId}/recipes/{recipeId}/items", new { text, comment = (string?)null });
         return json.GetProperty("id").GetInt32();
     }
+
+    public Task<IAPIResponse> TryCreateRecipeAsync(string? name, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name, description = (string?)null },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryGetRecipesAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryDeleteRecipeAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetRecipeRevisionAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/revision",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetRecipeItemsAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateRecipeItemAsync(int recipeId, string? text, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items",
+            new APIRequestContextOptions
+            {
+                DataObject = new { text, comment = (string?)null },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryDeleteRecipeItemAsync(int recipeId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items/{itemId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryRestoreRecipeItemAsync(int recipeId, int itemId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items/{itemId}/restore",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryReorderRecipeItemAsync(int recipeId, int itemId, int afterId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PatchAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items/{itemId}/reorder",
+            new APIRequestContextOptions
+            {
+                DataObject = new { afterId },
+                Headers = AuthHeaders,
+            });
+    }
 }
