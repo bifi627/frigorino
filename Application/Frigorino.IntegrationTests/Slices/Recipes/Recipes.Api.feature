@@ -8,6 +8,12 @@ Feature: Recipes API
     Then the API response status is 400
     And the API response has a validation error for "Name"
 
+  Scenario: Creating a recipe item with empty text returns a validation error
+    Given there is a recipe named "Pasta Carbonara"
+    When I POST a recipe item with empty text to "Pasta Carbonara" via the API
+    Then the API response status is 400
+    And the API response has a validation error for "Text"
+
   Scenario: Non-member cannot read a household's recipes
     Given I am logged in as "alice"
     And an existing household "Other" owned by "bob" that I am not a member of

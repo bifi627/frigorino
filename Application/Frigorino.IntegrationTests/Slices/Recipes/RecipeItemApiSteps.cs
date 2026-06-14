@@ -126,6 +126,10 @@ public class RecipeItemApiSteps(ScenarioContextHolder ctx, TestApiClient api)
 
     // Recipes must NEVER classify into the Product catalog (unlike lists). After extraction lands,
     // the Products table must stay empty — this is the load-bearing no-classify guarantee.
+    // The count is global (Products has no household FK), which is sound only because each scenario
+    // runs against its own fresh database (ScenarioContextHolder.DatabaseName) — so no other
+    // scenario's classification can leak in. If the suite ever shares a DB across scenarios, scope
+    // this to the recipe's household instead.
     [Then("the Products table is empty")]
     public async Task ThenTheProductsTableIsEmpty()
     {
