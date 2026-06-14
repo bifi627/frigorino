@@ -61,7 +61,7 @@ Out of scope (explicitly deferred):
 | Servings scaler | Stays **view-only**; grouped with a "Zutaten" section heading; Reset link kept (shown only while scaled). |
 | Search | **Kept** on `/view`, reached from the ⋮ menu; filters ingredients. |
 | Post-create landing | **`/edit`** (recipe has a name but no ingredients yet). |
-| Edit page metadata save model | Metadata form keeps **Save & close / Cancel & close**; ingredient edits save **immediately** (unchanged from today). |
+| Edit page save model | **Unified implicit save-on-change** across the whole edit view — metadata fields auto-save (debounced); ingredient edits are already immediate. **No Save/Cancel buttons**; the back arrow is the only exit. |
 
 ## Read-only view — `RecipeViewPage`
 
@@ -135,8 +135,7 @@ view page), top to bottom:
    `DeleteRecipeConfirmDialog`, unchanged).
 2. **Scroll region** (`flex:1, overflow:auto`) containing, in order:
    - **`EditRecipeForm`** (metadata: name → description → servings), existing
-     component. Keep Save & Cancel — both `router.history.back()` (Save persists
-     first). See "save model" note below.
+     component, **converted to implicit save-on-change**. See "save model" below.
    - **Ingredient editor list** — the existing `RecipeContainer` (interactive:
      `SortableList` with drag handles, per-item edit/delete, reorder), moved here
      from the view page. It renders items via the existing `RecipeItemContent`
@@ -158,11 +157,32 @@ both in an outer scroll `Box` and relax the container's overflow. The plan must
 specify the exact approach and verify the composer stays pinned and the list
 still scrolls.
 
-**Metadata save model (call-out):** ingredient operations save immediately
-(optimistic mutations, as today). The metadata form keeps explicit Save/Cancel,
-both of which navigate back to `/view`. So "Cancel" discards unsaved *metadata*
-edits only — already-applied ingredient changes persist. This is a minor
-inconsistency accepted for simplicity; flagged here for review.
+**Save model — unified implicit save-on-change:** the entire edit view persists
+as you go; there are **no Save/Cancel buttons** and no save-then-navigate. The
+back arrow is the only way out, and everything is already saved when you leave.
+
+- **Ingredients:** unchanged — immediate optimistic mutations (add/edit/delete/
+  reorder), as today.
+- **Metadata (`EditRecipeForm`):** fields are still seeded once on mount (keyed
+  by `recipe.id`). On change, **debounce** (~600 ms; no generic debounce hook
+  exists, so use a small inline debounced effect / `setTimeout` cleared per
+  change, fired via the existing `useUpdateRecipe`) then PUT the current
+  `{ name, description, servings }`. Also **flush on blur** so a quick edit +
+  immediate back doesn't drop the last change (and clear any pending timer on
+  unmount).
+  - **Validation gates the save** (don't PUT invalid data): skip the save while
+    `name` is empty (show the existing required-error inline; the last valid name
+    stays on the server). Skip the save when `servings` is non-empty but not an
+    integer in `1..99` (show an inline error). Empty servings → save as `null`.
+    This is stricter than the create form's non-enforced native min/max, and is
+    intentional.
+  - **Feedback:** keep it light — a subtle saving/saved status indicator next to
+    the fields (e.g. `data-testid="recipe-metadata-status"` toggling
+    saving→saved) is enough; no toast. Remove the `recipe-edit-save-button`
+    testid and the Save/Cancel buttons entirely.
+
+Remove `EditRecipeForm`'s `handleSave`/`handleCancel` + `router.history.back()`
+buttons; navigation off the page is solely the action-bar back arrow.
 
 ## Create flow
 
@@ -205,7 +225,10 @@ replaced by `servingsFor` (verify usages).
   - View page is read-only: composer/footer and drag handles are **not** present
     on `/view`; pencil `recipe-edit-button` navigates to `/edit`.
   - Edit page hosts both metadata fields and the ingredient editor (composer
-    present, items addable/editable).
+    present, items addable/editable). **No Save button** — editing a metadata
+    field (e.g. description or servings) then navigating back to `/view` shows
+    the change persisted (auto-save). Wait out the debounce / trigger blur before
+    navigating.
   - Create lands on `/edit` (URL/edit-affordances present after create).
   - Description renders in `recipe-description` on `/view` (not the header).
   - Scaling still works on `/view`: stepper appears only when servings set,
