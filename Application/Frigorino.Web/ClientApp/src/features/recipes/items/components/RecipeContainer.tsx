@@ -18,7 +18,9 @@ interface RecipeContainerProps {
     isExtracting?: boolean;
     extractingItemId?: number | null;
     searchQuery?: string;
-    multiplier?: number;
+    // When false, the container flows in its parent's scroll instead of being its own
+    // scroll region (used on the edit page where it shares scroll with the metadata form).
+    scrollable?: boolean;
 }
 
 // Ingredients are searched across their text AND comment so ingredient notes
@@ -36,7 +38,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
             isExtracting,
             extractingItemId,
             searchQuery = "",
-            multiplier = 1,
+            scrollable = true,
         },
         ref,
     ) => {
@@ -65,11 +67,11 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                 maxWidth="sm"
                 data-testid="recipe-items"
                 sx={{
-                    flex: 1,
-                    overflow: "auto",
+                    ...(scrollable
+                        ? { flex: 1, overflow: "auto", minHeight: 0 }
+                        : {}),
                     px: featureContentPx,
                     py: 0,
-                    minHeight: 0,
                 }}
             >
                 {showNoMatches ? (
@@ -113,10 +115,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                             item.id === extractingItemId
                         }
                         renderContent={(item) => (
-                            <RecipeItemContent
-                                item={item}
-                                multiplier={multiplier}
-                            />
+                            <RecipeItemContent item={item} />
                         )}
                     />
                 )}
