@@ -120,5 +120,90 @@ namespace Frigorino.Test.Recipes
             Assert.True(result.IsSuccess);
             Assert.True(string.CompareOrdinal(b.Rank, a.Rank) < 0);
         }
+
+        [Fact]
+        public void RestoreItem_ReactivatesSoftDeletedItem()
+        {
+            var recipe = NewRecipe();
+            var item = recipe.AddItem("Flour", null, null).Value;
+            item.Id = 1;
+            recipe.RemoveItem(item.Id);
+            Assert.False(item.IsActive);
+
+            var result = recipe.RestoreItem(item.Id);
+
+            Assert.True(result.IsSuccess);
+            Assert.True(item.IsActive);
+            Assert.Same(item, result.Value);
+        }
+
+        [Fact]
+        public void RestoreItem_PreservesOriginalRank()
+        {
+            var recipe = NewRecipe();
+            var item = recipe.AddItem("Flour", null, null).Value;
+            item.Id = 1;
+            var originalRank = item.Rank;
+            recipe.RemoveItem(item.Id);
+
+            var result = recipe.RestoreItem(item.Id);
+
+            Assert.True(result.IsSuccess);
+            // RestoreItem keeps the old rank verbatim; rank re-mint is a separate step.
+            Assert.Equal(originalRank, item.Rank);
+        }
+
+        [Fact]
+        public void RestoreItem_AlreadyActive_ReturnsEntityNotFound()
+        {
+            var recipe = NewRecipe();
+            var item = recipe.AddItem("Flour", null, null).Value;
+            item.Id = 1; // active by default
+
+            var result = recipe.RestoreItem(item.Id);
+
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
+
+        [Fact]
+        public void ReplaceRestoredItemRank_OnRankCollision_MintsFreshAppendRank()
+        {
+            var recipe = NewRecipe();
+            // Restored item shares its old rank with a live item that took its slot while it was
+            // soft-deleted. ReplaceRestoredItemRank re-places it at the end of the section.
+            var restored = recipe.AddItem("Flour", null, null).Value;
+            restored.Id = 1;
+            recipe.RemoveItem(restored.Id);
+
+            var colliding = recipe.AddItem("Sugar", null, null).Value;
+            colliding.Id = 2;
+            // Force the rank collision: the new live item now occupies the restored item's old rank.
+            colliding.Rank = restored.Rank;
+
+            // Bring the restored item back (still carrying the now-colliding rank).
+            recipe.RestoreItem(restored.Id);
+            Assert.Equal(colliding.Rank, restored.Rank);
+
+            var result = recipe.ReplaceRestoredItemRank(restored.Id);
+
+            Assert.True(result.IsSuccess);
+            Assert.Same(restored, result.Value);
+            // A fresh rank is minted at the end of the section — no longer colliding, and after the
+            // sibling that took its slot.
+            Assert.NotEqual(colliding.Rank, restored.Rank);
+            Assert.True(string.CompareOrdinal(colliding.Rank, restored.Rank) < 0);
+        }
+
+        [Fact]
+        public void ReplaceRestoredItemRank_NotFound_ReturnsEntityNotFound()
+        {
+            var recipe = NewRecipe();
+
+            var result = recipe.ReplaceRestoredItemRank(itemId: 999);
+
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
     }
 }
