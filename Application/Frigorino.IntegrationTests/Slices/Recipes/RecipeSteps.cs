@@ -12,6 +12,22 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.RecipeIds[name] = recipeId;
     }
 
+    [Given("there is a recipe named {string} with servings {int}")]
+    public async Task GivenThereIsARecipeNamedWithServings(string name, int servings)
+    {
+        var recipeId = await api.CreateRecipeWithServingsAsync(name, servings);
+        ctx.RecipeIds[name] = recipeId;
+    }
+
+    [Given("the recipe {string} has an ingredient {string} with quantity {double} {string}")]
+    public async Task GivenTheRecipeHasIngredientWithQuantity(
+        string recipeName, string itemText, double value, string unit)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var itemId = await api.CreateRecipeItemAsync(recipeId, itemText);
+        await api.TrySetRecipeItemQuantityAsync(recipeId, itemId, value, unit);
+    }
+
     // ---- Navigation ----
 
     [When("I open the recipe {string}")]
@@ -21,6 +37,25 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GotoAsync(
             $"/recipes/{recipeId}/view",
             new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+    }
+
+    [When("I open the recipe {string} for editing")]
+    public async Task WhenIOpenTheRecipeForEditing(string recipeName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        await ctx.Page.GotoAsync(
+            $"/recipes/{recipeId}/edit",
+            new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
+    }
+
+    // ---- View interactions ----
+
+    [When("I increment the servings")]
+    public async Task WhenIIncrementTheServings()
+    {
+        // Display-only scaling: stepping servings up multiplies each ingredient's shown
+        // quantity (effectiveServings / baseServings) — no server round-trip.
+        await ctx.Page.GetByTestId("recipe-servings-increment").ClickAsync();
     }
 
     // ---- Create recipe form ----
@@ -42,7 +77,7 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
             && r.Status == 201);
         await ctx.Page.GetByTestId("recipe-create-submit-button").ClickAsync();
         await responseTask;
-        await ctx.Page.WaitForURLAsync("**/recipes/*/view");
+        await ctx.Page.WaitForURLAsync("**/recipes/*/edit");
     }
 
     // ---- Add ingredient via composer ----
@@ -114,6 +149,30 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await responseTask;
     }
 
+    // ---- Edit actions ----
+
+    [When("I tap the edit recipe button")]
+    public async Task WhenITapTheEditRecipeButton()
+    {
+        await ctx.Page.GetByTestId("recipe-edit-button").ClickAsync();
+    }
+
+    [When("I set the recipe description to {string}")]
+    public async Task WhenISetTheRecipeDescriptionTo(string text)
+    {
+        // Fill the description, then blur to flush the debounced auto-save, and await the
+        // recipe (not item) PUT so the follow-up navigation reads post-save state.
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.Contains("/recipes/")
+            && !r.Url.Contains("/items")
+            && r.Request.Method == "PUT"
+            && r.Status == 200);
+        var description = ctx.Page.GetByTestId("recipe-description-input");
+        await description.FillAsync(text);
+        await description.BlurAsync();
+        await responseTask;
+    }
+
     // ---- Assertions ----
 
     [Then("I am on the recipe view page for {string}")]
@@ -123,6 +182,33 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await Assertions.Expect(ctx.Page.GetByTestId("recipe-items")).ToBeVisibleAsync();
         // Verify the recipe name is visible in the page header (PageHeadActionBar title).
         await ctx.Page.GetByText(recipeName).First.WaitForAsync();
+    }
+
+    [Then("I am on the recipe edit page for {string}")]
+    public async Task ThenIAmOnTheRecipeEditPageFor(string recipeName)
+    {
+        await ctx.Page.WaitForURLAsync("**/recipes/*/edit");
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-items")).ToBeVisibleAsync();
+        // The composer (add-ingredient) is present on the edit page.
+        await Assertions.Expect(
+            ctx.Page.GetByTestId("autocomplete-input-textfield")).ToBeVisibleAsync();
+    }
+
+    [Then("the recipe view is read-only")]
+    public async Task ThenTheRecipeViewIsReadOnly()
+    {
+        // No add-ingredient composer on the read-only view.
+        await Assertions.Expect(
+            ctx.Page.GetByTestId("autocomplete-input-textfield")).Not.ToBeVisibleAsync();
+        // But the edit affordance is present.
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-edit-button")).ToBeVisibleAsync();
+    }
+
+    [Then("the recipe description shows {string}")]
+    public async Task ThenTheRecipeDescriptionShows(string text)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-description"))
+            .ToContainTextAsync(text);
     }
 
     [Then("{string} appears in the recipe items")]

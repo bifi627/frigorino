@@ -568,6 +568,34 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    public async Task<int> CreateRecipeWithServingsAsync(string name, int servings)
+    {
+        var response = await TryCreateRecipeWithServingsAsync(name, servings);
+        if (!response.Ok)
+        {
+            throw new Exception(
+                $"CreateRecipeWithServingsAsync failed: {response.Status} {await response.TextAsync()}");
+        }
+
+        var json = await response.JsonAsync();
+        return json!.Value.GetProperty("id").GetInt32();
+    }
+
+    // Sets a numeric quantity on a recipe item via the item update endpoint, so scaling
+    // scenarios have a deterministic quantity to scale (extraction is async/non-deterministic).
+    public Task<IAPIResponse> TrySetRecipeItemQuantityAsync(
+        int recipeId, int itemId, double value, string unit, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items/{itemId}",
+            new APIRequestContextOptions
+            {
+                DataObject = new { quantity = new { value, unit }, clearQuantity = false },
+                Headers = AuthHeaders,
+            });
+    }
+
     public Task<IAPIResponse> TryUpdateRecipeAsync(int recipeId, string name, int? servings, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
