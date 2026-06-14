@@ -181,10 +181,24 @@ namespace Frigorino.Domain.Entities
             var now = DateTime.UtcNow;
             section.IsActive = true;
             section.UpdatedAt = now;
-            foreach (var item in Items.Where(i => i.SectionId == sectionId && !i.IsActive))
+
+            // Revive the section's items. Two inactive items in the section can share a rank — e.g. an
+            // item deleted individually leaves its rank free, a sibling is reordered onto it, then the
+            // whole section is cascade-deleted. Reactivating both verbatim would put two ACTIVE items at
+            // the same rank → 23505 on UX_RecipeItems_SectionId_Rank_Active, which the restore slice's
+            // RankRetry cannot recover (it only re-mints the section rank). So de-collide as we revive:
+            // append a fresh rank for any item whose rank is already taken by a now-active sibling.
+            var toRevive = Items.Where(i => i.SectionId == sectionId && !i.IsActive).ToList();
+            foreach (var item in toRevive)
             {
                 item.IsActive = true;
                 item.UpdatedAt = now;
+                var rankTaken = Items.Any(o => o.IsActive && o.Id != item.Id && o.SectionId == sectionId
+                    && string.CompareOrdinal(o.Rank, item.Rank) == 0);
+                if (rankTaken)
+                {
+                    item.Rank = ComputeAppendRank(sectionId);
+                }
             }
             return Result.Ok(section);
         }

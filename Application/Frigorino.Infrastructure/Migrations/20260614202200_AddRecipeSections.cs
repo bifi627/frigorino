@@ -91,6 +91,20 @@ namespace Frigorino.Infrastructure.Migrations
                 WHERE ri."RecipeId" = i."RecipeId";
                 """);
 
+            // (4b) Fail loudly BEFORE the NOT NULL alter if any item slipped through the backfill
+            //      (e.g. an orphan RecipeItem with no matching Recipe). Without this guard the
+            //      AlterColumn below would throw an opaque error mid-migration on a prod boot.
+            migrationBuilder.Sql("""
+                DO $$
+                DECLARE leftover bigint;
+                BEGIN
+                    SELECT count(*) INTO leftover FROM "RecipeItems" WHERE "SectionId" IS NULL;
+                    IF leftover > 0 THEN
+                        RAISE EXCEPTION 'AddRecipeSections backfill left % RecipeItems with NULL SectionId', leftover;
+                    END IF;
+                END $$;
+                """);
+
             // (5) Now enforce NOT NULL.
             migrationBuilder.AlterColumn<int>(
                 name: "SectionId",
@@ -131,12 +145,29 @@ namespace Frigorino.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Rank became per-section in Up: every section's first item is 'a0', so a recipe with 2+
+            // sections has duplicate per-recipe ranks. Before recreating the old per-recipe unique
+            // index, collapse active items back into one per-recipe rank space (ordered by section rank
+            // then item rank to preserve a sensible sequence) — otherwise the CreateIndex below throws
+            // 23505. Done while SectionId + RecipeSections still exist so the ordering join works.
+            // lpad of a per-recipe row number yields a valid, C-collation-ordered, unique text rank.
+            migrationBuilder.Sql("""
+                WITH ordered AS (
+                    SELECT ri."Id",
+                           row_number() OVER (PARTITION BY ri."RecipeId" ORDER BY s."Rank", ri."Rank", ri."Id") AS rn
+                    FROM "RecipeItems" ri
+                    JOIN "RecipeSections" s ON ri."SectionId" = s."Id"
+                    WHERE ri."IsActive"
+                )
+                UPDATE "RecipeItems" ri
+                SET "Rank" = lpad(o.rn::text, 10, '0')
+                FROM ordered o
+                WHERE ri."Id" = o."Id";
+                """);
+
             migrationBuilder.DropForeignKey(
                 name: "FK_RecipeItems_RecipeSections_SectionId",
                 table: "RecipeItems");
-
-            migrationBuilder.DropTable(
-                name: "RecipeSections");
 
             migrationBuilder.DropIndex(
                 name: "IX_RecipeItems_SectionId",
@@ -153,6 +184,9 @@ namespace Frigorino.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "SectionId",
                 table: "RecipeItems");
+
+            migrationBuilder.DropTable(
+                name: "RecipeSections");
 
             migrationBuilder.CreateIndex(
                 name: "UX_RecipeItems_RecipeId_Rank_Active",

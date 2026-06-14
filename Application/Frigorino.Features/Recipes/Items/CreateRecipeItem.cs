@@ -1,3 +1,4 @@
+using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
@@ -57,7 +58,7 @@ namespace Frigorino.Features.Recipes.Items
                 if (result.IsFailed)
                 {
                     // Unknown/inactive section → 404; any validation error → ValidationProblem.
-                    if (result.Errors[0] is Frigorino.Domain.Errors.EntityNotFoundError)
+                    if (result.Errors[0] is EntityNotFoundError)
                     {
                         return new CreateOutcome(null, NotFound: true, Problem: null);
                     }

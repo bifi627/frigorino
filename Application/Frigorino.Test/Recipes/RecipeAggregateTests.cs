@@ -376,6 +376,55 @@ namespace Frigorino.Test.Recipes
         }
 
         [Fact]
+        public void UpdateSection_RenamesAndBumpsTimestamp()
+        {
+            var recipe = NewRecipe();
+            var section = recipe.Sections.First(s => s.Id == DefaultSectionId);
+
+            var result = recipe.UpdateSection(DefaultSectionId, "Crust", "Flaky base");
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal("Crust", section.Name);
+            Assert.Equal("Flaky base", section.Description);
+        }
+
+        [Fact]
+        public void UpdateSection_UnknownSection_ReturnsEntityNotFound()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.UpdateSection(sectionId: 999, "Crust", null);
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
+
+        [Fact]
+        public void RestoreSection_DeCollidesItemsSharingARank()
+        {
+            var recipe = NewRecipe();
+            // A second section so the default isn't the last (RemoveSection blocks the last one).
+            recipe.AddSection("Other", null).Value.Id = 200;
+            // Two items in the default section: I1 at the initial rank, I2 appended after it.
+            var i1 = recipe.AddItem(DefaultSectionId, "I1", null, null).Value; i1.Id = 1;
+            var i2 = recipe.AddItem(DefaultSectionId, "I2", null, null).Value; i2.Id = 2;
+
+            // Delete I1 (frees its rank), then reorder I2 to the top so it reclaims I1's old rank slot.
+            recipe.RemoveItem(i1.Id);
+            recipe.ReorderItem(i2.Id, afterItemId: 0);
+            // Force the exact collision the de-collide guard must handle: I1 (inactive) now shares I2's rank.
+            i1.Rank = i2.Rank;
+
+            // Cascade-delete the whole section (both items inactive, sharing a rank), then restore.
+            recipe.RemoveSection(DefaultSectionId);
+            var result = recipe.RestoreSection(DefaultSectionId);
+
+            Assert.True(result.IsSuccess);
+            Assert.True(i1.IsActive);
+            Assert.True(i2.IsActive);
+            // No two active items in the section may share a rank after restore.
+            Assert.NotEqual(i1.Rank, i2.Rank);
+        }
+
+        [Fact]
         public void ReorderItem_StaysWithinItsSection()
         {
             var recipe = NewRecipe();
