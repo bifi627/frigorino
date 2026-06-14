@@ -24,3 +24,8 @@ Feature: Static asset serving
     Then the static-asset response status is 200
     And the static-asset response header "Cache-Control" equals "no-cache, must-revalidate"
     And the static-asset response header "Content-Type" contains "text/html"
+
+  Scenario: Unmatched API route returns 404 instead of falling through to the SPA shell
+    When I request "/api/this-route-does-not-exist"
+    Then the static-asset response status is 404
+    And the static-asset response has no "Content-Type" header

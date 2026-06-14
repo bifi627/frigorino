@@ -220,6 +220,16 @@ if (!isBuildTimeOpenApi)
 }
 
 // Configure middleware pipeline
+
+// Unhandled exceptions → structured ProblemDetails (type/status/traceId) via the registered
+// ProblemDetailsService instead of an empty body. No stack trace is leaked; the traceId
+// correlates the response to the server logs. Development keeps WebApplication's auto-registered
+// developer exception page (full stack trace), so this only activates for prod + IntegrationTest.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -455,6 +465,12 @@ app.UseSpa(spa =>
         //spa.UseProxyToSpaDevelopmentServer("https://localhost:44375");
     }
 });
+
+// Unmatched API routes must NOT fall through to the SPA index.html below — the SPA fallback
+// 500s on non-GET (SpaDefaultPageMiddleware throws), masking a route mismatch as a server fault.
+// This more-specific fallback returns a clean 404 so "route doesn't exist" reads as Not Found
+// (e.g. an out-of-int-range {id} segment that fails the route constraint).
+app.MapFallback("/api/{**rest}", () => Results.NotFound());
 
 app.MapFallbackToFile("index.html", staticFileOptions);
 
