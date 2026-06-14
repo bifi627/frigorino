@@ -18,6 +18,7 @@ declare module "i18next" {
                 reorder: Record<string, string>;
                 settings: Record<string, string>;
                 blueprints: Record<string, string>;
+                recipes: Record<string, string>;
             };
         };
     }
