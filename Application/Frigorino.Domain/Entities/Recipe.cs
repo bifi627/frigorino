@@ -8,10 +8,12 @@ namespace Frigorino.Domain.Entities
     {
         public const int NameMaxLength = 255;
         public const int DescriptionMaxLength = 1000;
+        public const int ServingsMax = 99;
 
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+        public int? Servings { get; set; }
         public int HouseholdId { get; set; }
         public string CreatedByUserId { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
@@ -22,9 +24,9 @@ namespace Frigorino.Domain.Entities
         public User CreatedByUser { get; set; } = null!;
         public ICollection<RecipeItem> Items { get; set; } = new List<RecipeItem>();
 
-        public static Result<Recipe> Create(string name, string? description, int householdId, string createdByUserId)
+        public static Result<Recipe> Create(string name, string? description, int householdId, string createdByUserId, int? servings = null)
         {
-            var errors = ValidateMetadata(name, description);
+            var errors = ValidateMetadata(name, description, servings);
             if (householdId <= 0)
             {
                 errors.Add(new Error("Household id is required.").WithMetadata("Property", nameof(HouseholdId)));
@@ -43,6 +45,7 @@ namespace Frigorino.Domain.Entities
             {
                 Name = name.Trim(),
                 Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                Servings = servings,
                 HouseholdId = householdId,
                 CreatedByUserId = createdByUserId,
                 CreatedAt = now,
@@ -56,14 +59,14 @@ namespace Frigorino.Domain.Entities
             return CreatedByUserId == callerUserId || callerRole >= HouseholdRole.Admin;
         }
 
-        public Result Update(string callerUserId, HouseholdRole callerRole, string name, string? description)
+        public Result Update(string callerUserId, HouseholdRole callerRole, string name, string? description, int? servings = null)
         {
             if (!CanBeManagedBy(callerUserId, callerRole))
             {
                 return Result.Fail(new AccessDeniedError("Only the recipe creator or an admin can edit this recipe."));
             }
 
-            var errors = ValidateMetadata(name, description);
+            var errors = ValidateMetadata(name, description, servings);
             if (errors.Count > 0)
             {
                 return Result.Fail(errors);
@@ -71,6 +74,7 @@ namespace Frigorino.Domain.Entities
 
             Name = name.Trim();
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            Servings = servings;
             UpdatedAt = DateTime.UtcNow;
             return Result.Ok();
         }
@@ -274,7 +278,7 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
-        private static List<IError> ValidateMetadata(string name, string? description)
+        private static List<IError> ValidateMetadata(string name, string? description, int? servings)
         {
             var errors = new List<IError>();
             if (string.IsNullOrWhiteSpace(name))
@@ -288,6 +292,10 @@ namespace Frigorino.Domain.Entities
             if (description is not null && description.Length > DescriptionMaxLength)
             {
                 errors.Add(new Error($"Recipe description must be {DescriptionMaxLength} characters or fewer.").WithMetadata("Property", nameof(Description)));
+            }
+            if (servings is not null && (servings < 1 || servings > ServingsMax))
+            {
+                errors.Add(new Error($"Servings must be between 1 and {ServingsMax}.").WithMetadata("Property", nameof(Servings)));
             }
             return errors;
         }
