@@ -25,3 +25,15 @@ export const formatQuantity = (t: TFunction, q: QuantityDto): string => {
     const value = Number(q.value);
     return `${value.toString()} ${unitLabel(t, q.unit)}`;
 };
+
+// Multiply a structured quantity by a scale factor for DISPLAY only. Rounds to 3 decimals to match
+// the numeric(12,3) DB column, so a scaled value shown here equals what a future promote-to-list
+// would persist. Unit is unchanged (no g<->kg conversion). Caller skips this when multiplier === 1.
+export const scaleQuantity = (
+    q: QuantityDto,
+    multiplier: number,
+): QuantityDto => {
+    const scaled = Number(q.value) * multiplier;
+    const rounded = Math.round(scaled * 1000) / 1000;
+    return { ...q, value: rounded };
+};

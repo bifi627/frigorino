@@ -24,6 +24,8 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
     const navigate = useNavigate();
     const createRecipeMutation = useCreateRecipe();
     const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [servings, setServings] = useState("");
 
     const isLoading = createRecipeMutation.isPending;
     const error: unknown = createRecipeMutation.error;
@@ -36,12 +38,17 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
         try {
             const response = await createRecipeMutation.mutateAsync({
                 path: { householdId },
-                body: { name: name.trim(), description: null },
+                body: {
+                    name: name.trim(),
+                    description: description.trim() || null,
+                    servings: servings === "" ? null : Number(servings),
+                },
             });
             if (response?.id) {
                 navigate({
-                    to: "/recipes/$recipeId/view",
+                    to: "/recipes/$recipeId/edit",
                     params: { recipeId: response.id.toString() },
+                    replace: true,
                 });
             }
         } catch (err) {
@@ -80,6 +87,50 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                                         ? t("recipes.recipeNameRequired")
                                         : ""
                                 }
+                            />
+                        </Box>
+
+                        <Box>
+                            <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600, mb: 1 }}
+                            >
+                                {t("recipes.description")}
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                disabled={isLoading}
+                                placeholder={t(
+                                    "recipes.descriptionPlaceholder",
+                                )}
+                                slotProps={{ htmlInput: { maxLength: 1000 } }}
+                            />
+                        </Box>
+
+                        <Box>
+                            <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 600, mb: 1 }}
+                            >
+                                {t("recipes.servings")}
+                            </Typography>
+                            <TextField
+                                type="number"
+                                value={servings}
+                                onChange={(e) => setServings(e.target.value)}
+                                disabled={isLoading}
+                                sx={{ width: 120 }}
+                                slotProps={{
+                                    htmlInput: {
+                                        min: 1,
+                                        max: 99,
+                                        "data-testid": "recipe-servings-input",
+                                    },
+                                }}
                             />
                         </Box>
 

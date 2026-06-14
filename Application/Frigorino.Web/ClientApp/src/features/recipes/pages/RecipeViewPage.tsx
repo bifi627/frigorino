@@ -1,28 +1,25 @@
-import { Edit, Search } from "@mui/icons-material";
+import { Add, Edit, Remove, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
+    Button,
     CircularProgress,
     Container,
+    IconButton,
+    Stack,
     Typography,
 } from "@mui/material";
 import { useParams, useRouter } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
 import { SearchInputRow } from "../../../components/shared/SearchInputRow";
-import type { RecipeItemResponse } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
-import { RecipeContainer } from "../items/components/RecipeContainer";
-import { RecipeFooter } from "../items/components/RecipeFooter";
-import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
-import { useRecipeExtractionPoll } from "../items/useRecipeExtractionPoll";
-import { useRecipeItems } from "../items/useRecipeItems";
+import { RecipeViewList } from "../items/components/RecipeViewList";
 import { useRecipeRevision } from "../items/useRecipeRevision";
-import { useUpdateRecipeItem } from "../items/useUpdateRecipeItem";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeViewPage = () => {
@@ -33,17 +30,10 @@ export const RecipeViewPage = () => {
     });
     const recipeId = parseInt(recipeIdParam);
 
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    const [editingItem, setEditingItem] = useState<RecipeItemResponse | null>(
-        null,
-    );
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [pendingExtraction, setPendingExtraction] = useState<{
-        id: number;
-        extractionPending: boolean;
-    } | null>(null);
+    // Display-only scaling. targetServings overrides the base; null = no override (shows base).
+    const [targetServings, setTargetServings] = useState<number | null>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
     const householdId = currentHousehold?.householdId ?? 0;
@@ -54,38 +44,7 @@ export const RecipeViewPage = () => {
         error: recipeError,
     } = useRecipe(householdId, recipeId, householdId > 0);
 
-    const { data: items = [] } = useRecipeItems(
-        householdId,
-        recipeId,
-        !!recipe,
-    );
     useRecipeRevision(householdId, recipeId);
-
-    const createMutation = useCreateRecipeItem();
-    const updateMutation = useUpdateRecipeItem();
-
-    const { isExtracting, extractingItemId } = useRecipeExtractionPoll(
-        householdId,
-        recipeId,
-        pendingExtraction?.id ?? null,
-        pendingExtraction?.extractionPending ?? false,
-    );
-
-    const scrollToLastItem = useCallback(() => {
-        if (scrollContainerRef.current) {
-            const listItems =
-                scrollContainerRef.current.querySelectorAll(
-                    ".MuiListItem-root",
-                );
-            const lastItem = listItems[listItems.length - 1];
-            if (lastItem) {
-                lastItem.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                });
-            }
-        }
-    }, []);
 
     const handleEdit = useCallback(() => {
         router.navigate({
@@ -104,54 +63,22 @@ export const RecipeViewPage = () => {
         });
     }, []);
 
-    const handleAddItem = useCallback(
-        async (text: string, comment: string | null) => {
-            if (!householdId) return;
-            try {
-                const created = await createMutation.mutateAsync({
-                    path: { householdId, recipeId },
-                    body: { text, comment },
-                });
-                // Only the latest add is polled for extraction; rapid successive adds
-                // replace this, so just the last item shows the extracting spinner.
-                // The server's create response is the single authority on whether an async
-                // extraction was enqueued — no client-side gate to drift from it.
-                setPendingExtraction({
-                    id: created.id,
-                    extractionPending: created.extractionPending,
-                });
-            } catch {
-                // createMutation.onError rolls back the optimistic item; nothing to do here.
-            }
-        },
-        [createMutation, householdId, recipeId],
-    );
+    const baseServings = recipe?.servings ?? null;
+    const effectiveServings = targetServings ?? baseServings;
+    const isScaled =
+        baseServings != null &&
+        effectiveServings != null &&
+        effectiveServings !== baseServings;
+    const multiplier =
+        baseServings != null && effectiveServings != null && baseServings > 0
+            ? effectiveServings / baseServings
+            : 1;
 
-    const handleUpdateItem = useCallback(
-        (
-            text: string,
-            quantity: import("../../../lib/api").QuantityDto | null,
-            comment: string | null,
-        ) => {
-            if (editingItem?.id && householdId) {
-                updateMutation.mutate({
-                    path: {
-                        householdId,
-                        recipeId,
-                        itemId: editingItem.id,
-                    },
-                    body: {
-                        text,
-                        quantity,
-                        clearQuantity: quantity === null,
-                        comment,
-                    },
-                });
-                setEditingItem(null);
-            }
-        },
-        [editingItem, updateMutation, householdId, recipeId],
-    );
+    const stepServings = (delta: number) => {
+        if (baseServings == null || effectiveServings == null) return;
+        const next = Math.min(99, Math.max(1, effectiveServings + delta));
+        setTargetServings(next);
+    };
 
     if (!householdId) {
         return (
@@ -184,14 +111,14 @@ export const RecipeViewPage = () => {
         );
     }
 
-    const directActions: HeadNavigationAction[] = [];
-    const menuActions: HeadNavigationAction[] = [
+    const directActions: HeadNavigationAction[] = [
         {
-            text: t("common.edit"),
             icon: <Edit fontSize="small" />,
             onClick: handleEdit,
             testId: "recipe-edit-button",
         },
+    ];
+    const menuActions: HeadNavigationAction[] = [
         {
             text: t("common.search"),
             icon: <Search fontSize="small" />,
@@ -211,12 +138,29 @@ export const RecipeViewPage = () => {
         >
             <PageHeadActionBar
                 title={recipe.name || t("recipes.untitledRecipe")}
-                subtitle={recipe.description || undefined}
                 section="recipes"
                 directActions={directActions}
                 menuActions={menuActions}
                 menuButtonTestId="recipe-header-menu-toggle"
             />
+
+            {recipe.description ? (
+                <Container maxWidth="sm" sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
+                    <Typography
+                        data-testid="recipe-description"
+                        variant="body2"
+                        sx={{
+                            color: "text.secondary",
+                            fontStyle: "italic",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            lineHeight: 1.5,
+                        }}
+                    >
+                        {recipe.description}
+                    </Typography>
+                </Container>
+            ) : null}
 
             <SearchInputRow
                 open={searchOpen}
@@ -227,25 +171,93 @@ export const RecipeViewPage = () => {
                 testIdPrefix="recipe-search"
             />
 
-            <RecipeContainer
-                ref={scrollContainerRef}
+            <Container
+                maxWidth="sm"
+                sx={{ px: 2, pt: 1, pb: 0.5, flexShrink: 0 }}
+            >
+                <Stack
+                    direction="row"
+                    sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                    }}
+                >
+                    <Typography
+                        variant="overline"
+                        color="text.secondary"
+                        sx={{ fontWeight: 700, letterSpacing: 1 }}
+                    >
+                        {t("recipes.ingredientsHeading")}
+                    </Typography>
+                    {baseServings != null ? (
+                        <Stack
+                            direction="row"
+                            sx={{ alignItems: "center" }}
+                            spacing={0.5}
+                        >
+                            {isScaled ? (
+                                <Button
+                                    size="small"
+                                    onClick={() => setTargetServings(null)}
+                                    data-testid="recipe-servings-reset"
+                                >
+                                    {t("recipes.resetServings")}
+                                </Button>
+                            ) : null}
+                            <IconButton
+                                size="small"
+                                onClick={() => stepServings(-1)}
+                                disabled={
+                                    effectiveServings != null &&
+                                    effectiveServings <= 1
+                                }
+                                data-testid="recipe-servings-decrement"
+                            >
+                                <Remove fontSize="small" />
+                            </IconButton>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    minWidth: 20,
+                                    textAlign: "center",
+                                    fontWeight: 600,
+                                }}
+                                data-testid="recipe-servings-value"
+                            >
+                                {effectiveServings}
+                            </Typography>
+                            <IconButton
+                                size="small"
+                                onClick={() => stepServings(1)}
+                                disabled={
+                                    effectiveServings != null &&
+                                    effectiveServings >= 99
+                                }
+                                data-testid="recipe-servings-increment"
+                            >
+                                <Add fontSize="small" />
+                            </IconButton>
+                        </Stack>
+                    ) : null}
+                </Stack>
+                {baseServings != null ? (
+                    <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        data-testid="recipe-servings-subline"
+                    >
+                        {isScaled
+                            ? t("recipes.scaledFrom", { count: baseServings })
+                            : t("recipes.servingsFor", { count: baseServings })}
+                    </Typography>
+                ) : null}
+            </Container>
+
+            <RecipeViewList
                 householdId={householdId}
                 recipeId={recipeId}
-                editingItem={editingItem}
-                onEdit={setEditingItem}
-                isExtracting={isExtracting}
-                extractingItemId={extractingItemId}
                 searchQuery={searchQuery}
-            />
-
-            <RecipeFooter
-                editingItem={editingItem}
-                existingItems={items}
-                onAddItem={handleAddItem}
-                onUpdateItem={handleUpdateItem}
-                onCancelEdit={() => setEditingItem(null)}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-                onScrollToLast={scrollToLastItem}
+                multiplier={multiplier}
             />
         </Box>
     );

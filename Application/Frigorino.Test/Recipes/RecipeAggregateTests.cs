@@ -26,6 +26,61 @@ namespace Frigorino.Test.Recipes
         }
 
         [Fact]
+        public void Create_ValidServings_IsStored()
+        {
+            var result = Recipe.Create("Apple Pie", null, 1, "u1", servings: 4);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(4, result.Value.Servings);
+        }
+
+        [Fact]
+        public void Create_NullServings_IsAllowed()
+        {
+            var result = Recipe.Create("Apple Pie", null, 1, "u1", servings: null);
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Servings);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(Recipe.ServingsMax + 1)]
+        public void Create_OutOfRangeServings_FailsWithServingsProperty(int servings)
+        {
+            var result = Recipe.Create("Apple Pie", null, 1, "u1", servings: servings);
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(Recipe.Servings));
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(Recipe.ServingsMax)]
+        public void Create_BoundaryServings_IsAllowed(int servings)
+        {
+            var result = Recipe.Create("Apple Pie", null, 1, "u1", servings: servings);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(servings, result.Value.Servings);
+        }
+
+        [Fact]
+        public void Update_ValidServings_IsStored()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.Update("u1", HouseholdRole.Owner, "Apple Pie", null, servings: 6);
+            Assert.True(result.IsSuccess);
+            Assert.Equal(6, recipe.Servings);
+        }
+
+        [Fact]
+        public void Update_OutOfRangeServings_FailsWithServingsProperty()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.Update("u1", HouseholdRole.Owner, "Apple Pie", null, servings: 0);
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(Recipe.Servings));
+        }
+
+        [Fact]
         public void Update_NonOwnerNonAdmin_Denied()
         {
             var recipe = NewRecipe();

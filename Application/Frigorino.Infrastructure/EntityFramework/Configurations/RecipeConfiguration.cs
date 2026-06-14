@@ -12,6 +12,7 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(r => r.Id).ValueGeneratedOnAdd();
             builder.Property(r => r.Name).HasMaxLength(Recipe.NameMaxLength).IsRequired();
             builder.Property(r => r.Description).HasMaxLength(Recipe.DescriptionMaxLength);
+            builder.Property(r => r.Servings);
             builder.Property(r => r.HouseholdId).IsRequired();
             builder.Property(r => r.CreatedByUserId).HasMaxLength(128).IsRequired();
             builder.Property(r => r.CreatedAt).IsRequired();

@@ -10,6 +10,7 @@ export {
 } from "./features/quantityComposerFeature";
 export {
     formatQuantity,
+    scaleQuantity,
     unitLabel,
     QUANTITY_UNIT_VALUES,
 } from "./features/quantityFormat";

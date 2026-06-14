@@ -14,6 +14,22 @@ focused. Likely fix if confirmed: surface foreground messages as an in-app toast
 
 Deferred from the expiry-notifications feature work (testing feedback item #4).
 
+## Back navigation misbehaves after creating data, then redirecting to an edit/view page
+
+Observed (anecdotally, across multiple features — not yet isolated): after a
+create flow that redirects to a follow-up page (e.g. create recipe →
+redirect to the recipe edit page to add ingredients), the browser/router back
+stack doesn't unwind as expected — back may land on the now-stale create form
+or skip the expected step instead of returning to the overview. Needs
+investigation: audit how create handlers navigate (likely `router.navigate`
+without `replace: true`, leaving the create route on the history stack). Likely
+fix: use `replace` on the post-create redirect so the create route isn't a back
+target, and audit the same pattern on the existing list/inventory create flows.
+
+Noted while designing the recipe view/edit split (recipe metadata feature) —
+the new "create recipe → land on /edit" flow will hit the same path, so verify
+it there too. Not yet reproduced/debugged.
+
 ## Inventory fails to load when opening a notification for a non-active household
 
 With multiple households: if you receive an expiry notification for Household B

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Recipes
 {
-    public sealed record UpdateRecipeRequest(string Name, string? Description);
+    public sealed record UpdateRecipeRequest(string Name, string? Description, int? Servings);
 
     public static class UpdateRecipeEndpoint
     {
@@ -44,7 +44,7 @@ namespace Frigorino.Features.Recipes
                 return TypedResults.NotFound();
             }
 
-            var result = recipe.Update(currentUser.UserId, membership.Role, request.Name, request.Description);
+            var result = recipe.Update(currentUser.UserId, membership.Role, request.Name, request.Description, request.Servings);
             if (result.IsFailed)
             {
                 var first = result.Errors[0];

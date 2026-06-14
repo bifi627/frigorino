@@ -1,24 +1,52 @@
 import { Delete } from "@mui/icons-material";
-import { Alert, Box, Container, Skeleton } from "@mui/material";
+import { Alert, Box, Container, Skeleton, Stack } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CollapsibleSection } from "../../../components/shared/CollapsibleSection";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
-import { pageContainerSx } from "../../../theme";
+import { usePersistedExpanded } from "../../../hooks/usePersistedExpanded";
+import type { QuantityDto, RecipeItemResponse } from "../../../lib/api";
+import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
+import { RecipeContainer } from "../items/components/RecipeContainer";
+import { RecipeFooter } from "../items/components/RecipeFooter";
+import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
+import { useRecipeExtractionPoll } from "../items/useRecipeExtractionPoll";
+import { useRecipeItems } from "../items/useRecipeItems";
+import { useRecipeRevision } from "../items/useRecipeRevision";
+import { useUpdateRecipeItem } from "../items/useUpdateRecipeItem";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeEditPage = () => {
-    const { recipeId } = useParams({ from: "/recipes/$recipeId/edit" });
+    const { recipeId: recipeIdParam } = useParams({
+        from: "/recipes/$recipeId/edit",
+    });
     const { t } = useTranslation();
-    const recipeIdNum = parseInt(recipeId, 10);
+    const recipeId = parseInt(recipeIdParam, 10);
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState<RecipeItemResponse | null>(
+        null,
+    );
+    const [detailsExpanded, setDetailsExpanded] = usePersistedExpanded(
+        "recipe-edit-section:details",
+        true,
+    );
+    const [ingredientsExpanded, setIngredientsExpanded] = usePersistedExpanded(
+        "recipe-edit-section:ingredients",
+        true,
+    );
+    const [pendingExtraction, setPendingExtraction] = useState<{
+        id: number;
+        extractionPending: boolean;
+    } | null>(null);
 
     const {
         currentHousehold,
@@ -26,19 +54,103 @@ export const RecipeEditPage = () => {
         error: householdError,
         hasActiveHousehold,
     } = useCurrentHouseholdWithDetails();
-
     const householdId = currentHousehold?.householdId ?? 0;
+
     const {
         data: recipe,
         isLoading: recipeLoading,
         error: recipeError,
     } = useRecipe(
         householdId,
-        recipeIdNum,
-        hasActiveHousehold && !isNaN(recipeIdNum),
+        recipeId,
+        hasActiveHousehold && !isNaN(recipeId),
     );
 
-    const handleDeleteClick = () => setDeleteDialogOpen(true);
+    const { data: items = [] } = useRecipeItems(
+        householdId,
+        recipeId,
+        !!recipe,
+    );
+    useRecipeRevision(householdId, recipeId);
+
+    const createMutation = useCreateRecipeItem();
+    const updateMutation = useUpdateRecipeItem();
+
+    const { isExtracting, extractingItemId } = useRecipeExtractionPoll(
+        householdId,
+        recipeId,
+        pendingExtraction?.id ?? null,
+        pendingExtraction?.extractionPending ?? false,
+    );
+
+    const scrollToLastItem = useCallback(() => {
+        if (scrollContainerRef.current) {
+            const listItems =
+                scrollContainerRef.current.querySelectorAll(
+                    ".MuiListItem-root",
+                );
+            const lastItem = listItems[listItems.length - 1];
+            if (lastItem) {
+                lastItem.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }
+        }
+    }, []);
+
+    const handleAddItem = useCallback(
+        async (text: string, comment: string | null) => {
+            if (!householdId) return;
+            try {
+                const created = await createMutation.mutateAsync({
+                    path: { householdId, recipeId },
+                    body: { text, comment },
+                });
+                setPendingExtraction({
+                    id: created.id,
+                    extractionPending: created.extractionPending,
+                });
+            } catch {
+                // createMutation.onError rolls back the optimistic item.
+            }
+        },
+        [createMutation, householdId, recipeId],
+    );
+
+    const handleUpdateItem = useCallback(
+        (
+            text: string,
+            quantity: QuantityDto | null,
+            comment: string | null,
+        ) => {
+            if (editingItem?.id && householdId) {
+                updateMutation.mutate({
+                    path: { householdId, recipeId, itemId: editingItem.id },
+                    body: {
+                        text,
+                        quantity,
+                        clearQuantity: quantity === null,
+                        comment,
+                    },
+                });
+                setEditingItem(null);
+            }
+        },
+        [editingItem, updateMutation, householdId, recipeId],
+    );
+
+    // Collapsing the ingredients section hides the composer, so drop any in-progress
+    // item edit (its editor would otherwise vanish mid-edit).
+    const handleIngredientsExpandedChange = useCallback(
+        (expanded: boolean) => {
+            setIngredientsExpanded(expanded);
+            if (!expanded) {
+                setEditingItem(null);
+            }
+        },
+        [setIngredientsExpanded],
+    );
 
     const isLoading = householdLoading || recipeLoading;
     const error = householdError || recipeError;
@@ -89,43 +201,98 @@ export const RecipeEditPage = () => {
         );
     }
 
-    const recipeName = recipe.name || t("recipes.untitledRecipe");
-
     const menuActions: HeadNavigationAction[] = [
         {
             text: t("recipes.deleteRecipe"),
             icon: <Delete fontSize="small" color="error" />,
-            onClick: handleDeleteClick,
+            onClick: () => setDeleteDialogOpen(true),
             color: "error",
         },
     ];
 
     return (
-        <>
+        <Box
+            sx={{
+                height: "calc(100dvh - 56px)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+            }}
+        >
             <PageHeadActionBar
                 title={t("recipes.editRecipe")}
                 section="recipes"
-                maxWidth="md"
                 directActions={[]}
                 menuActions={menuActions}
+                menuButtonTestId="recipe-edit-menu-toggle"
             />
-            <Container maxWidth="md" sx={pageContainerSx}>
-                <EditRecipeForm
-                    key={recipe.id}
-                    householdId={householdId}
-                    recipe={recipe}
-                />
 
-                {recipe.id && (
-                    <DeleteRecipeConfirmDialog
-                        open={deleteDialogOpen}
-                        onClose={() => setDeleteDialogOpen(false)}
-                        householdId={householdId}
-                        recipeId={recipe.id}
-                        recipeName={recipeName}
-                    />
-                )}
-            </Container>
-        </>
+            <Box
+                ref={scrollContainerRef}
+                sx={{ flex: 1, overflow: "auto", minHeight: 0 }}
+            >
+                <Container
+                    maxWidth="sm"
+                    sx={{ px: featureContentPx, pt: 2, pb: 1 }}
+                >
+                    <Stack spacing={2}>
+                        <CollapsibleSection
+                            title={t("recipes.detailsSection")}
+                            expanded={detailsExpanded}
+                            onChange={setDetailsExpanded}
+                            testId="recipe-section-details"
+                        >
+                            <EditRecipeForm
+                                key={recipe.id}
+                                householdId={householdId}
+                                recipe={recipe}
+                            />
+                        </CollapsibleSection>
+
+                        <CollapsibleSection
+                            title={t("recipes.ingredientsHeading")}
+                            expanded={ingredientsExpanded}
+                            onChange={handleIngredientsExpandedChange}
+                            testId="recipe-section-ingredients"
+                            disableContentPadding
+                        >
+                            <RecipeContainer
+                                householdId={householdId}
+                                recipeId={recipeId}
+                                editingItem={editingItem}
+                                onEdit={setEditingItem}
+                                isExtracting={isExtracting}
+                                extractingItemId={extractingItemId}
+                                scrollable={false}
+                            />
+                        </CollapsibleSection>
+                    </Stack>
+                </Container>
+            </Box>
+
+            {ingredientsExpanded ? (
+                <RecipeFooter
+                    editingItem={editingItem}
+                    existingItems={items}
+                    onAddItem={handleAddItem}
+                    onUpdateItem={handleUpdateItem}
+                    onCancelEdit={() => setEditingItem(null)}
+                    isLoading={
+                        createMutation.isPending || updateMutation.isPending
+                    }
+                    onScrollToLast={scrollToLastItem}
+                />
+            ) : null}
+
+            {recipe.id ? (
+                <DeleteRecipeConfirmDialog
+                    open={deleteDialogOpen}
+                    onClose={() => setDeleteDialogOpen(false)}
+                    householdId={householdId}
+                    recipeId={recipe.id}
+                    recipeName={recipe.name || t("recipes.untitledRecipe")}
+                />
+            ) : null}
+        </Box>
     );
 };

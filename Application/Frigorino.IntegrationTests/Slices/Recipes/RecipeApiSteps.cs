@@ -68,4 +68,30 @@ public class RecipeApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         Assert.Equal(2, _revisions.Count);
         Assert.NotEqual(_revisions[0], _revisions[1]);
     }
+
+    [When("I POST a recipe named {string} with servings {int} via the API")]
+    public async Task WhenIPostARecipeNamedWithServings(string recipeName, int servings)
+    {
+        var response = await api.TryCreateRecipeWithServingsAsync(recipeName, servings);
+        ctx.LastApiResponse = response;
+        if (response.Status == 201)
+        {
+            var json = (await response.JsonAsync())!.Value;
+            ctx.RecipeIds[recipeName] = json.GetProperty("id").GetInt32();
+        }
+    }
+
+    [When("I PUT recipe {string} with servings {int} via the API")]
+    public async Task WhenIPutRecipeWithServings(string recipeName, int servings)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        ctx.LastApiResponse = await api.TryUpdateRecipeAsync(recipeId, recipeName, servings);
+    }
+
+    [Then("the API recipe response has servings {int}")]
+    public async Task ThenTheApiRecipeResponseHasServings(int expected)
+    {
+        var json = (await ctx.LastApiResponse!.JsonAsync())!.Value;
+        Assert.Equal(expected, json.GetProperty("servings").GetInt32());
+    }
 }

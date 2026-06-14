@@ -59,6 +59,7 @@ export type CreateRecipeItemRequest = {
 export type CreateRecipeRequest = {
     name: string;
     description: null | string;
+    servings: null | number;
 };
 
 export type ExpiryCalendarItemResponse = {
@@ -247,6 +248,7 @@ export type RecipeResponse = {
     id: number;
     name: string;
     description: null | string;
+    servings: null | number;
     householdId: number;
     createdAt: string;
     updatedAt: string;
@@ -341,6 +343,7 @@ export type UpdateRecipeItemRequest = {
 export type UpdateRecipeRequest = {
     name: string;
     description: null | string;
+    servings: null | number;
 };
 
 export type UpdateUserNotificationSettingsRequest = {
