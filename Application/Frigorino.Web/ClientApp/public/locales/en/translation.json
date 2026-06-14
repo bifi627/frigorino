@@ -363,7 +363,6 @@
         "description": "Description",
         "descriptionPlaceholder": "A short note about this recipe",
         "servings": "Servings",
-        "servingsFrom": "Servings (from {{count}})",
         "resetServings": "Reset",
         "ingredientsHeading": "Ingredients",
         "servingsFor": "for {{count}} servings",

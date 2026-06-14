@@ -363,7 +363,6 @@
         "description": "Beschreibung",
         "descriptionPlaceholder": "Eine kurze Notiz zu diesem Rezept",
         "servings": "Portionen",
-        "servingsFrom": "Portionen (von {{count}})",
         "resetServings": "Zurücksetzen",
         "ingredientsHeading": "Zutaten",
         "servingsFor": "für {{count}} Portionen",
