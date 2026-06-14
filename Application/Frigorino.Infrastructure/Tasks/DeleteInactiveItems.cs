@@ -43,6 +43,9 @@ namespace Frigorino.Infrastructure.Tasks
             }
 
             await _dbContext.InventoryItems.Where(h => !h.IsActive).ExecuteDeleteAsync(cancellationToken);
+
+            await _dbContext.RecipeItems.Where(ri => !ri.IsActive).ExecuteDeleteAsync(cancellationToken);
+            await _dbContext.Recipes.Where(r => !r.IsActive).ExecuteDeleteAsync(cancellationToken);
         }
     }
 }
