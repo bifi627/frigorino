@@ -466,10 +466,72 @@ public class TestApiClient(ScenarioContextHolder ctx)
         return json.GetProperty("id").GetInt32();
     }
 
+    // Resolves the recipe's first section, then creates the item in it. Keeps existing
+    // recipe-item scenarios working now that item-create requires a sectionId.
     public async Task<int> CreateRecipeItemAsync(int recipeId, string text)
+        => await CreateRecipeItemInSectionAsync(recipeId, await FirstSectionIdAsync(recipeId), text);
+
+    public async Task<int> CreateRecipeItemInSectionAsync(int recipeId, int sectionId, string text)
     {
-        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/recipes/{recipeId}/items", new { text, comment = (string?)null });
+        var json = await PostAsync(
+            $"/api/household/{ctx.HouseholdId}/recipes/{recipeId}/items",
+            new { sectionId, text, comment = (string?)null });
         return json.GetProperty("id").GetInt32();
+    }
+
+    public async Task<int> FirstSectionIdAsync(int recipeId)
+    {
+        var resp = await TryGetRecipeSectionsAsync(recipeId);
+        var json = (await resp.JsonAsync())!.Value;
+        return json.EnumerateArray().First().GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryGetRecipeSectionsAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/sections",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateRecipeSectionAsync(int recipeId, string? name, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/sections",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name, description = (string?)null },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryDeleteRecipeSectionAsync(int recipeId, int sectionId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/sections/{sectionId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryRestoreRecipeSectionAsync(int recipeId, int sectionId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/sections/{sectionId}/restore",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateRecipeItemInSectionAsync(int recipeId, int sectionId, string? text, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items",
+            new APIRequestContextOptions
+            {
+                DataObject = new { sectionId, text, comment = (string?)null },
+                Headers = AuthHeaders,
+            });
     }
 
     public Task<IAPIResponse> TryCreateRecipeAsync(string? name, int? householdId = null)
@@ -516,17 +578,8 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
-    public Task<IAPIResponse> TryCreateRecipeItemAsync(int recipeId, string? text, int? householdId = null)
-    {
-        var targetHouseholdId = householdId ?? ctx.HouseholdId;
-        return ctx.BrowserContext.APIRequest.PostAsync(
-            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/items",
-            new APIRequestContextOptions
-            {
-                DataObject = new { text, comment = (string?)null },
-                Headers = AuthHeaders,
-            });
-    }
+    public async Task<IAPIResponse> TryCreateRecipeItemAsync(int recipeId, string? text, int? householdId = null)
+        => await TryCreateRecipeItemInSectionAsync(recipeId, await FirstSectionIdAsync(recipeId), text, householdId);
 
     public Task<IAPIResponse> TryDeleteRecipeItemAsync(int recipeId, int itemId, int? householdId = null)
     {
