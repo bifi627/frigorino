@@ -20,6 +20,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<RecipeItem> RecipeItems { get; set; }
+        public DbSet<RecipeSection> RecipeSections { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
         public DbSet<HouseholdSettings> HouseholdSettings { get; set; }
@@ -108,6 +109,12 @@ namespace Frigorino.Infrastructure.EntityFramework
                         recipeItem.UpdatedAt = now;
                     }
 
+                    if (entry.Entity is RecipeSection recipeSection && recipeSection.CreatedAt == default)
+                    {
+                        recipeSection.CreatedAt = now;
+                        recipeSection.UpdatedAt = now;
+                    }
+
                     if (entry.Entity is Product product && product.CreatedAt == default)
                     {
                         product.CreatedAt = now;
@@ -185,6 +192,11 @@ namespace Frigorino.Infrastructure.EntityFramework
                     if (entry.Entity is RecipeItem recipeItem)
                     {
                         recipeItem.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is RecipeSection recipeSection)
+                    {
+                        recipeSection.UpdatedAt = now;
                     }
 
                     if (entry.Entity is Product product)
