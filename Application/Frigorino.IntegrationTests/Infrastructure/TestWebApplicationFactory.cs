@@ -14,6 +14,12 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
     public required string ConnectionString { get; init; }
 
+    /// <summary>
+    /// Buffers Warning+ server logs for this host so an AfterScenario hook can dump them on the
+    /// first failing run (Kestrel request logs otherwise never reach the xUnit test output).
+    /// </summary>
+    public InMemoryLogSink LogSink { get; } = new();
+
     public TestWebApplicationFactory()
     {
         // Bind to a kernel-allocated port; Kestrel itself owns the port between bind and accept,
@@ -46,6 +52,10 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
         {
             logging.ClearProviders();
             logging.AddConsole();
+            // Mirror Warning+ records into an in-memory buffer the AfterScenario hook can dump on
+            // failure — Console output from the Kestrel request context isn't attributed to the
+            // failing scenario by the xUnit runner, so it never shows in `dotnet test`.
+            logging.AddProvider(new InMemoryLoggerProvider(LogSink, LogLevel.Warning));
             logging.SetMinimumLevel(LogLevel.Warning);
         });
 
