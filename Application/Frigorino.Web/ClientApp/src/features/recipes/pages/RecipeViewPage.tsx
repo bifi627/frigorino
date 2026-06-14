@@ -1,9 +1,12 @@
-import { Edit, Search } from "@mui/icons-material";
+import { Add, Edit, Remove, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
+    Button,
     CircularProgress,
     Container,
+    IconButton,
+    Stack,
     Typography,
 } from "@mui/material";
 import { useParams, useRouter } from "@tanstack/react-router";
@@ -44,6 +47,8 @@ export const RecipeViewPage = () => {
         id: number;
         extractionPending: boolean;
     } | null>(null);
+    // Display-only scaling. targetServings overrides the base; null = no override (shows base).
+    const [targetServings, setTargetServings] = useState<number | null>(null);
 
     const { data: currentHousehold } = useCurrentHousehold();
     const householdId = currentHousehold?.householdId ?? 0;
@@ -153,6 +158,23 @@ export const RecipeViewPage = () => {
         [editingItem, updateMutation, householdId, recipeId],
     );
 
+    const baseServings = recipe?.servings ?? null;
+    const effectiveServings = targetServings ?? baseServings;
+    const isScaled =
+        baseServings != null &&
+        effectiveServings != null &&
+        effectiveServings !== baseServings;
+    const multiplier =
+        baseServings && effectiveServings
+            ? effectiveServings / baseServings
+            : 1;
+
+    const stepServings = (delta: number) => {
+        if (baseServings == null || effectiveServings == null) return;
+        const next = Math.min(99, Math.max(1, effectiveServings + delta));
+        setTargetServings(next);
+    };
+
     if (!householdId) {
         return (
             <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -227,6 +249,72 @@ export const RecipeViewPage = () => {
                 testIdPrefix="recipe-search"
             />
 
+            {baseServings != null ? (
+                <Stack
+                    direction="row"
+                    sx={{
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        px: 2,
+                        py: 0.5,
+                        borderBottom: 1,
+                        borderColor: "divider",
+                    }}
+                >
+                    <Typography variant="body2" color="text.secondary">
+                        {t("recipes.servingsFrom", { count: baseServings })}
+                    </Typography>
+                    <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={0.5}
+                    >
+                        {isScaled ? (
+                            <Button
+                                size="small"
+                                onClick={() => setTargetServings(null)}
+                                data-testid="recipe-servings-reset"
+                            >
+                                {t("recipes.resetServings")}
+                            </Button>
+                        ) : null}
+                        <IconButton
+                            size="small"
+                            onClick={() => stepServings(-1)}
+                            disabled={
+                                effectiveServings != null &&
+                                effectiveServings <= 1
+                            }
+                            data-testid="recipe-servings-decrement"
+                        >
+                            <Remove fontSize="small" />
+                        </IconButton>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                minWidth: 20,
+                                textAlign: "center",
+                                fontWeight: 600,
+                            }}
+                            data-testid="recipe-servings-value"
+                        >
+                            {effectiveServings}
+                        </Typography>
+                        <IconButton
+                            size="small"
+                            onClick={() => stepServings(1)}
+                            disabled={
+                                effectiveServings != null &&
+                                effectiveServings >= 99
+                            }
+                            data-testid="recipe-servings-increment"
+                        >
+                            <Add fontSize="small" />
+                        </IconButton>
+                    </Stack>
+                </Stack>
+            ) : null}
+
             <RecipeContainer
                 ref={scrollContainerRef}
                 householdId={householdId}
@@ -236,6 +324,7 @@ export const RecipeViewPage = () => {
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
                 searchQuery={searchQuery}
+                multiplier={multiplier}
             />
 
             <RecipeFooter

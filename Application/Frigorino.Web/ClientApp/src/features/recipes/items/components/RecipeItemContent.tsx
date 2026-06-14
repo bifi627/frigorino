@@ -1,12 +1,23 @@
 import { Box, ListItemText, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
+import { formatQuantity, scaleQuantity } from "../../../../components/composer";
 import type { RecipeItemResponse } from "../../../../lib/api";
 
 interface Props {
     item: RecipeItemResponse;
+    // Display-only scale factor for quantities. 1 = unscaled (default).
+    multiplier?: number;
 }
 
-export function RecipeItemContent({ item }: Props) {
+export function RecipeItemContent({ item, multiplier = 1 }: Props) {
+    const { t } = useTranslation();
+    const isScaled = multiplier !== 1 && !!item.quantity;
+    const displayQuantity =
+        item.quantity && isScaled
+            ? scaleQuantity(item.quantity, multiplier)
+            : item.quantity;
+
     return (
         <ListItemText
             data-testid={`recipe-item-${item.id}`}
@@ -47,7 +58,7 @@ export function RecipeItemContent({ item }: Props) {
                                 {item.comment}
                             </Typography>
                         ) : null}
-                        {item.quantity ? (
+                        {displayQuantity ? (
                             <Box
                                 sx={{
                                     display: "inline-flex",
@@ -56,9 +67,24 @@ export function RecipeItemContent({ item }: Props) {
                                 }}
                             >
                                 <ItemQuantityChip
-                                    quantity={item.quantity}
+                                    quantity={displayQuantity}
+                                    color={isScaled ? "primary" : undefined}
                                     testId={`recipe-item-quantity-${item.text}`}
                                 />
+                                {isScaled && item.quantity ? (
+                                    <Typography
+                                        component="span"
+                                        data-testid={`recipe-item-quantity-base-${item.id}`}
+                                        variant="caption"
+                                        color="text.disabled"
+                                        sx={{
+                                            textDecoration: "line-through",
+                                            fontSize: "0.7rem",
+                                        }}
+                                    >
+                                        {formatQuantity(t, item.quantity)}
+                                    </Typography>
+                                ) : null}
                             </Box>
                         ) : null}
                     </Box>

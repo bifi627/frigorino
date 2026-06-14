@@ -18,6 +18,7 @@ interface RecipeContainerProps {
     isExtracting?: boolean;
     extractingItemId?: number | null;
     searchQuery?: string;
+    multiplier?: number;
 }
 
 // Ingredients are searched across their text AND comment so ingredient notes
@@ -35,6 +36,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
             isExtracting,
             extractingItemId,
             searchQuery = "",
+            multiplier = 1,
         },
         ref,
     ) => {
@@ -111,7 +113,10 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                             item.id === extractingItemId
                         }
                         renderContent={(item) => (
-                            <RecipeItemContent item={item} />
+                            <RecipeItemContent
+                                item={item}
+                                multiplier={multiplier}
+                            />
                         )}
                     />
                 )}
