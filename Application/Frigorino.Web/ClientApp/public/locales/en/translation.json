@@ -18,6 +18,7 @@
         "name": "Name",
         "creating": "Creating...",
         "saving": "Saving...",
+        "saved": "Saved",
         "deleting": "Deleting...",
         "errorOccurred": "Something went wrong",
         "nameRequired": "Please enter a name",
@@ -363,6 +364,11 @@
         "descriptionPlaceholder": "A short note about this recipe",
         "servings": "Servings",
         "servingsFrom": "Servings (from {{count}})",
-        "resetServings": "Reset"
+        "resetServings": "Reset",
+        "ingredientsHeading": "Ingredients",
+        "servingsFor": "for {{count}} servings",
+        "scaledFrom": "scaled from {{count}}",
+        "emptyIngredients": "No ingredients yet — tap edit to add some.",
+        "servingsRange": "Servings must be between 1 and 99"
     }
 }
