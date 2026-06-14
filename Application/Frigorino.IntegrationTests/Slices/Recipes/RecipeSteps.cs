@@ -97,15 +97,20 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GetByTestId($"recipe-item-menu-button-{recipeName}").ClickAsync();
     }
 
-    [When("I delete the recipe from the card menu")]
-    public async Task WhenIDeleteTheRecipeFromTheCardMenu()
+    [When("I confirm deleting the recipe {string} from the card menu")]
+    public async Task WhenIConfirmDeletingTheRecipeFromTheCardMenu(string recipeName)
     {
+        // The card-menu delete opens a type-the-name confirmation dialog (guards against an
+        // accidental tap permanently deleting a recipe). Type the exact name to enable confirm.
+        await ctx.Page.GetByTestId("delete-recipe-button").ClickAsync();
+        await ctx.Page.GetByTestId("recipe-delete-confirm-input").FillAsync(recipeName);
+
         // Await the DELETE 204 so the next Then-step inspects post-server-confirm DOM.
         var responseTask = ctx.Page.WaitForResponseAsync(r =>
             r.Url.Contains("/recipes/")
             && r.Request.Method == "DELETE"
             && r.Status == 204);
-        await ctx.Page.GetByTestId("delete-recipe-button").ClickAsync();
+        await ctx.Page.GetByTestId("recipe-delete-confirm-button").ClickAsync();
         await responseTask;
     }
 

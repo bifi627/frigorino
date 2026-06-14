@@ -235,6 +235,7 @@ export const RecipeViewPage = () => {
                 onEdit={setEditingItem}
                 isExtracting={isExtracting}
                 extractingItemId={extractingItemId}
+                searchQuery={searchQuery}
             />
 
             <RecipeFooter

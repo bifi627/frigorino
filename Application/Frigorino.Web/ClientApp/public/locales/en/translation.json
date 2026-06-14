@@ -357,6 +357,7 @@
         "confirmTypeRecipeName": "To confirm, type the recipe name:",
         "typeRecipeNameToConfirm": "Type \"{{recipeName}}\" to confirm",
         "recipeItemCount_one": "{{count}} ingredient",
-        "recipeItemCount_other": "{{count}} ingredients"
+        "recipeItemCount_other": "{{count}} ingredients",
+        "noSearchMatches": "No ingredients match your search."
     }
 }

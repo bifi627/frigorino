@@ -30,5 +30,5 @@ Feature: Recipes
     Given there is a recipe named "Old Recipe"
     When I navigate to "/recipes"
     And I open the recipe card menu for "Old Recipe"
-    And I delete the recipe from the card menu
+    And I confirm deleting the recipe "Old Recipe" from the card menu
     Then "Old Recipe" no longer appears in the recipe overview

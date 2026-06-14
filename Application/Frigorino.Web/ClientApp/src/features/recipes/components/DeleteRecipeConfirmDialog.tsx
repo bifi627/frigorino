@@ -64,6 +64,7 @@ export const DeleteRecipeConfirmDialog = ({
             cancelLabel={t("common.cancel")}
             confirmDisabled={confirmationText !== recipeName}
             isPending={deleteRecipeMutation.isPending}
+            confirmTestId="recipe-delete-confirm-button"
         >
             <Alert severity="warning" sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -91,6 +92,11 @@ export const DeleteRecipeConfirmDialog = ({
                 helperText={
                     confirmationMismatch ? t("lists.nameDoesntMatch") : ""
                 }
+                slotProps={{
+                    htmlInput: {
+                        "data-testid": "recipe-delete-confirm-input",
+                    },
+                }}
             />
         </ConfirmDialog>
     );

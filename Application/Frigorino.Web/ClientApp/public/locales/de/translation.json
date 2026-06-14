@@ -357,6 +357,7 @@
         "confirmTypeRecipeName": "Gib zur Bestätigung den Rezeptnamen ein:",
         "typeRecipeNameToConfirm": "Gib \"{{recipeName}}\" zur Bestätigung ein",
         "recipeItemCount_one": "{{count}} Zutat",
-        "recipeItemCount_other": "{{count}} Zutaten"
+        "recipeItemCount_other": "{{count}} Zutaten",
+        "noSearchMatches": "Keine Zutaten entsprechen deiner Suche."
     }
 }

@@ -17,9 +17,9 @@ import type { RecipeResponse } from "../../../lib/api";
 import { pageContainerSx } from "../../../theme";
 import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
+import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { RecipeActionsMenu } from "../components/RecipeActionsMenu";
 import { RecipeSummaryCard } from "../components/RecipeSummaryCard";
-import { useDeleteRecipe } from "../useDeleteRecipe";
 import { useHouseholdRecipes } from "../useHouseholdRecipes";
 
 export const RecipesPage = () => {
@@ -33,10 +33,15 @@ export const RecipesPage = () => {
         isLoading,
         error,
     } = useHouseholdRecipes(householdId, householdId > 0);
-    const deleteRecipeMutation = useDeleteRecipe();
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedRecipe, setSelectedRecipe] = useState<RecipeResponse | null>(
+        null,
+    );
+    // Deletion is confirmed via DeleteRecipeConfirmDialog (type-the-name guard), so we keep the
+    // target recipe in its own slot — the menu's selectedRecipe is cleared on menu close, which
+    // happens before the dialog resolves.
+    const [recipeToDelete, setRecipeToDelete] = useState<RecipeResponse | null>(
         null,
     );
 
@@ -62,10 +67,8 @@ export const RecipesPage = () => {
     };
 
     const handleDeleteRecipe = () => {
-        if (selectedRecipe?.id && householdId) {
-            deleteRecipeMutation.mutate({
-                path: { householdId, recipeId: selectedRecipe.id },
-            });
+        if (selectedRecipe?.id) {
+            setRecipeToDelete(selectedRecipe);
         }
         handleMenuClose();
     };
@@ -145,7 +148,6 @@ export const RecipesPage = () => {
                                 recipe={recipe}
                                 onClick={handleRecipeClick}
                                 onMenuOpen={handleMenuOpen}
-                                menuDisabled={deleteRecipeMutation.isPending}
                             />
                         ))}
                     </Stack>
@@ -154,8 +156,18 @@ export const RecipesPage = () => {
                     anchorEl={anchorEl}
                     onClose={handleMenuClose}
                     onDelete={handleDeleteRecipe}
-                    isDeleting={deleteRecipeMutation.isPending}
                 />
+                {recipeToDelete?.id && (
+                    <DeleteRecipeConfirmDialog
+                        open={Boolean(recipeToDelete)}
+                        onClose={() => setRecipeToDelete(null)}
+                        householdId={householdId}
+                        recipeId={recipeToDelete.id}
+                        recipeName={
+                            recipeToDelete.name || t("recipes.untitledRecipe")
+                        }
+                    />
+                )}
             </Container>
         </>
     );
