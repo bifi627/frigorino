@@ -28,11 +28,9 @@ import { useRecipe } from "../useRecipe";
 export const RecipeViewPage = () => {
     const router = useRouter();
     const { t } = useTranslation();
-    // useParams strict: false — route tree is generated in T14; the "/recipes/$recipeId/view"
-    // from-string would be the typed form but the tree doesn't exist yet.
-    const { recipeId: recipeIdParam } = useParams({ strict: false }) as {
-        recipeId: string;
-    };
+    const { recipeId: recipeIdParam } = useParams({
+        from: "/recipes/$recipeId/view",
+    });
     const recipeId = parseInt(recipeIdParam);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -88,9 +86,7 @@ export const RecipeViewPage = () => {
     }, []);
 
     const handleEdit = useCallback(() => {
-        // Route wired in T14; cast until routeTree.gen.ts is regenerated.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        router.navigate({ to: `/recipes/${recipeId}/edit` as any });
+        router.navigate({ to: "/recipes/$recipeId/edit", params: { recipeId: recipeId.toString() } });
     }, [router, recipeId]);
 
     const handleToggleSearch = useCallback(() => {

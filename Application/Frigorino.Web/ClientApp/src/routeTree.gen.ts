@@ -13,8 +13,10 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
+import { Route as RecipesCreateRouteImport } from './routes/recipes/create'
 import { Route as ListsCreateRouteImport } from './routes/lists/create'
 import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
 import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
@@ -22,6 +24,8 @@ import { Route as HouseholdManageRouteImport } from './routes/household/manage'
 import { Route as HouseholdCreateRouteImport } from './routes/household/create'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as HouseholdBlueprintsIndexRouteImport } from './routes/household/blueprints/index'
+import { Route as RecipesRecipeIdViewRouteImport } from './routes/recipes/$recipeId/view'
+import { Route as RecipesRecipeIdEditRouteImport } from './routes/recipes/$recipeId/edit'
 import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
 import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
 import { Route as InventoriesInventoryIdViewRouteImport } from './routes/inventories/$inventoryId/view'
@@ -50,6 +54,11 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecipesIndexRoute = RecipesIndexRouteImport.update({
+  id: '/recipes/',
+  path: '/recipes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListsIndexRoute = ListsIndexRouteImport.update({
   id: '/lists/',
   path: '/lists/',
@@ -58,6 +67,11 @@ const ListsIndexRoute = ListsIndexRouteImport.update({
 const InventoriesIndexRoute = InventoriesIndexRouteImport.update({
   id: '/inventories/',
   path: '/inventories/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesCreateRoute = RecipesCreateRouteImport.update({
+  id: '/recipes/create',
+  path: '/recipes/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListsCreateRoute = ListsCreateRouteImport.update({
@@ -96,6 +110,16 @@ const HouseholdBlueprintsIndexRoute =
     path: '/household/blueprints/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const RecipesRecipeIdViewRoute = RecipesRecipeIdViewRouteImport.update({
+  id: '/recipes/$recipeId/view',
+  path: '/recipes/$recipeId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRecipeIdEditRoute = RecipesRecipeIdEditRouteImport.update({
+  id: '/recipes/$recipeId/edit',
+  path: '/recipes/$recipeId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListsListIdViewRoute = ListsListIdViewRouteImport.update({
   id: '/lists/$listId/view',
   path: '/lists/$listId/view',
@@ -147,14 +171,18 @@ export interface FileRoutesByFullPath {
   '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/recipes/create': typeof RecipesCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
+  '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/recipes/$recipeId/edit': typeof RecipesRecipeIdEditRoute
+  '/recipes/$recipeId/view': typeof RecipesRecipeIdViewRoute
   '/household/blueprints/': typeof HouseholdBlueprintsIndexRoute
   '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
   '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
@@ -169,14 +197,18 @@ export interface FileRoutesByTo {
   '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/recipes/create': typeof RecipesCreateRoute
   '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
+  '/recipes': typeof RecipesIndexRoute
   '/settings': typeof SettingsIndexRoute
   '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/recipes/$recipeId/edit': typeof RecipesRecipeIdEditRoute
+  '/recipes/$recipeId/view': typeof RecipesRecipeIdViewRoute
   '/household/blueprints': typeof HouseholdBlueprintsIndexRoute
   '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
   '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
@@ -192,14 +224,18 @@ export interface FileRoutesById {
   '/inventories/calendar': typeof InventoriesCalendarRoute
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
+  '/recipes/create': typeof RecipesCreateRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
+  '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
   '/household/blueprints/create': typeof HouseholdBlueprintsCreateRoute
   '/inventories/$inventoryId/edit': typeof InventoriesInventoryIdEditRoute
   '/inventories/$inventoryId/view': typeof InventoriesInventoryIdViewRoute
   '/lists/$listId/edit': typeof ListsListIdEditRoute
   '/lists/$listId/view': typeof ListsListIdViewRoute
+  '/recipes/$recipeId/edit': typeof RecipesRecipeIdEditRoute
+  '/recipes/$recipeId/view': typeof RecipesRecipeIdViewRoute
   '/household/blueprints/': typeof HouseholdBlueprintsIndexRoute
   '/household/blueprints/$blueprintId/edit': typeof HouseholdBlueprintsBlueprintIdEditRoute
   '/household/blueprints/$blueprintId/view': typeof HouseholdBlueprintsBlueprintIdViewRoute
@@ -216,14 +252,18 @@ export interface FileRouteTypes {
     | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
+    | '/recipes/create'
     | '/inventories/'
     | '/lists/'
+    | '/recipes/'
     | '/settings/'
     | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/recipes/$recipeId/edit'
+    | '/recipes/$recipeId/view'
     | '/household/blueprints/'
     | '/household/blueprints/$blueprintId/edit'
     | '/household/blueprints/$blueprintId/view'
@@ -238,14 +278,18 @@ export interface FileRouteTypes {
     | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
+    | '/recipes/create'
     | '/inventories'
     | '/lists'
+    | '/recipes'
     | '/settings'
     | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/recipes/$recipeId/edit'
+    | '/recipes/$recipeId/view'
     | '/household/blueprints'
     | '/household/blueprints/$blueprintId/edit'
     | '/household/blueprints/$blueprintId/view'
@@ -260,14 +304,18 @@ export interface FileRouteTypes {
     | '/inventories/calendar'
     | '/inventories/create'
     | '/lists/create'
+    | '/recipes/create'
     | '/inventories/'
     | '/lists/'
+    | '/recipes/'
     | '/settings/'
     | '/household/blueprints/create'
     | '/inventories/$inventoryId/edit'
     | '/inventories/$inventoryId/view'
     | '/lists/$listId/edit'
     | '/lists/$listId/view'
+    | '/recipes/$recipeId/edit'
+    | '/recipes/$recipeId/view'
     | '/household/blueprints/'
     | '/household/blueprints/$blueprintId/edit'
     | '/household/blueprints/$blueprintId/view'
@@ -283,14 +331,18 @@ export interface RootRouteChildren {
   InventoriesCalendarRoute: typeof InventoriesCalendarRoute
   InventoriesCreateRoute: typeof InventoriesCreateRoute
   ListsCreateRoute: typeof ListsCreateRoute
+  RecipesCreateRoute: typeof RecipesCreateRoute
   InventoriesIndexRoute: typeof InventoriesIndexRoute
   ListsIndexRoute: typeof ListsIndexRoute
+  RecipesIndexRoute: typeof RecipesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
   HouseholdBlueprintsCreateRoute: typeof HouseholdBlueprintsCreateRoute
   InventoriesInventoryIdEditRoute: typeof InventoriesInventoryIdEditRoute
   InventoriesInventoryIdViewRoute: typeof InventoriesInventoryIdViewRoute
   ListsListIdEditRoute: typeof ListsListIdEditRoute
   ListsListIdViewRoute: typeof ListsListIdViewRoute
+  RecipesRecipeIdEditRoute: typeof RecipesRecipeIdEditRoute
+  RecipesRecipeIdViewRoute: typeof RecipesRecipeIdViewRoute
   HouseholdBlueprintsIndexRoute: typeof HouseholdBlueprintsIndexRoute
   HouseholdBlueprintsBlueprintIdEditRoute: typeof HouseholdBlueprintsBlueprintIdEditRoute
   HouseholdBlueprintsBlueprintIdViewRoute: typeof HouseholdBlueprintsBlueprintIdViewRoute
@@ -326,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recipes/': {
+      id: '/recipes/'
+      path: '/recipes'
+      fullPath: '/recipes/'
+      preLoaderRoute: typeof RecipesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lists/': {
       id: '/lists/'
       path: '/lists'
@@ -338,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/inventories'
       fullPath: '/inventories/'
       preLoaderRoute: typeof InventoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/create': {
+      id: '/recipes/create'
+      path: '/recipes/create'
+      fullPath: '/recipes/create'
+      preLoaderRoute: typeof RecipesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/create': {
@@ -387,6 +453,20 @@ declare module '@tanstack/react-router' {
       path: '/household/blueprints'
       fullPath: '/household/blueprints/'
       preLoaderRoute: typeof HouseholdBlueprintsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/$recipeId/view': {
+      id: '/recipes/$recipeId/view'
+      path: '/recipes/$recipeId/view'
+      fullPath: '/recipes/$recipeId/view'
+      preLoaderRoute: typeof RecipesRecipeIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/$recipeId/edit': {
+      id: '/recipes/$recipeId/edit'
+      path: '/recipes/$recipeId/edit'
+      fullPath: '/recipes/$recipeId/edit'
+      preLoaderRoute: typeof RecipesRecipeIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lists/$listId/view': {
@@ -451,14 +531,18 @@ const rootRouteChildren: RootRouteChildren = {
   InventoriesCalendarRoute: InventoriesCalendarRoute,
   InventoriesCreateRoute: InventoriesCreateRoute,
   ListsCreateRoute: ListsCreateRoute,
+  RecipesCreateRoute: RecipesCreateRoute,
   InventoriesIndexRoute: InventoriesIndexRoute,
   ListsIndexRoute: ListsIndexRoute,
+  RecipesIndexRoute: RecipesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
   HouseholdBlueprintsCreateRoute: HouseholdBlueprintsCreateRoute,
   InventoriesInventoryIdEditRoute: InventoriesInventoryIdEditRoute,
   InventoriesInventoryIdViewRoute: InventoriesInventoryIdViewRoute,
   ListsListIdEditRoute: ListsListIdEditRoute,
   ListsListIdViewRoute: ListsListIdViewRoute,
+  RecipesRecipeIdEditRoute: RecipesRecipeIdEditRoute,
+  RecipesRecipeIdViewRoute: RecipesRecipeIdViewRoute,
   HouseholdBlueprintsIndexRoute: HouseholdBlueprintsIndexRoute,
   HouseholdBlueprintsBlueprintIdEditRoute:
     HouseholdBlueprintsBlueprintIdEditRoute,

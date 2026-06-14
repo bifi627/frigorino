@@ -39,9 +39,7 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                 body: { name: name.trim(), description: null },
             });
             if (response?.id) {
-                // Route wired in T14; cast until routeTree.gen.ts is regenerated.
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                navigate({ to: `/recipes/${response.id}/view` as any });
+                navigate({ to: "/recipes/$recipeId/view", params: { recipeId: response.id.toString() } });
             }
         } catch (err) {
             console.error("Failed to create recipe:", err);

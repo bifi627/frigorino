@@ -14,9 +14,7 @@ import { EditRecipeForm } from "../components/EditRecipeForm";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeEditPage = () => {
-    // useParams strict: false — route tree is generated in T14; the "/recipes/$recipeId/edit"
-    // from-string would be the typed form but the tree doesn't exist yet.
-    const { recipeId } = useParams({ strict: false }) as { recipeId: string };
+    const { recipeId } = useParams({ from: "/recipes/$recipeId/edit" });
     const { t } = useTranslation();
     const recipeIdNum = parseInt(recipeId, 10);
 

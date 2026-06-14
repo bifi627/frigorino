@@ -41,12 +41,9 @@ export const RecipesPage = () => {
     );
 
     const handleBack = () => navigate({ to: "/" });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleCreateRecipe = () => navigate({ to: "/recipes/create" as any });
+    const handleCreateRecipe = () => navigate({ to: "/recipes/create" });
     const handleRecipeClick = (recipeId: number) =>
-        // Routes are wired in T14 (routeTree.gen.ts regeneration); cast until then.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        navigate({ to: `/recipes/${recipeId}/view` as any });
+        navigate({ to: "/recipes/$recipeId/view", params: { recipeId: recipeId.toString() } });
 
     const handleMenuOpen = (
         event: React.MouseEvent<HTMLElement>,

@@ -39,9 +39,7 @@ export const DeleteRecipeConfirmDialog = ({
             {
                 onSuccess: () => {
                     handleClose();
-                    // Route wired in T14; cast until routeTree.gen.ts is regenerated.
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    navigate({ to: "/recipes" as any });
+                    navigate({ to: "/recipes" });
                 },
             },
         );
