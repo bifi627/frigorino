@@ -5,24 +5,17 @@ import {
     TouchSensor,
     useSensor,
     useSensors,
-    type DraggableAttributes,
     type DragEndEvent,
 } from "@dnd-kit/core";
-import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import {
     SortableContext,
     useSortable,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { DragIndicator } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
-
-export interface SectionDragHandle {
-    attributes: DraggableAttributes;
-    listeners: SyntheticListenerMap | undefined;
-    setActivatorNodeRef: (el: HTMLElement | null) => void;
-}
 
 interface SortableSectionItem {
     id: number;
@@ -31,7 +24,10 @@ interface SortableSectionItem {
 interface SortableSectionListProps<T extends SortableSectionItem> {
     sections: T[];
     onReorder: (sectionId: number, afterId: number) => Promise<void>;
-    renderSection: (section: T, dragHandle: SectionDragHandle) => ReactNode;
+    // The drag handle is rendered here (where useSortable lives) and handed to the
+    // card to place in its header — spreading the dnd-kit listeners/attributes in the
+    // hook's own component is the pattern that satisfies the React Compiler ref rule.
+    renderSection: (section: T, dragHandle: ReactNode) => ReactNode;
 }
 
 function SortableSection<T extends SortableSectionItem>({
@@ -39,7 +35,7 @@ function SortableSection<T extends SortableSectionItem>({
     renderSection,
 }: {
     section: T;
-    renderSection: (section: T, dragHandle: SectionDragHandle) => ReactNode;
+    renderSection: (section: T, dragHandle: ReactNode) => ReactNode;
 }) {
     const {
         attributes,
@@ -51,6 +47,25 @@ function SortableSection<T extends SortableSectionItem>({
         isDragging,
     } = useSortable({ id: section.id });
 
+    const dragHandle = (
+        <Box
+            ref={setActivatorNodeRef}
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            sx={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "grab",
+                mr: 1,
+                touchAction: "none",
+            }}
+            data-testid={`section-drag-handle-${section.id}`}
+        >
+            <DragIndicator fontSize="small" color="action" />
+        </Box>
+    );
+
     return (
         <Box
             ref={setNodeRef}
@@ -61,11 +76,7 @@ function SortableSection<T extends SortableSectionItem>({
                 mb: 2,
             }}
         >
-            {renderSection(section, {
-                attributes,
-                listeners,
-                setActivatorNodeRef,
-            })}
+            {renderSection(section, dragHandle)}
         </Box>
     );
 }

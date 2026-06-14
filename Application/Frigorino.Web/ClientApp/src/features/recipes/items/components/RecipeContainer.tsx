@@ -11,6 +11,7 @@ import { RecipeItemContent } from "./RecipeItemContent";
 interface RecipeContainerProps {
     householdId: number;
     recipeId: number;
+    sectionId: number;
     editingItem: RecipeItemResponse | null;
     onEdit: (item: RecipeItemResponse) => void;
     isExtracting?: boolean;
@@ -25,6 +26,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
         {
             householdId,
             recipeId,
+            sectionId,
             editingItem,
             onEdit,
             isExtracting,
@@ -41,6 +43,11 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
         const deleteMutation = useDeleteRecipeItem();
         const reorderMutation = useReorderRecipeItem();
 
+        // The items query holds the whole recipe; render only this section's slice.
+        // The server enforces same-section reorder, and afterId is computed from the
+        // section-scoped array, so the optimistic cache stays correct.
+        const sectionItems = items.filter((i) => i.sectionId === sectionId);
+
         return (
             <Container
                 ref={ref}
@@ -55,7 +62,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                 }}
             >
                 <SortableList
-                    items={items}
+                    items={sectionItems}
                     isLoading={isLoading}
                     error={error}
                     onReorder={async (itemId, afterId) => {
