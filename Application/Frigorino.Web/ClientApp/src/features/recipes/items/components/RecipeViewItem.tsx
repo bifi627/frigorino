@@ -38,7 +38,9 @@ export function RecipeViewItem({ item, multiplier = 1 }: Props) {
                             variant="body2"
                             sx={{
                                 fontWeight: 600,
-                                color: isScaled ? "success.dark" : "success.main",
+                                color: isScaled
+                                    ? "success.dark"
+                                    : "success.main",
                             }}
                         >
                             {formatQuantity(t, displayQuantity)}

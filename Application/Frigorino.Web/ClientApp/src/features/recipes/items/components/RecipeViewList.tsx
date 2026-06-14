@@ -1,4 +1,10 @@
-import { Box, CircularProgress, Container, Paper, Typography } from "@mui/material";
+import {
+    Box,
+    CircularProgress,
+    Container,
+    Paper,
+    Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { RecipeItemResponse } from "../../../../lib/api";
 import { featureContentPx } from "../../../../theme";
@@ -23,10 +29,11 @@ export function RecipeViewList({
     searchQuery = "",
     multiplier = 1,
 }: RecipeViewListProps) {
-    const { data: items = [], isLoading, error } = useRecipeItems(
-        householdId,
-        recipeId,
-    );
+    const {
+        data: items = [],
+        isLoading,
+        error,
+    } = useRecipeItems(householdId, recipeId);
     const { t } = useTranslation();
 
     const trimmedQuery = searchQuery.trim();

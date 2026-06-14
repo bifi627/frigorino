@@ -145,10 +145,7 @@ export const RecipeViewPage = () => {
             />
 
             {recipe.description ? (
-                <Container
-                    maxWidth="sm"
-                    sx={{ px: 2, pb: 1.5, flexShrink: 0 }}
-                >
+                <Container maxWidth="sm" sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
                     <Typography
                         data-testid="recipe-description"
                         variant="body2"

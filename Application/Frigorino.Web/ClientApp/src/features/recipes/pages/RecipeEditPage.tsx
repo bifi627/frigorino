@@ -1,10 +1,5 @@
 import { Delete } from "@mui/icons-material";
-import {
-    Alert,
-    Box,
-    Container,
-    Skeleton,
-} from "@mui/material";
+import { Alert, Box, Container, Skeleton } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,9 +50,17 @@ export const RecipeEditPage = () => {
         data: recipe,
         isLoading: recipeLoading,
         error: recipeError,
-    } = useRecipe(householdId, recipeId, hasActiveHousehold && !isNaN(recipeId));
+    } = useRecipe(
+        householdId,
+        recipeId,
+        hasActiveHousehold && !isNaN(recipeId),
+    );
 
-    const { data: items = [] } = useRecipeItems(householdId, recipeId, !!recipe);
+    const { data: items = [] } = useRecipeItems(
+        householdId,
+        recipeId,
+        !!recipe,
+    );
     useRecipeRevision(householdId, recipeId);
 
     const createMutation = useCreateRecipeItem();
@@ -106,7 +109,11 @@ export const RecipeEditPage = () => {
     );
 
     const handleUpdateItem = useCallback(
-        (text: string, quantity: QuantityDto | null, comment: string | null) => {
+        (
+            text: string,
+            quantity: QuantityDto | null,
+            comment: string | null,
+        ) => {
             if (editingItem?.id && householdId) {
                 updateMutation.mutate({
                     path: { householdId, recipeId, itemId: editingItem.id },
