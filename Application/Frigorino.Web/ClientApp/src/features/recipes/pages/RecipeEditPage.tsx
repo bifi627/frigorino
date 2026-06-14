@@ -94,7 +94,9 @@ export const RecipeEditPage = () => {
     // The open accordion section; falls back to the first section when none is chosen
     // or the chosen one was deleted. The composer (and item-create) targets it.
     const effectiveOpenSectionId =
-        sections.find((s) => s.id === openSectionId)?.id ?? sections[0]?.id ?? 0;
+        sections.find((s) => s.id === openSectionId)?.id ??
+        sections[0]?.id ??
+        0;
     const composerVisible = effectiveOpenSectionId > 0;
     const openSectionItems = items.filter(
         (i) => i.sectionId === effectiveOpenSectionId,

@@ -37,8 +37,9 @@ export const useDeleteRecipeSection = () => {
             const previousItems =
                 queryClient.getQueryData<RecipeItemResponse[]>(itemsKey);
 
-            queryClient.setQueryData<RecipeSectionResponse[]>(sectionsKey, (old) =>
-                old?.filter((s) => s.id !== variables.path.sectionId),
+            queryClient.setQueryData<RecipeSectionResponse[]>(
+                sectionsKey,
+                (old) => old?.filter((s) => s.id !== variables.path.sectionId),
             );
             queryClient.setQueryData<RecipeItemResponse[]>(itemsKey, (old) =>
                 old?.filter((i) => i.sectionId !== variables.path.sectionId),

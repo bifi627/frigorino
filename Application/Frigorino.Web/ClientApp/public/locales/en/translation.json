@@ -369,6 +369,13 @@
         "servingsFor": "for {{count}} servings",
         "scaledFrom": "scaled from {{count}}",
         "emptyIngredients": "No ingredients yet — tap edit to add some.",
-        "servingsRange": "Servings must be between 1 and 99"
+        "servingsRange": "Servings must be between 1 and 99",
+        "addSection": "Add section",
+        "sectionName": "Section name",
+        "sectionNamePlaceholder": "e.g. Dough, Filling",
+        "sectionDescription": "Section description",
+        "sectionDescriptionPlaceholder": "Optional notes for this section",
+        "deleteSection": "Delete section",
+        "sectionDeleted": "Section deleted"
     }
 }

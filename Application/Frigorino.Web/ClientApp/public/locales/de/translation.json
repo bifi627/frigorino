@@ -369,6 +369,13 @@
         "servingsFor": "für {{count}} Portionen",
         "scaledFrom": "skaliert von {{count}}",
         "emptyIngredients": "Noch keine Zutaten — zum Bearbeiten tippen.",
-        "servingsRange": "Portionen müssen zwischen 1 und 99 liegen"
+        "servingsRange": "Portionen müssen zwischen 1 und 99 liegen",
+        "addSection": "Abschnitt hinzufügen",
+        "sectionName": "Abschnittsname",
+        "sectionNamePlaceholder": "z. B. Teig, Füllung",
+        "sectionDescription": "Abschnittsbeschreibung",
+        "sectionDescriptionPlaceholder": "Optionale Notizen für diesen Abschnitt",
+        "deleteSection": "Abschnitt löschen",
+        "sectionDeleted": "Abschnitt gelöscht"
     }
 }

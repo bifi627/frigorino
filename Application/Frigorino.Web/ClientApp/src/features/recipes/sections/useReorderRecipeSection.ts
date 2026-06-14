@@ -23,24 +23,29 @@ export const useReorderRecipeSection = () => {
             const previousSections =
                 queryClient.getQueryData<RecipeSectionResponse[]>(queryKey);
 
-            queryClient.setQueryData<RecipeSectionResponse[]>(queryKey, (old) => {
-                if (!old) return old;
-                const moved = old.find((s) => s.id === variables.path.sectionId);
-                if (!moved) return old;
-                const others = old.filter((s) => s.id !== moved.id);
-                const afterId = variables.body.afterId;
-                if (!afterId) {
-                    others.unshift(moved);
+            queryClient.setQueryData<RecipeSectionResponse[]>(
+                queryKey,
+                (old) => {
+                    if (!old) return old;
+                    const moved = old.find(
+                        (s) => s.id === variables.path.sectionId,
+                    );
+                    if (!moved) return old;
+                    const others = old.filter((s) => s.id !== moved.id);
+                    const afterId = variables.body.afterId;
+                    if (!afterId) {
+                        others.unshift(moved);
+                        return others;
+                    }
+                    const anchorIdx = others.findIndex((s) => s.id === afterId);
+                    others.splice(
+                        anchorIdx === -1 ? others.length : anchorIdx + 1,
+                        0,
+                        moved,
+                    );
                     return others;
-                }
-                const anchorIdx = others.findIndex((s) => s.id === afterId);
-                others.splice(
-                    anchorIdx === -1 ? others.length : anchorIdx + 1,
-                    0,
-                    moved,
-                );
-                return others;
-            });
+                },
+            );
 
             return { previousSections };
         },

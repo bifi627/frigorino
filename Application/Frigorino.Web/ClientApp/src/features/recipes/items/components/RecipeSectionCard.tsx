@@ -13,7 +13,13 @@ import {
     Typography,
 } from "@mui/material";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type {
     RecipeItemResponse,
@@ -112,10 +118,15 @@ export const RecipeSectionCard = ({
         >
             <AccordionSummary
                 data-testid={`recipe-section-${section.id}-summary`}
-                sx={{ "& .MuiAccordionSummary-content": { alignItems: "center" } }}
+                sx={{
+                    "& .MuiAccordionSummary-content": { alignItems: "center" },
+                }}
             >
                 {dragHandle}
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 600, flex: 1 }}
+                >
                     {displayName}
                 </Typography>
                 <IconButton

@@ -47,7 +47,9 @@ export function RecipeViewList({
     const filterActive = trimmedQuery.length > 0;
 
     const visibleItems = filterActive
-        ? items.filter((item) => matchesQuery(searchableText(item), trimmedQuery))
+        ? items.filter((item) =>
+              matchesQuery(searchableText(item), trimmedQuery),
+          )
         : items;
 
     // Section rows: each active section + its (filtered) items, dropping sections that have
@@ -55,7 +57,9 @@ export function RecipeViewList({
     const grouped = sections
         .map((section) => ({
             section,
-            sectionItems: visibleItems.filter((i) => i.sectionId === section.id),
+            sectionItems: visibleItems.filter(
+                (i) => i.sectionId === section.id,
+            ),
         }))
         .filter(
             ({ section, sectionItems }) =>
