@@ -173,6 +173,21 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await responseTask;
     }
 
+    // ---- Collapsible sections (edit page) ----
+
+    [When("I collapse the {string} recipe section")]
+    public async Task WhenICollapseTheRecipeSection(string section)
+    {
+        // The Accordion summary toggles on click; only click if currently expanded so the
+        // step is deterministic regardless of the (persisted) starting state.
+        var summary = ctx.Page.GetByTestId($"recipe-section-{section}-summary");
+        if (await summary.GetAttributeAsync("aria-expanded") == "true")
+        {
+            await summary.ClickAsync();
+        }
+        await Assertions.Expect(summary).ToHaveAttributeAsync("aria-expanded", "false");
+    }
+
     // ---- Assertions ----
 
     [Then("I am on the recipe view page for {string}")]
@@ -233,6 +248,27 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
     public async Task ThenNoLongerAppearsInTheRecipeOverview(string recipeName)
     {
         await Assertions.Expect(ctx.Page.GetByTestId($"recipe-item-{recipeName}"))
+            .Not.ToBeVisibleAsync();
+    }
+
+    [Then("the {string} recipe section is collapsed")]
+    public async Task ThenTheRecipeSectionIsCollapsed(string section)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId($"recipe-section-{section}-summary"))
+            .ToHaveAttributeAsync("aria-expanded", "false");
+    }
+
+    [Then("the recipe edit composer is visible")]
+    public async Task ThenTheRecipeEditComposerIsVisible()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-composer-footer"))
+            .ToBeVisibleAsync();
+    }
+
+    [Then("the recipe edit composer is hidden")]
+    public async Task ThenTheRecipeEditComposerIsHidden()
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-composer-footer"))
             .Not.ToBeVisibleAsync();
     }
 }
