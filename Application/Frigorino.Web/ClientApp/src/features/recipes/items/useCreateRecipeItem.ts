@@ -25,8 +25,9 @@ export const useCreateRecipeItem = () => {
             const previousItems =
                 queryClient.getQueryData<RecipeItemResponse[]>(queryKey);
 
+            const tempId = Date.now();
             const optimisticItem: RecipeItemResponse = {
-                id: Date.now(),
+                id: tempId,
                 recipeId: variables.path.recipeId,
                 text: variables.body.text,
                 comment: variables.body.comment ?? null,
@@ -39,12 +40,11 @@ export const useCreateRecipeItem = () => {
                 extractionPending: false,
             };
 
-            queryClient.setQueryData<RecipeItemResponse[]>(
-                queryKey,
-                (old) => (old ? [...old, optimisticItem] : [optimisticItem]),
+            queryClient.setQueryData<RecipeItemResponse[]>(queryKey, (old) =>
+                old ? [...old, optimisticItem] : [optimisticItem],
             );
 
-            return { previousItems };
+            return { previousItems, tempId };
         },
         onError: (_data, variables, context) => {
             if (context?.previousItems) {
@@ -59,15 +59,27 @@ export const useCreateRecipeItem = () => {
                 );
             }
         },
-        onSuccess: (_data, variables) => {
-            debouncedInvalidate(
-                getRecipeItemsQueryKey({
-                    path: {
-                        householdId: variables.path.householdId,
-                        recipeId: variables.path.recipeId,
-                    },
-                }),
-            );
+        onSuccess: (data, variables, context) => {
+            const queryKey = getRecipeItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    recipeId: variables.path.recipeId,
+                },
+            });
+            // Swap the temp-id optimistic row for the real server item immediately. Anything
+            // keyed on the real id — the extraction-poll row highlight, and an edit/reorder fired
+            // before the debounced refetch lands — must see the real id right away. Otherwise the
+            // PUT/PATCH targets the Date.now() temp id, which overflows the {itemId:int} route
+            // constraint and falls through to the SPA fallback (HTTP 500). Mirrors useCreateListItem.
+            if (context?.tempId !== undefined) {
+                queryClient.setQueryData<RecipeItemResponse[]>(
+                    queryKey,
+                    (old) =>
+                        old?.map((i) => (i.id === context.tempId ? data : i)) ??
+                        old,
+                );
+            }
+            debouncedInvalidate(queryKey);
         },
     });
 };
