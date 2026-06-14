@@ -30,15 +30,10 @@ export const useDeleteRecipeItem = () => {
             const previousItems =
                 queryClient.getQueryData<RecipeItemResponse[]>(queryKey);
 
-            queryClient.setQueryData<RecipeItemResponse[]>(
-                queryKey,
-                (old) => {
-                    if (!old) return old;
-                    return old.filter(
-                        (item) => item.id !== variables.path.itemId,
-                    );
-                },
-            );
+            queryClient.setQueryData<RecipeItemResponse[]>(queryKey, (old) => {
+                if (!old) return old;
+                return old.filter((item) => item.id !== variables.path.itemId);
+            });
 
             return { previousItems };
         },

@@ -43,7 +43,10 @@ export const RecipesPage = () => {
     const handleBack = () => navigate({ to: "/" });
     const handleCreateRecipe = () => navigate({ to: "/recipes/create" });
     const handleRecipeClick = (recipeId: number) =>
-        navigate({ to: "/recipes/$recipeId/view", params: { recipeId: recipeId.toString() } });
+        navigate({
+            to: "/recipes/$recipeId/view",
+            params: { recipeId: recipeId.toString() },
+        });
 
     const handleMenuOpen = (
         event: React.MouseEvent<HTMLElement>,
@@ -88,9 +91,7 @@ export const RecipesPage = () => {
             <PageHeadActionBar
                 title={t("recipes.recipes")}
                 section="recipes"
-                directActions={[
-                    { icon: <Add />, onClick: handleCreateRecipe },
-                ]}
+                directActions={[{ icon: <Add />, onClick: handleCreateRecipe }]}
                 menuActions={[]}
             />
             <Container maxWidth="sm" sx={pageContainerSx}>

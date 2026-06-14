@@ -18,7 +18,10 @@ interface EditRecipeFormProps {
     recipe: RecipeResponse;
 }
 
-export const EditRecipeForm = ({ householdId, recipe }: EditRecipeFormProps) => {
+export const EditRecipeForm = ({
+    householdId,
+    recipe,
+}: EditRecipeFormProps) => {
     const { t } = useTranslation();
     const router = useRouter();
     const updateRecipeMutation = useUpdateRecipe();

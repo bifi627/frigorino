@@ -74,7 +74,9 @@ export const RecipeViewPage = () => {
     const scrollToLastItem = useCallback(() => {
         if (scrollContainerRef.current) {
             const listItems =
-                scrollContainerRef.current.querySelectorAll(".MuiListItem-root");
+                scrollContainerRef.current.querySelectorAll(
+                    ".MuiListItem-root",
+                );
             const lastItem = listItems[listItems.length - 1];
             if (lastItem) {
                 lastItem.scrollIntoView({
@@ -86,7 +88,10 @@ export const RecipeViewPage = () => {
     }, []);
 
     const handleEdit = useCallback(() => {
-        router.navigate({ to: "/recipes/$recipeId/edit", params: { recipeId: recipeId.toString() } });
+        router.navigate({
+            to: "/recipes/$recipeId/edit",
+            params: { recipeId: recipeId.toString() },
+        });
     }, [router, recipeId]);
 
     const handleToggleSearch = useCallback(() => {

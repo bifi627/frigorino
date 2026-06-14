@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createRecipeMutation, getRecipesQueryKey } from "../../lib/api/@tanstack/react-query.gen";
+import {
+    createRecipeMutation,
+    getRecipesQueryKey,
+} from "../../lib/api/@tanstack/react-query.gen";
 
 export const useCreateRecipe = () => {
     const queryClient = useQueryClient();
@@ -7,7 +10,9 @@ export const useCreateRecipe = () => {
         ...createRecipeMutation(),
         onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({
-                queryKey: getRecipesQueryKey({ path: { householdId: variables.path.householdId } }),
+                queryKey: getRecipesQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });

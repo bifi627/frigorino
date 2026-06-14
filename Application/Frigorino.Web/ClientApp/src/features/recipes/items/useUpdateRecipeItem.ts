@@ -39,7 +39,7 @@ export const useUpdateRecipeItem = () => {
                         const comment =
                             variables.body.comment == null
                                 ? item.comment
-                                : (variables.body.comment.trim() || null);
+                                : variables.body.comment.trim() || null;
                         return {
                             ...item,
                             text: variables.body.text ?? item.text,

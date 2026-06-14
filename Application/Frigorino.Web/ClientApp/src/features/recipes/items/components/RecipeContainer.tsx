@@ -72,9 +72,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                     isItemProcessing={(item) =>
                         Boolean(isExtracting) && item.id === extractingItemId
                     }
-                    renderContent={(item) => (
-                        <RecipeItemContent item={item} />
-                    )}
+                    renderContent={(item) => <RecipeItemContent item={item} />}
                 />
             </Container>
         );

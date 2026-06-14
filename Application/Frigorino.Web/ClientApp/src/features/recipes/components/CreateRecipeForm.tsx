@@ -39,7 +39,10 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                 body: { name: name.trim(), description: null },
             });
             if (response?.id) {
-                navigate({ to: "/recipes/$recipeId/view", params: { recipeId: response.id.toString() } });
+                navigate({
+                    to: "/recipes/$recipeId/view",
+                    params: { recipeId: response.id.toString() },
+                });
             }
         } catch (err) {
             console.error("Failed to create recipe:", err);

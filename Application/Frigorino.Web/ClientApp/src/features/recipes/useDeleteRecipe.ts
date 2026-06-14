@@ -12,11 +12,16 @@ export const useDeleteRecipe = () => {
         onSuccess: (_data, variables) => {
             queryClient.removeQueries({
                 queryKey: getRecipeQueryKey({
-                    path: { householdId: variables.path.householdId, recipeId: variables.path.recipeId },
+                    path: {
+                        householdId: variables.path.householdId,
+                        recipeId: variables.path.recipeId,
+                    },
                 }),
             });
             queryClient.invalidateQueries({
-                queryKey: getRecipesQueryKey({ path: { householdId: variables.path.householdId } }),
+                queryKey: getRecipesQueryKey({
+                    path: { householdId: variables.path.householdId },
+                }),
             });
         },
     });
