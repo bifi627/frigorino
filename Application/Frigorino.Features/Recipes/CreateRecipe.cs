@@ -46,6 +46,7 @@ namespace Frigorino.Features.Recipes
 
             var recipe = creation.Value;
             recipe.CreatedByUser = creator;
+            recipe.AddSection(null, null); // every recipe starts with one unnamed default section
             db.Recipes.Add(recipe);
             await db.SaveChangesAsync(ct);
 
