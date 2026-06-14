@@ -11,6 +11,7 @@ public class ScenarioContextHolder
     public Dictionary<string, int> ListIds { get; } = new();
     public Dictionary<string, int> InventoryIds { get; } = new();
     public Dictionary<string, int> BlueprintIds { get; } = new();
+    public Dictionary<string, int> RecipeIds { get; } = new();
     public IAPIResponse? LastApiResponse { get; set; }
     public IAPIResponse[]? ConcurrentApiResponses { get; set; }
 

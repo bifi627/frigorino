@@ -457,4 +457,18 @@ public class TestApiClient(ScenarioContextHolder ctx)
                 Headers = AuthHeaders,
             });
     }
+
+    // ---- Recipes ----
+
+    public async Task<int> CreateRecipeAsync(string name)
+    {
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/recipes", new { name, description = (string?)null });
+        return json.GetProperty("id").GetInt32();
+    }
+
+    public async Task<int> CreateRecipeItemAsync(int recipeId, string text)
+    {
+        var json = await PostAsync($"/api/household/{ctx.HouseholdId}/recipes/{recipeId}/items", new { text, comment = (string?)null });
+        return json.GetProperty("id").GetInt32();
+    }
 }
