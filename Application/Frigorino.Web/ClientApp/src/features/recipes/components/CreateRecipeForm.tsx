@@ -46,8 +46,9 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
             });
             if (response?.id) {
                 navigate({
-                    to: "/recipes/$recipeId/view",
+                    to: "/recipes/$recipeId/edit",
                     params: { recipeId: response.id.toString() },
+                    replace: true,
                 });
             }
         } catch (err) {
