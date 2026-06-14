@@ -258,17 +258,4 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
             .ToHaveAttributeAsync("aria-expanded", "false");
     }
 
-    [Then("the recipe edit composer is visible")]
-    public async Task ThenTheRecipeEditComposerIsVisible()
-    {
-        await Assertions.Expect(ctx.Page.GetByTestId("recipe-composer-footer"))
-            .ToBeVisibleAsync();
-    }
-
-    [Then("the recipe edit composer is hidden")]
-    public async Task ThenTheRecipeEditComposerIsHidden()
-    {
-        await Assertions.Expect(ctx.Page.GetByTestId("recipe-composer-footer"))
-            .Not.ToBeVisibleAsync();
-    }
 }

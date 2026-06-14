@@ -126,9 +126,17 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             db.Recipes.AddRange(keepRecipe, dropRecipe);
             await db.SaveChangesAsync();
 
+            // Items live in a section (required FK). One active section holds them; one soft-deleted
+            // (empty) section under the surviving recipe exercises the direct RecipeSections.Where(!IsActive)
+            // purge — the only path that hits it, since a dropped recipe's sections go via cascade.
+            var keepSection = new RecipeSection { RecipeId = keepRecipe.Id, Rank = "a0", IsActive = true, CreatedAt = now, UpdatedAt = now };
+            var dropSection = new RecipeSection { RecipeId = keepRecipe.Id, Rank = "a1", IsActive = false, CreatedAt = now, UpdatedAt = now };
+            db.RecipeSections.AddRange(keepSection, dropSection);
+            await db.SaveChangesAsync();
+
             db.RecipeItems.AddRange(
-                new RecipeItem { RecipeId = keepRecipe.Id, Text = "keep recipe item", IsActive = true, Rank = "a0", CreatedAt = now, UpdatedAt = now },
-                new RecipeItem { RecipeId = keepRecipe.Id, Text = "soft-deleted recipe item", IsActive = false, Rank = "a1", CreatedAt = now, UpdatedAt = now });
+                new RecipeItem { RecipeId = keepRecipe.Id, SectionId = keepSection.Id, Text = "keep recipe item", IsActive = true, Rank = "a0", CreatedAt = now, UpdatedAt = now },
+                new RecipeItem { RecipeId = keepRecipe.Id, SectionId = keepSection.Id, Text = "soft-deleted recipe item", IsActive = false, Rank = "a1", CreatedAt = now, UpdatedAt = now });
             await db.SaveChangesAsync();
         }
 
@@ -164,6 +172,11 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             Assert.Equal(new[] { "keep recipe" }, recipes);
             var recipeItems = await db.RecipeItems.Select(r => r.Text).ToListAsync();
             Assert.Equal(new[] { "keep recipe item" }, recipeItems);
+
+            // The soft-deleted section under the surviving recipe is gone (direct purge); the active
+            // one survives.
+            var recipeSections = await db.RecipeSections.CountAsync();
+            Assert.Equal(1, recipeSections);
         }
     }
 }

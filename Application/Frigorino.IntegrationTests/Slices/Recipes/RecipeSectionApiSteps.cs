@@ -24,6 +24,9 @@ public class RecipeSectionApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         Assert.Equal(expected, json.GetArrayLength());
     }
 
+    // Used both as a When (the action under test) and as a Given/And setup step in other scenarios;
+    // this project's Reqnroll matches step keyword-sensitively, so both attributes are required.
+    [Given("I POST a section named {string} to recipe {string} via the API")]
     [When("I POST a section named {string} to recipe {string} via the API")]
     public async Task WhenIPostSection(string sectionName, string recipeName)
     {
