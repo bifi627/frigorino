@@ -12,6 +12,7 @@ namespace Frigorino.Domain.Entities
 
         public int Id { get; set; }
         public int RecipeId { get; set; }
+        public int SectionId { get; set; }
         public string Text { get; set; } = string.Empty;
         public string? Comment { get; set; }
 
@@ -20,7 +21,7 @@ namespace Frigorino.Domain.Entities
         public decimal? QuantityValue { get; set; }
         public QuantityUnit? QuantityUnit { get; set; }
 
-        // Lexicographic ordering key (fractional index). Single section — no status split.
+        // Lexicographic ordering key (fractional index), unique per SECTION. No status split.
         public string Rank { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -28,5 +29,6 @@ namespace Frigorino.Domain.Entities
 
         // Navigation
         public Recipe Recipe { get; set; } = null!;
+        public RecipeSection Section { get; set; } = null!;
     }
 }

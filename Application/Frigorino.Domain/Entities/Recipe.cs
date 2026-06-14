@@ -23,6 +23,7 @@ namespace Frigorino.Domain.Entities
         public Household Household { get; set; } = null!;
         public User CreatedByUser { get; set; } = null!;
         public ICollection<RecipeItem> Items { get; set; } = new List<RecipeItem>();
+        public ICollection<RecipeSection> Sections { get; set; } = new List<RecipeSection>();
 
         public static Result<Recipe> Create(string name, string? description, int householdId, string createdByUserId, int? servings = null)
         {
@@ -91,10 +92,168 @@ namespace Frigorino.Domain.Entities
             return Result.Ok();
         }
 
+        // ---- RecipeSection coordination (collaborative — any member; no role gate) ----
+
+        public Result<RecipeSection> AddSection(string? name, string? description)
+        {
+            var errors = ValidateSectionMetadata(name, description);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeSection>(errors);
+            }
+
+            var now = DateTime.UtcNow;
+            var section = new RecipeSection
+            {
+                RecipeId = Id,
+                Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+                Rank = ComputeAppendSectionRank(),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+            };
+            Sections.Add(section);
+            return Result.Ok(section);
+        }
+
+        public Result<RecipeSection> UpdateSection(int sectionId, string? name, string? description)
+        {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail<RecipeSection>(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+
+            var errors = ValidateSectionMetadata(name, description);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeSection>(errors);
+            }
+
+            section.Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+            section.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+            section.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(section);
+        }
+
+        // Cascade soft-delete: removes the section and ALL its active items. Blocked when it is the
+        // last active section — a recipe always keeps at least one.
+        public Result RemoveSection(int sectionId)
+        {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+
+            var activeSectionCount = Sections.Count(s => s.IsActive);
+            if (activeSectionCount <= 1)
+            {
+                return Result.Fail(new Error("A recipe must keep at least one section.")
+                    .WithMetadata("Property", nameof(Sections)));
+            }
+
+            var now = DateTime.UtcNow;
+            section.IsActive = false;
+            section.UpdatedAt = now;
+            foreach (var item in Items.Where(i => i.SectionId == sectionId && i.IsActive))
+            {
+                item.IsActive = false;
+                item.UpdatedAt = now;
+            }
+            return Result.Ok();
+        }
+
+        // Undo of a cascade delete: reactivates the section and every inactive item in it. Keeps the
+        // section's ORIGINAL rank (re-mint is a separate step if it collides — see
+        // ReplaceRestoredSectionRank). Note: this revives ALL inactive items in the section, including
+        // any deleted individually before the cascade; acceptable because undo follows the delete
+        // immediately and soft-deleted items are purged on the next cold start.
+        public Result<RecipeSection> RestoreSection(int sectionId)
+        {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && !s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail<RecipeSection>(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+
+            var now = DateTime.UtcNow;
+            section.IsActive = true;
+            section.UpdatedAt = now;
+            foreach (var item in Items.Where(i => i.SectionId == sectionId && !i.IsActive))
+            {
+                item.IsActive = true;
+                item.UpdatedAt = now;
+            }
+            return Result.Ok(section);
+        }
+
+        public Result<RecipeSection> ReplaceRestoredSectionRank(int sectionId)
+        {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail<RecipeSection>(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+            section.Rank = ComputeAppendSectionRank();
+            section.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(section);
+        }
+
+        public Result<RecipeSection> ReorderSection(int sectionId, int afterSectionId)
+        {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail<RecipeSection>(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+            if (afterSectionId == sectionId)
+            {
+                return Result.Ok(section);
+            }
+
+            var others = Sections
+                .Where(s => s.IsActive && s.Id != section.Id)
+                .OrderBy(s => s.Rank, StringComparer.Ordinal)
+                .ToList();
+
+            var after = afterSectionId == 0 ? null : others.FirstOrDefault(s => s.Id == afterSectionId);
+            var before = after is not null
+                ? others.FirstOrDefault(s => string.CompareOrdinal(s.Rank, after.Rank) > 0)
+                : null;
+
+            string newRank;
+            if (after is null)
+            {
+                newRank = others.Count == 0
+                    ? FractionalIndex.GenerateKeyBetween(null, null)
+                    : FractionalIndex.GenerateKeyBetween(null, others[0].Rank);
+            }
+            else if (before is null)
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, null);
+            }
+            else
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, before.Rank);
+            }
+
+            section.Rank = newRank;
+            section.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(section);
+        }
+
         // ---- RecipeItem coordination (collaborative — any member; no role gate) ----
 
-        public Result<RecipeItem> AddItem(string text, Quantity? quantity, string? comment)
+        public Result<RecipeItem> AddItem(int sectionId, string text, Quantity? quantity, string? comment)
         {
+            var section = Sections.FirstOrDefault(s => s.Id == sectionId && s.IsActive);
+            if (section is null)
+            {
+                return Result.Fail<RecipeItem>(new EntityNotFoundError($"Recipe section {sectionId} not found."));
+            }
+
             var errors = ValidateItemText(text, requireText: true);
             errors.AddRange(ValidateComment(comment));
             if (errors.Count > 0)
@@ -106,11 +265,12 @@ namespace Frigorino.Domain.Entities
             var item = new RecipeItem
             {
                 RecipeId = Id,
+                SectionId = sectionId,
                 Text = text.Trim(),
                 Comment = NormalizeComment(comment),
                 QuantityValue = quantity?.Value,
                 QuantityUnit = quantity?.Unit,
-                Rank = ComputeAppendRank(),
+                Rank = ComputeAppendRank(sectionId),
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
@@ -197,7 +357,7 @@ namespace Frigorino.Domain.Entities
             {
                 return Result.Fail<RecipeItem>(new EntityNotFoundError($"Recipe item {itemId} not found."));
             }
-            item.Rank = ComputeAppendRank();
+            item.Rank = ComputeAppendRank(item.SectionId);
             item.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(item);
         }
@@ -215,7 +375,7 @@ namespace Frigorino.Domain.Entities
             }
 
             var section = Items
-                .Where(i => i.IsActive && i.Id != item.Id)
+                .Where(i => i.IsActive && i.Id != item.Id && i.SectionId == item.SectionId)
                 .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
 
@@ -278,6 +438,33 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        private static List<IError> ValidateSectionMetadata(string? name, string? description)
+        {
+            var errors = new List<IError>();
+            if (name is not null && name.Trim().Length > RecipeSection.NameMaxLength)
+            {
+                errors.Add(new Error($"Section name must be {RecipeSection.NameMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeSection.Name)));
+            }
+            if (description is not null && description.Length > RecipeSection.DescriptionMaxLength)
+            {
+                errors.Add(new Error($"Section description must be {RecipeSection.DescriptionMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeSection.Description)));
+            }
+            return errors;
+        }
+
+        private string ComputeAppendSectionRank()
+        {
+            var ordered = Sections
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.Rank, StringComparer.Ordinal)
+                .ToList();
+            return ordered.Count == 0
+                ? FractionalIndex.GenerateKeyBetween(null, null)
+                : FractionalIndex.GenerateKeyBetween(ordered[^1].Rank, null);
+        }
+
         private static List<IError> ValidateMetadata(string name, string? description, int? servings)
         {
             var errors = new List<IError>();
@@ -331,10 +518,10 @@ namespace Frigorino.Domain.Entities
         private static string? NormalizeComment(string? comment)
             => string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
 
-        private string ComputeAppendRank()
+        private string ComputeAppendRank(int sectionId)
         {
             var section = Items
-                .Where(i => i.IsActive)
+                .Where(i => i.IsActive && i.SectionId == sectionId)
                 .OrderBy(i => i.Rank, StringComparer.Ordinal)
                 .ToList();
             return section.Count == 0
