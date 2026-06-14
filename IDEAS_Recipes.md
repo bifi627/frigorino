@@ -41,11 +41,6 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 - **Why:** Reorder a recipe's ingredients by supermarket aisle walk-order (same as lists), handy when shopping straight from a recipe.
 - **Sketch:** Reuse `BlueprintSorter`. **Depends on classification**, which the MVP doesn't run for recipe items — so this only becomes free once recipe ingredients are classified (likely a side effect of promote-to-shopping-list, or a deliberate "classify recipe items" toggle).
 
-## Recipe metadata: servings / yield / scaling
-
-- **Why:** "Serves 4" plus the ability to scale quantities (×2). Common recipe-app expectation, intentionally omitted from the ingredient-list MVP.
-- **Sketch:** Add `Servings` (+ maybe `YieldNote`) to the `Recipe` aggregate; scaling multiplies the structured `Quantity` VOs at display/promote time. Pairs naturally with promote-to-shopping-list ("add ingredients for 8 servings").
-
 ---
 
 # Phase 3 — directional bets
