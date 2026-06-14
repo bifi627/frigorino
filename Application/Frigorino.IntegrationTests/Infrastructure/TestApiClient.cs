@@ -555,4 +555,28 @@ public class TestApiClient(ScenarioContextHolder ctx)
                 Headers = AuthHeaders,
             });
     }
+
+    public Task<IAPIResponse> TryCreateRecipeWithServingsAsync(string name, int? servings, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name, description = (string?)null, servings },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryUpdateRecipeAsync(int recipeId, string name, int? servings, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}",
+            new APIRequestContextOptions
+            {
+                DataObject = new { name, description = (string?)null, servings },
+                Headers = AuthHeaders,
+            });
+    }
 }

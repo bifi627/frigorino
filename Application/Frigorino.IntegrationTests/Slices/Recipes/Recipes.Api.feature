@@ -8,6 +8,19 @@ Feature: Recipes API
     Then the API response status is 400
     And the API response has a validation error for "Name"
 
+  Scenario: Servings round-trips through create and update
+    When I POST a recipe named "Banana Bread" with servings 4 via the API
+    Then the API response status is 201
+    And the API recipe response has servings 4
+    When I PUT recipe "Banana Bread" with servings 6 via the API
+    Then the API response status is 200
+    And the API recipe response has servings 6
+
+  Scenario: Creating a recipe with out-of-range servings returns a validation error
+    When I POST a recipe named "Bad" with servings 0 via the API
+    Then the API response status is 400
+    And the API response has a validation error for "Servings"
+
   Scenario: Creating a recipe item with empty text returns a validation error
     Given there is a recipe named "Pasta Carbonara"
     When I POST a recipe item with empty text to "Pasta Carbonara" via the API
