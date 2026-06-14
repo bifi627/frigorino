@@ -12,9 +12,15 @@
 
 ---
 
-## Implementation status — backend complete, resume at Task 9 (updated 2026-06-14)
+## Implementation status — ✅ COMPLETE (backend + frontend + gate, updated 2026-06-14)
 
-**Backend (Tasks 1–8): ✅ DONE** — implemented subagent-driven on branch `feat/recipes-impl`, each task spec- + quality-reviewed, plus a holistic opus review (no critical/important issues; `dotnet build Application/Frigorino.sln` PASS; `dotnet test Application/Frigorino.Test` = 477 passed).
+**ALL tasks (1–19) DONE** on branch `feat/recipes-impl`, subagent-driven, each task spec- + quality-reviewed. Final gate green: `dotnet test Application/Frigorino.sln` = **477 unit + 148 integration passed** (2 skipped); frontend lint/tsc/prettier/build all clean; `docker build` exit 0.
+
+**Frontend (Tasks 9–19) commits:** T9 `1e27bff` (regen client), T10 `783ab04` (collection hooks), T11 `2ffce6e` (item hooks), T12 `600d88d` (composer/container/content + typed `recipes` i18n namespace), T13 `4c9114c` (pages/forms/cards), T14 `d31264b` (routes + tightened typed nav), T15 `55a94c9` (dashboard), T16 `db8128c` (i18n en/de), T18 `c0061d0` (e2e test) + `13224d0` (prettier normalization). T17/T19 = build/gate (no commit).
+
+**Bug found by the T18 e2e test + fixed:** the optimistic create row used `id: Date.now()`; editing/reordering before the debounced refetch targeted that temp id, which overflows the `{itemId:int}` route → fell through to the SPA fallback → opaque `500`. Fixed by reconciling temp→real id in `useCreateRecipeItem` `onSuccess` (`cd5ec3d`), mirroring `useCreateListItem`. The **same latent bug in `useCreateInventoryItem`** was also fixed (`57e0ebc`). Diagnosability gaps that made it expensive to find (empty 500 body, hidden server logs, SPA fallback masking unmatched `/api`) logged in `TECH_DEBT.md` (`e5e80ce`).
+
+<details><summary>Backend (Tasks 1–8) — DONE, holistic opus review passed</summary>
 
 | Task | Commit | Notes |
 |------|--------|-------|
@@ -27,14 +33,9 @@
 | T8 Maintenance purge | `05a1026` | **scope change:** SQLite unit test dropped (see below); purge code kept |
 | docs: testing convention | `ed10f06` | DB tests = Testcontainers, not InMemory/SQLite |
 
-**Frontend + gate (Tasks 9–19): ⏳ NOT STARTED.** Resume at **Task 9**.
-
-**Resume notes for the next session:**
-- `ClientApp/` will likely need `npm ci` before T9 (`npm run api`) — check for `node_modules` first.
 - **T8 reality vs. plan text:** the plan's T8 below still describes an EF-InMemory unit test with `TestApplicationDbContext.Create()`. That was NOT used — `ExecuteDeleteAsync` is relational-only and this project does not do SQLite/InMemory DB tests. The 2-line purge was added to `DeleteInactiveItems.cs` with NO unit test; a tech-debt item in `TECH_DEBT.md` tracks adding Testcontainer coverage in `Frigorino.IntegrationTests`. Treat T8 as fully done; ignore its InMemory test steps.
-- Working in the **main checkout** (not a worktree) on branch `feat/recipes-impl`, to keep the IDE LSP quiet.
-- Subagent execution: implementers told not to spawn sub-subagents; reviewers run as the read-only `Explore` agent type.
-- The T18 integration test is the natural home for the deferred purge coverage (could fold it in there).
+
+</details>
 
 ---
 
@@ -1887,7 +1888,7 @@ git commit -m "feat(recipes): purge soft-deleted recipes in maintenance task"
 
 ---
 
-## Task 9: Regenerate the API client — ⏳ RESUME HERE (frontend phase starts)
+## Task 9: Regenerate the API client — ✅ DONE (`1e27bff`)
 
 **Files:**
 - Generated under `Application/Frigorino.Web/ClientApp/src/lib/api/` (committed, do not hand-edit)
