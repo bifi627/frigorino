@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Frigorino.Features.Recipes.Items
 {
-    public sealed record CreateRecipeItemRequest(string Text, string? Comment);
+    public sealed record CreateRecipeItemRequest(int SectionId, string Text, string? Comment);
 
     public static class CreateRecipeItemEndpoint
     {
@@ -46,15 +46,21 @@ namespace Frigorino.Features.Recipes.Items
 
                 var recipe = await db.Recipes
                     .Include(r => r.Items)
+                    .Include(r => r.Sections)
                     .FirstOrDefaultAsync(r => r.Id == recipeId && r.HouseholdId == householdId && r.IsActive, ct);
                 if (recipe is null)
                 {
                     return new CreateOutcome(null, NotFound: true, Problem: null);
                 }
 
-                var result = recipe.AddItem(analysis.CleanName, quantity: null, request.Comment);
+                var result = recipe.AddItem(request.SectionId, analysis.CleanName, quantity: null, request.Comment);
                 if (result.IsFailed)
                 {
+                    // Unknown/inactive section → 404; any validation error → ValidationProblem.
+                    if (result.Errors[0] is Frigorino.Domain.Errors.EntityNotFoundError)
+                    {
+                        return new CreateOutcome(null, NotFound: true, Problem: null);
+                    }
                     return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
                 }
 

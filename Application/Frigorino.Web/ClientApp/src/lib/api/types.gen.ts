@@ -52,6 +52,7 @@ export type CreateListRequest = {
 };
 
 export type CreateRecipeItemRequest = {
+    sectionId: number;
     text: string;
     comment: null | string;
 };
@@ -60,6 +61,11 @@ export type CreateRecipeRequest = {
     name: string;
     description: null | string;
     servings: null | number;
+};
+
+export type CreateRecipeSectionRequest = {
+    name: null | string;
+    description: null | string;
 };
 
 export type ExpiryCalendarItemResponse = {
@@ -235,6 +241,7 @@ export type RecipeCreatorResponse = {
 export type RecipeItemResponse = {
     id: number;
     recipeId: number;
+    sectionId: number;
     text: string;
     comment: null | string;
     quantity: null | QuantityDto;
@@ -254,6 +261,16 @@ export type RecipeResponse = {
     updatedAt: string;
     createdByUser: RecipeCreatorResponse;
     itemCount: number;
+};
+
+export type RecipeSectionResponse = {
+    id: number;
+    recipeId: number;
+    name: null | string;
+    description: null | string;
+    rank: string;
+    createdAt: string;
+    updatedAt: string;
 };
 
 export type RegisterFcmTokenRequest = {
@@ -344,6 +361,11 @@ export type UpdateRecipeRequest = {
     name: string;
     description: null | string;
     servings: null | number;
+};
+
+export type UpdateRecipeSectionRequest = {
+    name: null | string;
+    description: null | string;
 };
 
 export type UpdateUserNotificationSettingsRequest = {
@@ -2280,6 +2302,184 @@ export type ReorderRecipeItemResponses = {
 };
 
 export type ReorderRecipeItemResponse = ReorderRecipeItemResponses[keyof ReorderRecipeItemResponses];
+
+export type GetRecipeSectionsData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections';
+};
+
+export type GetRecipeSectionsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetRecipeSectionsResponses = {
+    /**
+     * OK
+     */
+    200: Array<RecipeSectionResponse>;
+};
+
+export type GetRecipeSectionsResponse = GetRecipeSectionsResponses[keyof GetRecipeSectionsResponses];
+
+export type CreateRecipeSectionData = {
+    body: CreateRecipeSectionRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections';
+};
+
+export type CreateRecipeSectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type CreateRecipeSectionError = CreateRecipeSectionErrors[keyof CreateRecipeSectionErrors];
+
+export type CreateRecipeSectionResponses = {
+    /**
+     * Created
+     */
+    201: RecipeSectionResponse;
+};
+
+export type CreateRecipeSectionResponse = CreateRecipeSectionResponses[keyof CreateRecipeSectionResponses];
+
+export type DeleteRecipeSectionData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        sectionId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections/{sectionId}';
+};
+
+export type DeleteRecipeSectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteRecipeSectionError = DeleteRecipeSectionErrors[keyof DeleteRecipeSectionErrors];
+
+export type DeleteRecipeSectionResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteRecipeSectionResponse = DeleteRecipeSectionResponses[keyof DeleteRecipeSectionResponses];
+
+export type UpdateRecipeSectionData = {
+    body: UpdateRecipeSectionRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        sectionId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections/{sectionId}';
+};
+
+export type UpdateRecipeSectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateRecipeSectionError = UpdateRecipeSectionErrors[keyof UpdateRecipeSectionErrors];
+
+export type UpdateRecipeSectionResponses = {
+    /**
+     * OK
+     */
+    200: RecipeSectionResponse;
+};
+
+export type UpdateRecipeSectionResponse = UpdateRecipeSectionResponses[keyof UpdateRecipeSectionResponses];
+
+export type RestoreRecipeSectionData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        sectionId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections/{sectionId}/restore';
+};
+
+export type RestoreRecipeSectionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreRecipeSectionResponses = {
+    /**
+     * OK
+     */
+    200: RecipeSectionResponse;
+};
+
+export type RestoreRecipeSectionResponse = RestoreRecipeSectionResponses[keyof RestoreRecipeSectionResponses];
+
+export type ReorderRecipeSectionData = {
+    body: ReorderItemRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        sectionId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/sections/{sectionId}/reorder';
+};
+
+export type ReorderRecipeSectionErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type ReorderRecipeSectionResponses = {
+    /**
+     * OK
+     */
+    200: RecipeSectionResponse;
+};
+
+export type ReorderRecipeSectionResponse = ReorderRecipeSectionResponses[keyof ReorderRecipeSectionResponses];
 
 export type GetActiveHouseholdData = {
     body?: never;
