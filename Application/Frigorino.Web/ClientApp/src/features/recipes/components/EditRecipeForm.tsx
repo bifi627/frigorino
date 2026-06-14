@@ -1,17 +1,10 @@
-import { Save } from "@mui/icons-material";
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Stack,
-    TextField,
-} from "@mui/material";
-import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { Box, Card, CardContent, Stack, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeResponse } from "../../../lib/api";
 import { useUpdateRecipe } from "../useUpdateRecipe";
+
+const SAVE_DEBOUNCE_MS = 600;
 
 interface EditRecipeFormProps {
     householdId: number;
@@ -23,8 +16,8 @@ export const EditRecipeForm = ({
     recipe,
 }: EditRecipeFormProps) => {
     const { t } = useTranslation();
-    const router = useRouter();
     const updateRecipeMutation = useUpdateRecipe();
+
     // Seeded once on mount. The parent keys this form by recipe.id, so switching to a different
     // recipe remounts and reseeds — no reset-on-prop effect (which would also clobber edits).
     const [editedName, setEditedName] = useState(recipe.name || "");
@@ -34,29 +27,89 @@ export const EditRecipeForm = ({
     const [editedServings, setEditedServings] = useState(
         recipe.servings != null ? String(recipe.servings) : "",
     );
+    const [dirty, setDirty] = useState(false);
 
-    const isFormValid = editedName.trim().length > 0;
-    const isPending = updateRecipeMutation.isPending;
+    const nameInvalid = editedName.trim().length === 0;
+    const servingsNum = editedServings === "" ? null : Number(editedServings);
+    const servingsInvalid =
+        editedServings !== "" &&
+        (!Number.isInteger(servingsNum) ||
+            (servingsNum as number) < 1 ||
+            (servingsNum as number) > 99);
 
-    const handleSave = () => {
-        if (!recipe.id) return;
-        updateRecipeMutation.mutate(
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Latest field state, read by the debounced/blur flush without re-creating the timer.
+    const latest = useRef({
+        name: editedName,
+        description: editedDescription,
+        servings: editedServings,
+        nameInvalid,
+        servingsInvalid,
+        dirty,
+    });
+    // Keep latest.current in sync after every render (useLayoutEffect so it's updated before
+    // any pending debounce timer or blur handler fires).
+    useLayoutEffect(() => {
+        latest.current = {
+            name: editedName,
+            description: editedDescription,
+            servings: editedServings,
+            nameInvalid,
+            servingsInvalid,
+            dirty,
+        };
+    });
+
+    const { mutate } = updateRecipeMutation;
+    const recipeId = recipe.id;
+
+    const save = useCallback(() => {
+        if (!recipeId) return;
+        const cur = latest.current;
+        if (cur.nameInvalid || cur.servingsInvalid) return;
+        if (!cur.dirty) return;
+        mutate(
             {
-                path: { householdId, recipeId: recipe.id },
+                path: { householdId, recipeId },
                 body: {
-                    name: editedName.trim(),
-                    description: editedDescription.trim() || null,
-                    servings:
-                        editedServings === "" ? null : Number(editedServings),
+                    name: cur.name.trim(),
+                    description: cur.description.trim() || null,
+                    servings: cur.servings === "" ? null : Number(cur.servings),
                 },
             },
-            {
-                onSuccess: () => router.history.back(),
-            },
+            { onSuccess: () => setDirty(false) },
         );
-    };
+    }, [householdId, recipeId, mutate]);
 
-    const handleCancel = () => router.history.back();
+    const scheduleSave = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            timerRef.current = null;
+            save();
+        }, SAVE_DEBOUNCE_MS);
+    }, [save]);
+
+    const flushSave = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        save();
+    }, [save]);
+
+    useEffect(
+        () => () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        },
+        [],
+    );
+
+    let status: "saving" | "saved" | "idle" = "idle";
+    if (updateRecipeMutation.isPending) {
+        status = "saving";
+    } else if (!dirty && updateRecipeMutation.isSuccess) {
+        status = "saved";
+    }
 
     return (
         <Card elevation={4}>
@@ -65,34 +118,56 @@ export const EditRecipeForm = ({
                     <TextField
                         label={t("recipes.recipeName")}
                         value={editedName}
-                        onChange={(e) => setEditedName(e.target.value)}
+                        onChange={(e) => {
+                            setEditedName(e.target.value);
+                            setDirty(true);
+                            scheduleSave();
+                        }}
+                        onBlur={flushSave}
                         fullWidth
                         required
-                        error={editedName.trim().length === 0}
+                        error={nameInvalid}
                         helperText={
-                            editedName.trim().length === 0
-                                ? t("recipes.recipeNameRequired")
-                                : ""
+                            nameInvalid ? t("recipes.recipeNameRequired") : ""
                         }
                     />
 
                     <TextField
                         label={t("recipes.description")}
                         value={editedDescription}
-                        onChange={(e) => setEditedDescription(e.target.value)}
+                        onChange={(e) => {
+                            setEditedDescription(e.target.value);
+                            setDirty(true);
+                            scheduleSave();
+                        }}
+                        onBlur={flushSave}
                         fullWidth
                         multiline
                         minRows={2}
                         placeholder={t("recipes.descriptionPlaceholder")}
-                        slotProps={{ htmlInput: { maxLength: 1000 } }}
+                        slotProps={{
+                            htmlInput: {
+                                maxLength: 1000,
+                                "data-testid": "recipe-description-input",
+                            },
+                        }}
                     />
 
                     <TextField
                         type="number"
                         label={t("recipes.servings")}
                         value={editedServings}
-                        onChange={(e) => setEditedServings(e.target.value)}
+                        onChange={(e) => {
+                            setEditedServings(e.target.value);
+                            setDirty(true);
+                            scheduleSave();
+                        }}
+                        onBlur={flushSave}
                         sx={{ width: 140 }}
+                        error={servingsInvalid}
+                        helperText={
+                            servingsInvalid ? t("recipes.servingsRange") : ""
+                        }
                         slotProps={{
                             htmlInput: {
                                 min: 1,
@@ -103,30 +178,17 @@ export const EditRecipeForm = ({
                     />
 
                     <Box
-                        sx={{
-                            display: "flex",
-                            gap: 2,
-                            justifyContent: "flex-end",
-                        }}
+                        data-testid="recipe-metadata-status"
+                        data-status={status}
+                        sx={{ minHeight: 20 }}
                     >
-                        <Button
-                            variant="outlined"
-                            onClick={handleCancel}
-                            disabled={isPending}
-                            sx={{ minWidth: 100 }}
-                        >
-                            {t("common.cancel")}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleSave}
-                            disabled={isPending || !isFormValid}
-                            startIcon={<Save />}
-                            data-testid="recipe-edit-save-button"
-                            sx={{ minWidth: 100, fontWeight: 600 }}
-                        >
-                            {isPending ? t("common.saving") : t("common.save")}
-                        </Button>
+                        <Typography variant="caption" color="text.secondary">
+                            {status === "saving"
+                                ? t("common.saving")
+                                : status === "saved"
+                                  ? t("common.saved")
+                                  : ""}
+                        </Typography>
                     </Box>
                 </Stack>
             </CardContent>
