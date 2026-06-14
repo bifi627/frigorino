@@ -490,6 +490,117 @@ namespace Frigorino.Infrastructure.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.Recipe", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("HouseholdId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("HouseholdId", "IsActive");
+
+                    b.ToTable("Recipes");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.RecipeItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<int?>("QuantityUnit")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("QuantityValue")
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<string>("Rank")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .UseCollation("C");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("RecipeId");
+
+                    b.HasIndex("RecipeId", "IsActive");
+
+                    b.HasIndex("RecipeId", "Rank")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RecipeItems_RecipeId_Rank_Active")
+                        .HasFilter("\"IsActive\"");
+
+                    b.ToTable("RecipeItems");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>
                 {
                     b.Property<int>("Id")
@@ -802,6 +913,36 @@ namespace Frigorino.Infrastructure.Migrations
                     b.Navigation("Household");
                 });
 
+            modelBuilder.Entity("Frigorino.Domain.Entities.Recipe", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Frigorino.Domain.Entities.Household", "Household")
+                        .WithMany()
+                        .HasForeignKey("HouseholdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Household");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.RecipeItem", b =>
+                {
+                    b.HasOne("Frigorino.Domain.Entities.Recipe", "Recipe")
+                        .WithMany("Items")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+                });
+
             modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>
                 {
                     b.HasOne("Frigorino.Domain.Entities.Household", "Household")
@@ -892,6 +1033,11 @@ namespace Frigorino.Infrastructure.Migrations
             modelBuilder.Entity("Frigorino.Domain.Entities.List", b =>
                 {
                     b.Navigation("ListItems");
+                });
+
+            modelBuilder.Entity("Frigorino.Domain.Entities.Recipe", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Frigorino.Domain.Entities.SortBlueprint", b =>

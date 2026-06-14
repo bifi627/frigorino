@@ -11,11 +11,13 @@ public class ScenarioContextHolder
     public Dictionary<string, int> ListIds { get; } = new();
     public Dictionary<string, int> InventoryIds { get; } = new();
     public Dictionary<string, int> BlueprintIds { get; } = new();
+    public Dictionary<string, int> RecipeIds { get; } = new();
     public IAPIResponse? LastApiResponse { get; set; }
     public IAPIResponse[]? ConcurrentApiResponses { get; set; }
 
     private readonly Dictionary<(string list, string text), int> _listItemIds = new();
     private readonly Dictionary<(string inventory, string text), int> _inventoryItemIds = new();
+    private readonly Dictionary<(string recipe, string text), int> _recipeItemIds = new();
 
     public void SetListItemId(string listName, string itemText, int id)
     {
@@ -35,5 +37,15 @@ public class ScenarioContextHolder
     public int GetInventoryItemId(string inventoryName, string itemText)
     {
         return _inventoryItemIds[(inventoryName, itemText)];
+    }
+
+    public void SetRecipeItemId(string recipeName, string itemText, int id)
+    {
+        _recipeItemIds[(recipeName, itemText)] = id;
+    }
+
+    public int GetRecipeItemId(string recipeName, string itemText)
+    {
+        return _recipeItemIds[(recipeName, itemText)];
     }
 }

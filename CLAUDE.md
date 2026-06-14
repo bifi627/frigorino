@@ -16,7 +16,7 @@ Application/
   Frigorino.Infrastructure/  # EF Core (Postgres), Firebase + dev auth, background maintenance
   Frigorino.Web/             # ASP.NET Core host, MapGroup slice wiring, middleware; a few legacy controllers (Auth/Demo)
     ClientApp/               # React 19 + Vite + TanStack Router SPA
-  Frigorino.Test/            # xUnit + FakeItEasy + EF InMemory; aggregate-method unit tests; ArchUnitNET layer rules
+  Frigorino.Test/            # xUnit + FakeItEasy; aggregate-method + slice unit tests; ArchUnitNET layer rules
   Frigorino.IntegrationTests/# Reqnroll (BDD) + Playwright + Postgres Testcontainers — drives the SPA end-to-end
   Dockerfile                 # Multi-stage: builds backend + ClientApp, copies build → wwwroot
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
@@ -143,4 +143,4 @@ Key rules: the theme at `ClientApp/src/theme.ts` owns `shape.borderRadius`, resp
 
 ## Testing
 
-Tests live in `Frigorino.Test/` and use xUnit + FakeItEasy. Database-touching tests use `Microsoft.EntityFrameworkCore.InMemory` via `TestApplicationDbContext`. `Frigorino.IntegrationTests/` drives the SPA end-to-end (Reqnroll + Playwright + Postgres Testcontainers). There is no frontend (JS) test runner configured.
+Tests live in `Frigorino.Test/` (xUnit + FakeItEasy) — unit tests for aggregate methods and slice logic. **Any test that exercises real database behavior uses Postgres Testcontainers in `Frigorino.IntegrationTests/` (Reqnroll + Playwright, drives the SPA end-to-end) — do not add SQLite or EF InMemory database tests; they diverge from real Postgres (collations, `ExecuteDeleteAsync`, relational query semantics).** (Some legacy `Frigorino.Test` slice tests still use EF InMemory via `TestApplicationDbContext`; don't extend that pattern for new DB-dependent coverage.) There is no frontend (JS) test runner configured.

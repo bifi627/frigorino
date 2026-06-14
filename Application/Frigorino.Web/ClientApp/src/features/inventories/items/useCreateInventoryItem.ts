@@ -25,8 +25,9 @@ export const useCreateInventoryItem = () => {
             const previousItems =
                 queryClient.getQueryData<InventoryItemResponse[]>(queryKey);
 
+            const tempId = Date.now();
             const optimisticItem: InventoryItemResponse = {
-                id: Date.now(),
+                id: tempId,
                 text: variables.body.text,
                 quantity: variables.body.quantity,
                 expiryDate: variables.body.expiryDate,
@@ -44,7 +45,7 @@ export const useCreateInventoryItem = () => {
                 (old) => (old ? [...old, optimisticItem] : [optimisticItem]),
             );
 
-            return { previousItems };
+            return { previousItems, tempId };
         },
         onError: (_data, variables, context) => {
             if (context?.previousItems) {
@@ -59,15 +60,26 @@ export const useCreateInventoryItem = () => {
                 );
             }
         },
-        onSuccess: (_data, variables) => {
-            debouncedInvalidate(
-                getInventoryItemsQueryKey({
-                    path: {
-                        householdId: variables.path.householdId,
-                        inventoryId: variables.path.inventoryId,
-                    },
-                }),
-            );
+        onSuccess: (data, variables, context) => {
+            const queryKey = getInventoryItemsQueryKey({
+                path: {
+                    householdId: variables.path.householdId,
+                    inventoryId: variables.path.inventoryId,
+                },
+            });
+            // Swap the temp-id optimistic row for the real server item immediately, so an
+            // edit/reorder fired before the debounced refetch lands targets the real id. Otherwise
+            // the PUT/PATCH targets the Date.now() temp id, which overflows the {itemId:int} route
+            // constraint and falls through to the SPA fallback (HTTP 500). Mirrors useCreateListItem.
+            if (context?.tempId !== undefined) {
+                queryClient.setQueryData<InventoryItemResponse[]>(
+                    queryKey,
+                    (old) =>
+                        old?.map((i) => (i.id === context.tempId ? data : i)) ??
+                        old,
+                );
+            }
+            debouncedInvalidate(queryKey);
         },
     });
 };

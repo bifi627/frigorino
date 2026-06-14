@@ -12,6 +12,8 @@ using Frigorino.Features.Inventories.Notifications;
 using Frigorino.Features.Inventories.Settings;
 using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
+using Frigorino.Features.Recipes;
+using Frigorino.Features.Recipes.Items;
 using Frigorino.Features.Lists.Promote;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Features.Me.Settings;
@@ -87,6 +89,7 @@ builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddImageProcessing();
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
+builder.Services.AddRecipeQuantityExtraction(builder.Configuration);
 builder.Services.AddMaintenanceServices(builder.Configuration);
 builder.Services.AddExpiryNotifications(builder.Configuration);
 
@@ -402,6 +405,27 @@ var inventoryNotifications = app.MapGroup("/api/household/{householdId:int}/inve
     .WithTags("Inventories");
 inventoryNotifications.MapGetMyInventoryNotification();
 inventoryNotifications.MapUpdateMyInventoryNotification();
+
+var recipes = app.MapGroup("/api/household/{householdId:int}/recipes")
+    .RequireAuthorization()
+    .WithTags("Recipes");
+recipes.MapCreateRecipe();
+recipes.MapGetRecipes();
+recipes.MapGetRecipe();
+recipes.MapGetRecipeRevision();
+recipes.MapUpdateRecipe();
+recipes.MapDeleteRecipe();
+
+var recipeItems = app.MapGroup("/api/household/{householdId:int}/recipes/{recipeId:int}/items")
+    .RequireAuthorization()
+    .WithTags("RecipeItems");
+recipeItems.MapGetRecipeItems();
+recipeItems.MapGetRecipeItem();
+recipeItems.MapCreateRecipeItem();
+recipeItems.MapUpdateRecipeItem();
+recipeItems.MapDeleteRecipeItem();
+recipeItems.MapRestoreRecipeItem();
+recipeItems.MapReorderRecipeItem();
 
 var me = app.MapGroup("/api/me")
     .RequireAuthorization()

@@ -334,5 +334,30 @@
             "Baby": "Baby",
             "Pet": "Haustier"
         }
+    },
+    "recipes": {
+        "recipes": "Rezepte",
+        "createRecipe": "Rezept erstellen",
+        "createNewRecipe": "Neues Rezept erstellen",
+        "recipeName": "Rezeptname",
+        "recipeNameRequired": "Bitte gib einen Rezeptnamen ein",
+        "searchPlaceholder": "Zutaten suchen",
+        "noRecipes": "Noch keine Rezepte. Erstelle dein erstes Rezept!",
+        "noRecipesYet": "Noch keine Rezepte",
+        "createFirstRecipe": "Erstelle dein erstes Rezept, um loszulegen",
+        "createYourFirstRecipe": "Dein erstes Rezept erstellen",
+        "selectHouseholdToViewRecipes": "Wähle einen Haushalt, um seine Rezepte zu sehen.",
+        "failedToLoadRecipes": "Wir konnten deine Rezepte nicht laden. Bitte versuch es erneut.",
+        "loadingRecipe": "Rezept wird geladen...",
+        "failedToLoadRecipe": "Wir konnten dieses Rezept nicht laden. Bitte versuch es erneut.",
+        "untitledRecipe": "Unbenanntes Rezept",
+        "editRecipe": "Rezept bearbeiten",
+        "deleteRecipe": "Rezept löschen",
+        "alreadyInRecipe": "Bereits in diesem Rezept",
+        "confirmTypeRecipeName": "Gib zur Bestätigung den Rezeptnamen ein:",
+        "typeRecipeNameToConfirm": "Gib \"{{recipeName}}\" zur Bestätigung ein",
+        "recipeItemCount_one": "{{count}} Zutat",
+        "recipeItemCount_other": "{{count}} Zutaten",
+        "noSearchMatches": "Keine Zutaten entsprechen deiner Suche."
     }
 }

@@ -334,5 +334,30 @@
             "Baby": "Baby",
             "Pet": "Pet"
         }
+    },
+    "recipes": {
+        "recipes": "Recipes",
+        "createRecipe": "Create recipe",
+        "createNewRecipe": "Create new recipe",
+        "recipeName": "Recipe name",
+        "recipeNameRequired": "Please enter a recipe name",
+        "searchPlaceholder": "Search ingredients",
+        "noRecipes": "No recipes yet. Create your first recipe!",
+        "noRecipesYet": "No recipes yet",
+        "createFirstRecipe": "Create your first recipe to get started",
+        "createYourFirstRecipe": "Create your first recipe",
+        "selectHouseholdToViewRecipes": "Select a household to see its recipes.",
+        "failedToLoadRecipes": "We couldn't load your recipes. Please try again.",
+        "loadingRecipe": "Loading recipe...",
+        "failedToLoadRecipe": "We couldn't load this recipe. Please try again.",
+        "untitledRecipe": "Untitled recipe",
+        "editRecipe": "Edit recipe",
+        "deleteRecipe": "Delete recipe",
+        "alreadyInRecipe": "Already in this recipe",
+        "confirmTypeRecipeName": "To confirm, type the recipe name:",
+        "typeRecipeNameToConfirm": "Type \"{{recipeName}}\" to confirm",
+        "recipeItemCount_one": "{{count}} ingredient",
+        "recipeItemCount_other": "{{count}} ingredients",
+        "noSearchMatches": "No ingredients match your search."
     }
 }
