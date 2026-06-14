@@ -100,6 +100,36 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             db.ListItems.Add(new ListItem { ListId = childList.Id, Text = "child list item", IsActive = true, Status = false, CreatedAt = now, UpdatedAt = now });
             db.InventoryItems.Add(new InventoryItem { InventoryId = childInventory.Id, Text = "child inventory item", IsActive = true, CreatedAt = now, UpdatedAt = now });
             await db.SaveChangesAsync();
+
+            // Soft-deleted children UNDER the surviving "keep" household — these exercise each purge's
+            // `Where(!IsActive)` predicate DIRECTLY (not via the household cascade above). A regression
+            // that broke a predicate on a live household — wrong filter, or hard-deleting active rows —
+            // would only surface here, since every other inventory/list/recipe row gets cascade-deleted
+            // with its household regardless.
+            db.Lists.Add(new List { Name = "soft-deleted list", HouseholdId = keepHouseholdId, CreatedByUserId = "u", IsActive = false });
+
+            // Active inventory under keep, holding one active item (survives) + one soft-deleted (purged).
+            var keepInventory = new Inventory { Name = "keep inventory", HouseholdId = keepHouseholdId, CreatedByUserId = "u", IsActive = true };
+            var dropInventory = new Inventory { Name = "soft-deleted inventory", HouseholdId = keepHouseholdId, CreatedByUserId = "u", IsActive = false };
+            db.Inventories.AddRange(keepInventory, dropInventory);
+            await db.SaveChangesAsync();
+
+            db.InventoryItems.AddRange(
+                new InventoryItem { InventoryId = keepInventory.Id, Text = "keep inventory item", IsActive = true, Rank = "a0", CreatedAt = now, UpdatedAt = now },
+                new InventoryItem { InventoryId = keepInventory.Id, Text = "soft-deleted inventory item", IsActive = false, Rank = "a1", CreatedAt = now, UpdatedAt = now });
+
+            // Active recipe (survives) with one active item + one soft-deleted item (purged), plus a
+            // soft-deleted recipe (purged). Recipes were added after this test last changed, so the
+            // recipe/recipe-item purges (DeleteInactiveItems lines 47-48) were entirely uncovered.
+            var keepRecipe = new Recipe { Name = "keep recipe", HouseholdId = keepHouseholdId, CreatedByUserId = "u", IsActive = true, CreatedAt = now, UpdatedAt = now };
+            var dropRecipe = new Recipe { Name = "soft-deleted recipe", HouseholdId = keepHouseholdId, CreatedByUserId = "u", IsActive = false, CreatedAt = now, UpdatedAt = now };
+            db.Recipes.AddRange(keepRecipe, dropRecipe);
+            await db.SaveChangesAsync();
+
+            db.RecipeItems.AddRange(
+                new RecipeItem { RecipeId = keepRecipe.Id, Text = "keep recipe item", IsActive = true, Rank = "a0", CreatedAt = now, UpdatedAt = now },
+                new RecipeItem { RecipeId = keepRecipe.Id, Text = "soft-deleted recipe item", IsActive = false, Rank = "a1", CreatedAt = now, UpdatedAt = now });
+            await db.SaveChangesAsync();
         }
 
         await using (var run = _provider.CreateAsyncScope())
@@ -118,11 +148,22 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             var items = await db.ListItems.OrderBy(i => i.Text).Select(i => i.Text).ToListAsync();
             Assert.Equal(new[] { "open old", "recent done" }, items);
 
-            // The inactive household's list + inventory + their items were cascade-deleted with it.
+            // Only the active list under "keep" survives: the dropped household's "child list" went via
+            // cascade, the "soft-deleted list" under keep via the direct Lists.Where(!IsActive) purge.
             var lists = await db.Lists.Select(l => l.Name).ToListAsync();
             Assert.Equal(new[] { "list" }, lists);
-            Assert.Empty(await db.Inventories.ToListAsync());
-            Assert.Empty(await db.InventoryItems.ToListAsync());
+
+            // Direct (non-cascade) soft-delete purges on the surviving household: active rows survive,
+            // soft-deleted rows are gone. The dropped household's inventory/items went via cascade.
+            var inventories = await db.Inventories.OrderBy(i => i.Name).Select(i => i.Name).ToListAsync();
+            Assert.Equal(new[] { "keep inventory" }, inventories);
+            var inventoryItems = await db.InventoryItems.Select(i => i.Text).ToListAsync();
+            Assert.Equal(new[] { "keep inventory item" }, inventoryItems);
+
+            var recipes = await db.Recipes.Select(r => r.Name).ToListAsync();
+            Assert.Equal(new[] { "keep recipe" }, recipes);
+            var recipeItems = await db.RecipeItems.Select(r => r.Text).ToListAsync();
+            Assert.Equal(new[] { "keep recipe item" }, recipeItems);
         }
     }
 }
