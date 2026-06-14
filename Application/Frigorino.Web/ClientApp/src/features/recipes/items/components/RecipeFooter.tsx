@@ -109,6 +109,7 @@ export const RecipeFooter = memo(
         return (
             <Container
                 maxWidth="sm"
+                data-testid="recipe-composer-footer"
                 sx={{
                     flexShrink: 0,
                     px: featureContentPx,

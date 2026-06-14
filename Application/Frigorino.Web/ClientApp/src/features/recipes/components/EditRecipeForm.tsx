@@ -1,11 +1,4 @@
-import {
-    Box,
-    Card,
-    CardContent,
-    Stack,
-    TextField,
-    Typography,
-} from "@mui/material";
+import { Box, Stack, TextField, Typography } from "@mui/material";
 import {
     useCallback,
     useEffect,
@@ -125,86 +118,78 @@ export const EditRecipeForm = ({
     }
 
     return (
-        <Card elevation={4}>
-            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Stack spacing={3}>
-                    <TextField
-                        label={t("recipes.recipeName")}
-                        value={editedName}
-                        onChange={(e) => {
-                            setEditedName(e.target.value);
-                            setDirty(true);
-                            scheduleSave();
-                        }}
-                        onBlur={flushSave}
-                        fullWidth
-                        required
-                        error={nameInvalid}
-                        helperText={
-                            nameInvalid ? t("recipes.recipeNameRequired") : ""
-                        }
-                    />
+        <Stack spacing={3}>
+            <TextField
+                label={t("recipes.recipeName")}
+                value={editedName}
+                onChange={(e) => {
+                    setEditedName(e.target.value);
+                    setDirty(true);
+                    scheduleSave();
+                }}
+                onBlur={flushSave}
+                fullWidth
+                required
+                error={nameInvalid}
+                helperText={nameInvalid ? t("recipes.recipeNameRequired") : ""}
+            />
 
-                    <TextField
-                        label={t("recipes.description")}
-                        value={editedDescription}
-                        onChange={(e) => {
-                            setEditedDescription(e.target.value);
-                            setDirty(true);
-                            scheduleSave();
-                        }}
-                        onBlur={flushSave}
-                        fullWidth
-                        multiline
-                        minRows={2}
-                        placeholder={t("recipes.descriptionPlaceholder")}
-                        slotProps={{
-                            htmlInput: {
-                                maxLength: 1000,
-                                "data-testid": "recipe-description-input",
-                            },
-                        }}
-                    />
+            <TextField
+                label={t("recipes.description")}
+                value={editedDescription}
+                onChange={(e) => {
+                    setEditedDescription(e.target.value);
+                    setDirty(true);
+                    scheduleSave();
+                }}
+                onBlur={flushSave}
+                fullWidth
+                multiline
+                minRows={2}
+                placeholder={t("recipes.descriptionPlaceholder")}
+                slotProps={{
+                    htmlInput: {
+                        maxLength: 1000,
+                        "data-testid": "recipe-description-input",
+                    },
+                }}
+            />
 
-                    <TextField
-                        type="number"
-                        label={t("recipes.servings")}
-                        value={editedServings}
-                        onChange={(e) => {
-                            setEditedServings(e.target.value);
-                            setDirty(true);
-                            scheduleSave();
-                        }}
-                        onBlur={flushSave}
-                        sx={{ width: 140 }}
-                        error={servingsInvalid}
-                        helperText={
-                            servingsInvalid ? t("recipes.servingsRange") : ""
-                        }
-                        slotProps={{
-                            htmlInput: {
-                                min: 1,
-                                max: 99,
-                                "data-testid": "recipe-servings-input",
-                            },
-                        }}
-                    />
+            <TextField
+                type="number"
+                label={t("recipes.servings")}
+                value={editedServings}
+                onChange={(e) => {
+                    setEditedServings(e.target.value);
+                    setDirty(true);
+                    scheduleSave();
+                }}
+                onBlur={flushSave}
+                sx={{ width: 140 }}
+                error={servingsInvalid}
+                helperText={servingsInvalid ? t("recipes.servingsRange") : ""}
+                slotProps={{
+                    htmlInput: {
+                        min: 1,
+                        max: 99,
+                        "data-testid": "recipe-servings-input",
+                    },
+                }}
+            />
 
-                    <Box
-                        data-testid="recipe-metadata-status"
-                        data-status={status}
-                        sx={{ minHeight: 20 }}
-                    >
-                        <Typography variant="caption" color="text.secondary">
-                            {status === "saving"
-                                ? t("common.saving")
-                                : status === "saved"
-                                  ? t("common.saved")
-                                  : ""}
-                        </Typography>
-                    </Box>
-                </Stack>
-            </CardContent>
-        </Card>
+            <Box
+                data-testid="recipe-metadata-status"
+                data-status={status}
+                sx={{ minHeight: 20 }}
+            >
+                <Typography variant="caption" color="text.secondary">
+                    {status === "saving"
+                        ? t("common.saving")
+                        : status === "saved"
+                          ? t("common.saved")
+                          : ""}
+                </Typography>
+            </Box>
+        </Stack>
     );
 };

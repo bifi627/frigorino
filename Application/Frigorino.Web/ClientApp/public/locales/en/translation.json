@@ -364,6 +364,7 @@
         "descriptionPlaceholder": "A short note about this recipe",
         "servings": "Servings",
         "resetServings": "Reset",
+        "detailsSection": "Details",
         "ingredientsHeading": "Ingredients",
         "servingsFor": "for {{count}} servings",
         "scaledFrom": "scaled from {{count}}",

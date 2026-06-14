@@ -1,12 +1,14 @@
 import { Delete } from "@mui/icons-material";
-import { Alert, Box, Container, Skeleton } from "@mui/material";
+import { Alert, Box, Container, Skeleton, Stack } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CollapsibleSection } from "../../../components/shared/CollapsibleSection";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
+import { usePersistedExpanded } from "../../../hooks/usePersistedExpanded";
 import type { QuantityDto, RecipeItemResponse } from "../../../lib/api";
 import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
@@ -32,6 +34,14 @@ export const RecipeEditPage = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<RecipeItemResponse | null>(
         null,
+    );
+    const [detailsExpanded, setDetailsExpanded] = usePersistedExpanded(
+        "recipe-edit-section:details",
+        true,
+    );
+    const [ingredientsExpanded, setIngredientsExpanded] = usePersistedExpanded(
+        "recipe-edit-section:ingredients",
+        true,
     );
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
@@ -130,6 +140,18 @@ export const RecipeEditPage = () => {
         [editingItem, updateMutation, householdId, recipeId],
     );
 
+    // Collapsing the ingredients section hides the composer, so drop any in-progress
+    // item edit (its editor would otherwise vanish mid-edit).
+    const handleIngredientsExpandedChange = useCallback(
+        (expanded: boolean) => {
+            setIngredientsExpanded(expanded);
+            if (!expanded) {
+                setEditingItem(null);
+            }
+        },
+        [setIngredientsExpanded],
+    );
+
     const isLoading = householdLoading || recipeLoading;
     const error = householdError || recipeError;
 
@@ -213,32 +235,54 @@ export const RecipeEditPage = () => {
                     maxWidth="sm"
                     sx={{ px: featureContentPx, pt: 2, pb: 1 }}
                 >
-                    <EditRecipeForm
-                        key={recipe.id}
-                        householdId={householdId}
-                        recipe={recipe}
-                    />
+                    <Stack spacing={2}>
+                        <CollapsibleSection
+                            title={t("recipes.detailsSection")}
+                            expanded={detailsExpanded}
+                            onChange={setDetailsExpanded}
+                            testId="recipe-section-details"
+                        >
+                            <EditRecipeForm
+                                key={recipe.id}
+                                householdId={householdId}
+                                recipe={recipe}
+                            />
+                        </CollapsibleSection>
+
+                        <CollapsibleSection
+                            title={t("recipes.ingredientsHeading")}
+                            expanded={ingredientsExpanded}
+                            onChange={handleIngredientsExpandedChange}
+                            testId="recipe-section-ingredients"
+                            disableContentPadding
+                        >
+                            <RecipeContainer
+                                householdId={householdId}
+                                recipeId={recipeId}
+                                editingItem={editingItem}
+                                onEdit={setEditingItem}
+                                isExtracting={isExtracting}
+                                extractingItemId={extractingItemId}
+                                scrollable={false}
+                            />
+                        </CollapsibleSection>
+                    </Stack>
                 </Container>
-                <RecipeContainer
-                    householdId={householdId}
-                    recipeId={recipeId}
-                    editingItem={editingItem}
-                    onEdit={setEditingItem}
-                    isExtracting={isExtracting}
-                    extractingItemId={extractingItemId}
-                    scrollable={false}
-                />
             </Box>
 
-            <RecipeFooter
-                editingItem={editingItem}
-                existingItems={items}
-                onAddItem={handleAddItem}
-                onUpdateItem={handleUpdateItem}
-                onCancelEdit={() => setEditingItem(null)}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-                onScrollToLast={scrollToLastItem}
-            />
+            {ingredientsExpanded ? (
+                <RecipeFooter
+                    editingItem={editingItem}
+                    existingItems={items}
+                    onAddItem={handleAddItem}
+                    onUpdateItem={handleUpdateItem}
+                    onCancelEdit={() => setEditingItem(null)}
+                    isLoading={
+                        createMutation.isPending || updateMutation.isPending
+                    }
+                    onScrollToLast={scrollToLastItem}
+                />
+            ) : null}
 
             {recipe.id ? (
                 <DeleteRecipeConfirmDialog
