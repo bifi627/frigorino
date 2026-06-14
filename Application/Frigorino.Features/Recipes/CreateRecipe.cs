@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Frigorino.Features.Recipes
 {
-    public sealed record CreateRecipeRequest(string Name, string? Description);
+    public sealed record CreateRecipeRequest(string Name, string? Description, int? Servings);
 
     public static class CreateRecipeEndpoint
     {
@@ -38,7 +38,7 @@ namespace Frigorino.Features.Recipes
             }
 
             var creator = membership.User;
-            var creation = Recipe.Create(request.Name, request.Description, householdId, currentUser.UserId);
+            var creation = Recipe.Create(request.Name, request.Description, householdId, currentUser.UserId, request.Servings);
             if (creation.IsFailed)
             {
                 return creation.ToValidationProblem();

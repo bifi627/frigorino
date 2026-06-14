@@ -3843,7 +3843,8 @@
       "CreateRecipeRequest": {
         "required": [
           "name",
-          "description"
+          "description",
+          "servings"
         ],
         "type": "object",
         "properties": {
@@ -3855,6 +3856,13 @@
               "null",
               "string"
             ]
+          },
+          "servings": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -4657,6 +4665,7 @@
           "id",
           "name",
           "description",
+          "servings",
           "householdId",
           "createdAt",
           "updatedAt",
@@ -4677,6 +4686,13 @@
               "null",
               "string"
             ]
+          },
+          "servings": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           },
           "householdId": {
             "type": "integer",
@@ -5021,7 +5037,8 @@
       "UpdateRecipeRequest": {
         "required": [
           "name",
-          "description"
+          "description",
+          "servings"
         ],
         "type": "object",
         "properties": {
@@ -5033,6 +5050,13 @@
               "null",
               "string"
             ]
+          },
+          "servings": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
