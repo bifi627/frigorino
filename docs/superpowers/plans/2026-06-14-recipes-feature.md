@@ -6,9 +6,35 @@
 
 **Architecture:** Split-provenance vertical slices. The `Recipe` aggregate, CRUD slices, ordering, and frontend structure mirror **Inventories**; item *creation/update* mirrors **Lists** (text routing + async quantity extraction + `ExtractionPending` poll), because Inventory has no extraction. Extraction reuses the list router/extractor/queue but runs through a **recipe-specific job + trigger that omit the classification chain** (no `Product` rows accrue). One EF migration (two tables), one required edit to the `DeleteInactiveItems` maintenance purge.
 
-**Tech Stack:** .NET 10 minimal-API vertical slices, EF Core (Postgres), FluentResults, xUnit + FakeItEasy + EF InMemory; React 19 + TanStack Query/Router + MUI + Zustand; hey-api generated client. Reqnroll + Playwright + Testcontainers for E2E.
+**Tech Stack:** .NET 10 minimal-API vertical slices, EF Core (Postgres), FluentResults, xUnit + FakeItEasy; React 19 + TanStack Query/Router + MUI + Zustand; hey-api generated client. Reqnroll + Playwright + Testcontainers for E2E (DB-touching tests are Testcontainers-only — no SQLite/InMemory).
 
 **Spec:** `docs/superpowers/specs/2026-06-14-recipes-feature-design.md` (read it first).
+
+---
+
+## Implementation status — backend complete, resume at Task 9 (updated 2026-06-14)
+
+**Backend (Tasks 1–8): ✅ DONE** — implemented subagent-driven on branch `feat/recipes-impl`, each task spec- + quality-reviewed, plus a holistic opus review (no critical/important issues; `dotnet build Application/Frigorino.sln` PASS; `dotnet test Application/Frigorino.Test` = 477 passed).
+
+| Task | Commit | Notes |
+|------|--------|-------|
+| T1-2 RecipeItem + Recipe aggregate | `ef962b3`, `3b33559` | nav collection kept as `Recipe.Items` (used throughout) |
+| T3 EF config + `AddRecipes` migration | `9b0a5a8` | explicit `Recipe→Household` Cascade FK (Household has no Recipes nav) |
+| T4 No-classify extraction (job/trigger/DI) | `15c8616` | regression test asserts `Products` stays empty |
+| T5 Recipe CRUD + revision slices | `e0e9f5b` | fixed 3 idiom drifts vs Inventory siblings |
+| T6 Recipe item slices (split provenance) | `cc5bba9` | Delete/Restore/Reorder ← Inventory; Create/Update ← Lists |
+| T7 MapGroups wiring + `openapi.json` | `5a77ee9` | 13 endpoints |
+| T8 Maintenance purge | `05a1026` | **scope change:** SQLite unit test dropped (see below); purge code kept |
+| docs: testing convention | `ed10f06` | DB tests = Testcontainers, not InMemory/SQLite |
+
+**Frontend + gate (Tasks 9–19): ⏳ NOT STARTED.** Resume at **Task 9**.
+
+**Resume notes for the next session:**
+- `ClientApp/` will likely need `npm ci` before T9 (`npm run api`) — check for `node_modules` first.
+- **T8 reality vs. plan text:** the plan's T8 below still describes an EF-InMemory unit test with `TestApplicationDbContext.Create()`. That was NOT used — `ExecuteDeleteAsync` is relational-only and this project does not do SQLite/InMemory DB tests. The 2-line purge was added to `DeleteInactiveItems.cs` with NO unit test; a tech-debt item in `TECH_DEBT.md` tracks adding Testcontainer coverage in `Frigorino.IntegrationTests`. Treat T8 as fully done; ignore its InMemory test steps.
+- Working in the **main checkout** (not a worktree) on branch `feat/recipes-impl`, to keep the IDE LSP quiet.
+- Subagent execution: implementers told not to spawn sub-subagents; reviewers run as the read-only `Explore` agent type.
+- The T18 integration test is the natural home for the deferred purge coverage (could fold it in there).
 
 ---
 
@@ -60,7 +86,7 @@
 
 ---
 
-## Task 1: `RecipeItem` entity
+## Task 1: `RecipeItem` entity — ✅ DONE (`ef962b3`)
 
 **Files:**
 - Create: `Application/Frigorino.Domain/Entities/RecipeItem.cs`
@@ -116,7 +142,7 @@ git commit -m "feat(recipes): add RecipeItem entity"
 
 ---
 
-## Task 2: `Recipe` aggregate (TDD)
+## Task 2: `Recipe` aggregate (TDD) — ✅ DONE (`3b33559`)
 
 **Files:**
 - Create: `Application/Frigorino.Domain/Entities/Recipe.cs`
@@ -608,7 +634,7 @@ git commit -m "feat(recipes): add Recipe aggregate with item coordination + extr
 
 ---
 
-## Task 3: EF configs, DbSets, timestamp stamping, migration
+## Task 3: EF configs, DbSets, timestamp stamping, migration — ✅ DONE (`9b0a5a8`)
 
 **Files:**
 - Create: `Application/Frigorino.Infrastructure/EntityFramework/Configurations/RecipeConfiguration.cs`, `RecipeItemConfiguration.cs`
@@ -766,7 +792,7 @@ git commit -m "feat(recipes): EF config, DbSets, timestamp stamping, AddRecipes 
 
 ---
 
-## Task 4: Recipe-specific extraction (no-classify) — trigger, job, DI (TDD)
+## Task 4: Recipe-specific extraction (no-classify) — trigger, job, DI (TDD) — ✅ DONE (`15c8616`)
 
 This is the genuinely-new backend piece. It reuses `ItemTextRouter`, `IQuantityExtractor`, `IBackgroundTaskQueue` but **omits the `IProductClassificationTrigger.OnProductReferenced` chain** so no `Product` rows accrue.
 
@@ -1030,7 +1056,7 @@ git commit -m "feat(recipes): no-classify quantity extraction trigger + job + DI
 
 ---
 
-## Task 5: Recipe CRUD slices + RecipeResponse
+## Task 5: Recipe CRUD slices + RecipeResponse — ✅ DONE (`e0e9f5b`)
 
 **Files:**
 - Create: `Application/Frigorino.Features/Recipes/RecipeResponse.cs`, `CreateRecipe.cs`, `GetRecipe.cs`, `GetRecipes.cs`, `UpdateRecipe.cs`, `DeleteRecipe.cs`, `GetRecipeRevision.cs`
@@ -1388,7 +1414,7 @@ git commit -m "feat(recipes): recipe CRUD slices + revision endpoint"
 
 ---
 
-## Task 6: Recipe item slices + RecipeItemResponse
+## Task 6: Recipe item slices + RecipeItemResponse — ✅ DONE (`cc5bba9`)
 
 **Files:**
 - Create: `Application/Frigorino.Features/Recipes/Items/RecipeItemResponse.cs`, `CreateRecipeItem.cs`, `UpdateRecipeItem.cs`, `DeleteRecipeItem.cs`, `RestoreRecipeItem.cs`, `GetRecipeItems.cs`, `ReorderRecipeItem.cs`
@@ -1765,7 +1791,7 @@ git commit -m "feat(recipes): recipe item slices (create w/ extraction, update, 
 
 ---
 
-## Task 7: Wire the MapGroups in Program.cs
+## Task 7: Wire the MapGroups in Program.cs — ✅ DONE (`5a77ee9`)
 
 **Files:**
 - Modify: `Application/Frigorino.Web/Program.cs`
@@ -1811,7 +1837,7 @@ git commit -m "feat(recipes): wire recipe + recipe-item endpoint groups"
 
 ---
 
-## Task 8: Add recipes to the maintenance purge (TDD)
+## Task 8: Add recipes to the maintenance purge (TDD) — ✅ DONE (`05a1026`; SQLite test dropped — see status header)
 
 **Files:**
 - Modify: `Application/Frigorino.Infrastructure/Tasks/DeleteInactiveItems.cs`
@@ -1861,7 +1887,7 @@ git commit -m "feat(recipes): purge soft-deleted recipes in maintenance task"
 
 ---
 
-## Task 9: Regenerate the API client
+## Task 9: Regenerate the API client — ⏳ RESUME HERE (frontend phase starts)
 
 **Files:**
 - Generated under `Application/Frigorino.Web/ClientApp/src/lib/api/` (committed, do not hand-edit)
