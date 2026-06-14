@@ -358,6 +358,11 @@
         "typeRecipeNameToConfirm": "Type \"{{recipeName}}\" to confirm",
         "recipeItemCount_one": "{{count}} ingredient",
         "recipeItemCount_other": "{{count}} ingredients",
-        "noSearchMatches": "No ingredients match your search."
+        "noSearchMatches": "No ingredients match your search.",
+        "description": "Description",
+        "descriptionPlaceholder": "A short note about this recipe",
+        "servings": "Servings",
+        "servingsFrom": "Servings (from {{count}})",
+        "resetServings": "Reset"
     }
 }

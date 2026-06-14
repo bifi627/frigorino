@@ -28,6 +28,12 @@ export const EditRecipeForm = ({
     // Seeded once on mount. The parent keys this form by recipe.id, so switching to a different
     // recipe remounts and reseeds — no reset-on-prop effect (which would also clobber edits).
     const [editedName, setEditedName] = useState(recipe.name || "");
+    const [editedDescription, setEditedDescription] = useState(
+        recipe.description ?? "",
+    );
+    const [editedServings, setEditedServings] = useState(
+        recipe.servings != null ? String(recipe.servings) : "",
+    );
 
     const isFormValid = editedName.trim().length > 0;
     const isPending = updateRecipeMutation.isPending;
@@ -39,7 +45,9 @@ export const EditRecipeForm = ({
                 path: { householdId, recipeId: recipe.id },
                 body: {
                     name: editedName.trim(),
-                    description: recipe.description ?? null,
+                    description: editedDescription.trim() || null,
+                    servings:
+                        editedServings === "" ? null : Number(editedServings),
                 },
             },
             {
@@ -66,6 +74,32 @@ export const EditRecipeForm = ({
                                 ? t("recipes.recipeNameRequired")
                                 : ""
                         }
+                    />
+
+                    <TextField
+                        label={t("recipes.description")}
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        placeholder={t("recipes.descriptionPlaceholder")}
+                        slotProps={{ htmlInput: { maxLength: 1000 } }}
+                    />
+
+                    <TextField
+                        type="number"
+                        label={t("recipes.servings")}
+                        value={editedServings}
+                        onChange={(e) => setEditedServings(e.target.value)}
+                        sx={{ width: 140 }}
+                        slotProps={{
+                            htmlInput: {
+                                min: 1,
+                                max: 99,
+                                "data-testid": "recipe-servings-input",
+                            },
+                        }}
                     />
 
                     <Box

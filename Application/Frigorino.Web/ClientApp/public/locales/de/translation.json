@@ -358,6 +358,11 @@
         "typeRecipeNameToConfirm": "Gib \"{{recipeName}}\" zur Bestätigung ein",
         "recipeItemCount_one": "{{count}} Zutat",
         "recipeItemCount_other": "{{count}} Zutaten",
-        "noSearchMatches": "Keine Zutaten entsprechen deiner Suche."
+        "noSearchMatches": "Keine Zutaten entsprechen deiner Suche.",
+        "description": "Beschreibung",
+        "descriptionPlaceholder": "Eine kurze Notiz zu diesem Rezept",
+        "servings": "Portionen",
+        "servingsFrom": "Portionen (von {{count}})",
+        "resetServings": "Zurücksetzen"
     }
 }
