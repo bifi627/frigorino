@@ -33,9 +33,11 @@ interface SortableLinkListProps<T extends SortableLinkItem> {
 function SortableLink<T extends SortableLinkItem>({
     link,
     renderLink,
+    isLast,
 }: {
     link: T;
     renderLink: (link: T, dragHandle: ReactNode) => ReactNode;
+    isLast: boolean;
 }) {
     const {
         attributes,
@@ -72,7 +74,12 @@ function SortableLink<T extends SortableLinkItem>({
                 transform: CSS.Transform.toString(transform),
                 transition,
                 opacity: isDragging ? 0.5 : 1,
-                mb: 1,
+                // Group each link's label+url pair: a divider + extra gap between links makes the
+                // boundary clearer than the tight intra-row spacing. The last link drops both.
+                pb: isLast ? 0 : 1.5,
+                mb: isLast ? 0 : 1.5,
+                borderBottom: isLast ? 0 : 1,
+                borderColor: "divider",
             }}
         >
             {renderLink(link, dragHandle)}
@@ -114,11 +121,12 @@ export function SortableLinkList<T extends SortableLinkItem>({
                 items={links.map((l) => l.id)}
                 strategy={verticalListSortingStrategy}
             >
-                {links.map((link) => (
+                {links.map((link, index) => (
                     <SortableLink
                         key={link.id}
                         link={link}
                         renderLink={renderLink}
+                        isLast={index === links.length - 1}
                     />
                 ))}
             </SortableContext>
