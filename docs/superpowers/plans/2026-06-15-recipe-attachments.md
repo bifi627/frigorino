@@ -18,6 +18,16 @@
 
 ---
 
+## Execution phases
+
+The 14 tasks run in three phases. Task numbers are stable (tasks cross-reference each other by number) — the phases group them, they don't renumber them. Each phase ends at a natural checkpoint where the work is independently reviewable.
+
+- **Phase A — Backend (Tasks 1–8):** entity → aggregate methods (TDD) → EF config + migration → blob area + reference source → read slices → mutation slices → route wiring + revision + purge → regenerate the TS client. End state: the full API exists, is wired, and the generated client reflects it. Task 8 (regenerate client) is the seam — backend-driven, but it produces the typed surface the frontend consumes.
+- **Phase B — Frontend (Tasks 9–12):** TanStack Query hooks → components + page wiring → i18n keys → SPA build + in-browser smoke verify. End state: the feature is usable in the UI and manually verified.
+- **Phase C — Finals (Tasks 13–14):** integration tests (Reqnroll + Playwright + Testcontainers) → full verification gate (`dotnet test` on the solution + `docker build` + frontend lint/tsc/prettier). End state: shippable.
+
+---
+
 ## File Structure
 
 **Backend — create:**
@@ -72,6 +82,10 @@
 - `Application/Frigorino.IntegrationTests/Infrastructure/TestApiClient.cs` (modify — add attachment helpers)
 
 ---
+
+# Phase A — Backend (Tasks 1–8)
+
+Builds the entire API: entity, aggregate rules, persistence, blob plumbing, the eight slices, route wiring, and the regenerated client. Reviewable on its own — at the end the API is exercisable via Scalar/curl and the generated TS client compiles.
 
 ## Task 1: `RecipeAttachment` entity + constants
 
@@ -1511,6 +1525,10 @@ git commit -m "chore(api): regenerate client for recipe attachments"
 
 ---
 
+# Phase B — Frontend (Tasks 9–12)
+
+Builds the UI on top of the regenerated client from Phase A: query/mutation hooks, the sortable edit list + view grid + lightbox, page wiring, translations, then a real SPA build and an in-browser smoke test. Reviewable on its own — at the end a user can upload, caption, reorder, delete, and undo attachments in the running app.
+
 ## Task 9: Frontend hooks
 
 **Files:**
@@ -2579,6 +2597,10 @@ Bring the dev stack up (`/dev-up`), open a recipe edit page, expand "Attachments
 `ClientApp/build` is gitignored — nothing to commit here unless a source fix was needed during verify (commit those fixes with a descriptive message).
 
 ---
+
+# Phase C — Finals (Tasks 13–14)
+
+End-to-end coverage and the shippable gate: BDD integration tests against real Postgres + a real blob area override, then the full verification gate (solution tests + `docker build` + frontend lint/tsc/prettier). At the end the branch is ready to promote.
 
 ## Task 13: Integration tests (Reqnroll + Playwright + Testcontainers)
 
