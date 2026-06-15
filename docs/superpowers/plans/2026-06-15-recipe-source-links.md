@@ -23,7 +23,12 @@
 - [x] Task 8 — Reorder slice
 - [x] Task 9 — Route group + revision token
 - [x] Task 10 — Regen client + API IT scenarios  ← Phase B complete (Phases A+B done)
-- [ ] Phase C/D/E (Tasks 11–16) — not yet started
+- [x] Task 11 — Source-link hooks + revision invalidation  ← Phase C complete
+- [x] Task 12 — SortableLinkList + RecipeLinkRow
+- [x] Task 13 — RecipeLinksSection + edit-page wiring
+- [x] Task 14 — RecipeViewLinks + view-page wiring  ← Phase D complete
+- [x] Task 15 — i18n strings (en, de)
+- [x] Task 16 — Full verification gate (520 unit + 175 IT pass, SPA build, docker build)  ← Phase E complete (ALL DONE)
 
 **Conventions to honor throughout:**
 - C# always block braces `{}`, even single-line. Prefer `if/else` over multi-condition ternary. Name compound boolean conditions before branching.
