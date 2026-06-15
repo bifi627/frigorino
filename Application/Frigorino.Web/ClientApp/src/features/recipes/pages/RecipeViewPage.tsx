@@ -20,6 +20,7 @@ import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { RecipeViewList } from "../items/components/RecipeViewList";
 import { useRecipeRevision } from "../items/useRecipeRevision";
+import { RecipeViewLinks } from "../links/components/RecipeViewLinks";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeViewPage = () => {
@@ -161,6 +162,8 @@ export const RecipeViewPage = () => {
                     </Typography>
                 </Container>
             ) : null}
+
+            <RecipeViewLinks householdId={householdId} recipeId={recipeId} />
 
             <SearchInputRow
                 open={searchOpen}
