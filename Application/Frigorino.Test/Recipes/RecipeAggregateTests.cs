@@ -556,7 +556,7 @@ namespace Frigorino.Test.Recipes
             link.Id = 511;
             var result = recipe.RemoveLink(511);
             Assert.True(result.IsSuccess);
-            Assert.Empty(recipe.Links.Where(l => l.IsActive));
+            Assert.DoesNotContain(recipe.Links, l => l.IsActive);
         }
 
         [Fact]
