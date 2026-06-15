@@ -129,7 +129,8 @@ export const RecipeLinksSection = ({
                             slotProps={{
                                 htmlInput: {
                                     maxLength: 255,
-                                    "data-testid": "recipe-link-draft-label-input",
+                                    "data-testid":
+                                        "recipe-link-draft-label-input",
                                 },
                             }}
                         />
@@ -150,7 +151,8 @@ export const RecipeLinksSection = ({
                             slotProps={{
                                 htmlInput: {
                                     maxLength: 2048,
-                                    "data-testid": "recipe-link-draft-url-input",
+                                    "data-testid":
+                                        "recipe-link-draft-url-input",
                                 },
                             }}
                         />
@@ -158,7 +160,9 @@ export const RecipeLinksSection = ({
                             <Button
                                 size="small"
                                 variant="contained"
-                                disabled={!canSubmitDraft || createLink.isPending}
+                                disabled={
+                                    !canSubmitDraft || createLink.isPending
+                                }
                                 onClick={handleSubmitDraft}
                                 data-testid="recipe-link-draft-submit"
                             >

@@ -128,7 +128,9 @@ export const RecipeLinkRow = ({
                     size="small"
                     fullWidth
                     error={urlInvalid}
-                    helperText={urlInvalid ? t("recipes.invalidUrl") : undefined}
+                    helperText={
+                        urlInvalid ? t("recipes.invalidUrl") : undefined
+                    }
                     placeholder={t("recipes.linkUrlPlaceholder")}
                     slotProps={{
                         htmlInput: {
