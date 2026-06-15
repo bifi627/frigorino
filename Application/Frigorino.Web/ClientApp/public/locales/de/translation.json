@@ -388,6 +388,8 @@
         "invalidUrl": "Gib eine gültige http(s)-URL ein",
         "attachments": "Anhänge",
         "addAttachment": "Anhang hinzufügen",
+        "attachImageTitle": "Bild anhängen",
+        "editAttachmentCaption": "Beschriftung bearbeiten",
         "attachmentCaption": "Beschriftung",
         "attachmentCaptionPlaceholder": "Optionale Beschriftung",
         "deleteAttachment": "Anhang löschen",

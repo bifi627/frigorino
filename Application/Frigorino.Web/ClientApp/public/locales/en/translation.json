@@ -388,6 +388,8 @@
         "invalidUrl": "Enter a valid http(s) URL",
         "attachments": "Attachments",
         "addAttachment": "Add attachment",
+        "attachImageTitle": "Attach image",
+        "editAttachmentCaption": "Edit caption",
         "attachmentCaption": "Caption",
         "attachmentCaptionPlaceholder": "Optional caption",
         "deleteAttachment": "Delete attachment",
