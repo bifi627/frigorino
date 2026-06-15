@@ -16,27 +16,15 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 - **Why:** Filter recipes by course — Entry / Main / Side / Salad / Dessert / Breakfast / Drink / Snack… Client requirement #3.
 - **Sketch:** Fixed curated **multi-select enum**, stored as flat `RecipeTag` join rows (`RecipeId`, `Tag`), serialized as string names like other enums. Tag-filter chips on the recipes overview. (Free-form household tags considered and set aside in favor of the curated set — revisit only if the fixed list proves limiting.)
 
-## Source links
-
-- **Why:** Hold the recipe's source material — a URL to the blog/video the recipe came from. Cheapest slice of client requirement #5, and the seed for the "AI reads the source" path below.
-- **Sketch:** Flat `RecipeLink` rows (`RecipeId`, `Url`, optional `Label`, `Rank`), multiple per recipe. Add/remove on the recipe edit page; display on the recipe view. First phase-2 attachment piece (no blob plumbing).
-
 ## File / image / document attachments
 
 - **Why:** The rest of client requirement #5 — attach a photo of the dish, a scanned card, or a PDF as source material.
-- **Sketch:** Reuse the shipped blob-storage + thumbnail infra (the `IFileStorage` port / GCS backend / orphan-blob sweep from rich-list-items). A flat `RecipeAttachment` table with a `Type` enum + nullable `StorageKey`/`Url` (unifies links + files), upload + file/thumbnail serve slices scoped to the recipe. Sequence after source links.
+- **Sketch:** Brainstormed → spec at [`docs/superpowers/specs/2026-06-15-recipe-attachments-design.md`](docs/superpowers/specs/2026-06-15-recipe-attachments-design.md). Decided: a **separate** files-only `RecipeAttachment` table + a new "Attachments" section (not unified with source links — distinct concepts). **Phase 1 = images only** (this spec; no type discriminator); **PDF/documents are a later additive phase** (adds a `Type` column + doc tile). Reuses the shipped blob/thumbnail infra (`IFileStorage`, GCS/Local, `MagickImageProcessor`, orphan sweep). **Blocked on** the blob-area refactor in `TECH_DEBT.md` (per-feature/per-env blob namespacing) — that must land first.
 
 ## AI-generated cooking instructions from sources
 
 - **Why:** Client requirement #5's end-goal — once a recipe has source material (link/document), use AI to extract in-app cooking instructions, turning the MVP "ingredient list" into a full recipe.
 - **Sketch:** Big one, needs its own brainstorm. Depends on attachments landing first. Vendor-neutral per the existing `IXxx` interface convention. Out of sight until attachments + a real cooking-instruction data model exist.
-
-## Blueprint sorting of ingredients
-
-- **Why:** Reorder a recipe's ingredients by supermarket aisle walk-order (same as lists), handy when shopping straight from a recipe.
-- **Sketch:** Reuse `BlueprintSorter`. **Depends on classification**, which the MVP doesn't run for recipe items — so this only becomes free once recipe ingredients are classified (likely a side effect of promote-to-shopping-list, or a deliberate "classify recipe items" toggle).
-
----
 
 # Phase 3 — directional bets
 
