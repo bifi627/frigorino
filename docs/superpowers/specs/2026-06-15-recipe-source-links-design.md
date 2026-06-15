@@ -151,8 +151,10 @@ Details `CollapsibleSection` and the `SortableSectionList`. Persisted-expanded v
   (testid `recipe-link-drag-handle-{id}`), a label `TextField`, a URL `TextField`, and a delete
   `IconButton` (testid `recipe-link-delete-{id}`). Row edits debounce-save via `useUpdateRecipeLink`
   (same `latest`-ref-in-`useLayoutEffect` + timer-cleanup pattern as `RecipeSectionCard`).
-- An inline "+ Add link" composer (button testid `recipe-add-link`) that creates an empty link
-  (or opens a small row to type URL first); on create, focus the new row's URL field.
+- An inline "+ Add link" composer (button testid `recipe-add-link`). Because `Url` is required
+  (a link cannot be created empty, unlike a section with a null name), the button reveals a local
+  draft row (URL field + optional label) that **POSTs only on submit** once a valid URL is entered;
+  the new row's URL field receives focus. Cancel discards the draft without a server call.
 - Client-side URL hint: show an inline error on the URL field when non-empty and not a valid
   http(s) URL (`t("recipes.invalidUrl")`); the server remains the source of truth (400 on save).
 
