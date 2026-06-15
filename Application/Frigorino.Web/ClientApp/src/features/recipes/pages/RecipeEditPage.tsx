@@ -16,6 +16,7 @@ import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
+import { RecipeAttachmentsSection } from "../attachments/components/RecipeAttachmentsSection";
 import { RecipeLinksSection } from "../links/components/RecipeLinksSection";
 import { RecipeSectionCard } from "../items/components/RecipeSectionCard";
 import { RecipeFooter } from "../items/components/RecipeFooter";
@@ -295,6 +296,11 @@ export const RecipeEditPage = () => {
                         </CollapsibleSection>
 
                         <RecipeLinksSection
+                            householdId={householdId}
+                            recipeId={recipeId}
+                        />
+
+                        <RecipeAttachmentsSection
                             householdId={householdId}
                             recipeId={recipeId}
                         />

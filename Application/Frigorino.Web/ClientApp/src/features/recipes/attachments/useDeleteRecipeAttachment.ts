@@ -30,7 +30,8 @@ export const useDeleteRecipeAttachment = () => {
 
             queryClient.setQueryData<RecipeAttachmentResponse[]>(
                 queryKey,
-                (old) => old?.filter((a) => a.id !== variables.path.attachmentId),
+                (old) =>
+                    old?.filter((a) => a.id !== variables.path.attachmentId),
             );
 
             return { previousAttachments };
