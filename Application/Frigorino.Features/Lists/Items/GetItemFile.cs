@@ -1,11 +1,13 @@
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Infrastructure.EntityFramework;
+using Frigorino.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Frigorino.Features.Lists.Items
 {
@@ -26,7 +28,7 @@ namespace Frigorino.Features.Lists.Items
             int itemId,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
-            IFileStorage storage,
+            [FromKeyedServices(BlobAreas.ListItem)] IFileStorage storage,
             HttpContext http,
             CancellationToken ct)
         {

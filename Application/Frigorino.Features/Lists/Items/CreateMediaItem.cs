@@ -6,12 +6,14 @@ using Frigorino.Features.Households;
 using Frigorino.Features.Items;
 using Frigorino.Features.Results;
 using Frigorino.Infrastructure.EntityFramework;
+using Frigorino.Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Frigorino.Features.Lists.Items
@@ -38,7 +40,7 @@ namespace Frigorino.Features.Lists.Items
             [FromForm] string? caption,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
-            IFileStorage storage,
+            [FromKeyedServices(BlobAreas.ListItem)] IFileStorage storage,
             IImageProcessor imageProcessor,
             ILoggerFactory loggerFactory,
             CancellationToken ct)
