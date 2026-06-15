@@ -12,6 +12,19 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-15-recipe-source-links-design.md`
 
+**Execution progress (inline):**
+- [x] Task 1 — RecipeLink entity (commit)
+- [x] Task 2 — Recipe aggregate link methods (TDD)
+- [x] Task 3 — EF config, DbSet, timestamps, migration
+- [x] Task 4 — Purge soft-deleted links  ← Phase A complete
+- [x] Task 5 — RecipeLinkResponse + GetRecipeLinks
+- [x] Task 6 — Create + Update slices
+- [x] Task 7 — Delete + Restore slices
+- [x] Task 8 — Reorder slice
+- [x] Task 9 — Route group + revision token
+- [x] Task 10 — Regen client + API IT scenarios  ← Phase B complete (Phases A+B done)
+- [ ] Phase C/D/E (Tasks 11–16) — not yet started
+
 **Conventions to honor throughout:**
 - C# always block braces `{}`, even single-line. Prefer `if/else` over multi-condition ternary. Name compound boolean conditions before branching.
 - Frontend: never hand-write `queryFn`/`mutationFn`/`queryKey`; spread the generated `getXOptions`/`xMutation`/`getXQueryKey()`. One hook per file.
