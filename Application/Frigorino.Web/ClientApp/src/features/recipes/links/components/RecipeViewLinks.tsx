@@ -20,7 +20,7 @@ export const RecipeViewLinks = ({
         <Container
             maxWidth="sm"
             data-testid="recipe-view-links"
-            sx={{ px: 2, pb: 1, flexShrink: 0 }}
+            sx={{ px: 2, pb: 1 }}
         >
             <Typography
                 variant="overline"
