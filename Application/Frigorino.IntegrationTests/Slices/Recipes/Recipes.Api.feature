@@ -119,3 +119,38 @@ Feature: Recipes API
     And I POST a section named "Dough" to recipe "Pizza" via the API
     And I capture the revision of recipe "Pizza" via the API
     Then the two captured recipe revisions differ
+
+  Scenario: A new recipe has no source links
+    Given there is a recipe named "Pizza"
+    When I GET the source links of recipe "Pizza" via the API
+    Then the API response status is 200
+    And the API source links of recipe "Pizza" number 0
+
+  Scenario: Adding a valid source link succeeds and is listed
+    Given there is a recipe named "Pizza"
+    When I POST a source link "https://example.com/pizza" labelled "Best Pizza" to recipe "Pizza" via the API
+    Then the API response status is 201
+    And the API source links of recipe "Pizza" number 1
+
+  Scenario: Adding a non-http source link returns a validation error
+    Given there is a recipe named "Pizza"
+    When I POST a source link "ftp://example.com/file" with no scheme to recipe "Pizza" via the API
+    Then the API response status is 400
+    And the API response has a validation error for "Url"
+
+  Scenario: Deleting a source link removes it, and restore brings it back
+    Given there is a recipe named "Pizza"
+    And I POST a source link "https://example.com/pizza" labelled "Best Pizza" to recipe "Pizza" via the API
+    When I DELETE the source link "Best Pizza" of recipe "Pizza" via the API
+    Then the API response status is 204
+    And the API source links of recipe "Pizza" number 0
+    When I POST restore for the source link "Best Pizza" of recipe "Pizza" via the API
+    Then the API response status is 200
+    And the API source links of recipe "Pizza" number 1
+
+  Scenario: A source-link change moves the recipe revision token
+    Given there is a recipe named "Pizza"
+    When I capture the revision of recipe "Pizza" via the API
+    And I POST a source link "https://example.com/pizza" labelled "Best Pizza" to recipe "Pizza" via the API
+    And I capture the revision of recipe "Pizza" via the API
+    Then the two captured recipe revisions differ
