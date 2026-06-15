@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { addMember, applyBlueprint, createBlueprint, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, createRecipe, createRecipeItem, deleteBlueprint, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, deleteRecipe, deleteRecipeItem, getActiveHousehold, getApiAuthMe, getApiDemo, getBlueprint, getBlueprints, getExpiryCalendar, getExpiryCalendarRevision, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventoryRevision, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getListRevision, getLists, getMembers, getMyInventoryNotification, getPendingPromotions, getRecipe, getRecipeItem, getRecipeItems, getRecipeRevision, getRecipes, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, promoteListItems, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, reorderRecipeItem, restoreBlueprint, restoreInventoryItem, restoreItem, restoreRecipeItem, setActiveHousehold, skipPromotion, toggleItemStatus, unregisterFcmToken, updateBlueprint, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateRecipe, updateRecipeItem, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
-import type { AddMemberData, AddMemberError, AddMemberResponse, ApplyBlueprintData, ApplyBlueprintResponse, CreateBlueprintData, CreateBlueprintError, CreateBlueprintResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, CreateRecipeData, CreateRecipeError, CreateRecipeItemData, CreateRecipeItemError, CreateRecipeItemResponse, CreateRecipeResponse, DeleteBlueprintData, DeleteBlueprintResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, DeleteRecipeData, DeleteRecipeItemData, DeleteRecipeItemResponse, DeleteRecipeResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetBlueprintData, GetBlueprintResponse, GetBlueprintsData, GetBlueprintsResponse, GetExpiryCalendarData, GetExpiryCalendarResponse, GetExpiryCalendarRevisionData, GetExpiryCalendarRevisionResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventoryRevisionData, GetInventoryRevisionResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListRevisionData, GetListRevisionResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetPendingPromotionsData, GetPendingPromotionsResponse, GetRecipeData, GetRecipeItemData, GetRecipeItemResponse, GetRecipeItemsData, GetRecipeItemsResponse, GetRecipeResponse, GetRecipeRevisionData, GetRecipeRevisionResponse, GetRecipesData, GetRecipesResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PromoteListItemsData, PromoteListItemsError, PromoteListItemsResponse2, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, ReorderRecipeItemData, ReorderRecipeItemResponse, RestoreBlueprintData, RestoreBlueprintResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, RestoreRecipeItemData, RestoreRecipeItemResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, SkipPromotionData, SkipPromotionResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateBlueprintData, UpdateBlueprintError, UpdateBlueprintResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateRecipeData, UpdateRecipeError, UpdateRecipeItemData, UpdateRecipeItemError, UpdateRecipeItemResponse, UpdateRecipeResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
+import { addMember, applyBlueprint, createBlueprint, createHousehold, createInventory, createInventoryItem, createItem, createList, createMediaItem, createRecipe, createRecipeItem, createRecipeSection, deleteBlueprint, deleteHousehold, deleteInventory, deleteInventoryItem, deleteItem, deleteList, deleteRecipe, deleteRecipeItem, deleteRecipeSection, getActiveHousehold, getApiAuthMe, getApiDemo, getBlueprint, getBlueprints, getExpiryCalendar, getExpiryCalendarRevision, getHouseholdSettings, getInventories, getInventory, getInventoryItems, getInventoryRevision, getInventorySettings, getItem, getItemFile, getItems, getItemThumbnail, getList, getListRevision, getLists, getMembers, getMyInventoryNotification, getPendingPromotions, getRecipe, getRecipeItem, getRecipeItems, getRecipeRevision, getRecipes, getRecipeSections, getUserHouseholds, getUserSettings, getWeatherForecast, type Options, promoteListItems, putApiAuthProfile, registerFcmToken, removeMember, reorderInventoryItem, reorderItem, reorderRecipeItem, reorderRecipeSection, restoreBlueprint, restoreInventoryItem, restoreItem, restoreRecipeItem, restoreRecipeSection, setActiveHousehold, skipPromotion, toggleItemStatus, unregisterFcmToken, updateBlueprint, updateHouseholdSettings, updateInventory, updateInventoryItem, updateInventorySettings, updateItem, updateList, updateMemberRole, updateMyInventoryNotification, updateRecipe, updateRecipeItem, updateRecipeSection, updateUserNotificationSettings, updateUserSettings } from '../sdk.gen';
+import type { AddMemberData, AddMemberError, AddMemberResponse, ApplyBlueprintData, ApplyBlueprintResponse, CreateBlueprintData, CreateBlueprintError, CreateBlueprintResponse, CreateHouseholdData, CreateHouseholdError, CreateHouseholdResponse, CreateInventoryData, CreateInventoryError, CreateInventoryItemData, CreateInventoryItemError, CreateInventoryItemResponse, CreateInventoryResponse, CreateItemData, CreateItemError, CreateItemResponse, CreateListData, CreateListError, CreateListResponse, CreateMediaItemData, CreateMediaItemError, CreateMediaItemResponse, CreateRecipeData, CreateRecipeError, CreateRecipeItemData, CreateRecipeItemError, CreateRecipeItemResponse, CreateRecipeResponse, CreateRecipeSectionData, CreateRecipeSectionError, CreateRecipeSectionResponse, DeleteBlueprintData, DeleteBlueprintResponse, DeleteHouseholdData, DeleteHouseholdResponse, DeleteInventoryData, DeleteInventoryItemData, DeleteInventoryItemResponse, DeleteInventoryResponse, DeleteItemData, DeleteItemResponse, DeleteListData, DeleteListResponse, DeleteRecipeData, DeleteRecipeItemData, DeleteRecipeItemResponse, DeleteRecipeResponse, DeleteRecipeSectionData, DeleteRecipeSectionError, DeleteRecipeSectionResponse, GetActiveHouseholdData, GetActiveHouseholdResponse, GetApiAuthMeData, GetApiDemoData, GetApiDemoResponse, GetBlueprintData, GetBlueprintResponse, GetBlueprintsData, GetBlueprintsResponse, GetExpiryCalendarData, GetExpiryCalendarResponse, GetExpiryCalendarRevisionData, GetExpiryCalendarRevisionResponse, GetHouseholdSettingsData, GetHouseholdSettingsResponse, GetInventoriesData, GetInventoriesResponse, GetInventoryData, GetInventoryItemsData, GetInventoryItemsResponse, GetInventoryResponse, GetInventoryRevisionData, GetInventoryRevisionResponse, GetInventorySettingsData, GetInventorySettingsResponse, GetItemData, GetItemFileData, GetItemResponse, GetItemsData, GetItemsResponse, GetItemThumbnailData, GetListData, GetListResponse, GetListRevisionData, GetListRevisionResponse, GetListsData, GetListsResponse, GetMembersData, GetMembersResponse, GetMyInventoryNotificationData, GetMyInventoryNotificationResponse, GetPendingPromotionsData, GetPendingPromotionsResponse, GetRecipeData, GetRecipeItemData, GetRecipeItemResponse, GetRecipeItemsData, GetRecipeItemsResponse, GetRecipeResponse, GetRecipeRevisionData, GetRecipeRevisionResponse, GetRecipesData, GetRecipeSectionsData, GetRecipeSectionsResponse, GetRecipesResponse, GetUserHouseholdsData, GetUserHouseholdsResponse, GetUserSettingsData, GetUserSettingsResponse, GetWeatherForecastData, GetWeatherForecastResponse, PromoteListItemsData, PromoteListItemsError, PromoteListItemsResponse2, PutApiAuthProfileData, RegisterFcmTokenData, RemoveMemberData, RemoveMemberError, RemoveMemberResponse, ReorderInventoryItemData, ReorderInventoryItemResponse, ReorderItemData, ReorderItemResponse, ReorderRecipeItemData, ReorderRecipeItemResponse, ReorderRecipeSectionData, ReorderRecipeSectionResponse, RestoreBlueprintData, RestoreBlueprintResponse, RestoreInventoryItemData, RestoreInventoryItemResponse, RestoreItemData, RestoreItemResponse, RestoreRecipeItemData, RestoreRecipeItemResponse, RestoreRecipeSectionData, RestoreRecipeSectionResponse, SetActiveHouseholdData, SetActiveHouseholdResponse, SkipPromotionData, SkipPromotionResponse, ToggleItemStatusData, ToggleItemStatusResponse, UnregisterFcmTokenData, UnregisterFcmTokenResponse, UpdateBlueprintData, UpdateBlueprintError, UpdateBlueprintResponse, UpdateHouseholdSettingsData, UpdateHouseholdSettingsError, UpdateHouseholdSettingsResponse, UpdateInventoryData, UpdateInventoryError, UpdateInventoryItemData, UpdateInventoryItemError, UpdateInventoryItemResponse, UpdateInventoryResponse, UpdateInventorySettingsData, UpdateInventorySettingsResponse, UpdateItemData, UpdateItemError, UpdateItemResponse, UpdateListData, UpdateListError, UpdateListResponse, UpdateMemberRoleData, UpdateMemberRoleError, UpdateMemberRoleResponse, UpdateMyInventoryNotificationData, UpdateMyInventoryNotificationError, UpdateMyInventoryNotificationResponse, UpdateRecipeData, UpdateRecipeError, UpdateRecipeItemData, UpdateRecipeItemError, UpdateRecipeItemResponse, UpdateRecipeResponse, UpdateRecipeSectionData, UpdateRecipeSectionError, UpdateRecipeSectionResponse, UpdateUserNotificationSettingsData, UpdateUserNotificationSettingsError, UpdateUserNotificationSettingsResponse, UpdateUserSettingsData, UpdateUserSettingsError, UpdateUserSettingsResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -993,6 +993,91 @@ export const reorderRecipeItemMutation = (options?: Partial<Options<ReorderRecip
     const mutationOptions: UseMutationOptions<ReorderRecipeItemResponse, DefaultError, Options<ReorderRecipeItemData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await reorderRecipeItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getRecipeSectionsQueryKey = (options: Options<GetRecipeSectionsData>) => createQueryKey('getRecipeSections', options, false, ['RecipeSections']);
+
+export const getRecipeSectionsOptions = (options: Options<GetRecipeSectionsData>) => queryOptions<GetRecipeSectionsResponse, DefaultError, GetRecipeSectionsResponse, ReturnType<typeof getRecipeSectionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRecipeSections({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRecipeSectionsQueryKey(options)
+});
+
+export const createRecipeSectionMutation = (options?: Partial<Options<CreateRecipeSectionData>>): UseMutationOptions<CreateRecipeSectionResponse, CreateRecipeSectionError, Options<CreateRecipeSectionData>> => {
+    const mutationOptions: UseMutationOptions<CreateRecipeSectionResponse, CreateRecipeSectionError, Options<CreateRecipeSectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createRecipeSection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const deleteRecipeSectionMutation = (options?: Partial<Options<DeleteRecipeSectionData>>): UseMutationOptions<DeleteRecipeSectionResponse, DeleteRecipeSectionError, Options<DeleteRecipeSectionData>> => {
+    const mutationOptions: UseMutationOptions<DeleteRecipeSectionResponse, DeleteRecipeSectionError, Options<DeleteRecipeSectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await deleteRecipeSection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const updateRecipeSectionMutation = (options?: Partial<Options<UpdateRecipeSectionData>>): UseMutationOptions<UpdateRecipeSectionResponse, UpdateRecipeSectionError, Options<UpdateRecipeSectionData>> => {
+    const mutationOptions: UseMutationOptions<UpdateRecipeSectionResponse, UpdateRecipeSectionError, Options<UpdateRecipeSectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await updateRecipeSection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const restoreRecipeSectionMutation = (options?: Partial<Options<RestoreRecipeSectionData>>): UseMutationOptions<RestoreRecipeSectionResponse, DefaultError, Options<RestoreRecipeSectionData>> => {
+    const mutationOptions: UseMutationOptions<RestoreRecipeSectionResponse, DefaultError, Options<RestoreRecipeSectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await restoreRecipeSection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const reorderRecipeSectionMutation = (options?: Partial<Options<ReorderRecipeSectionData>>): UseMutationOptions<ReorderRecipeSectionResponse, DefaultError, Options<ReorderRecipeSectionData>> => {
+    const mutationOptions: UseMutationOptions<ReorderRecipeSectionResponse, DefaultError, Options<ReorderRecipeSectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await reorderRecipeSection({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

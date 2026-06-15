@@ -1,5 +1,5 @@
-import { Delete } from "@mui/icons-material";
-import { Alert, Box, Container, Skeleton, Stack } from "@mui/material";
+import { Add, Delete } from "@mui/icons-material";
+import { Alert, Box, Button, Container, Skeleton, Stack } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,19 +8,25 @@ import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
+import { SortableSectionList } from "../../../components/sortables/SortableSectionList";
 import { usePersistedExpanded } from "../../../hooks/usePersistedExpanded";
+import { usePersistedNumber } from "../../../hooks/usePersistedNumber";
 import type { QuantityDto, RecipeItemResponse } from "../../../lib/api";
 import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
-import { RecipeContainer } from "../items/components/RecipeContainer";
+import { RecipeSectionCard } from "../items/components/RecipeSectionCard";
 import { RecipeFooter } from "../items/components/RecipeFooter";
 import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
 import { useRecipeExtractionPoll } from "../items/useRecipeExtractionPoll";
 import { useRecipeItems } from "../items/useRecipeItems";
 import { useRecipeRevision } from "../items/useRecipeRevision";
 import { useUpdateRecipeItem } from "../items/useUpdateRecipeItem";
+import { useCreateRecipeSection } from "../sections/useCreateRecipeSection";
+import { useDeleteRecipeSection } from "../sections/useDeleteRecipeSection";
+import { useRecipeSections } from "../sections/useRecipeSections";
+import { useReorderRecipeSection } from "../sections/useReorderRecipeSection";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeEditPage = () => {
@@ -39,9 +45,9 @@ export const RecipeEditPage = () => {
         "recipe-edit-section:details",
         true,
     );
-    const [ingredientsExpanded, setIngredientsExpanded] = usePersistedExpanded(
-        "recipe-edit-section:ingredients",
-        true,
+    const [openSectionId, setOpenSectionId] = usePersistedNumber(
+        "recipe-edit:open-section",
+        0,
     );
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
@@ -73,8 +79,28 @@ export const RecipeEditPage = () => {
     );
     useRecipeRevision(householdId, recipeId);
 
+    const { data: sections = [] } = useRecipeSections(
+        householdId,
+        recipeId,
+        !!recipe,
+    );
+    const createSection = useCreateRecipeSection();
+    const deleteSection = useDeleteRecipeSection();
+    const reorderSection = useReorderRecipeSection();
+
     const createMutation = useCreateRecipeItem();
     const updateMutation = useUpdateRecipeItem();
+
+    // The open accordion section; falls back to the first section when none is chosen
+    // or the chosen one was deleted. The composer (and item-create) targets it.
+    const effectiveOpenSectionId =
+        sections.find((s) => s.id === openSectionId)?.id ??
+        sections[0]?.id ??
+        0;
+    const composerVisible = effectiveOpenSectionId > 0;
+    const openSectionItems = items.filter(
+        (i) => i.sectionId === effectiveOpenSectionId,
+    );
 
     const { isExtracting, extractingItemId } = useRecipeExtractionPoll(
         householdId,
@@ -101,11 +127,11 @@ export const RecipeEditPage = () => {
 
     const handleAddItem = useCallback(
         async (text: string, comment: string | null) => {
-            if (!householdId) return;
+            if (!householdId || !effectiveOpenSectionId) return;
             try {
                 const created = await createMutation.mutateAsync({
                     path: { householdId, recipeId },
-                    body: { text, comment },
+                    body: { sectionId: effectiveOpenSectionId, text, comment },
                 });
                 setPendingExtraction({
                     id: created.id,
@@ -115,7 +141,7 @@ export const RecipeEditPage = () => {
                 // createMutation.onError rolls back the optimistic item.
             }
         },
-        [createMutation, householdId, recipeId],
+        [createMutation, householdId, recipeId, effectiveOpenSectionId],
     );
 
     const handleUpdateItem = useCallback(
@@ -140,17 +166,26 @@ export const RecipeEditPage = () => {
         [editingItem, updateMutation, householdId, recipeId],
     );
 
-    // Collapsing the ingredients section hides the composer, so drop any in-progress
-    // item edit (its editor would otherwise vanish mid-edit).
-    const handleIngredientsExpandedChange = useCallback(
-        (expanded: boolean) => {
-            setIngredientsExpanded(expanded);
+    // One section open at a time. Collapsing the open section hides the composer, so drop
+    // any in-progress item edit (its editor would otherwise vanish mid-edit).
+    const handleToggleSection = useCallback(
+        (sectionId: number, expanded: boolean) => {
+            setOpenSectionId(expanded ? sectionId : 0);
             if (!expanded) {
                 setEditingItem(null);
             }
         },
-        [setIngredientsExpanded],
+        [setOpenSectionId],
     );
+
+    const handleAddSection = useCallback(async () => {
+        if (!householdId) return;
+        const created = await createSection.mutateAsync({
+            path: { householdId, recipeId },
+            body: { name: null, description: null },
+        });
+        setOpenSectionId(created.id);
+    }, [createSection, householdId, recipeId, setOpenSectionId]);
 
     const isLoading = householdLoading || recipeLoading;
     const error = householdError || recipeError;
@@ -249,31 +284,61 @@ export const RecipeEditPage = () => {
                             />
                         </CollapsibleSection>
 
-                        <CollapsibleSection
-                            title={t("recipes.ingredientsHeading")}
-                            expanded={ingredientsExpanded}
-                            onChange={handleIngredientsExpandedChange}
-                            testId="recipe-section-ingredients"
-                            disableContentPadding
+                        <SortableSectionList
+                            sections={sections}
+                            onReorder={async (sectionId, afterId) => {
+                                await reorderSection.mutateAsync({
+                                    path: { householdId, recipeId, sectionId },
+                                    body: { afterId },
+                                });
+                            }}
+                            renderSection={(section, dragHandle) => (
+                                <RecipeSectionCard
+                                    householdId={householdId}
+                                    recipeId={recipeId}
+                                    section={section}
+                                    expanded={
+                                        section.id === effectiveOpenSectionId
+                                    }
+                                    onToggle={(exp) =>
+                                        handleToggleSection(section.id, exp)
+                                    }
+                                    canDelete={sections.length > 1}
+                                    onDelete={() =>
+                                        deleteSection.mutate({
+                                            path: {
+                                                householdId,
+                                                recipeId,
+                                                sectionId: section.id,
+                                            },
+                                        })
+                                    }
+                                    editingItem={editingItem}
+                                    onEditItem={setEditingItem}
+                                    isExtracting={isExtracting}
+                                    extractingItemId={extractingItemId}
+                                    dragHandle={dragHandle}
+                                />
+                            )}
+                        />
+
+                        <Button
+                            startIcon={<Add />}
+                            onClick={handleAddSection}
+                            disabled={createSection.isPending}
+                            data-testid="recipe-add-section"
+                            sx={{ alignSelf: "flex-start" }}
                         >
-                            <RecipeContainer
-                                householdId={householdId}
-                                recipeId={recipeId}
-                                editingItem={editingItem}
-                                onEdit={setEditingItem}
-                                isExtracting={isExtracting}
-                                extractingItemId={extractingItemId}
-                                scrollable={false}
-                            />
-                        </CollapsibleSection>
+                            {t("recipes.addSection")}
+                        </Button>
                     </Stack>
                 </Container>
             </Box>
 
-            {ingredientsExpanded ? (
+            {composerVisible ? (
                 <RecipeFooter
                     editingItem={editingItem}
-                    existingItems={items}
+                    existingItems={openSectionItems}
                     onAddItem={handleAddItem}
                     onUpdateItem={handleUpdateItem}
                     onCancelEdit={() => setEditingItem(null)}

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
     getRecipeItemsQueryKey,
     getRecipeRevisionOptions,
+    getRecipeSectionsQueryKey,
 } from "../../../lib/api/@tanstack/react-query.gen";
 import {
     REVISION_QUERY_OPTIONS,
@@ -23,6 +24,16 @@ export const useRecipeRevision = (householdId: number, recipeId: number) => {
     useRevisionInvalidation({
         rev: data?.rev,
         dataQueryKey: getRecipeItemsQueryKey({
+            path: { householdId, recipeId },
+        }),
+        isLocalMutation: (variables) =>
+            (variables as { path?: { recipeId?: number } } | undefined)?.path
+                ?.recipeId === recipeId,
+    });
+
+    useRevisionInvalidation({
+        rev: data?.rev,
+        dataQueryKey: getRecipeSectionsQueryKey({
             path: { householdId, recipeId },
         }),
         isLocalMutation: (variables) =>

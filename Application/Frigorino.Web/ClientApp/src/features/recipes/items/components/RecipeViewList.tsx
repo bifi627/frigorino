@@ -6,9 +6,13 @@ import {
     Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import type { RecipeItemResponse } from "../../../../lib/api";
+import type {
+    RecipeItemResponse,
+    RecipeSectionResponse,
+} from "../../../../lib/api";
 import { featureContentPx } from "../../../../theme";
 import { matchesQuery } from "../../../../utils/searchUtils";
+import { useRecipeSections } from "../../sections/useRecipeSections";
 import { useRecipeItems } from "../useRecipeItems";
 import { RecipeViewItem } from "./RecipeViewItem";
 
@@ -29,25 +33,46 @@ export function RecipeViewList({
     searchQuery = "",
     multiplier = 1,
 }: RecipeViewListProps) {
+    const { t } = useTranslation();
     const {
         data: items = [],
-        isLoading,
-        error,
+        isLoading: itemsLoading,
+        error: itemsError,
     } = useRecipeItems(householdId, recipeId);
-    const { t } = useTranslation();
+    const { data: sections = [], isLoading: sectionsLoading } =
+        useRecipeSections(householdId, recipeId);
 
+    const isLoading = itemsLoading || sectionsLoading;
     const trimmedQuery = searchQuery.trim();
     const filterActive = trimmedQuery.length > 0;
+
     const visibleItems = filterActive
         ? items.filter((item) =>
               matchesQuery(searchableText(item), trimmedQuery),
           )
         : items;
 
+    // Section rows: each active section + its (filtered) items, dropping sections that have
+    // neither items nor a description.
+    const grouped = sections
+        .map((section) => ({
+            section,
+            sectionItems: visibleItems.filter(
+                (i) => i.sectionId === section.id,
+            ),
+        }))
+        .filter(
+            ({ section, sectionItems }) =>
+                sectionItems.length > 0 || Boolean(section.description?.trim()),
+        );
+
     const showNoMatches =
-        filterActive && !isLoading && !error && visibleItems.length === 0;
+        filterActive && !isLoading && !itemsError && visibleItems.length === 0;
     const showEmpty =
-        !filterActive && !isLoading && !error && items.length === 0;
+        !filterActive && !isLoading && !itemsError && items.length === 0;
+
+    const sectionHeader = (section: RecipeSectionResponse) =>
+        section.name?.trim() || t("recipes.ingredientsHeading");
 
     return (
         <Container
@@ -103,13 +128,43 @@ export function RecipeViewList({
                 </Paper>
             ) : null}
 
-            {!isLoading && !error
-                ? visibleItems.map((item) => (
-                      <RecipeViewItem
-                          key={item.id}
-                          item={item}
-                          multiplier={multiplier}
-                      />
+            {!isLoading && !itemsError
+                ? grouped.map(({ section, sectionItems }) => (
+                      <Box
+                          key={section.id}
+                          data-testid={`recipe-view-section-${section.id}`}
+                          sx={{ mb: 2 }}
+                      >
+                          <Typography
+                              variant="subtitle2"
+                              data-testid={`recipe-view-section-${section.id}-header`}
+                              sx={{ fontWeight: 700, mt: 1 }}
+                          >
+                              {sectionHeader(section)}
+                          </Typography>
+                          {section.description?.trim() ? (
+                              <Typography
+                                  variant="body2"
+                                  data-testid={`recipe-view-section-${section.id}-description`}
+                                  sx={{
+                                      color: "text.secondary",
+                                      fontStyle: "italic",
+                                      whiteSpace: "pre-wrap",
+                                      wordBreak: "break-word",
+                                      mb: 0.5,
+                                  }}
+                              >
+                                  {section.description}
+                              </Typography>
+                          ) : null}
+                          {sectionItems.map((item) => (
+                              <RecipeViewItem
+                                  key={item.id}
+                                  item={item}
+                                  multiplier={multiplier}
+                              />
+                          ))}
+                      </Box>
                   ))
                 : null}
         </Container>

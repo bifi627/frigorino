@@ -20,19 +20,28 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(ri => ri.UpdatedAt).IsRequired();
             builder.Property(ri => ri.IsActive).IsRequired().HasDefaultValue(true);
 
+            builder.Property(ri => ri.SectionId).IsRequired();
+
             builder.HasOne(ri => ri.Recipe)
                 .WithMany(r => r.Items)
                 .HasForeignKey(ri => ri.RecipeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(ri => ri.Section)
+                .WithMany(s => s.Items)
+                .HasForeignKey(ri => ri.SectionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasIndex(ri => ri.RecipeId);
             builder.HasIndex(ri => ri.IsActive);
             builder.HasIndex(ri => ri.CreatedAt);
             builder.HasIndex(ri => new { ri.RecipeId, ri.IsActive });
-            builder.HasIndex(ri => new { ri.RecipeId, ri.Rank })
+            builder.HasIndex(ri => ri.SectionId);
+            builder.HasIndex(ri => new { ri.SectionId, ri.IsActive });
+            builder.HasIndex(ri => new { ri.SectionId, ri.Rank })
                 .IsUnique()
                 .HasFilter("\"IsActive\"")
-                .HasDatabaseName("UX_RecipeItems_RecipeId_Rank_Active");
+                .HasDatabaseName("UX_RecipeItems_SectionId_Rank_Active");
         }
     }
 }

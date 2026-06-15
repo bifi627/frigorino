@@ -33,10 +33,11 @@ namespace Frigorino.Test.Recipes
             using (var seed = NewContext(dbName))
             {
                 var recipe = Recipe.Create("Pie", null, 1, "u1").Value;
+                var section = recipe.AddSection(null, null).Value;
                 seed.Recipes.Add(recipe);
                 await seed.SaveChangesAsync();
 
-                var item = recipe.AddItem("250g flour", null, null).Value;
+                var item = recipe.AddItem(section.Id, "250g flour", null, null).Value;
                 await seed.SaveChangesAsync();
 
                 recipeId = recipe.Id;

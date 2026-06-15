@@ -76,3 +76,46 @@ Feature: Recipes API
     When I POST a recipe item with text "20 apples" to "Pasta Carbonara" via the API
     Then the recipe item eventually has text "apples" with quantity 20 unit 4
     And the Products table is empty
+
+  Scenario: Creating a recipe seeds one default section
+    Given there is a recipe named "Pizza"
+    When I GET the sections of recipe "Pizza" via the API
+    Then the API response status is 200
+    And the API sections of recipe "Pizza" number 1
+
+  Scenario: Adding a second section appends it after the first
+    Given there is a recipe named "Pizza"
+    When I POST a section named "Dough" to recipe "Pizza" via the API
+    Then the API response status is 201
+    When I GET the sections of recipe "Pizza" via the API
+    Then the API sections of recipe "Pizza" number 2
+
+  Scenario: Deleting the only section is rejected
+    Given there is a recipe named "Pizza"
+    When I DELETE the only section of recipe "Pizza" via the API
+    Then the API response status is 400
+
+  Scenario: Deleting a non-empty section cascades its items, and restore brings them back
+    Given there is a recipe named "Pizza"
+    And I POST a section named "Topping" to recipe "Pizza" via the API
+    And the recipe "Pizza" has an item "Cheese" in section "Topping"
+    When I DELETE the section "Topping" of recipe "Pizza" via the API
+    Then the API response status is 204
+    And the API response when getting items of recipe "Pizza" omits "Cheese"
+    When I POST restore for the section "Topping" of recipe "Pizza" via the API
+    Then the API response status is 200
+    And the API response when getting items of recipe "Pizza" includes "Cheese"
+
+  Scenario: Items live in the section they were added to
+    Given there is a recipe named "Pizza"
+    And I POST a section named "Topping" to recipe "Pizza" via the API
+    And the recipe "Pizza" has an item "Cheese" in section "Topping"
+    When I GET the items of recipe "Pizza" via the API
+    Then the recipe item "Cheese" is in section "Topping"
+
+  Scenario: A section change moves the recipe revision token
+    Given there is a recipe named "Pizza"
+    When I capture the revision of recipe "Pizza" via the API
+    And I POST a section named "Dough" to recipe "Pizza" via the API
+    And I capture the revision of recipe "Pizza" via the API
+    Then the two captured recipe revisions differ

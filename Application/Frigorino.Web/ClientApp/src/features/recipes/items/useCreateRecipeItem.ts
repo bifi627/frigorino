@@ -29,6 +29,7 @@ export const useCreateRecipeItem = () => {
             const optimisticItem: RecipeItemResponse = {
                 id: tempId,
                 recipeId: variables.path.recipeId,
+                sectionId: variables.body.sectionId,
                 text: variables.body.text,
                 comment: variables.body.comment ?? null,
                 quantity: null,
