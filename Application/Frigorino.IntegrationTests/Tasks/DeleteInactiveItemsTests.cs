@@ -132,6 +132,12 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             var keepSection = new RecipeSection { RecipeId = keepRecipe.Id, Rank = "a0", IsActive = true, CreatedAt = now, UpdatedAt = now };
             var dropSection = new RecipeSection { RecipeId = keepRecipe.Id, Rank = "a1", IsActive = false, CreatedAt = now, UpdatedAt = now };
             db.RecipeSections.AddRange(keepSection, dropSection);
+
+            // A link feeds the direct RecipeLinks.Where(!IsActive) purge: the active one survives,
+            // the soft-deleted one is removed.
+            var keepLink = new RecipeLink { RecipeId = keepRecipe.Id, Url = "https://keep.example.com", Rank = "a0", IsActive = true, CreatedAt = now, UpdatedAt = now };
+            var dropLink = new RecipeLink { RecipeId = keepRecipe.Id, Url = "https://drop.example.com", Rank = "a1", IsActive = false, CreatedAt = now, UpdatedAt = now };
+            db.RecipeLinks.AddRange(keepLink, dropLink);
             await db.SaveChangesAsync();
 
             db.RecipeItems.AddRange(
@@ -177,6 +183,11 @@ public class DeleteInactiveItemsTests : IAsyncLifetime
             // one survives.
             var recipeSections = await db.RecipeSections.CountAsync();
             Assert.Equal(1, recipeSections);
+
+            // The soft-deleted link under the surviving recipe is gone (direct purge); the active
+            // one survives.
+            var recipeLinks = await db.RecipeLinks.CountAsync();
+            Assert.Equal(1, recipeLinks);
         }
     }
 }
