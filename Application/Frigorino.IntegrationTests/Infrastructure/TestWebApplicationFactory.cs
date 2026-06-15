@@ -81,14 +81,15 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
 
             // Real blob storage bound to a unique temp dir per factory instance, registered under BOTH
-            // storage interfaces (one shared instance) so the startup orphan-sweep operates on the temp
-            // dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor stays real.
-            services.RemoveAll<IFileStorage>();
-            services.RemoveAll<IFileStorageMaintenance>();
+            // keyed storage interfaces (one shared instance per area) so the startup orphan-sweep operates
+            // on the temp dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor
+            // stays real. Keyed re-registration wins on resolution (last keyed descriptor for a key).
+            services.RemoveAllKeyed<IFileStorage>(BlobAreas.ListItem);
+            services.RemoveAllKeyed<IFileStorageMaintenance>(BlobAreas.ListItem);
             var blobRoot = Path.Combine(Path.GetTempPath(), "frigorino-it-blobs", Guid.NewGuid().ToString("N"));
             var blobStorage = new LocalFileStorage(blobRoot);
-            services.AddSingleton<IFileStorage>(blobStorage);
-            services.AddSingleton<IFileStorageMaintenance>(blobStorage);
+            services.AddKeyedSingleton<IFileStorage>(BlobAreas.ListItem, blobStorage);
+            services.AddKeyedSingleton<IFileStorageMaintenance>(BlobAreas.ListItem, blobStorage);
         });
     }
 }

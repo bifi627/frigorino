@@ -1,12 +1,10 @@
 using System.Runtime.CompilerServices;
 using FakeItEasy;
-using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
-using Frigorino.Infrastructure.EntityFramework;
 using Frigorino.Infrastructure.Notifications;
+using Frigorino.Infrastructure.Services;
 using Frigorino.Infrastructure.Tasks;
-using Frigorino.Test.TestInfrastructure;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -35,41 +33,25 @@ namespace Frigorino.Test.Infrastructure
             }
         }
 
-        private static TestApplicationDbContext NewContext(string dbName)
+        // Supplies the referenced-key set for one area without touching a database.
+        private sealed class StubReferenceSource : IBlobReferenceSource
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(dbName)
-                .Options;
-            return new TestApplicationDbContext(options);
+            private readonly ISet<string> _keys;
+
+            public StubReferenceSource(string area, ISet<string> keys)
+            {
+                AreaName = area;
+                _keys = keys;
+            }
+
+            public string AreaName { get; }
+
+            public Task<ISet<string>> GetReferencedKeysAsync(CancellationToken ct) => Task.FromResult(_keys);
         }
 
         [Fact]
-        public async Task Run_ReclaimsOnly_UnreferencedAgedBlobs()
+        public async Task Run_ReclaimsOnly_UnreferencedAgedBlobs_InTheArea()
         {
-            var dbName = Guid.NewGuid().ToString();
-            using (var db = NewContext(dbName))
-            {
-                db.ListItems.Add(new ListItem
-                {
-                    ListId = 1,
-                    Text = "",
-                    Type = ListItemType.Image,
-                    StorageKey = "ref-full",
-                    ThumbnailStorageKey = "ref-thumb",
-                    IsActive = true,
-                });
-                db.ListItems.Add(new ListItem
-                {
-                    ListId = 1,
-                    Text = "",
-                    Type = ListItemType.Image,
-                    StorageKey = "ref-deleted",
-                    ThumbnailStorageKey = null,
-                    IsActive = false,
-                });
-                await db.SaveChangesAsync();
-            }
-
             var old = DateTimeOffset.UtcNow.AddDays(-2);
             var fresh = DateTimeOffset.UtcNow.AddMinutes(-5);
             var maintenance = new StubMaintenance(new[]
@@ -80,13 +62,20 @@ namespace Frigorino.Test.Infrastructure
                 new StoredBlob("orphan-old", old),
                 new StoredBlob("orphan-fresh", fresh),
             });
-
             var storage = A.Fake<IFileStorage>();
-            var settings = Options.Create(new MaintenanceSettings { OrphanBlobGraceHours = 24 });
 
-            using var runDb = NewContext(dbName);
+            // Referenced set: full+thumb of a live row, plus a soft-deleted row's full-res key.
+            var referenced = new HashSet<string>(StringComparer.Ordinal) { "ref-full", "ref-thumb", "ref-deleted" };
+            var source = new StubReferenceSource(BlobAreas.ListItem, referenced);
+
+            var services = new ServiceCollection();
+            services.AddKeyedSingleton<IFileStorage>(BlobAreas.ListItem, storage);
+            services.AddKeyedSingleton<IFileStorageMaintenance>(BlobAreas.ListItem, maintenance);
+            using var sp = services.BuildServiceProvider();
+
+            var settings = Options.Create(new MaintenanceSettings { OrphanBlobGraceHours = 24 });
             var task = new ReclaimOrphanBlobs(
-                runDb, storage, maintenance, settings, NullLogger<ReclaimOrphanBlobs>.Instance);
+                sp, new[] { source }, settings, NullLogger<ReclaimOrphanBlobs>.Instance);
 
             await task.Run();
 

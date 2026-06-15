@@ -1,6 +1,6 @@
 # Recipe attachments (images)
 
-**Status:** Design approved (brainstorm) — **blocked on a prerequisite** (blob-area refactor, see `TECH_DEBT.md`)
+**Status:** Design approved (brainstorm) — prerequisite **landed** (blob-area refactor on branch `refactor/blob-storage-areas`)
 **Date:** 2026-06-15
 **Branch:** TBD — `feat/recipe-attachments`, off `stage` once the blob-area refactor and `feat/recipe-source-links` have merged
 **Source idea:** "File / image / document attachments" in `IDEAS_Recipes.md`
@@ -28,13 +28,15 @@ the frontend blob-caching pattern (cache the `Blob`, per-consumer object URL). A
 links feature: optional caption, fractional drag-reorder, soft-delete + undo, and revision-token
 participation.
 
-## Prerequisite (hard dependency)
+## Prerequisite (landed)
 
-This feature **must not start** until the **blob-area refactor** in `TECH_DEBT.md` lands. Today there
-is a single blob prefix and the orphan sweep's referenced-key set is hardcoded to `ListItems`; adding
-a second blob feature on top of that would make the sweep delete the new feature's live blobs. The
-refactor introduces per-feature/per-env `BlobArea`s (prefix `{env}/{area}`), keyed-DI storage
-instances, and an `IBlobReferenceSource` registry that the sweep iterates per folder.
+The **blob-area refactor** this feature depended on has **landed** (branch `refactor/blob-storage-areas`).
+It replaced the single blob prefix + `ListItems`-hardcoded orphan sweep with per-feature/per-env
+`BlobArea`s: `BlobAreas` constants, keyed-DI `IFileStorage`/`IFileStorageMaintenance` per area
+(prefix `{env}/{area}`, composed from `FileStorage:Environment`), and an `IBlobReferenceSource`
+registry the sweep iterates per folder (`ReclaimOrphanBlobs` resolves each area's keyed storage by
+name). Adding a blob feature now needs only a new area constant + an `IBlobReferenceSource` — the
+sweep itself does not change.
 
 **What this feature then contributes on top of the refactor:**
 - A `recipe-attachment` `BlobArea` (prefix `{env}/recipe-attachment`), with its keyed `IFileStorage`
@@ -288,7 +290,7 @@ Still `docker build` at the end per the verification gate.
   re-add.
 - **Storage keys never leave the server** — the client uses `…/file` and `…/thumbnail` (hard-cached,
   immutable GUID keys).
-- **Blocked on the blob-area refactor** (`TECH_DEBT.md`); contributes a `recipe-attachment` area +
-  an `IBlobReferenceSource`.
+- **Blob-area refactor has landed** (branch `refactor/blob-storage-areas`); this feature contributes a
+  `recipe-attachment` area + an `IBlobReferenceSource`.
 - Edit-page "Attachments" section **defaults collapsed**; **no backfill** (zero attachments is valid).
 - **No data migration of existing list-item blobs** — barely used; data loss accepted (2026-06-15).
