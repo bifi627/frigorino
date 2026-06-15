@@ -376,6 +376,15 @@
         "sectionDescription": "Section description",
         "sectionDescriptionPlaceholder": "Optional notes for this section",
         "deleteSection": "Delete section",
-        "sectionDeleted": "Section deleted"
+        "sectionDeleted": "Section deleted",
+        "sourceLinks": "Source links",
+        "addLink": "Add link",
+        "linkUrl": "URL",
+        "linkLabel": "Display text",
+        "linkUrlPlaceholder": "https://example.com/recipe",
+        "linkLabelPlaceholder": "e.g. The original blog post",
+        "deleteLink": "Delete link",
+        "linkDeleted": "Link deleted",
+        "invalidUrl": "Enter a valid http(s) URL"
     }
 }
