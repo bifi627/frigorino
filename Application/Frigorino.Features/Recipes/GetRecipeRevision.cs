@@ -51,6 +51,10 @@ namespace Frigorino.Features.Recipes
             var linkMaxUpdatedAt = await links.MaxAsync(l => (DateTime?)l.UpdatedAt, ct);
             var linkCount = await links.CountAsync(ct);
 
+            var attachments = db.RecipeAttachments.Where(a => a.RecipeId == recipeId && a.IsActive);
+            var attachmentMaxUpdatedAt = await attachments.MaxAsync(a => (DateTime?)a.UpdatedAt, ct);
+            var attachmentCount = await attachments.CountAsync(ct);
+
             DateTime? maxUpdatedAt = itemMaxUpdatedAt;
             if (sectionMaxUpdatedAt is not null && (maxUpdatedAt is null || sectionMaxUpdatedAt > maxUpdatedAt))
             {
@@ -60,7 +64,11 @@ namespace Frigorino.Features.Recipes
             {
                 maxUpdatedAt = linkMaxUpdatedAt;
             }
-            var count = itemCount + sectionCount + linkCount;
+            if (attachmentMaxUpdatedAt is not null && (maxUpdatedAt is null || attachmentMaxUpdatedAt > maxUpdatedAt))
+            {
+                maxUpdatedAt = attachmentMaxUpdatedAt;
+            }
+            var count = itemCount + sectionCount + linkCount + attachmentCount;
 
             return TypedResults.Ok(RevisionResponse.Compute(recipe.UpdatedAt, maxUpdatedAt, count));
         }
