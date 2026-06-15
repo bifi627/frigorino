@@ -24,6 +24,7 @@ namespace Frigorino.Domain.Entities
         public User CreatedByUser { get; set; } = null!;
         public ICollection<RecipeItem> Items { get; set; } = new List<RecipeItem>();
         public ICollection<RecipeSection> Sections { get; set; } = new List<RecipeSection>();
+        public ICollection<RecipeLink> Links { get; set; } = new List<RecipeLink>();
 
         public static Result<Recipe> Create(string name, string? description, int householdId, string createdByUserId, int? servings = null)
         {
@@ -452,6 +453,134 @@ namespace Frigorino.Domain.Entities
             return Result.Ok(item);
         }
 
+        // ---- RecipeLink coordination (collaborative — any member; no role gate) ----
+
+        public Result<RecipeLink> AddLink(string url, string? label)
+        {
+            var errors = ValidateLinkMetadata(url, label);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeLink>(errors);
+            }
+
+            var now = DateTime.UtcNow;
+            var link = new RecipeLink
+            {
+                RecipeId = Id,
+                Url = url.Trim(),
+                Label = string.IsNullOrWhiteSpace(label) ? null : label.Trim(),
+                Rank = ComputeAppendLinkRank(),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+            };
+            Links.Add(link);
+            return Result.Ok(link);
+        }
+
+        public Result<RecipeLink> UpdateLink(int linkId, string url, string? label)
+        {
+            var link = Links.FirstOrDefault(l => l.Id == linkId && l.IsActive);
+            if (link is null)
+            {
+                return Result.Fail<RecipeLink>(new EntityNotFoundError($"Recipe link {linkId} not found."));
+            }
+
+            var errors = ValidateLinkMetadata(url, label);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeLink>(errors);
+            }
+
+            link.Url = url.Trim();
+            link.Label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
+            link.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(link);
+        }
+
+        public Result RemoveLink(int linkId)
+        {
+            var link = Links.FirstOrDefault(l => l.Id == linkId && l.IsActive);
+            if (link is null)
+            {
+                return Result.Fail(new EntityNotFoundError($"Recipe link {linkId} not found."));
+            }
+            link.IsActive = false;
+            link.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok();
+        }
+
+        // Undo of a delete: reactivates the link with its ORIGINAL rank to preserve position. If a
+        // live link took that rank while it was deleted, the partial unique index rejects it; the
+        // restore slice re-mints via ReplaceRestoredLinkRank on that 23505 retry. (Links have no
+        // child rows, so unlike RestoreSection there is nothing else to de-collide here.)
+        public Result<RecipeLink> RestoreLink(int linkId)
+        {
+            var link = Links.FirstOrDefault(l => l.Id == linkId && !l.IsActive);
+            if (link is null)
+            {
+                return Result.Fail<RecipeLink>(new EntityNotFoundError($"Recipe link {linkId} not found."));
+            }
+            link.IsActive = true;
+            link.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(link);
+        }
+
+        public Result<RecipeLink> ReplaceRestoredLinkRank(int linkId)
+        {
+            var link = Links.FirstOrDefault(l => l.Id == linkId && l.IsActive);
+            if (link is null)
+            {
+                return Result.Fail<RecipeLink>(new EntityNotFoundError($"Recipe link {linkId} not found."));
+            }
+            link.Rank = ComputeAppendLinkRank();
+            link.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(link);
+        }
+
+        public Result<RecipeLink> ReorderLink(int linkId, int afterLinkId)
+        {
+            var link = Links.FirstOrDefault(l => l.Id == linkId && l.IsActive);
+            if (link is null)
+            {
+                return Result.Fail<RecipeLink>(new EntityNotFoundError($"Recipe link {linkId} not found."));
+            }
+            if (afterLinkId == linkId)
+            {
+                return Result.Ok(link);
+            }
+
+            var others = Links
+                .Where(l => l.IsActive && l.Id != link.Id)
+                .OrderBy(l => l.Rank, StringComparer.Ordinal)
+                .ToList();
+
+            var after = afterLinkId == 0 ? null : others.FirstOrDefault(l => l.Id == afterLinkId);
+            var before = after is not null
+                ? others.FirstOrDefault(l => string.CompareOrdinal(l.Rank, after.Rank) > 0)
+                : null;
+
+            string newRank;
+            if (after is null)
+            {
+                newRank = others.Count == 0
+                    ? FractionalIndex.GenerateKeyBetween(null, null)
+                    : FractionalIndex.GenerateKeyBetween(null, others[0].Rank);
+            }
+            else if (before is null)
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, null);
+            }
+            else
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, before.Rank);
+            }
+
+            link.Rank = newRank;
+            link.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(link);
+        }
+
         private static List<IError> ValidateSectionMetadata(string? name, string? description)
         {
             var errors = new List<IError>();
@@ -473,6 +602,48 @@ namespace Frigorino.Domain.Entities
             var ordered = Sections
                 .Where(s => s.IsActive)
                 .OrderBy(s => s.Rank, StringComparer.Ordinal)
+                .ToList();
+            return ordered.Count == 0
+                ? FractionalIndex.GenerateKeyBetween(null, null)
+                : FractionalIndex.GenerateKeyBetween(ordered[^1].Rank, null);
+        }
+
+        private static List<IError> ValidateLinkMetadata(string? url, string? label)
+        {
+            var errors = new List<IError>();
+            var trimmedUrl = url?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedUrl))
+            {
+                errors.Add(new Error("Source link URL is required.").WithMetadata("Property", nameof(RecipeLink.Url)));
+            }
+            else
+            {
+                if (trimmedUrl.Length > RecipeLink.UrlMaxLength)
+                {
+                    errors.Add(new Error($"Source link URL must be {RecipeLink.UrlMaxLength} characters or fewer.")
+                        .WithMetadata("Property", nameof(RecipeLink.Url)));
+                }
+                var isHttpUrl = Uri.TryCreate(trimmedUrl, UriKind.Absolute, out var uri)
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+                if (!isHttpUrl)
+                {
+                    errors.Add(new Error("Source link must be a valid http(s) URL.")
+                        .WithMetadata("Property", nameof(RecipeLink.Url)));
+                }
+            }
+            if (label is not null && label.Trim().Length > RecipeLink.LabelMaxLength)
+            {
+                errors.Add(new Error($"Source link label must be {RecipeLink.LabelMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeLink.Label)));
+            }
+            return errors;
+        }
+
+        private string ComputeAppendLinkRank()
+        {
+            var ordered = Links
+                .Where(l => l.IsActive)
+                .OrderBy(l => l.Rank, StringComparer.Ordinal)
                 .ToList();
             return ordered.Count == 0
                 ? FractionalIndex.GenerateKeyBetween(null, null)

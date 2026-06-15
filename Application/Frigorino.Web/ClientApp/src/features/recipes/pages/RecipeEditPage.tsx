@@ -16,6 +16,7 @@ import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
+import { RecipeLinksSection } from "../links/components/RecipeLinksSection";
 import { RecipeSectionCard } from "../items/components/RecipeSectionCard";
 import { RecipeFooter } from "../items/components/RecipeFooter";
 import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
@@ -28,6 +29,11 @@ import { useDeleteRecipeSection } from "../sections/useDeleteRecipeSection";
 import { useRecipeSections } from "../sections/useRecipeSections";
 import { useReorderRecipeSection } from "../sections/useReorderRecipeSection";
 import { useRecipe } from "../useRecipe";
+
+// Persisted open-section sentinels. -1 = untouched (open the first section by default so the
+// composer is ready); 0 = the user explicitly collapsed every section (none open).
+const SECTIONS_UNTOUCHED = -1;
+const SECTIONS_ALL_COLLAPSED = 0;
 
 export const RecipeEditPage = () => {
     const { recipeId: recipeIdParam } = useParams({
@@ -47,7 +53,7 @@ export const RecipeEditPage = () => {
     );
     const [openSectionId, setOpenSectionId] = usePersistedNumber(
         "recipe-edit:open-section",
-        0,
+        SECTIONS_UNTOUCHED,
     );
     const [pendingExtraction, setPendingExtraction] = useState<{
         id: number;
@@ -91,12 +97,16 @@ export const RecipeEditPage = () => {
     const createMutation = useCreateRecipeItem();
     const updateMutation = useUpdateRecipeItem();
 
-    // The open accordion section; falls back to the first section when none is chosen
-    // or the chosen one was deleted. The composer (and item-create) targets it.
+    // The open accordion section. An explicit collapse-all (0) opens none — this is what lets the
+    // user close every section. Otherwise resolve the chosen section, falling back to the first
+    // when untouched (-1) or the persisted id is stale (another recipe / a deleted section). The
+    // composer (and item-create) targets the result.
     const effectiveOpenSectionId =
-        sections.find((s) => s.id === openSectionId)?.id ??
-        sections[0]?.id ??
-        0;
+        openSectionId === SECTIONS_ALL_COLLAPSED
+            ? 0
+            : (sections.find((s) => s.id === openSectionId)?.id ??
+              sections[0]?.id ??
+              0);
     const composerVisible = effectiveOpenSectionId > 0;
     const openSectionItems = items.filter(
         (i) => i.sectionId === effectiveOpenSectionId,
@@ -170,7 +180,7 @@ export const RecipeEditPage = () => {
     // any in-progress item edit (its editor would otherwise vanish mid-edit).
     const handleToggleSection = useCallback(
         (sectionId: number, expanded: boolean) => {
-            setOpenSectionId(expanded ? sectionId : 0);
+            setOpenSectionId(expanded ? sectionId : SECTIONS_ALL_COLLAPSED);
             if (!expanded) {
                 setEditingItem(null);
             }
@@ -283,6 +293,11 @@ export const RecipeEditPage = () => {
                                 recipe={recipe}
                             />
                         </CollapsibleSection>
+
+                        <RecipeLinksSection
+                            householdId={householdId}
+                            recipeId={recipeId}
+                        />
 
                         <SortableSectionList
                             sections={sections}

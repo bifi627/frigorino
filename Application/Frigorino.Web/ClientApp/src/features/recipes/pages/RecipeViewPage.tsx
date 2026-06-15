@@ -20,6 +20,7 @@ import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { RecipeViewList } from "../items/components/RecipeViewList";
 import { useRecipeRevision } from "../items/useRecipeRevision";
+import { RecipeViewLinks } from "../links/components/RecipeViewLinks";
 import { useRecipe } from "../useRecipe";
 
 export const RecipeViewPage = () => {
@@ -144,121 +145,132 @@ export const RecipeViewPage = () => {
                 menuButtonTestId="recipe-header-menu-toggle"
             />
 
-            {recipe.description ? (
-                <Container maxWidth="sm" sx={{ px: 2, pb: 1.5, flexShrink: 0 }}>
-                    <Typography
-                        data-testid="recipe-description"
-                        variant="body2"
+            <Box
+                data-testid="recipe-view-scroll"
+                sx={{ flex: 1, overflow: "auto", minHeight: 0 }}
+            >
+                {recipe.description ? (
+                    <Container maxWidth="sm" sx={{ px: 2, pb: 1.5 }}>
+                        <Typography
+                            data-testid="recipe-description"
+                            variant="body2"
+                            sx={{
+                                color: "text.secondary",
+                                fontStyle: "italic",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                                lineHeight: 1.5,
+                            }}
+                        >
+                            {recipe.description}
+                        </Typography>
+                    </Container>
+                ) : null}
+
+                <RecipeViewLinks
+                    householdId={householdId}
+                    recipeId={recipeId}
+                />
+
+                <SearchInputRow
+                    open={searchOpen}
+                    query={searchQuery}
+                    onQueryChange={setSearchQuery}
+                    onClose={handleToggleSearch}
+                    placeholder={t("recipes.searchPlaceholder")}
+                    testIdPrefix="recipe-search"
+                />
+
+                <Container maxWidth="sm" sx={{ px: 2, pt: 1, pb: 0.5 }}>
+                    <Stack
+                        direction="row"
                         sx={{
-                            color: "text.secondary",
-                            fontStyle: "italic",
-                            whiteSpace: "pre-wrap",
-                            wordBreak: "break-word",
-                            lineHeight: 1.5,
+                            alignItems: "center",
+                            justifyContent: "space-between",
                         }}
                     >
-                        {recipe.description}
-                    </Typography>
-                </Container>
-            ) : null}
-
-            <SearchInputRow
-                open={searchOpen}
-                query={searchQuery}
-                onQueryChange={setSearchQuery}
-                onClose={handleToggleSearch}
-                placeholder={t("recipes.searchPlaceholder")}
-                testIdPrefix="recipe-search"
-            />
-
-            <Container
-                maxWidth="sm"
-                sx={{ px: 2, pt: 1, pb: 0.5, flexShrink: 0 }}
-            >
-                <Stack
-                    direction="row"
-                    sx={{
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                    }}
-                >
-                    <Typography
-                        variant="overline"
-                        color="text.secondary"
-                        sx={{ fontWeight: 700, letterSpacing: 1 }}
-                    >
-                        {t("recipes.ingredientsHeading")}
-                    </Typography>
-                    {baseServings != null ? (
-                        <Stack
-                            direction="row"
-                            sx={{ alignItems: "center" }}
-                            spacing={0.5}
+                        <Typography
+                            variant="overline"
+                            color="text.secondary"
+                            sx={{ fontWeight: 700, letterSpacing: 1 }}
                         >
-                            {isScaled ? (
-                                <Button
+                            {t("recipes.ingredientsHeading")}
+                        </Typography>
+                        {baseServings != null ? (
+                            <Stack
+                                direction="row"
+                                sx={{ alignItems: "center" }}
+                                spacing={0.5}
+                            >
+                                {isScaled ? (
+                                    <Button
+                                        size="small"
+                                        onClick={() => setTargetServings(null)}
+                                        data-testid="recipe-servings-reset"
+                                    >
+                                        {t("recipes.resetServings")}
+                                    </Button>
+                                ) : null}
+                                <IconButton
                                     size="small"
-                                    onClick={() => setTargetServings(null)}
-                                    data-testid="recipe-servings-reset"
+                                    onClick={() => stepServings(-1)}
+                                    disabled={
+                                        effectiveServings != null &&
+                                        effectiveServings <= 1
+                                    }
+                                    data-testid="recipe-servings-decrement"
                                 >
-                                    {t("recipes.resetServings")}
-                                </Button>
-                            ) : null}
-                            <IconButton
-                                size="small"
-                                onClick={() => stepServings(-1)}
-                                disabled={
-                                    effectiveServings != null &&
-                                    effectiveServings <= 1
-                                }
-                                data-testid="recipe-servings-decrement"
-                            >
-                                <Remove fontSize="small" />
-                            </IconButton>
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                    minWidth: 20,
-                                    textAlign: "center",
-                                    fontWeight: 600,
-                                }}
-                                data-testid="recipe-servings-value"
-                            >
-                                {effectiveServings}
-                            </Typography>
-                            <IconButton
-                                size="small"
-                                onClick={() => stepServings(1)}
-                                disabled={
-                                    effectiveServings != null &&
-                                    effectiveServings >= 99
-                                }
-                                data-testid="recipe-servings-increment"
-                            >
-                                <Add fontSize="small" />
-                            </IconButton>
-                        </Stack>
+                                    <Remove fontSize="small" />
+                                </IconButton>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        minWidth: 20,
+                                        textAlign: "center",
+                                        fontWeight: 600,
+                                    }}
+                                    data-testid="recipe-servings-value"
+                                >
+                                    {effectiveServings}
+                                </Typography>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => stepServings(1)}
+                                    disabled={
+                                        effectiveServings != null &&
+                                        effectiveServings >= 99
+                                    }
+                                    data-testid="recipe-servings-increment"
+                                >
+                                    <Add fontSize="small" />
+                                </IconButton>
+                            </Stack>
+                        ) : null}
+                    </Stack>
+                    {baseServings != null ? (
+                        <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            data-testid="recipe-servings-subline"
+                        >
+                            {isScaled
+                                ? t("recipes.scaledFrom", {
+                                      count: baseServings,
+                                  })
+                                : t("recipes.servingsFor", {
+                                      count: baseServings,
+                                  })}
+                        </Typography>
                     ) : null}
-                </Stack>
-                {baseServings != null ? (
-                    <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        data-testid="recipe-servings-subline"
-                    >
-                        {isScaled
-                            ? t("recipes.scaledFrom", { count: baseServings })
-                            : t("recipes.servingsFor", { count: baseServings })}
-                    </Typography>
-                ) : null}
-            </Container>
+                </Container>
 
-            <RecipeViewList
-                householdId={householdId}
-                recipeId={recipeId}
-                searchQuery={searchQuery}
-                multiplier={multiplier}
-            />
+                <RecipeViewList
+                    householdId={householdId}
+                    recipeId={recipeId}
+                    searchQuery={searchQuery}
+                    multiplier={multiplier}
+                />
+            </Box>
         </Box>
     );
 };

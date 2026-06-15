@@ -376,6 +376,15 @@
         "sectionDescription": "Abschnittsbeschreibung",
         "sectionDescriptionPlaceholder": "Optionale Notizen für diesen Abschnitt",
         "deleteSection": "Abschnitt löschen",
-        "sectionDeleted": "Abschnitt gelöscht"
+        "sectionDeleted": "Abschnitt gelöscht",
+        "sourceLinks": "Quellenlinks",
+        "addLink": "Link hinzufügen",
+        "linkUrl": "URL",
+        "linkLabel": "Anzeigetext",
+        "linkUrlPlaceholder": "https://example.com/rezept",
+        "linkLabelPlaceholder": "z. B. Der ursprüngliche Blogbeitrag",
+        "deleteLink": "Link löschen",
+        "linkDeleted": "Link gelöscht",
+        "invalidUrl": "Gib eine gültige http(s)-URL ein"
     }
 }

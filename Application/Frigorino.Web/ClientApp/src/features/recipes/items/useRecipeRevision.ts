@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
     getRecipeItemsQueryKey,
+    getRecipeLinksQueryKey,
     getRecipeRevisionOptions,
     getRecipeSectionsQueryKey,
 } from "../../../lib/api/@tanstack/react-query.gen";
@@ -34,6 +35,16 @@ export const useRecipeRevision = (householdId: number, recipeId: number) => {
     useRevisionInvalidation({
         rev: data?.rev,
         dataQueryKey: getRecipeSectionsQueryKey({
+            path: { householdId, recipeId },
+        }),
+        isLocalMutation: (variables) =>
+            (variables as { path?: { recipeId?: number } } | undefined)?.path
+                ?.recipeId === recipeId,
+    });
+
+    useRevisionInvalidation({
+        rev: data?.rev,
+        dataQueryKey: getRecipeLinksQueryKey({
             path: { householdId, recipeId },
         }),
         isLocalMutation: (variables) =>

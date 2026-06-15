@@ -79,11 +79,8 @@ export function RecipeViewList({
             maxWidth="sm"
             data-testid="recipe-items"
             sx={{
-                flex: 1,
-                overflow: "auto",
                 px: featureContentPx,
                 py: 1,
-                minHeight: 0,
             }}
         >
             {isLoading ? (

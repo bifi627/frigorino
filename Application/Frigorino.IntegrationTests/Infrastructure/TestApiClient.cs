@@ -522,6 +522,42 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
 
+    public Task<IAPIResponse> TryGetRecipeLinksAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/links",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryCreateRecipeLinkAsync(int recipeId, string? url, string? label = null, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/links",
+            new APIRequestContextOptions
+            {
+                DataObject = new { url, label },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryDeleteRecipeLinkAsync(int recipeId, int linkId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/links/{linkId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryRestoreRecipeLinkAsync(int recipeId, int linkId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/links/{linkId}/restore",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
     public Task<IAPIResponse> TryCreateRecipeItemInSectionAsync(int recipeId, int sectionId, string? text, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;

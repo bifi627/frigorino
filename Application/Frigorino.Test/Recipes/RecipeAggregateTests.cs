@@ -441,5 +441,160 @@ namespace Frigorino.Test.Recipes
             Assert.True(result.IsSuccess);
             Assert.True(string.CompareOrdinal(a2.Rank, a1.Rank) < 0);
         }
+
+        // ---- Source links ----
+
+        [Fact]
+        public void AddLink_ValidHttpsUrl_TrimsAndStores()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.AddLink("  https://example.com/recipe  ", "  My Blog  ");
+            Assert.True(result.IsSuccess);
+            Assert.Equal("https://example.com/recipe", result.Value.Url);
+            Assert.Equal("My Blog", result.Value.Label);
+            Assert.Single(recipe.Links);
+        }
+
+        [Fact]
+        public void AddLink_EmptyLabel_StoresNull()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.AddLink("https://example.com", "   ");
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.Value.Label);
+        }
+
+        [Fact]
+        public void AddLink_BlankUrl_FailsWithUrlProperty()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.AddLink("   ", null);
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(RecipeLink.Url));
+        }
+
+        [Theory]
+        [InlineData("ftp://example.com/file")]
+        [InlineData("javascript:alert(1)")]
+        [InlineData("not a url")]
+        [InlineData("example.com")]
+        public void AddLink_NonHttpUrl_FailsWithUrlProperty(string url)
+        {
+            var recipe = NewRecipe();
+            var result = recipe.AddLink(url, null);
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(RecipeLink.Url));
+        }
+
+        [Fact]
+        public void AddLink_OverlongLabel_FailsWithLabelProperty()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.AddLink("https://example.com", new string('x', RecipeLink.LabelMaxLength + 1));
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(RecipeLink.Label));
+        }
+
+        [Fact]
+        public void AddLink_AppendsWithRankAfterPrevious()
+        {
+            var recipe = NewRecipe();
+            var first = recipe.AddLink("https://a.example.com", null).Value;
+            var second = recipe.AddLink("https://b.example.com", null).Value;
+            Assert.True(string.CompareOrdinal(first.Rank, second.Rank) < 0);
+        }
+
+        [Fact]
+        public void UpdateLink_ChangesUrlAndLabel()
+        {
+            var recipe = NewRecipe();
+            var link = recipe.AddLink("https://old.example.com", "old").Value;
+            link.Id = 500;
+            var result = recipe.UpdateLink(500, "https://new.example.com", "new");
+            Assert.True(result.IsSuccess);
+            Assert.Equal("https://new.example.com", result.Value.Url);
+            Assert.Equal("new", result.Value.Label);
+        }
+
+        [Fact]
+        public void UpdateLink_InvalidUrl_FailsWithUrlProperty()
+        {
+            var recipe = NewRecipe();
+            var link = recipe.AddLink("https://old.example.com", null).Value;
+            link.Id = 501;
+            var result = recipe.UpdateLink(501, "ftp://nope", null);
+            Assert.True(result.IsFailed);
+            Assert.Contains(result.Errors, e => e.Metadata.TryGetValue("Property", out var p) && (string)p! == nameof(RecipeLink.Url));
+        }
+
+        [Fact]
+        public void UpdateLink_UnknownId_NotFound()
+        {
+            var recipe = NewRecipe();
+            var result = recipe.UpdateLink(999, "https://example.com", null);
+            Assert.True(result.IsFailed);
+            Assert.IsType<EntityNotFoundError>(result.Errors[0]);
+        }
+
+        [Fact]
+        public void RemoveLink_DeactivatesIt()
+        {
+            var recipe = NewRecipe();
+            var link = recipe.AddLink("https://example.com", null).Value;
+            link.Id = 510;
+            var result = recipe.RemoveLink(510);
+            Assert.True(result.IsSuccess);
+            Assert.False(link.IsActive);
+        }
+
+        [Fact]
+        public void RemoveLink_LastLink_IsAllowed()
+        {
+            // Unlike sections, zero links is a valid state.
+            var recipe = NewRecipe();
+            var link = recipe.AddLink("https://example.com", null).Value;
+            link.Id = 511;
+            var result = recipe.RemoveLink(511);
+            Assert.True(result.IsSuccess);
+            Assert.DoesNotContain(recipe.Links, l => l.IsActive);
+        }
+
+        [Fact]
+        public void RestoreLink_ReactivatesIt()
+        {
+            var recipe = NewRecipe();
+            var link = recipe.AddLink("https://example.com", null).Value;
+            link.Id = 520;
+            recipe.RemoveLink(520);
+            var result = recipe.RestoreLink(520);
+            Assert.True(result.IsSuccess);
+            Assert.True(link.IsActive);
+        }
+
+        [Fact]
+        public void ReplaceRestoredLinkRank_MovesToEnd()
+        {
+            var recipe = NewRecipe();
+            var first = recipe.AddLink("https://a.example.com", null).Value;
+            first.Id = 530;
+            var second = recipe.AddLink("https://b.example.com", null).Value;
+            second.Id = 531;
+            var result = recipe.ReplaceRestoredLinkRank(530);
+            Assert.True(result.IsSuccess);
+            Assert.True(string.CompareOrdinal(second.Rank, first.Rank) < 0);
+        }
+
+        [Fact]
+        public void ReorderLink_ToTop_PlacesFirst()
+        {
+            var recipe = NewRecipe();
+            var first = recipe.AddLink("https://a.example.com", null).Value;
+            first.Id = 540;
+            var second = recipe.AddLink("https://b.example.com", null).Value;
+            second.Id = 541;
+            var result = recipe.ReorderLink(541, 0);
+            Assert.True(result.IsSuccess);
+            Assert.True(string.CompareOrdinal(second.Rank, first.Rank) < 0);
+        }
     }
 }

@@ -57,6 +57,11 @@ export type CreateRecipeItemRequest = {
     comment: null | string;
 };
 
+export type CreateRecipeLinkRequest = {
+    url: string;
+    label: null | string;
+};
+
 export type CreateRecipeRequest = {
     name: string;
     description: null | string;
@@ -251,6 +256,16 @@ export type RecipeItemResponse = {
     extractionPending: boolean;
 };
 
+export type RecipeLinkResponse = {
+    id: number;
+    recipeId: number;
+    url: string;
+    label: null | string;
+    rank: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type RecipeResponse = {
     id: number;
     name: string;
@@ -355,6 +370,11 @@ export type UpdateRecipeItemRequest = {
     quantity: null | QuantityDto;
     clearQuantity: null | boolean;
     comment: null | string;
+};
+
+export type UpdateRecipeLinkRequest = {
+    url: string;
+    label: null | string;
 };
 
 export type UpdateRecipeRequest = {
@@ -2480,6 +2500,178 @@ export type ReorderRecipeSectionResponses = {
 };
 
 export type ReorderRecipeSectionResponse = ReorderRecipeSectionResponses[keyof ReorderRecipeSectionResponses];
+
+export type GetRecipeLinksData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links';
+};
+
+export type GetRecipeLinksErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetRecipeLinksResponses = {
+    /**
+     * OK
+     */
+    200: Array<RecipeLinkResponse>;
+};
+
+export type GetRecipeLinksResponse = GetRecipeLinksResponses[keyof GetRecipeLinksResponses];
+
+export type CreateRecipeLinkData = {
+    body: CreateRecipeLinkRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links';
+};
+
+export type CreateRecipeLinkErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type CreateRecipeLinkError = CreateRecipeLinkErrors[keyof CreateRecipeLinkErrors];
+
+export type CreateRecipeLinkResponses = {
+    /**
+     * Created
+     */
+    201: RecipeLinkResponse;
+};
+
+export type CreateRecipeLinkResponse = CreateRecipeLinkResponses[keyof CreateRecipeLinkResponses];
+
+export type DeleteRecipeLinkData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        linkId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links/{linkId}';
+};
+
+export type DeleteRecipeLinkErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteRecipeLinkResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteRecipeLinkResponse = DeleteRecipeLinkResponses[keyof DeleteRecipeLinkResponses];
+
+export type UpdateRecipeLinkData = {
+    body: UpdateRecipeLinkRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        linkId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links/{linkId}';
+};
+
+export type UpdateRecipeLinkErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateRecipeLinkError = UpdateRecipeLinkErrors[keyof UpdateRecipeLinkErrors];
+
+export type UpdateRecipeLinkResponses = {
+    /**
+     * OK
+     */
+    200: RecipeLinkResponse;
+};
+
+export type UpdateRecipeLinkResponse = UpdateRecipeLinkResponses[keyof UpdateRecipeLinkResponses];
+
+export type RestoreRecipeLinkData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        linkId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links/{linkId}/restore';
+};
+
+export type RestoreRecipeLinkErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreRecipeLinkResponses = {
+    /**
+     * OK
+     */
+    200: RecipeLinkResponse;
+};
+
+export type RestoreRecipeLinkResponse = RestoreRecipeLinkResponses[keyof RestoreRecipeLinkResponses];
+
+export type ReorderRecipeLinkData = {
+    body: ReorderItemRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        linkId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/links/{linkId}/reorder';
+};
+
+export type ReorderRecipeLinkErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type ReorderRecipeLinkResponses = {
+    /**
+     * OK
+     */
+    200: RecipeLinkResponse;
+};
+
+export type ReorderRecipeLinkResponse = ReorderRecipeLinkResponses[keyof ReorderRecipeLinkResponses];
 
 export type GetActiveHouseholdData = {
     body?: never;
