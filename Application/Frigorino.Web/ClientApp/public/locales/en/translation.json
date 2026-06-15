@@ -385,6 +385,15 @@
         "linkLabelPlaceholder": "e.g. The original blog post",
         "deleteLink": "Delete link",
         "linkDeleted": "Link deleted",
-        "invalidUrl": "Enter a valid http(s) URL"
+        "invalidUrl": "Enter a valid http(s) URL",
+        "attachments": "Attachments",
+        "addAttachment": "Add attachment",
+        "attachmentCaption": "Caption",
+        "attachmentCaptionPlaceholder": "Optional caption",
+        "deleteAttachment": "Delete attachment",
+        "attachmentDeleted": "Attachment deleted",
+        "uploadFailed": "Upload failed",
+        "fileTooLarge": "File is too large",
+        "unsupportedFileType": "Unsupported file type"
     }
 }
