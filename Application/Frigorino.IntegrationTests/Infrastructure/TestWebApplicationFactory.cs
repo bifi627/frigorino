@@ -90,6 +90,16 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             var blobStorage = new LocalFileStorage(blobRoot);
             services.AddKeyedSingleton<IFileStorage>(BlobAreas.ListItem, blobStorage);
             services.AddKeyedSingleton<IFileStorageMaintenance>(BlobAreas.ListItem, blobStorage);
+
+            // Recipe attachments live in their own blob area. Give them a SEPARATE temp dir so the
+            // per-area orphan sweep never sees another area's blobs as unreferenced (one shared dir
+            // would let ListItem's sweep delete recipe-attachment blobs, and vice versa).
+            services.RemoveAllKeyed<IFileStorage>(BlobAreas.RecipeAttachment);
+            services.RemoveAllKeyed<IFileStorageMaintenance>(BlobAreas.RecipeAttachment);
+            var attachmentBlobRoot = Path.Combine(Path.GetTempPath(), "frigorino-it-blobs", Guid.NewGuid().ToString("N"));
+            var attachmentBlobStorage = new LocalFileStorage(attachmentBlobRoot);
+            services.AddKeyedSingleton<IFileStorage>(BlobAreas.RecipeAttachment, attachmentBlobStorage);
+            services.AddKeyedSingleton<IFileStorageMaintenance>(BlobAreas.RecipeAttachment, attachmentBlobStorage);
         });
     }
 }

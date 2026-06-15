@@ -7,5 +7,6 @@ namespace Frigorino.Infrastructure.Services
     public static class BlobAreas
     {
         public const string ListItem = "list-item";
+        public const string RecipeAttachment = "recipe-attachment";
     }
 }

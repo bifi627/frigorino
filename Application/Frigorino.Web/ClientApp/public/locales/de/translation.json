@@ -385,6 +385,17 @@
         "linkLabelPlaceholder": "z. B. Der ursprüngliche Blogbeitrag",
         "deleteLink": "Link löschen",
         "linkDeleted": "Link gelöscht",
-        "invalidUrl": "Gib eine gültige http(s)-URL ein"
+        "invalidUrl": "Gib eine gültige http(s)-URL ein",
+        "attachments": "Anhänge",
+        "addAttachment": "Anhang hinzufügen",
+        "attachImageTitle": "Bild anhängen",
+        "editAttachmentCaption": "Beschriftung bearbeiten",
+        "attachmentCaption": "Beschriftung",
+        "attachmentCaptionPlaceholder": "Optionale Beschriftung",
+        "deleteAttachment": "Anhang löschen",
+        "attachmentDeleted": "Anhang gelöscht",
+        "uploadFailed": "Upload fehlgeschlagen",
+        "fileTooLarge": "Datei ist zu groß",
+        "unsupportedFileType": "Nicht unterstützter Dateityp"
     }
 }

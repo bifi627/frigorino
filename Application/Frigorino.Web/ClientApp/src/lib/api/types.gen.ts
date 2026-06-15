@@ -237,6 +237,18 @@ export type QuantityDto = {
 
 export type QuantityUnit = 'Gram' | 'Kilogram' | 'Milliliter' | 'Liter' | 'Piece' | 'Pack' | 'Can' | 'Bottle' | 'Bag';
 
+export type RecipeAttachmentResponse = {
+    id: number;
+    recipeId: number;
+    contentType: string;
+    originalFileName: null | string;
+    fileSizeBytes: number;
+    caption: null | string;
+    rank: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 export type RecipeCreatorResponse = {
     externalId: string;
     name: string;
@@ -363,6 +375,10 @@ export type UpdateMyInventoryNotificationRequest = {
 
 export type UpdateProfileRequest = {
     name: string;
+};
+
+export type UpdateRecipeAttachmentRequest = {
+    caption: null | string;
 };
 
 export type UpdateRecipeItemRequest = {
@@ -2672,6 +2688,236 @@ export type ReorderRecipeLinkResponses = {
 };
 
 export type ReorderRecipeLinkResponse = ReorderRecipeLinkResponses[keyof ReorderRecipeLinkResponses];
+
+export type GetRecipeAttachmentsData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments';
+};
+
+export type GetRecipeAttachmentsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetRecipeAttachmentsResponses = {
+    /**
+     * OK
+     */
+    200: Array<RecipeAttachmentResponse>;
+};
+
+export type GetRecipeAttachmentsResponse = GetRecipeAttachmentsResponses[keyof GetRecipeAttachmentsResponses];
+
+export type CreateRecipeAttachmentData = {
+    body: {
+        file: IFormFile;
+    } & {
+        caption?: string;
+    };
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments';
+};
+
+export type CreateRecipeAttachmentErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+    /**
+     * Payload Too Large
+     */
+    413: unknown;
+};
+
+export type CreateRecipeAttachmentError = CreateRecipeAttachmentErrors[keyof CreateRecipeAttachmentErrors];
+
+export type CreateRecipeAttachmentResponses = {
+    /**
+     * Created
+     */
+    201: RecipeAttachmentResponse;
+};
+
+export type CreateRecipeAttachmentResponse = CreateRecipeAttachmentResponses[keyof CreateRecipeAttachmentResponses];
+
+export type DeleteRecipeAttachmentData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}';
+};
+
+export type DeleteRecipeAttachmentErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteRecipeAttachmentResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteRecipeAttachmentResponse = DeleteRecipeAttachmentResponses[keyof DeleteRecipeAttachmentResponses];
+
+export type UpdateRecipeAttachmentData = {
+    body: UpdateRecipeAttachmentRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}';
+};
+
+export type UpdateRecipeAttachmentErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type UpdateRecipeAttachmentError = UpdateRecipeAttachmentErrors[keyof UpdateRecipeAttachmentErrors];
+
+export type UpdateRecipeAttachmentResponses = {
+    /**
+     * OK
+     */
+    200: RecipeAttachmentResponse;
+};
+
+export type UpdateRecipeAttachmentResponse = UpdateRecipeAttachmentResponses[keyof UpdateRecipeAttachmentResponses];
+
+export type RestoreRecipeAttachmentData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}/restore';
+};
+
+export type RestoreRecipeAttachmentErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type RestoreRecipeAttachmentResponses = {
+    /**
+     * OK
+     */
+    200: RecipeAttachmentResponse;
+};
+
+export type RestoreRecipeAttachmentResponse = RestoreRecipeAttachmentResponses[keyof RestoreRecipeAttachmentResponses];
+
+export type ReorderRecipeAttachmentData = {
+    body: ReorderItemRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}/reorder';
+};
+
+export type ReorderRecipeAttachmentErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type ReorderRecipeAttachmentResponses = {
+    /**
+     * OK
+     */
+    200: RecipeAttachmentResponse;
+};
+
+export type ReorderRecipeAttachmentResponse = ReorderRecipeAttachmentResponses[keyof ReorderRecipeAttachmentResponses];
+
+export type GetRecipeAttachmentFileData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}/file';
+};
+
+export type GetRecipeAttachmentFileErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetRecipeAttachmentFileResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetRecipeAttachmentThumbnailData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+        attachmentId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/attachments/{attachmentId}/thumbnail';
+};
+
+export type GetRecipeAttachmentThumbnailErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetRecipeAttachmentThumbnailResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetActiveHouseholdData = {
     body?: never;

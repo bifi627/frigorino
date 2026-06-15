@@ -46,6 +46,7 @@ namespace Frigorino.Infrastructure.Tasks
 
             await _dbContext.RecipeItems.Where(ri => !ri.IsActive).ExecuteDeleteAsync(cancellationToken);
             await _dbContext.RecipeLinks.Where(l => !l.IsActive).ExecuteDeleteAsync(cancellationToken);
+            await _dbContext.RecipeAttachments.Where(a => !a.IsActive).ExecuteDeleteAsync(cancellationToken);
             await _dbContext.RecipeSections.Where(s => !s.IsActive).ExecuteDeleteAsync(cancellationToken);
             await _dbContext.Recipes.Where(r => !r.IsActive).ExecuteDeleteAsync(cancellationToken);
         }

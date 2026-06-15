@@ -15,7 +15,7 @@ namespace Frigorino.Infrastructure.Services
         // IFileStorage + IFileStorageMaintenance, prefixed {env}/{area} so the bucket groups by
         // environment then feature and the orphan sweep only ever touches one feature's folder.
         // Add an area = add a BlobAreas constant here and an IBlobReferenceSource for the sweep.
-        private static readonly string[] Areas = [BlobAreas.ListItem];
+        private static readonly string[] Areas = [BlobAreas.ListItem, BlobAreas.RecipeAttachment];
 
         // Selects the blob backend by FileStorage:Provider ("Local" default for dev/test/CI, "Gcs"
         // for prod). Each area is registered as a keyed singleton under both IFileStorage (hot path)
@@ -40,6 +40,7 @@ namespace Frigorino.Infrastructure.Services
 
             // The orphan sweep iterates these to learn which keys each area still references.
             services.AddScoped<IBlobReferenceSource, ListItemBlobReferences>();
+            services.AddScoped<IBlobReferenceSource, RecipeAttachmentBlobReferences>();
 
             return services;
         }

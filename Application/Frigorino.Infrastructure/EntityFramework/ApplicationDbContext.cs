@@ -22,6 +22,7 @@ namespace Frigorino.Infrastructure.EntityFramework
         public DbSet<RecipeItem> RecipeItems { get; set; }
         public DbSet<RecipeSection> RecipeSections { get; set; }
         public DbSet<RecipeLink> RecipeLinks { get; set; }
+        public DbSet<RecipeAttachment> RecipeAttachments { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
         public DbSet<HouseholdSettings> HouseholdSettings { get; set; }

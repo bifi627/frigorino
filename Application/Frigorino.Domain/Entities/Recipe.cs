@@ -1,5 +1,6 @@
 using FluentResults;
 using Frigorino.Domain.Errors;
+using Frigorino.Domain.Files;
 using Frigorino.Domain.Quantities;
 
 namespace Frigorino.Domain.Entities
@@ -25,6 +26,7 @@ namespace Frigorino.Domain.Entities
         public ICollection<RecipeItem> Items { get; set; } = new List<RecipeItem>();
         public ICollection<RecipeSection> Sections { get; set; } = new List<RecipeSection>();
         public ICollection<RecipeLink> Links { get; set; } = new List<RecipeLink>();
+        public ICollection<RecipeAttachment> Attachments { get; set; } = new List<RecipeAttachment>();
 
         public static Result<Recipe> Create(string name, string? description, int householdId, string createdByUserId, int? servings = null)
         {
@@ -579,6 +581,205 @@ namespace Frigorino.Domain.Entities
             link.Rank = newRank;
             link.UpdatedAt = DateTime.UtcNow;
             return Result.Ok(link);
+        }
+
+        // ---- RecipeAttachment coordination (collaborative — any member; no role gate) ----
+
+        public Result<RecipeAttachment> AddAttachment(string? caption, StoredFile file)
+        {
+            var errors = ValidateAttachmentImage(file);
+            errors.AddRange(ValidateCaption(caption));
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeAttachment>(errors);
+            }
+
+            var now = DateTime.UtcNow;
+            var attachment = new RecipeAttachment
+            {
+                RecipeId = Id,
+                StorageKey = file.StorageKey,
+                ThumbnailStorageKey = file.ThumbnailKey,
+                ContentType = file.ContentType,
+                OriginalFileName = file.OriginalFileName,
+                FileSizeBytes = file.SizeBytes,
+                Caption = NormalizeCaption(caption),
+                Rank = ComputeAppendAttachmentRank(),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+            };
+            Attachments.Add(attachment);
+            return Result.Ok(attachment);
+        }
+
+        // Caption is the only mutable field — image bytes are immutable (replace = delete + re-add).
+        public Result<RecipeAttachment> UpdateAttachmentCaption(int attachmentId, string? caption)
+        {
+            var attachment = Attachments.FirstOrDefault(a => a.Id == attachmentId && a.IsActive);
+            if (attachment is null)
+            {
+                return Result.Fail<RecipeAttachment>(new EntityNotFoundError($"Recipe attachment {attachmentId} not found."));
+            }
+
+            var errors = ValidateCaption(caption);
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeAttachment>(errors);
+            }
+
+            attachment.Caption = NormalizeCaption(caption);
+            attachment.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(attachment);
+        }
+
+        public Result RemoveAttachment(int attachmentId)
+        {
+            var attachment = Attachments.FirstOrDefault(a => a.Id == attachmentId && a.IsActive);
+            if (attachment is null)
+            {
+                return Result.Fail(new EntityNotFoundError($"Recipe attachment {attachmentId} not found."));
+            }
+            attachment.IsActive = false;
+            attachment.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok();
+        }
+
+        // Undo of a delete: reactivate with the ORIGINAL rank to preserve position. If a now-active
+        // sibling took that rank while it was deleted, de-collide by re-minting this row's rank (the
+        // partial unique index would otherwise reject it; mirrors the RestoreSection guard).
+        public Result<RecipeAttachment> RestoreAttachment(int attachmentId)
+        {
+            var attachment = Attachments.FirstOrDefault(a => a.Id == attachmentId && !a.IsActive);
+            if (attachment is null)
+            {
+                return Result.Fail<RecipeAttachment>(new EntityNotFoundError($"Recipe attachment {attachmentId} not found."));
+            }
+
+            attachment.IsActive = true;
+            attachment.UpdatedAt = DateTime.UtcNow;
+
+            var rankTaken = Attachments.Any(o => o.IsActive && o.Id != attachment.Id
+                && string.CompareOrdinal(o.Rank, attachment.Rank) == 0);
+            if (rankTaken)
+            {
+                attachment.Rank = ComputeAppendAttachmentRank();
+            }
+            return Result.Ok(attachment);
+        }
+
+        public Result<RecipeAttachment> ReplaceRestoredAttachmentRank(int attachmentId)
+        {
+            var attachment = Attachments.FirstOrDefault(a => a.Id == attachmentId && a.IsActive);
+            if (attachment is null)
+            {
+                return Result.Fail<RecipeAttachment>(new EntityNotFoundError($"Recipe attachment {attachmentId} not found."));
+            }
+            attachment.Rank = ComputeAppendAttachmentRank();
+            attachment.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(attachment);
+        }
+
+        public Result<RecipeAttachment> ReorderAttachment(int attachmentId, int afterAttachmentId)
+        {
+            var attachment = Attachments.FirstOrDefault(a => a.Id == attachmentId && a.IsActive);
+            if (attachment is null)
+            {
+                return Result.Fail<RecipeAttachment>(new EntityNotFoundError($"Recipe attachment {attachmentId} not found."));
+            }
+            if (afterAttachmentId == attachmentId)
+            {
+                return Result.Ok(attachment);
+            }
+
+            var others = Attachments
+                .Where(a => a.IsActive && a.Id != attachment.Id)
+                .OrderBy(a => a.Rank, StringComparer.Ordinal)
+                .ToList();
+
+            var after = afterAttachmentId == 0 ? null : others.FirstOrDefault(a => a.Id == afterAttachmentId);
+            var before = after is not null
+                ? others.FirstOrDefault(a => string.CompareOrdinal(a.Rank, after.Rank) > 0)
+                : null;
+
+            string newRank;
+            if (after is null)
+            {
+                newRank = others.Count == 0
+                    ? FractionalIndex.GenerateKeyBetween(null, null)
+                    : FractionalIndex.GenerateKeyBetween(null, others[0].Rank);
+            }
+            else if (before is null)
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, null);
+            }
+            else
+            {
+                newRank = FractionalIndex.GenerateKeyBetween(after.Rank, before.Rank);
+            }
+
+            attachment.Rank = newRank;
+            attachment.UpdatedAt = DateTime.UtcNow;
+            return Result.Ok(attachment);
+        }
+
+        private static List<IError> ValidateAttachmentImage(StoredFile file)
+        {
+            var errors = new List<IError>();
+
+            // Stored output is always image/webp (the processor's rendition). Reject anything else.
+            if (file.ContentType != "image/webp")
+            {
+                errors.Add(new Error($"Stored content type '{file.ContentType}' must be image/webp.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.ContentType)));
+            }
+            if (string.IsNullOrWhiteSpace(file.StorageKey) || file.StorageKey.Length > RecipeAttachment.StorageKeyMaxLength)
+            {
+                errors.Add(new Error($"Storage key is required and must be {RecipeAttachment.StorageKeyMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.StorageKey)));
+            }
+            if (string.IsNullOrWhiteSpace(file.ThumbnailKey))
+            {
+                errors.Add(new Error("Image attachments require a thumbnail key.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.ThumbnailStorageKey)));
+            }
+            if (!string.IsNullOrEmpty(file.OriginalFileName) && file.OriginalFileName.Length > RecipeAttachment.OriginalFileNameMaxLength)
+            {
+                errors.Add(new Error($"File name must be {RecipeAttachment.OriginalFileNameMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.OriginalFileName)));
+            }
+            if (file.SizeBytes <= 0 || file.SizeBytes > RecipeAttachment.MaxFileSizeBytes)
+            {
+                errors.Add(new Error($"File size must be between 1 and {RecipeAttachment.MaxFileSizeBytes} bytes.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.FileSizeBytes)));
+            }
+            return errors;
+        }
+
+        private static List<IError> ValidateCaption(string? caption)
+        {
+            var errors = new List<IError>();
+            var trimmed = NormalizeCaption(caption);
+            if (trimmed is not null && trimmed.Length > RecipeAttachment.CaptionMaxLength)
+            {
+                errors.Add(new Error($"Caption must be {RecipeAttachment.CaptionMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.Caption)));
+            }
+            return errors;
+        }
+
+        private static string? NormalizeCaption(string? caption)
+            => string.IsNullOrWhiteSpace(caption) ? null : caption.Trim();
+
+        private string ComputeAppendAttachmentRank()
+        {
+            var ordered = Attachments
+                .Where(a => a.IsActive)
+                .OrderBy(a => a.Rank, StringComparer.Ordinal)
+                .ToList();
+            return ordered.Count == 0
+                ? FractionalIndex.GenerateKeyBetween(null, null)
+                : FractionalIndex.GenerateKeyBetween(ordered[^1].Rank, null);
         }
 
         private static List<IError> ValidateSectionMetadata(string? name, string? description)
