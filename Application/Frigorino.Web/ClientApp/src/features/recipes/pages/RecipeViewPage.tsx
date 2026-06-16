@@ -1,4 +1,4 @@
-import { Add, Edit, Remove, Search } from "@mui/icons-material";
+import { Add, Edit, Remove, Search, ShoppingCart } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -18,6 +18,7 @@ import {
 } from "../../../components/shared/PageHeadActionBar";
 import { SearchInputRow } from "../../../components/shared/SearchInputRow";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
+import { CopyToListSheet } from "../copyToList/CopyToListSheet";
 import { RecipeViewList } from "../items/components/RecipeViewList";
 import { useRecipeRevision } from "../items/useRecipeRevision";
 import { RecipeViewAttachments } from "../attachments/components/RecipeViewAttachments";
@@ -36,6 +37,7 @@ export const RecipeViewPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
     // Display-only scaling. targetServings overrides the base; null = no override (shows base).
     const [targetServings, setTargetServings] = useState<number | null>(null);
+    const [copyOpen, setCopyOpen] = useState(false);
 
     const { data: currentHousehold } = useCurrentHousehold();
     const householdId = currentHousehold?.householdId ?? 0;
@@ -126,6 +128,12 @@ export const RecipeViewPage = () => {
             icon: <Search fontSize="small" />,
             onClick: handleToggleSearch,
             testId: "recipe-search-button",
+        },
+        {
+            text: t("copyToList.menuAction"),
+            icon: <ShoppingCart fontSize="small" />,
+            onClick: () => setCopyOpen(true),
+            testId: "recipe-copy-to-list-button",
         },
     ];
 
@@ -277,6 +285,14 @@ export const RecipeViewPage = () => {
                     multiplier={multiplier}
                 />
             </Box>
+
+            <CopyToListSheet
+                open={copyOpen}
+                onClose={() => setCopyOpen(false)}
+                householdId={householdId}
+                recipeId={recipeId}
+                multiplier={multiplier}
+            />
         </Box>
     );
 };
