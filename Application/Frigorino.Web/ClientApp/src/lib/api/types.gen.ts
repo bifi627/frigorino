@@ -21,6 +21,20 @@ export type ApplyBlueprintRequest = {
 
 export type AttachmentType = 'Image' | 'Document';
 
+export type CopyEntry = {
+    recipeItemId: number;
+    quantity: null | QuantityDto;
+};
+
+export type CopyRecipeToListRequest = {
+    targetListId: number;
+    items: Array<CopyEntry>;
+};
+
+export type CopyRecipeToListResponse = {
+    copiedCount: number;
+};
+
 export type CreateBlueprintRequest = {
     name: string;
     categories: Array<ProductCategory>;
@@ -2142,6 +2156,38 @@ export type GetRecipeRevisionResponses = {
 };
 
 export type GetRecipeRevisionResponse = GetRecipeRevisionResponses[keyof GetRecipeRevisionResponses];
+
+export type CopyRecipeToListData = {
+    body: CopyRecipeToListRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/copy-to-list';
+};
+
+export type CopyRecipeToListErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type CopyRecipeToListError = CopyRecipeToListErrors[keyof CopyRecipeToListErrors];
+
+export type CopyRecipeToListResponses = {
+    /**
+     * OK
+     */
+    200: CopyRecipeToListResponse;
+};
+
+export type CopyRecipeToListResponse2 = CopyRecipeToListResponses[keyof CopyRecipeToListResponses];
 
 export type GetRecipeItemsData = {
     body?: never;

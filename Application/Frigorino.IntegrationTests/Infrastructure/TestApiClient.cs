@@ -698,6 +698,36 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    // Seeds a recipe item that already carries a structured quantity, deterministically: create the
+    // item, then PUT the quantity (the create endpoint routes plain text through async extraction, so
+    // a direct quantity write is the only deterministic path). unit is the QuantityUnit string name.
+    public async Task<int> CreateRecipeItemWithQuantityAsync(int recipeId, string text, decimal value, string unit)
+    {
+        var itemId = await CreateRecipeItemAsync(recipeId, text);
+        var response = await TrySetRecipeItemQuantityAsync(recipeId, itemId, (double)value, unit);
+        if (!response.Ok)
+        {
+            throw new Exception(
+                $"CreateRecipeItemWithQuantityAsync failed to set quantity on item {itemId}: {response.Status} {await response.TextAsync()}");
+        }
+        return itemId;
+    }
+
+    // Calls the copy-to-list endpoint. items = sequence of anonymous { recipeItemId, quantity } objects
+    // where quantity is a { value, unit } object or null (text-only).
+    public Task<IAPIResponse> TryCopyRecipeToListAsync(
+        int recipeId, int targetListId, IEnumerable<object> items, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/copy-to-list",
+            new APIRequestContextOptions
+            {
+                DataObject = new { targetListId, items },
+                Headers = AuthHeaders,
+            });
+    }
+
     // ---- Recipe attachments (multipart upload + byte-serving) ----
 
     // Minimal PDF bytes — the document path stores the raw bytes as-is (no parsing), so a header +

@@ -2931,6 +2931,69 @@
         }
       }
     },
+    "/api/household/{householdId}/recipes/{recipeId}/copy-to-list": {
+      "post": {
+        "tags": [
+          "Recipes"
+        ],
+        "operationId": "CopyRecipeToList",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "recipeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyRecipeToListRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyRecipeToListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/recipes/{recipeId}/items": {
       "get": {
         "tags": [
@@ -4829,6 +4892,60 @@
           "Image",
           "Document"
         ]
+      },
+      "CopyEntry": {
+        "required": [
+          "recipeItemId",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "recipeItemId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QuantityDto"
+              }
+            ]
+          }
+        }
+      },
+      "CopyRecipeToListRequest": {
+        "required": [
+          "targetListId",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "targetListId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CopyEntry"
+            }
+          }
+        }
+      },
+      "CopyRecipeToListResponse": {
+        "required": [
+          "copiedCount"
+        ],
+        "type": "object",
+        "properties": {
+          "copiedCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       },
       "CreateBlueprintRequest": {
         "required": [

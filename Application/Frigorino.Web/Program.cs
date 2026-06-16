@@ -14,6 +14,7 @@ using Frigorino.Features.Lists;
 using Frigorino.Features.Lists.Items;
 using Frigorino.Features.Recipes;
 using Frigorino.Features.Recipes.Attachments;
+using Frigorino.Features.Recipes.CopyToList;
 using Frigorino.Features.Recipes.Items;
 using Frigorino.Features.Recipes.Sections;
 using Frigorino.Features.Recipes.Links;
@@ -428,6 +429,7 @@ recipes.MapGetRecipe();
 recipes.MapGetRecipeRevision();
 recipes.MapUpdateRecipe();
 recipes.MapDeleteRecipe();
+recipes.MapCopyRecipeToList();
 
 var recipeItems = app.MapGroup("/api/household/{householdId:int}/recipes/{recipeId:int}/items")
     .RequireAuthorization()
