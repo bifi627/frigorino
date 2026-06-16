@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeAttachmentResponse } from "../../../../lib/api";
 import { useAttachmentImage } from "../useAttachmentImage";
+import { useOpenRecipeAttachmentFile } from "../useOpenRecipeAttachmentFile";
 
 // Mirrors RecipeAttachment.CaptionMaxLength on the backend.
 const CAPTION_MAX_LENGTH = 255;
@@ -44,6 +45,10 @@ export function RecipeAttachmentCaptionSheet({
     const { t } = useTranslation();
     const [caption, setCaption] = useState(attachment?.caption ?? "");
     const isDocument = attachment?.type === "Document";
+    const openFile = useOpenRecipeAttachmentFile(householdId, recipeId);
+    const openThisDocument = () => {
+        if (attachment) openFile(attachment.id);
+    };
 
     const {
         data: url,
@@ -82,42 +87,72 @@ export function RecipeAttachmentCaptionSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                <Box
-                    sx={{
-                        width: "100%",
-                        height: 160,
-                        mb: 2,
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        bgcolor: "action.hover",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
-                    {isDocument ? (
+                {isDocument ? (
+                    // Tap the document preview to open the PDF in a new tab (mirrors the view-page tile).
+                    <Box
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t("recipes.openDocument")}
+                        data-testid="recipe-attachment-caption-document-open"
+                        onClick={openThisDocument}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                openThisDocument();
+                            }
+                        }}
+                        sx={{
+                            width: "100%",
+                            height: 160,
+                            mb: 2,
+                            borderRadius: 1,
+                            overflow: "hidden",
+                            bgcolor: "action.hover",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            "&:hover": { bgcolor: "action.selected" },
+                        }}
+                    >
                         <Description color="action" fontSize="large" />
-                    ) : isLoading ? (
-                        <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height="100%"
-                        />
-                    ) : isError || !url ? (
-                        <BrokenImage color="disabled" />
-                    ) : (
-                        <Box
-                            component="img"
-                            src={url}
-                            alt=""
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                            }}
-                        />
-                    )}
-                </Box>
+                    </Box>
+                ) : (
+                    <Box
+                        sx={{
+                            width: "100%",
+                            height: 160,
+                            mb: 2,
+                            borderRadius: 1,
+                            overflow: "hidden",
+                            bgcolor: "action.hover",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {isLoading ? (
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height="100%"
+                            />
+                        ) : isError || !url ? (
+                            <BrokenImage color="disabled" />
+                        ) : (
+                            <Box
+                                component="img"
+                                src={url}
+                                alt=""
+                                sx={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                }}
+                            />
+                        )}
+                    </Box>
+                )}
                 <TextField
                     fullWidth
                     multiline
