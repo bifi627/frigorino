@@ -43,6 +43,60 @@ public class CopyToListApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, listId, items);
     }
 
+    [When("I copy items {string} plus a stale id from recipe {string} to list {string} via the API")]
+    public async Task WhenICopyItemsPlusStaleId(string commaSeparated, string recipeName, string listName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var listId = ctx.ListIds[listName];
+        var items = commaSeparated.Split(',').Select(s => s.Trim())
+            .Select(name =>
+            {
+                var (value, unit) = _seeded[(recipeName, name)];
+                return (object)new
+                {
+                    recipeItemId = ctx.GetRecipeItemId(recipeName, name),
+                    quantity = new { value, unit = ((QuantityUnit)unit).ToString() },
+                };
+            })
+            .ToList();
+        items.Add(new { recipeItemId = 999999, quantity = (object?)null }); // id not in the recipe
+        ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, listId, items);
+    }
+
+    [When("I copy item {string} from recipe {string} to a non-existent list via the API")]
+    public async Task WhenICopyToNonExistentList(string itemText, string recipeName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var (value, unit) = _seeded[(recipeName, itemText)];
+        var items = new[]
+        {
+            (object)new
+            {
+                recipeItemId = ctx.GetRecipeItemId(recipeName, itemText),
+                quantity = new { value, unit = ((QuantityUnit)unit).ToString() },
+            },
+        };
+        ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, 999999, items);
+    }
+
+    [When("I copy no items from recipe {string} to list {string} via the API")]
+    public async Task WhenICopyNoItems(string recipeName, string listName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, listId, Array.Empty<object>());
+    }
+
+    // Non-member case: membership is checked first, so the recipe/list ids are irrelevant — any ids
+    // produce a 404 before they're loaded. ctx.HouseholdId is the household the caller isn't in.
+    [When("I attempt to copy from recipe {string} to a list in that household via the API")]
+    public async Task WhenIAttemptToCopyAsNonMember(string recipeName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var items = new[] { (object)new { recipeItemId = 1, quantity = (object?)null } };
+        ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, 999999, items);
+    }
+
     [Then("the copy response reports {int} copied")]
     public async Task ThenCopyResponseReports(int expected)
     {
