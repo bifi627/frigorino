@@ -55,6 +55,7 @@ export const RecipeAttachmentsSection = ({
     const reorderAttachment = useReorderRecipeAttachment();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const documentInputRef = useRef<HTMLInputElement>(null);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const menuOpen = Boolean(menuAnchor);
@@ -122,6 +123,11 @@ export const RecipeAttachmentsSection = ({
             input.removeAttribute("capture");
         }
         input.click();
+    };
+
+    const openDocumentPicker = () => {
+        setMenuAnchor(null);
+        documentInputRef.current?.click();
     };
 
     const handleClickAway = (event: MouseEvent | TouchEvent) => {
@@ -242,10 +248,9 @@ export const RecipeAttachmentsSection = ({
                                                     {t("lists.choosePhoto")}
                                                 </ListItemText>
                                             </MenuItem>
-                                            {/* Document attachments arrive in a future phase. */}
                                             <MenuItem
-                                                disabled
                                                 data-testid="recipe-attachment-document"
+                                                onClick={openDocumentPicker}
                                             >
                                                 <ListItemIcon>
                                                     <Description fontSize="small" />
@@ -269,6 +274,14 @@ export const RecipeAttachmentsSection = ({
                         hidden
                         onChange={handlePick}
                         data-testid="recipe-attachment-file-input"
+                    />
+                    <input
+                        ref={documentInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        hidden
+                        onChange={handlePick}
+                        data-testid="recipe-attachment-document-input"
                     />
                 </Box>
             </Stack>
