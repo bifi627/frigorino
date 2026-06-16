@@ -6,11 +6,6 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 
 ---
 
-## Promote recipe to shopping list
-
-- **Why:** The headline reason recipes exist as ingredient lists — turn a recipe into an actual shopping List with one action ("cooking this tonight → add everything to Groceries"). The MVP recipe-item shape mirrors `ListItem` specifically to make this cheap.
-- **Sketch:** Mirror the existing list→inventory promotion flow. Copy selected/all recipe items into an existing or new List. Items go through the **normal list-item create pipeline on copy**, so classification (aisle/expiry) fires *then* — which is why the MVP deliberately doesn't classify at recipe-entry time. Open questions: pick-a-subset vs all, quantity carry-over / merge with existing list items, target = existing list vs new.
-
 ## Tags (filterable categories)
 
 - **Why:** Filter recipes by course — Entry / Main / Side / Salad / Dessert / Breakfast / Drink / Snack… Client requirement #3.
