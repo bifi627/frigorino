@@ -16,11 +16,9 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 - **Why:** Filter recipes by course — Entry / Main / Side / Salad / Dessert / Breakfast / Drink / Snack… Client requirement #3.
 - **Sketch:** Fixed curated **multi-select enum**, stored as flat `RecipeTag` join rows (`RecipeId`, `Tag`), serialized as string names like other enums. Tag-filter chips on the recipes overview. (Free-form household tags considered and set aside in favor of the curated set — revisit only if the fixed list proves limiting.)
 
-## Document (non-image) attachments
+## Attachment-flow integration tests (deferred debt)
 
-- **Why:** The rest of client requirement #5 — attach a PDF/scanned document as source material. **Image attachments shipped** (PR #126 → stage): the `RecipeAttachment` table, the "Attachments" section (add-menu + caption preview/edit modals, drag-reorder, soft-delete/undo), the thumbnail grid + lightbox, and the `recipe-attachment` blob area all exist. The add-menu already shows a **disabled "Document" item** as the placeholder for this phase.
-- **Sketch:** Additive phase on top of the shipped images feature (spec: [`docs/superpowers/specs/2026-06-15-recipe-attachments-design.md`](docs/superpowers/specs/2026-06-15-recipe-attachments-design.md)). Per the flat-schema decision, add a `Type` discriminator column to `RecipeAttachment` (image vs document) + nullable doc-specific columns rather than a second table. New tile/row rendering for non-image types (no thumbnail — icon + filename), a doc viewer/download affordance, and a content-type allowlist for PDFs. Reuses the same blob area + orphan sweep — no infra changes. Enable the disabled menu item once the upload path accepts documents.
-- **Also pending from the images phase:** dedicated Reqnroll/Playwright IT scenarios for the attachment flow (Phase C Task 13 of the images plan was deferred — the feature shipped covered by unit tests + manual verification).
+- **Why:** Both the image-attachments phase (PR #126) and the document-attachments phase shipped covered by unit tests + manual verification only — dedicated Reqnroll/Playwright IT scenarios for the attachment flow (upload, caption edit, reorder, delete/undo, view-page open) were deferred. Tracked here so the gap isn't forgotten.
 
 ## AI-generated cooking instructions from sources
 
