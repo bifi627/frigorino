@@ -1,9 +1,10 @@
-import { BrokenImage } from "@mui/icons-material";
+import { BrokenImage, Description } from "@mui/icons-material";
 import { Box, Container, Skeleton, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeAttachmentResponse } from "../../../../lib/api";
 import { useAttachmentImage } from "../useAttachmentImage";
+import { useOpenRecipeAttachmentFile } from "../useOpenRecipeAttachmentFile";
 import { useRecipeAttachments } from "../useRecipeAttachments";
 import { RecipeAttachmentLightbox } from "./RecipeAttachmentLightbox";
 
@@ -23,18 +24,26 @@ const Tile = ({
     attachment: RecipeAttachmentResponse;
     onOpen: () => void;
 }) => {
+    const { t } = useTranslation();
+    const isDocument = attachment.type === "Document";
     const {
         data: url,
         isLoading,
         isError,
-    } = useAttachmentImage(householdId, recipeId, attachment.id, "thumbnail");
+    } = useAttachmentImage(
+        householdId,
+        recipeId,
+        attachment.id,
+        "thumbnail",
+        !isDocument,
+    );
 
     return (
         <Box>
             <Box
                 role="button"
                 tabIndex={0}
-                aria-label="open image"
+                aria-label={isDocument ? t("recipes.openDocument") : "open image"}
                 data-testid={`recipe-attachment-${attachment.id}`}
                 onClick={onOpen}
                 onKeyDown={(e) => {
@@ -55,7 +64,9 @@ const Tile = ({
                     justifyContent: "center",
                 }}
             >
-                {isLoading ? (
+                {isDocument ? (
+                    <Description color="action" fontSize="large" />
+                ) : isLoading ? (
                     <Skeleton
                         variant="rectangular"
                         width="100%"
@@ -76,7 +87,7 @@ const Tile = ({
                     />
                 )}
             </Box>
-            {attachment.caption ? (
+            {attachment.caption || isDocument ? (
                 <Typography
                     variant="caption"
                     color="text.secondary"
@@ -86,7 +97,8 @@ const Tile = ({
                         wordBreak: "break-word",
                     }}
                 >
-                    {attachment.caption}
+                    {attachment.caption ||
+                        (isDocument ? attachment.originalFileName : "")}
                 </Typography>
             ) : null}
         </Box>
@@ -103,6 +115,7 @@ export const RecipeViewAttachments = ({
         recipeId,
     );
     const [openId, setOpenId] = useState<number | null>(null);
+    const openFile = useOpenRecipeAttachmentFile(householdId, recipeId);
 
     if (attachments.length === 0) return null;
 
@@ -138,7 +151,11 @@ export const RecipeViewAttachments = ({
                         householdId={householdId}
                         recipeId={recipeId}
                         attachment={attachment}
-                        onOpen={() => setOpenId(attachment.id)}
+                        onOpen={() =>
+                            attachment.type === "Document"
+                                ? openFile(attachment.id)
+                                : setOpenId(attachment.id)
+                        }
                     />
                 ))}
             </Box>
