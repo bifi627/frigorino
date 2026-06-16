@@ -389,6 +389,8 @@
         "attachments": "Anhänge",
         "addAttachment": "Anhang hinzufügen",
         "attachImageTitle": "Bild anhängen",
+        "attachDocumentTitle": "Dokument anhängen",
+        "openDocument": "Dokument öffnen",
         "editAttachmentCaption": "Beschriftung bearbeiten",
         "attachmentCaption": "Beschriftung",
         "attachmentCaptionPlaceholder": "Optionale Beschriftung",
