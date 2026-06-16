@@ -1,4 +1,4 @@
-import { Close, Send } from "@mui/icons-material";
+import { Close, Description, Send } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -8,7 +8,9 @@ import {
     DialogContent,
     DialogTitle,
     IconButton,
+    Stack,
     TextField,
+    Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,13 +37,14 @@ export function RecipeAttachmentPreviewSheet({
 }: Props) {
     const { t } = useTranslation();
     const [caption, setCaption] = useState("");
+    const isDocument = file?.type === "application/pdf";
 
     // Local object URL for the picked file (no server round-trip for the preview). createObjectURL
     // and revokeObjectURL MUST be paired in one effect so the URL survives StrictMode's
     // mount→unmount→remount probe (a useMemo here can outlive the cleanup that revoked it → dead URL).
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     useEffect(() => {
-        if (!file) {
+        if (!file || isDocument) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setPreviewUrl(null);
             return;
@@ -51,7 +54,7 @@ export function RecipeAttachmentPreviewSheet({
         return () => {
             URL.revokeObjectURL(objectUrl);
         };
-    }, [file]);
+    }, [file, isDocument]);
 
     return (
         <Dialog
@@ -68,7 +71,9 @@ export function RecipeAttachmentPreviewSheet({
                     alignItems: "center",
                 }}
             >
-                {t("recipes.attachImageTitle")}
+                {isDocument
+                    ? t("recipes.attachDocumentTitle")
+                    : t("recipes.attachImageTitle")}
                 <IconButton
                     onClick={onClose}
                     disabled={isUploading}
@@ -78,7 +83,22 @@ export function RecipeAttachmentPreviewSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                {previewUrl ? (
+                {isDocument ? (
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: "center", mb: 2 }}
+                        data-testid="recipe-attachment-document-preview"
+                    >
+                        <Description color="action" />
+                        <Typography
+                            variant="body2"
+                            sx={{ wordBreak: "break-word" }}
+                        >
+                            {file?.name}
+                        </Typography>
+                    </Stack>
+                ) : previewUrl ? (
                     <Box
                         component="img"
                         src={previewUrl}
