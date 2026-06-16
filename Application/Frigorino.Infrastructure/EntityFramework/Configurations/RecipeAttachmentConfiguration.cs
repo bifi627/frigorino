@@ -16,6 +16,7 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(a => a.OriginalFileName).HasMaxLength(RecipeAttachment.OriginalFileNameMaxLength);
             builder.Property(a => a.FileSizeBytes).IsRequired();
             builder.Property(a => a.Caption).HasMaxLength(RecipeAttachment.CaptionMaxLength);
+            builder.Property(a => a.Type).IsRequired();
             builder.Property(a => a.Rank).HasColumnType("text").UseCollation("C").IsRequired();
             builder.Property(a => a.RecipeId).IsRequired();
             builder.Property(a => a.CreatedAt).IsRequired();
