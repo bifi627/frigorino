@@ -14,6 +14,10 @@ public class ScenarioContextHolder
     public Dictionary<string, int> RecipeIds { get; } = new();
     public Dictionary<(string Recipe, string Section), int> RecipeSectionIds { get; } = new();
     public Dictionary<(string Recipe, string Label), int> RecipeLinkIds { get; } = new();
+
+    // Recipe attachments are keyed by caption (unique within a scenario), so a step can resolve the
+    // id it needs without threading the recipe name through every UI interaction.
+    public Dictionary<string, int> RecipeAttachmentIds { get; } = new();
     public IAPIResponse? LastApiResponse { get; set; }
     public IAPIResponse[]? ConcurrentApiResponses { get; set; }
 
