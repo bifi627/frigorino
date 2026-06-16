@@ -2,7 +2,7 @@
 
 Status legend: ✅ Done · 🚧 In progress · ⬜ Not started · ❌ Dropped
 
-This tracker covers Inventory-level CRUD only (`/api/household/{householdId}/inventories` and `/api/household/{householdId}/inventories/{inventoryId}`). InventoryItems (Create/Get/Update/Delete/Reorder/Compact) has its own tracker at `knowledge/Migrations/InventoryItems.md`. **Status: complete** — all five live slices shipped, no endpoints dropped at the inventory level.
+This tracker covers Inventory-level CRUD only (`/api/household/{householdId}/inventories` and `/api/household/{householdId}/inventories/{inventoryId}`); the nested `Inventories/Items/` slices were migrated in a later round and now order items by fractional-index `Rank`. **Status: complete** — all five live slices shipped, no endpoints dropped at the inventory level.
 
 This migration completes the slice rollout for the four feature areas (Households, Lists, ListItems, Inventory, InventoryItems). The `Frigorino.Application` project itself was deleted — review feedback flagged the vestigial-shim `AddApplicationServices()` as dead code, so the project + reference from `Frigorino.Web`/`Frigorino.Test` + sln entry + `Application_Should_Not_Depend_On_Infrastructure` arch rule + corresponding Dockerfile COPY all went together.
 
@@ -69,7 +69,7 @@ File: `Application/Frigorino.Features/Inventories/DeleteInventory.cs`. Write-via
 - `public Result Update(callerUserId, callerRole, name, description)` — role check first (returns `AccessDeniedError` on policy fail), then revalidates name/description, then mutates.
 - `public Result SoftDelete(callerUserId, callerRole)` — role check, then `IsActive = false; UpdatedAt = utcNow`.
 
-Plus six InventoryItem-coordination methods (see `knowledge/Migrations/InventoryItems.md`).
+Plus the InventoryItem-coordination methods on the aggregate (add / update / remove / restore / reorder), which order items by lexicographic fractional-index `Rank`.
 
 22 new unit tests in `Application/Frigorino.Test/Domain/InventoryAggregateTests.cs` lock the validation + role matrix.
 
@@ -111,7 +111,7 @@ Shared input primitives (`AddInput`, `QuantityPanel`, `DateInputPanel`, plus the
 
 The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely. Removed: project from `Frigorino.sln`, `<ProjectReference>` from `Frigorino.Web.csproj` + `Frigorino.Test.csproj`, `using Frigorino.Application;` + `builder.Services.AddApplicationServices();` from `Program.cs`, `Application_Should_Not_Depend_On_Infrastructure` arch test, `COPY Application/Frigorino.Application/...` line from the Dockerfile.
 
-`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` was **deleted** in the post-review cleanup pass — it ran at every startup via `MaintenanceHostedService` and unconditionally stamped `UpdatedAt` + sort orders on every list/inventory item even when no gap had shrunk. Compaction now happens only via the explicit `POST .../items/compact` endpoints. (Mid-migration it had shed its `IInventoryService` dependency and called `inventory.CompactItems()` directly; the file is now gone.)
+`Application/Frigorino.Infrastructure/Tasks/RecalculateSortOrderTask.cs` was **deleted** in the post-review cleanup pass — it ran at every startup via `MaintenanceHostedService` and unconditionally stamped `UpdatedAt` + sort orders on every list/inventory item even when no gap had shrunk. (The whole integer sort-order scheme — `SortOrderCalculator`, `CompactItems`, the `/items/compact` endpoints — was later replaced by lexicographic fractional-index `Rank`, which needs no compaction pass at all.)
 
 `Application/Frigorino.Test/Architecture/ArchitectureTests.cs` lost its `Application_Should_Not_Depend_On_Infrastructure` rule together with the project. Remaining rules pin `Domain → no infrastructure frameworks`, `Infrastructure → no Web`, `Features → no Web`.
 
@@ -125,5 +125,4 @@ The `Frigorino.Application` project + `DependencyInjection.cs` deleted entirely.
 - Slice doc: `knowledge/Vertical_Slices.md`
 - Households tracker (precedent): `knowledge/Migrations/Household.md`
 - Lists tracker (immediate precedent): `knowledge/Migrations/Lists.md`
-- InventoryItems tracker (companion): `knowledge/Migrations/InventoryItems.md`
 - API regen: `npm run api` from `Application/Frigorino.Web/ClientApp/`

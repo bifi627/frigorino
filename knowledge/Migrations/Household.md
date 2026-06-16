@@ -24,7 +24,7 @@ File: `Application/Frigorino.Features/Households/GetUserHouseholds.cs`. Inline E
 
 ### ❌ GET /api/household/{id} — Dropped (not migrated)
 
-The legacy endpoint had **zero hand-written frontend consumers** — `useCurrentHouseholdWithDetails` (`src/hooks/useHouseholdQueries.ts:193`) composes household details client-side by `.find()`-ing the active household inside the cached `useUserHouseholds()` list. No UI calls a single-household-by-id read, and the list-vs-detail shapes are identical today. So the endpoint was orphan API surface.
+The legacy endpoint had **zero hand-written frontend consumers** — `useCurrentHouseholdWithDetails` (a client-side hook, since relocated under `features/households/`) composed household details client-side by `.find()`-ing the active household inside the cached `useUserHouseholds()` list. No UI calls a single-household-by-id read, and the list-vs-detail shapes are identical today. So the endpoint was orphan API surface.
 
 Decision: drop entirely rather than migrate. Both the legacy controller action and (briefly) a vertical-slice reimplementation were removed.
 

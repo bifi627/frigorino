@@ -1,6 +1,6 @@
 # Vertical Slices
 
-Working notes on how `Frigorino.Features` is meant to grow as more of the legacy controller/service layer is migrated. Trust this document over older architecture notes — the slice migration began after `Backend_Architecture.md` was written.
+How `Frigorino.Features` is structured — the authoritative slice pattern for the codebase. The rules-as-comments header at the top of `CreateHousehold.cs` overrides this doc if they ever drift (see below).
 
 ## Why this project uses vertical slices
 
@@ -218,22 +218,17 @@ Frigorino.Features/
 - **Service interfaces stay in `Frigorino.Domain/Interfaces`.** Slices consume them via DI; the interface itself isn't a slice concern.
 - **Domain entities and their factories stay in `Frigorino.Domain`.** A slice calls `Household.Create(...)` — it doesn't define what a household is.
 
-## Migration status & path forward
+## Migration status
 
-What's done:
-- `Me/ActiveHousehold/` — Get + Set
-- `Households/` CRUD — Create, GetUserHouseholds, DeleteHousehold (GET/{id} and PUT/{id} dropped as orphan API)
-- `Households/Members/` — GetMembers, AddMember, RemoveMember, UpdateMemberRole (POST `/leave` dropped as orphan API)
-- `Lists/` CRUD — CreateList, GetLists, GetList, UpdateList, DeleteList. `List` is its own aggregate root with `Create` factory + `Update` / `SoftDelete` mutations; the handler resolves the caller's role from `UserHouseholds` and passes it in (creator-OR-Admin+ policy lives on the aggregate). See `knowledge/Migrations/Lists.md`.
-- `Lists/Items/` — GetItems, GetItem, CreateItem, UpdateItem, DeleteItem, ToggleItemStatus, ReorderItem, CompactItems. Sort-order coordination promoted onto the `List` aggregate. See `knowledge/Migrations/ListItems.md`.
-- `Inventories/` CRUD — CreateInventory, GetInventories, GetInventory, UpdateInventory, DeleteInventory. `Inventory` is its own aggregate root with the same creator-OR-Admin+ shape as `List`. See `knowledge/Migrations/Inventory.md`.
-- `Inventories/Items/` — CreateInventoryItem, GetInventoryItems, UpdateInventoryItem, DeleteInventoryItem, ReorderInventoryItem, CompactInventoryItems (no toggle — inventory items have no Status; GetInventoryItem singular dropped as orphan API). URL nests under household. See `knowledge/Migrations/InventoryItems.md`.
+The slice rollout is **complete** — the entire API is vertical slices. Areas: `Me/ActiveHousehold`; `Households` (+ `Members`, `Blueprints`, `Settings`); `Lists` (+ `Items`, `Blueprints`, `Promote`); `Inventories` (+ `Items`, `Settings`, per-user `Notifications`); `Recipes` (+ `Items`, `Sections`, `Links`, `Attachments`, `CopyToList`); `Notifications`; `Version`. CLAUDE.md's feature list is the live index. The only controllers left in `Frigorino.Web/Controllers/` are non-domain scaffold — `Auth`, `Demo`, `WeatherForecast`; new endpoints are always slices, never controllers.
 
-The four write slices in `Households/` (`AddMember`, `RemoveMember`, `UpdateMemberRole`, `DeleteHousehold`) all route through aggregate methods on `Household` (`AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`). See `knowledge/Migrations/Household.md` and `knowledge/Migrations/Members.md` for slice-by-slice notes.
+Decisions worth carrying forward:
 
-What's still in the legacy controller/service layer: **nothing** — slice rollout complete for all four feature areas.
+- `List` and `Inventory` are their **own aggregate roots** — peers of `Household`, not child collections. The handler resolves the caller's role via `db.FindActiveMembershipAsync(...)` and passes it into the aggregate; the creator-OR-Admin+ policy lives on the aggregate. `Household`'s own writes (`AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`) route through its aggregate methods.
+- List/inventory **item ordering is a lexicographic fractional-index `Rank`** (`Domain/Entities/FractionalIndex.cs`) — a reorder mints a key between neighbours, so there is no `CompactItems` endpoint and no `SortOrderCalculator` (both were removed when the original integer-sort design was replaced).
+- `Frigorino.Application` was deleted once the last legacy service was retired — its `Application_Should_Not_Depend_On_Infrastructure` arch rule, csproj/sln/reference entries, and Dockerfile COPY all went with it.
 
-`Frigorino.Application` was deleted with the Inventory migration round — the project went vestigial once the last legacy service was retired, so reviewer feedback drove the full removal (csproj + sln entry + `Frigorino.Web`/`Frigorino.Test` references + `Application_Should_Not_Depend_On_Infrastructure` arch test + Dockerfile COPY).
+Per-area decision history — including the orphan-endpoint drops (`GET`/`PUT /household/{id}`, `POST /leave`, `GET /items/{id}`) — lives in `Migrations/`.
 
 ### Step zero: drop, don't migrate
 
@@ -262,7 +257,7 @@ Before migrating any legacy endpoint, grep `ClientApp/src` for the generated met
 
 ## Cross-references
 
-- Slice template & rules: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-13`
+- Slice template & rules: `Application/Frigorino.Features/Households/CreateHousehold.cs:1-20`
 - Canonical write-via-aggregate-method: `Application/Frigorino.Features/Households/Members/AddMember.cs`
 - Aggregate methods (reference): `Application/Frigorino.Domain/Entities/Household.cs` (`Create`, `AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`)
 - Domain error markers: `Application/Frigorino.Domain/Errors/DomainErrors.cs`

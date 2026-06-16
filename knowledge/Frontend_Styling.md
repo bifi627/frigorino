@@ -4,7 +4,7 @@ Working notes on the visual conventions the project has converged on after the h
 
 ## Theme is the source of truth
 
-The MUI theme at `Application/Frigorino.Web/ClientApp/src/theme.ts` exports `appTheme` (registered in `main.tsx`) and a `pageContainerSx` constant. It sets:
+The MUI theme at `Application/Frigorino.Web/ClientApp/src/theme.ts` exports `appTheme` (registered in `main.tsx`) plus shared style tokens — `pageContainerSx`, `featureContentPx`, the `sectionColors` map (+ `SectionKey` type), `neutralActionColor`, and the `tintedActionButtonSx(color)` helper (shared by dashboard cards and feature headers so action buttons look the same everywhere). `appTheme` sets:
 
 - `palette.mode: "dark"` — single-mode app.
 - `shape.borderRadius: 8` — applies to Buttons, Cards, Papers, Alerts, OutlinedInput, Menu papers, Chips.

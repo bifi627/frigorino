@@ -1,50 +1,37 @@
-# List Performance Optimization
+# Performance Optimization
 
-## Current Implementation
+The performance-sensitive surface is the shopping/inventory **list view**: a list can accumulate hundreds or low-thousands of (mostly checked-off) items, rendered on low-spec phones. The optimizations live in `ClientApp/src/components/sortables/` (`SortableList.tsx`, `SortableListItem.tsx`) plus the per-feature optimistic hooks. There is **no virtualization library** — `react-window` and friends are not dependencies; the strategy is to keep the mounted DOM small by construction.
 
-The list components are optimized with React memoization strategies:
+## Ordering is fractional-index, not integer sort
 
-### SortableList Component
-- **React.memo**: Prevents unnecessary re-renders of list items
-- **useMemo**: Memoizes expensive sorting operations
-- **useCallback**: Stable references for drag-and-drop handlers
-- **Proper sensors**: Configured for both mouse and touch interactions
+List/inventory items carry a lexicographic **`Rank`** (`Domain/Entities/FractionalIndex.cs`), not an integer `SortOrder`. The server returns items already ordered by `Rank` (+ `Id` tiebreaker), so the client trusts array order — `sortMode="custom"` short-circuits with no client-side sort. A reorder persists a single key minted *between* the new neighbours; there is no bulk re-sequencing and no periodic "compaction" pass (the old integer `SortOrderCalculator` + `/items/compact` endpoints are gone). Optimistic reorders just splice the cached array into the new visual order.
 
-### Key Optimizations Applied
+The inventory-only `expiryDateAsc` / `expiryDateDesc` modes do sort client-side by date (null dates last); `custom` does not.
 
-```typescript
-// Memoized list item to prevent re-renders
-const MemoizedSortableListItem = memo(({ item, isEditing, ...handlers }) => (
-    <SortableListItem key={item.id} item={item} {...handlers} isEditing={isEditing} />
-));
+## Bounded DOM for checked items
 
-// Memoized sorting to avoid recalculation
-const { uncheckedItems, checkedItems } = useMemo(() => {
-    const unchecked = items.filter(item => !item.status)
-                          .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    const checked = items.filter(item => item.status)
-                        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-    return { uncheckedItems: unchecked, checkedItems: checked };
-}, [items]);
+`SortableList` splits items into an unchecked (draggable) section and a checked (archive) section, and renders them differently:
 
-// Stable callbacks to prevent child re-renders
-const handleToggleStatus = useCallback(
-    (itemId: number) => toggleMutation.mutate({ householdId, listId, itemId }),
-    [toggleMutation, householdId, listId]
-);
-```
+- **Checked items are paginated** — only the first `CHECKED_PAGE_SIZE` (25) mount; a "Show more" button grows the window by 25 (`visibleCheckedCount`), resetting on remount. This is the real defense against ~1000-item lists.
+- **Checked items render as plain rows** — no `useSortable` / `SortableContext` registration (they're never reordered), which cuts both DOM node count and dnd-kit's per-item bookkeeping.
+- Only the unchecked section is wrapped in `SortableContext`, with a memoized id array.
 
-### Performance Benefits
-- Smooth drag-and-drop interactions
-- Efficient rendering with large lists (50+ items)
-- Reduced memory usage through memoization
-- Optimized sensor configuration for touch devices
+## Drag interaction
 
-### Future Enhancements
-- Virtualization for very large lists (>100 items)
-- Infinite scrolling for server-side pagination
-- Web Workers for complex sorting operations
+- **Sensors** — `PointerSensor` with an 8px activation distance and `TouchSensor` with a 200ms press delay + 5px tolerance, so scrolling never starts a drag and touch drags are reliable.
+- **Live drag order** — `onDragOver` reorders a local `dragOrder` array (`arrayMove`) so rows shift symmetrically under the pointer; an `isDraggingRef` guard stops a mid-drag refetch (e.g. a previous reorder's debounced invalidation) from yanking the order away. On drop the order is held until the optimistic update resyncs — no snap-back flash.
+- The `DragOverlay` clones the dragged row with a left gutter matching the handle width, so the content stays visible above the finger on touch.
 
-## Dependencies
-- `react-window` package available but not currently implemented
-- Performance monitoring available in development mode
+## Memoization (React Compiler + manual)
+
+The build runs the **React Compiler** — `babel-plugin-react-compiler` via `@rolldown/plugin-babel` (`reactCompilerPreset()` in `vite.config.ts`), targeting React 19 (its native runtime). It auto-memoizes components and hooks at compile time, so **new code rarely needs hand-rolled `memo`/`useMemo`/`useCallback`**; opt a single file out with the `"use no memo"` directive if the compiler ever misbehaves.
+
+The hot list components still carry explicit memoization (predating, and belt-and-suspenders with, the compiler): `SortableListItem` is `memo()`-wrapped; `SortableList` memoizes the unchecked/checked split, the `SortableContext` id array, and every handler. These are load-bearing for the drag path's referential stability — keep them.
+
+## Server state
+
+Reads go through TanStack Query with a per-hook `staleTime`. Mutation hooks patch the cache optimistically and coalesce refetches with a debounced invalidation helper, so a burst of toggles/reorders doesn't fan out into one request per change. Hook conventions: `API_Integration.md`.
+
+## Backend note
+
+`Frigorino.Web.csproj` sets `PublishReadyToRun`, so published IL is pre-JIT'd at the Dockerfile's `linux-x64` publish — first-request latency after a Railway cold start doesn't pay tier-1 JIT. (Only active when publish supplies a RID; local `dotnet run` is unaffected.)

@@ -10,7 +10,7 @@ Firebase Auth is used as the identity provider — sign-in and JWT issuance only
   - Email/password via `signInWithEmailAndPassword` and `createUserWithEmailAndPassword`.
   - Google OAuth via `signInWithPopup(GoogleAuthProvider)`.
   - Logout via `signOut`.
-- **Route protection**: the `_protected.tsx` TanStack Router layout redirects unauthenticated users.
+- **Route protection**: per-route, not a layout — each protected route's `beforeLoad` calls `requireAuth` (`src/common/authGuard.ts`), which reads the Zustand auth store and redirects to `/auth/login` when there's no Firebase user. (There is no `_protected` layout route.)
 - **Token attachment**: `src/common/apiClient.ts` resolves `getAuth().currentUser?.getIdToken()` on every API call and sends it as `Authorization: Bearer <token>`.
 
 ## Backend Integration

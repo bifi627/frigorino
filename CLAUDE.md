@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Frigorino is a multi-tenant household management app (lists + inventories) built as a single deployable .NET 10 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
+Frigorino is a multi-tenant household management app (lists, inventories, recipes) built as a single deployable .NET 10 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
 
 ## Repository layout
 
 ```
 Application/
   Frigorino.sln
-  Frigorino.Domain/          # Entities (factories + aggregate methods), service interfaces, FluentResults errors, IMaintenanceTask
+  Frigorino.Domain/          # Entities (factories + aggregate methods), value objects (Quantity, Product classification), service interfaces, FluentResults errors, IMaintenanceTask
   Frigorino.Features/        # Vertical slices: one file per endpoint, request/response DTOs colocated
-  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase + dev auth, background maintenance
+  Frigorino.Infrastructure/  # EF Core (Postgres), Firebase + dev auth, background maintenance, OpenAI classification/extraction, GCS/local file storage + image processing, FCM push
   Frigorino.Web/             # ASP.NET Core host, MapGroup slice wiring, middleware; a few legacy controllers (Auth/Demo)
     ClientApp/               # React 19 + Vite + TanStack Router SPA
   Frigorino.Test/            # xUnit + FakeItEasy; aggregate-method + slice unit tests; ArchUnitNET layer rules
@@ -22,9 +22,9 @@ Application/
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Domain` depends on no infrastructure frameworks, `Infrastructure` does not reference `Web`, and `Features` does not reference `Web`. Infrastructure types are wired into the host via DI extension methods (`AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddMaintenanceServices`) called from `Frigorino.Web/Program.cs`.
+The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Domain` depends on no infrastructure frameworks, `Infrastructure` does not reference `Web`, and `Features` does not reference `Web`. Infrastructure types are wired into the host via DI extension methods (`AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddBackgroundTaskQueue`, `AddFileStorage`, `AddImageProcessing`, `AddItemClassification`, `AddQuantityExtraction`, `AddRecipeQuantityExtraction`, `AddMaintenanceServices`, `AddExpiryNotifications`) called from `Frigorino.Web/Program.cs`.
 
-Deeper notes live in `knowledge/`: `Backend_Architecture.md`, `Vertical_Slices.md`, `Frontend_Architecture.md`, `Frontend_Styling.md`, `Observability.md`, `Testing.md`, `API_Integration.md`, `Firebase_Auth_Setup.md`, `Performance_Optimization.md`, plus per-feature history under `Migrations/`.
+Deeper notes live in `knowledge/`: `Backend_Architecture.md`, `Vertical_Slices.md`, `Frontend_Architecture.md`, `Frontend_Styling.md`, `Observability.md`, `Testing.md`, `API_Integration.md`, `Firebase_Auth_Setup.md`, `Performance_Optimization.md`, `Recipes.md`, `AI_Classification.md`, `File_Storage.md`, `Push_Notifications.md`, plus per-feature history under `Migrations/`.
 
 ## Common commands
 
@@ -61,6 +61,10 @@ The Dockerfile publishes `Frigorino.Web` (solution-wide restore, web-only publis
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (auto-converted by a static helper in `Infrastructure/EntityFramework/DependencyInjection.cs`).
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
+- `Ai:ApiKey` + `Ai:Classifier:*` / `Ai:QuantityExtractor:*` — OpenAI key + per-feature model + `Enabled` flags; both AI features no-op (Null* triggers) unless key **and** flag are set (`knowledge/AI_Classification.md`).
+- `FileStorage:Provider` (`Local`/`Gcs`) + `Bucket` / `Environment` / `LocalPath` — blob storage for recipe attachments + list-item media (`knowledge/File_Storage.md`).
+- `MaintenanceSettings:TriggerToken` — shared secret guarding the `/internal/expiry-scan` cron endpoint (`knowledge/Push_Notifications.md`).
+- `OpenTelemetry:*` — OTLP export endpoint/headers/protocol (`knowledge/Observability.md`).
 
 ### Local dev: two modes
 
@@ -87,7 +91,7 @@ Canonical references:
 - Domain marker errors: `Application/Frigorino.Domain/Errors/DomainErrors.cs`.
 - Result→ValidationProblem helper: `Application/Frigorino.Features/Results/ResultExtensions.cs`.
 
-All features are migrated to slices: Households, Members, Lists, ListItems, Inventories, InventoryItems, Me/ActiveHousehold, Version. The only remaining controllers (`Frigorino.Web/Controllers/`) are non-domain scaffold (`Auth`, `Demo`, `WeatherForecast`). Per-feature migration history (decisions, drops) lives in `knowledge/Migrations/*.md`. **When adding a new endpoint, write a slice; do not add controllers.**
+All features are slices: Households (+ Members/Blueprints/Settings), Lists (+ Items/Blueprints/Promote), Inventories (+ Items/Settings/per-user Notifications), Recipes (+ Items/Sections/Links/Attachments/CopyToList), Me/ActiveHousehold/Settings, Notifications (FCM token register + expiry-scan trigger), Version. The only remaining controllers (`Frigorino.Web/Controllers/`) are non-domain scaffold (`Auth`, `Demo`, `WeatherForecast`). Per-feature migration history (decisions, drops) lives in `knowledge/Migrations/*.md`. **When adding a new endpoint, write a slice; do not add controllers.**
 
 ### Request pipeline (`Frigorino.Web/Program.cs`)
 Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync runs inside `JwtBearerEvents.OnTokenValidated` (`Frigorino.Infrastructure/Auth/FirebaseAuth.cs` → `UserSync.EnsureAsync`) — gated on the JWT's `auth_time` claim so it fires once per real Firebase login, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
@@ -100,9 +104,9 @@ Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. 
 - `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext` (timestamps auto-stamped in `SaveChangesAsync`; `IsActive` is filtered per-slice, not via a global query filter). New entities should follow the same pattern instead of setting timestamps in handlers.
 
 ### Background jobs (startup maintenance)
-Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). The only task today is `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items past 30 days). It re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — which is cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
+Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). Three tasks run today: `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items past 30 days), `ReclaimOrphanBlobs` (mark-and-sweep of unreferenced blobs per `IBlobReferenceSource` area — see `knowledge/File_Storage.md`), and `BackfillProductClassification` (enqueues classification for un-classified products — only registered when AI is enabled). Each re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
 
-Request-triggered fire-and-forget work should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService` (event-driven, no idle polling), **not** Hangfire — reverted because its always-on `BackgroundJobServer` polls Postgres continuously and defeats Railway's serverless sleep (see IDEAS.md). This queue now exists — `BackgroundTaskQueue` + `QueuedHostedService` (`Frigorino.Infrastructure/Services/`), drained by a single consumer.
+Request-triggered fire-and-forget work should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService` (event-driven, no idle polling), **not** Hangfire — reverted because its always-on `BackgroundJobServer` polls Postgres continuously and defeats Railway's serverless sleep (see IDEAS.md). This queue now exists — `BackgroundTaskQueue` + `QueuedHostedService` (`Frigorino.Infrastructure/Services/`), drained by a single bounded-concurrency consumer; it carries the AI classification + quantity-extraction jobs (`knowledge/AI_Classification.md`). The expiry-notification scan is the exception: it runs synchronously in-request behind the key-guarded `/internal/expiry-scan` endpoint (external Railway cron), writing its `NotificationDispatch` ledger row claim-slot-first so concurrent/duplicate calls are idempotent — durability the in-memory queue can't promise (`knowledge/Push_Notifications.md`).
 
 ### API surface
 - The API is wired entirely as vertical slices in `Frigorino.Features`, registered in `Program.cs` via `app.MapGroup(prefix).RequireAuthorization().WithTags(...)` groups whose endpoints are added with per-slice extension methods (`households.MapCreateHousehold()`, `lists.MapCreateList()`, …). `MapControllers` remains only for the `Auth`/`Demo` scaffold. New endpoints are slices — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1`.
@@ -119,6 +123,8 @@ Request-triggered fire-and-forget work should use an in-process `System.Threadin
 - The fetch client is configured once at app boot in `src/common/apiClient.ts` (imported for its side effect from `main.tsx`). It injects the Firebase ID token via a request **interceptor** (`client.interceptors.request.use`), not the generated `auth` resolver (ASP.NET emits no security schemes, so `auth` never fires). There is no `ClientApi` singleton — generated SDK functions import the configured `client` internally.
 - First-run onboarding: `routes/index.tsx` redirects a signed-in user with no households to `/onboarding` (a household-create form with a Skip option) unless they've skipped, persisted via `features/households/onboardingSkip.ts`.
 - i18n is wired via `i18next` + `i18next-http-backend` — translation files live under `ClientApp/public/locales/{en,de}/translation.json`. **Tests never assert on translated text** — see styling guide.
+- Push + PWA: a **push-only** service worker (`src/sw.ts`, no Workbox precaching) plus `src/common/pushNotifications.ts` (FCM enable/disable/register), surfaced in `features/settings`; PWA install wiring in `src/common/pwa.ts`. Frontend RUM/observability via Grafana Faro (`src/common/observability.ts`). See `knowledge/Push_Notifications.md`.
+- SPA env vars (all `VITE_*`, read via `import.meta.env`): `VITE_DEV_AUTH`, `VITE_FCM_VAPID_KEY`, `VITE_FARO_URL` / `_APP_NAME` / `_ENV`, `VITE_APP_VERSION`, `VITE_APP_NAME`. Each must be declared as **both** `ARG` and `ENV` in the Dockerfile `build_frontend` stage (and set in every Railway env) or it silently no-ops in the bundle.
 
 ### API hook conventions
 

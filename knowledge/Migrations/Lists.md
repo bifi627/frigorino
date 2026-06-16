@@ -2,7 +2,7 @@
 
 Status legend: ✅ Done · 🚧 In progress · ⬜ Not started · ❌ Dropped
 
-This tracker covers List-level CRUD only (`/api/household/{householdId}/lists` and `/api/household/{householdId}/lists/{listId}`). ListItems (Add/Update/Delete/Toggle/Reorder/Compact) are still on the legacy `ListItemsController`/`ListItemService` and have their own future tracker. **Status: complete** — all five live slices shipped, no endpoints dropped.
+This tracker covers List-level CRUD only (`/api/household/{householdId}/lists` and `/api/household/{householdId}/lists/{listId}`); the nested `Lists/Items/` slices were migrated in a later round (and now order items by fractional-index `Rank`, not the integer sort coordination this doc's "deferred" notes anticipated). **Status: complete** — all five live slices shipped, no endpoints dropped.
 
 ## Conventions
 

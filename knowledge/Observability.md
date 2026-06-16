@@ -20,16 +20,7 @@ Everything is single-stack: `https://otlp-gateway-prod-eu-west-2.grafana.net/otl
 
 ### Packages (`Frigorino.Web`)
 
-| Package | Version |
-|---|---|
-| `OpenTelemetry.Extensions.Hosting` | 1.15.3 |
-| `OpenTelemetry.Instrumentation.AspNetCore` | 1.15.2 |
-| `OpenTelemetry.Instrumentation.EntityFrameworkCore` | 1.15.1-beta.1 |
-| `OpenTelemetry.Instrumentation.Http` | 1.15.1 |
-| `OpenTelemetry.Instrumentation.Runtime` | 1.15.1 |
-| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | 1.15.3 |
-
-All exact-pinned.
+The `OpenTelemetry.*` package group — `Extensions.Hosting`, `Exporter.OpenTelemetryProtocol`, and the `AspNetCore` / `EntityFrameworkCore` / `Http` / `Runtime` instrumentations — is exact-pinned in `Frigorino.Web.csproj`. Read current versions there rather than duplicating them here.
 
 ### Registration site
 
@@ -57,18 +48,13 @@ Every dashboard query must filter on `deployment.environment` so local dev data 
 
 ### Diagnostics
 
-`Frigorino.Web/OTEL_DIAGNOSTICS.json` exists next to the csproj and configures the OTel SDK's own self-diagnostics file (`Frigorino.Web.exe.<pid>.log`, gitignored). It captures exporter failures and instrument warnings — the only sensible way to figure out why nothing reaches Grafana. Delete the JSON once an investigation finishes; the log file caps at the configured size then truncates.
+To debug why nothing reaches Grafana, drop an `OTEL_DIAGNOSTICS.json` next to the csproj (`Frigorino.Web/`): it switches on the OTel SDK's own self-diagnostics, written to `Frigorino.Web.exe.<pid>.log` (gitignored), capturing exporter failures and instrument warnings. No such file is committed — none is present by default; add it for an investigation and delete it after. The log file caps at the configured size then truncates.
 
 ## Frontend wiring
 
 ### Packages (`ClientApp`)
 
-| Package | Version |
-|---|---|
-| `@grafana/faro-web-sdk` | 2.6.3 |
-| `@grafana/faro-web-tracing` | 2.6.3 |
-
-Exact-pinned via `npm install --save-exact`.
+`@grafana/faro-web-sdk` + `@grafana/faro-web-tracing`, versioned in `ClientApp/package.json` (caret-minor, per the project's npm pinning convention).
 
 ### Adapter
 
