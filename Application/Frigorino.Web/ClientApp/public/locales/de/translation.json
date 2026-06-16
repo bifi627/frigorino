@@ -206,6 +206,17 @@
         "captionPlaceholder": "Bildunterschrift hinzufügen (optional)",
         "editCaption": "Bildunterschrift bearbeiten"
     },
+    "copyToList": {
+        "menuAction": "Zur Einkaufsliste hinzufügen",
+        "sheetTitle": "Zur Einkaufsliste hinzufügen",
+        "sheetSubtitle": "Liste wählen und Zutaten auswählen.",
+        "target": "Liste",
+        "selectAll": "Alle auswählen",
+        "noLists": "Erstelle zuerst eine Liste, um Zutaten hinzuzufügen.",
+        "createList": "Liste erstellen",
+        "addCount": "{{count}} zu {{list}} hinzufügen",
+        "added": "{{count}} zu {{list}} hinzugefügt"
+    },
     "promote": {
         "barReady_one": "{{count}} Artikel bereit für den Vorrat",
         "barReady_other": "{{count}} Artikel bereit für den Vorrat",

@@ -19,6 +19,7 @@ declare module "i18next" {
                 settings: Record<string, string>;
                 blueprints: Record<string, string>;
                 recipes: Record<string, string>;
+                copyToList: Record<string, string>;
             };
         };
     }

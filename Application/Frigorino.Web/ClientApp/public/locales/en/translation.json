@@ -206,6 +206,17 @@
         "captionPlaceholder": "Add a caption (optional)",
         "editCaption": "Edit caption"
     },
+    "copyToList": {
+        "menuAction": "Add to shopping list",
+        "sheetTitle": "Add to shopping list",
+        "sheetSubtitle": "Pick a list, then choose which ingredients to add.",
+        "target": "List",
+        "selectAll": "Select all",
+        "noLists": "Create a list first to add ingredients to it.",
+        "createList": "Create a list",
+        "addCount": "Add {{count}} to {{list}}",
+        "added": "Added {{count}} to {{list}}"
+    },
     "promote": {
         "barReady_one": "{{count}} item ready for inventory",
         "barReady_other": "{{count}} items ready for inventory",
