@@ -63,32 +63,49 @@ namespace Frigorino.Features.Recipes.Attachments
                 return TypedResults.StatusCode(StatusCodes.Status413PayloadTooLarge);
             }
 
-            // Input content-type allowlist pre-filter (the processor is the real gate, but this gives a
-            // clear 400 before we decode).
-            if (string.IsNullOrWhiteSpace(file.ContentType) || !RecipeAttachment.ImageContentTypes.Contains(file.ContentType))
+            // Input content-type allowlist pre-filter: route to the image or document path, else 400.
+            var isImage = RecipeAttachment.ImageContentTypes.Contains(file.ContentType);
+            var isDocument = RecipeAttachment.DocumentContentTypes.Contains(file.ContentType);
+            if (!isImage && !isDocument)
             {
-                return new Error($"Content type '{file.ContentType}' is not an allowed image type.")
+                return new Error($"Content type '{file.ContentType}' is not an allowed type.")
                     .WithProperty("file").ToValidationProblemResult();
             }
-
-            Result<ProcessedImage> processed;
-            await using (var upload = file.OpenReadStream())
-            {
-                processed = await imageProcessor.ProcessAsync(upload, ct);
-            }
-            if (processed.IsFailed) return processed.ToValidationProblem();
 
             // Orphan-safe ordering: save blobs BEFORE the row exists; compensate on any later failure.
             string? storageKey = null;
             string? thumbnailKey = null;
             try
             {
-                storageKey = await storage.SaveAsync(new MemoryStream(processed.Value.FullRes), ct);
-                thumbnailKey = await storage.SaveAsync(new MemoryStream(processed.Value.Thumbnail), ct);
+                StoredFile stored;
+                Func<Recipe, Result<RecipeAttachment>> addToRecipe;
 
-                var stored = new StoredFile(
-                    storageKey, thumbnailKey, processed.Value.ContentType,
-                    file.FileName, processed.Value.FullResSizeBytes);
+                if (isImage)
+                {
+                    Result<ProcessedImage> processed;
+                    await using (var upload = file.OpenReadStream())
+                    {
+                        processed = await imageProcessor.ProcessAsync(upload, ct);
+                    }
+                    if (processed.IsFailed) return processed.ToValidationProblem();
+
+                    storageKey = await storage.SaveAsync(new MemoryStream(processed.Value.FullRes), ct);
+                    thumbnailKey = await storage.SaveAsync(new MemoryStream(processed.Value.Thumbnail), ct);
+                    stored = new StoredFile(
+                        storageKey, thumbnailKey, processed.Value.ContentType,
+                        file.FileName, processed.Value.FullResSizeBytes);
+                    addToRecipe = recipe => recipe.AddAttachment(caption, stored);
+                }
+                else
+                {
+                    // Document path: store the raw PDF bytes, no processing, no thumbnail.
+                    await using (var upload = file.OpenReadStream())
+                    {
+                        storageKey = await storage.SaveAsync(upload, ct);
+                    }
+                    stored = new StoredFile(storageKey, null, file.ContentType, file.FileName, file.Length);
+                    addToRecipe = recipe => recipe.AddDocumentAttachment(caption, stored);
+                }
 
                 var outcome = await RankRetry.SaveWithRetryAsync(async () =>
                 {
@@ -102,7 +119,7 @@ namespace Frigorino.Features.Recipes.Attachments
                         return new CreateOutcome(null, NotFound: true, Problem: null);
                     }
 
-                    var result = recipe.AddAttachment(caption, stored);
+                    var result = addToRecipe(recipe);
                     if (result.IsFailed)
                     {
                         return new CreateOutcome(null, NotFound: false, Problem: result.ToValidationProblem());
