@@ -19,6 +19,8 @@ export type ApplyBlueprintRequest = {
     blueprintId: number;
 };
 
+export type AttachmentType = 'Image' | 'Document';
+
 export type CreateBlueprintRequest = {
     name: string;
     categories: Array<ProductCategory>;
@@ -240,6 +242,7 @@ export type QuantityUnit = 'Gram' | 'Kilogram' | 'Milliliter' | 'Liter' | 'Piece
 export type RecipeAttachmentResponse = {
     id: number;
     recipeId: number;
+    type: AttachmentType;
     contentType: string;
     originalFileName: null | string;
     fileSizeBytes: number;

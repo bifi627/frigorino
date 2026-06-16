@@ -4824,6 +4824,12 @@
           }
         }
       },
+      "AttachmentType": {
+        "enum": [
+          "Image",
+          "Document"
+        ]
+      },
       "CreateBlueprintRequest": {
         "required": [
           "name",
@@ -5761,6 +5767,7 @@
         "required": [
           "id",
           "recipeId",
+          "type",
           "contentType",
           "originalFileName",
           "fileSizeBytes",
@@ -5778,6 +5785,9 @@
           "recipeId": {
             "type": "integer",
             "format": "int32"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AttachmentType"
           },
           "contentType": {
             "type": "string"
