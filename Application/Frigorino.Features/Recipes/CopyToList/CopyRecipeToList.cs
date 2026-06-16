@@ -39,6 +39,7 @@ namespace Frigorino.Features.Recipes.CopyToList
             CopyRecipeToListRequest request,
             ICurrentUserService currentUser,
             ApplicationDbContext db,
+            IProductClassificationTrigger classificationTrigger,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipAsync(householdId, currentUser.UserId, ct);
@@ -72,6 +73,12 @@ namespace Frigorino.Features.Recipes.CopyToList
             }
 
             var copied = 0;
+            // Clean names to classify after the save commits. Classification (not quantity
+            // extraction) is what lets a later check-off offer promote-to-inventory: ToggleItemStatus
+            // looks up the Product by normalized name, and recipe items never create Product rows
+            // (ExtractRecipeQuantityJob is deliberately classification-free), so without this the
+            // copied item has no catalog row and the promote bar never appears.
+            var namesToClassify = new List<string>();
             // Dedupe by id so a malformed payload with a repeated RecipeItemId copies once.
             foreach (var entry in request.Items.DistinctBy(e => e.RecipeItemId))
             {
@@ -100,9 +107,24 @@ namespace Frigorino.Features.Recipes.CopyToList
                     return added.ToValidationProblem();
                 }
                 copied++;
+
+                // The structured quantity is already supplied → skip quantity extraction (it would
+                // re-parse and could clobber it, mirroring CreateItem's re-order path). Still route the
+                // text so junk/URLs are screened out exactly like the normal create path.
+                var analysis = ItemTextRouter.Analyze(source.Text);
+                if (analysis.Route != ItemTextRoute.SkipAi)
+                {
+                    namesToClassify.Add(analysis.CleanName);
+                }
             }
 
             await db.SaveChangesAsync(ct);
+
+            // Fire-and-forget after the commit (enabled trigger enqueues classify; disabled is a no-op).
+            foreach (var name in namesToClassify)
+            {
+                classificationTrigger.OnProductReferenced(householdId, name);
+            }
 
             return TypedResults.Ok(new CopyRecipeToListResponse(copied));
         }

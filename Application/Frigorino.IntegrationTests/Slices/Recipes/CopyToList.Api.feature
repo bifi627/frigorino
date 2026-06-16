@@ -15,6 +15,14 @@ Feature: Copy recipe to shopping list (API)
     And the list "Groceries" contains an item "Milk" with quantity 300 unit 2
     And every item in list "Groceries" is unchecked
 
+  Scenario: A copied ingredient is classified so a later check-off can suggest promote-to-inventory
+    Given there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Milk" with quantity 300 unit 2
+    And there is a list named "Groceries"
+    When I copy items "Milk" from recipe "Pancakes" to list "Groceries" via the API
+    Then the API response status is 200
+    And the product catalog eventually contains "milk" with AI-recommended shelf life 7
+
   Scenario: Deselected ingredients are not copied
     Given there is a recipe named "Pancakes"
     And the recipe "Pancakes" has an item "Flour" with quantity 250 unit 0
