@@ -1,4 +1,4 @@
-import { BrokenImage, Close, Save } from "@mui/icons-material";
+import { BrokenImage, Close, Description, Save } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -43,6 +43,7 @@ export function RecipeAttachmentCaptionSheet({
 }: Props) {
     const { t } = useTranslation();
     const [caption, setCaption] = useState(attachment?.caption ?? "");
+    const isDocument = attachment?.type === "Document";
 
     const {
         data: url,
@@ -53,7 +54,7 @@ export function RecipeAttachmentCaptionSheet({
         recipeId,
         attachment?.id ?? 0,
         "thumbnail",
-        Boolean(attachment),
+        Boolean(attachment) && !isDocument,
     );
 
     return (
@@ -94,7 +95,9 @@ export function RecipeAttachmentCaptionSheet({
                         justifyContent: "center",
                     }}
                 >
-                    {isLoading ? (
+                    {isDocument ? (
+                        <Description color="action" fontSize="large" />
+                    ) : isLoading ? (
                         <Skeleton
                             variant="rectangular"
                             width="100%"
