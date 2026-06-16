@@ -605,6 +605,36 @@ namespace Frigorino.Domain.Entities
                 FileSizeBytes = file.SizeBytes,
                 Caption = NormalizeCaption(caption),
                 Rank = ComputeAppendAttachmentRank(),
+                Type = AttachmentType.Image,
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+            };
+            Attachments.Add(attachment);
+            return Result.Ok(attachment);
+        }
+
+        public Result<RecipeAttachment> AddDocumentAttachment(string? caption, StoredFile file)
+        {
+            var errors = ValidateAttachmentDocument(file);
+            errors.AddRange(ValidateCaption(caption));
+            if (errors.Count > 0)
+            {
+                return Result.Fail<RecipeAttachment>(errors);
+            }
+
+            var now = DateTime.UtcNow;
+            var attachment = new RecipeAttachment
+            {
+                RecipeId = Id,
+                StorageKey = file.StorageKey,
+                ThumbnailStorageKey = null,
+                ContentType = file.ContentType,
+                OriginalFileName = file.OriginalFileName,
+                FileSizeBytes = file.SizeBytes,
+                Caption = NormalizeCaption(caption),
+                Rank = ComputeAppendAttachmentRank(),
+                Type = AttachmentType.Document,
                 CreatedAt = now,
                 UpdatedAt = now,
                 IsActive = true,
@@ -741,6 +771,38 @@ namespace Frigorino.Domain.Entities
             if (string.IsNullOrWhiteSpace(file.ThumbnailKey))
             {
                 errors.Add(new Error("Image attachments require a thumbnail key.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.ThumbnailStorageKey)));
+            }
+            if (!string.IsNullOrEmpty(file.OriginalFileName) && file.OriginalFileName.Length > RecipeAttachment.OriginalFileNameMaxLength)
+            {
+                errors.Add(new Error($"File name must be {RecipeAttachment.OriginalFileNameMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.OriginalFileName)));
+            }
+            if (file.SizeBytes <= 0 || file.SizeBytes > RecipeAttachment.MaxFileSizeBytes)
+            {
+                errors.Add(new Error($"File size must be between 1 and {RecipeAttachment.MaxFileSizeBytes} bytes.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.FileSizeBytes)));
+            }
+            return errors;
+        }
+
+        private static List<IError> ValidateAttachmentDocument(StoredFile file)
+        {
+            var errors = new List<IError>();
+
+            if (!RecipeAttachment.DocumentContentTypes.Contains(file.ContentType))
+            {
+                errors.Add(new Error($"Stored content type '{file.ContentType}' is not an allowed document type.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.ContentType)));
+            }
+            if (string.IsNullOrWhiteSpace(file.StorageKey) || file.StorageKey.Length > RecipeAttachment.StorageKeyMaxLength)
+            {
+                errors.Add(new Error($"Storage key is required and must be {RecipeAttachment.StorageKeyMaxLength} characters or fewer.")
+                    .WithMetadata("Property", nameof(RecipeAttachment.StorageKey)));
+            }
+            if (file.ThumbnailKey is not null)
+            {
+                errors.Add(new Error("Document attachments must not have a thumbnail key.")
                     .WithMetadata("Property", nameof(RecipeAttachment.ThumbnailStorageKey)));
             }
             if (!string.IsNullOrEmpty(file.OriginalFileName) && file.OriginalFileName.Length > RecipeAttachment.OriginalFileNameMaxLength)
