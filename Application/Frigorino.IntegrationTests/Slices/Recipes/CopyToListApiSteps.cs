@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Quantities;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
@@ -63,6 +64,18 @@ public class CopyToListApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, listId, items);
     }
 
+    [When("I copy text-only item {string} from recipe {string} to list {string} via the API")]
+    public async Task WhenICopyTextOnlyItem(string itemText, string recipeName, string listName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        var listId = ctx.ListIds[listName];
+        var items = new[]
+        {
+            (object)new { recipeItemId = ctx.GetRecipeItemId(recipeName, itemText), quantity = (object?)null },
+        };
+        ctx.LastApiResponse = await api.TryCopyRecipeToListAsync(recipeId, listId, items);
+    }
+
     [When("I copy item {string} from recipe {string} to a non-existent list via the API")]
     public async Task WhenICopyToNonExistentList(string itemText, string recipeName)
     {
@@ -115,6 +128,21 @@ public class CopyToListApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         Assert.NotNull(item);
         Assert.Equal((decimal)value, item!.QuantityValue);
         Assert.Equal((QuantityUnit)unit, item.QuantityUnit);
+        Assert.Equal(ListItemType.Text, item.Type);
+    }
+
+    [Then("the list {string} contains a text-only item {string}")]
+    public async Task ThenListContainsTextOnlyItem(string listName, string itemText)
+    {
+        var listId = ctx.ListIds[listName];
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var item = await db.ListItems.AsNoTracking()
+            .FirstOrDefaultAsync(i => i.ListId == listId && i.Text == itemText && i.IsActive);
+        Assert.NotNull(item);
+        Assert.Null(item!.QuantityValue);
+        Assert.Null(item.QuantityUnit);
+        Assert.Equal(ListItemType.Text, item.Type);
     }
 
     [Then("the list {string} does not contain an item {string}")]

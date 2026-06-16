@@ -25,6 +25,15 @@ Feature: Copy recipe to shopping list (API)
     And the copy response reports 1 copied
     And the list "Groceries" does not contain an item "Milk"
 
+  Scenario: A text-only ingredient is copied with no quantity
+    Given there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Salt to taste"
+    And there is a list named "Groceries"
+    When I copy text-only item "Salt to taste" from recipe "Pancakes" to list "Groceries" via the API
+    Then the API response status is 200
+    And the copy response reports 1 copied
+    And the list "Groceries" contains a text-only item "Salt to taste"
+
   Scenario: A stale recipe-item id is skipped, not an error
     Given there is a recipe named "Pancakes"
     And the recipe "Pancakes" has an item "Flour" with quantity 250 unit 0
