@@ -43,7 +43,9 @@ const Tile = ({
             <Box
                 role="button"
                 tabIndex={0}
-                aria-label={isDocument ? t("recipes.openDocument") : "open image"}
+                aria-label={
+                    isDocument ? t("recipes.openDocument") : "open image"
+                }
                 data-testid={`recipe-attachment-${attachment.id}`}
                 onClick={onOpen}
                 onKeyDown={(e) => {
