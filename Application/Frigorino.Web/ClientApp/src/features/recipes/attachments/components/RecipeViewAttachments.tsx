@@ -90,6 +90,8 @@ const Tile = ({
                 )}
             </Box>
             {attachment.caption || isDocument ? (
+                // Show the caption row for any captioned attachment, and for documents
+                // fall back to the filename when there's no caption.
                 <Typography
                     variant="caption"
                     color="text.secondary"
