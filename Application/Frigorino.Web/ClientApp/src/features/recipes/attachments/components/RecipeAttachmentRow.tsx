@@ -1,4 +1,4 @@
-import { BrokenImage, Delete } from "@mui/icons-material";
+import { BrokenImage, Delete, Description } from "@mui/icons-material";
 import { Box, IconButton, Skeleton, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,12 +25,19 @@ export const RecipeAttachmentRow = ({
     dragHandle,
 }: RecipeAttachmentRowProps) => {
     const { t } = useTranslation();
+    const isDocument = attachment.type === "Document";
 
     const {
         data: url,
         isLoading,
         isError,
-    } = useAttachmentImage(householdId, recipeId, attachment.id, "thumbnail");
+    } = useAttachmentImage(
+        householdId,
+        recipeId,
+        attachment.id,
+        "thumbnail",
+        !isDocument,
+    );
 
     return (
         <Stack
@@ -77,7 +84,9 @@ export const RecipeAttachmentRow = ({
                         justifyContent: "center",
                     }}
                 >
-                    {isLoading ? (
+                    {isDocument ? (
+                        <Description color="action" />
+                    ) : isLoading ? (
                         <Skeleton
                             variant="rectangular"
                             width={THUMB_SIZE}
@@ -112,6 +121,7 @@ export const RecipeAttachmentRow = ({
                     data-testid={`recipe-attachment-${attachment.id}-caption`}
                 >
                     {attachment.caption ||
+                        (isDocument ? attachment.originalFileName : null) ||
                         t("recipes.attachmentCaptionPlaceholder")}
                 </Typography>
             </Stack>

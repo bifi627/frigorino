@@ -1,9 +1,17 @@
 namespace Frigorino.Domain.Entities
 {
-    // An image attached to a recipe as source material (dish photo, scanned card). One kind of
-    // attachment today (image), so no Type discriminator — every row has a generated thumbnail.
-    // Ordering, validation, and lifecycle (add/update-caption/delete/restore/reorder) live on the
-    // parent Recipe aggregate; this is a plain data holder. Sibling of RecipeLink.
+    // Discriminates the two kinds of recipe attachment. Stored as int (Image=0, Document=1);
+    // serialized as its string name on the wire via the global JsonStringEnumConverter.
+    public enum AttachmentType
+    {
+        Image = 0,
+        Document = 1,
+    }
+
+    // An attachment on a recipe as source material — an image (dish photo, scanned card) or a
+    // document (PDF). The Type discriminator distinguishes them: images carry a generated thumbnail,
+    // documents have none. Ordering, validation, and lifecycle (add/update-caption/delete/restore/
+    // reorder) live on the parent Recipe aggregate; this is a plain data holder. Sibling of RecipeLink.
     public class RecipeAttachment
     {
         // Media limits — own source of truth (mirrors ListItem's media values; no cross-aggregate coupling).
@@ -17,6 +25,9 @@ namespace Frigorino.Domain.Entities
         public static readonly string[] ImageContentTypes =
             ["image/jpeg", "image/png", "image/webp"];
 
+        // Accepted document content types (stored as-is — no re-encoding, no thumbnail).
+        public static readonly string[] DocumentContentTypes = ["application/pdf"];
+
         public int Id { get; set; }
         public int RecipeId { get; set; }
 
@@ -26,6 +37,7 @@ namespace Frigorino.Domain.Entities
         public string? OriginalFileName { get; set; }
         public long FileSizeBytes { get; set; }
         public string? Caption { get; set; }
+        public AttachmentType Type { get; set; } = AttachmentType.Image;
 
         // Lexicographic ordering key (fractional index), unique per RECIPE among active rows.
         public string Rank { get; set; } = string.Empty;

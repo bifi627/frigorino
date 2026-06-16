@@ -7,6 +7,7 @@ namespace Frigorino.Features.Recipes.Attachments
     public sealed record RecipeAttachmentResponse(
         int Id,
         int RecipeId,
+        AttachmentType Type,
         string ContentType,
         string? OriginalFileName,
         long FileSizeBytes,
@@ -16,9 +17,9 @@ namespace Frigorino.Features.Recipes.Attachments
         DateTime UpdatedAt)
     {
         public static RecipeAttachmentResponse From(RecipeAttachment a)
-            => new(a.Id, a.RecipeId, a.ContentType, a.OriginalFileName, a.FileSizeBytes, a.Caption, a.Rank, a.CreatedAt, a.UpdatedAt);
+            => new(a.Id, a.RecipeId, a.Type, a.ContentType, a.OriginalFileName, a.FileSizeBytes, a.Caption, a.Rank, a.CreatedAt, a.UpdatedAt);
 
         public static readonly Expression<Func<RecipeAttachment, RecipeAttachmentResponse>> ToProjection = a =>
-            new RecipeAttachmentResponse(a.Id, a.RecipeId, a.ContentType, a.OriginalFileName, a.FileSizeBytes, a.Caption, a.Rank, a.CreatedAt, a.UpdatedAt);
+            new RecipeAttachmentResponse(a.Id, a.RecipeId, a.Type, a.ContentType, a.OriginalFileName, a.FileSizeBytes, a.Caption, a.Rank, a.CreatedAt, a.UpdatedAt);
     }
 }

@@ -389,6 +389,8 @@
         "attachments": "Attachments",
         "addAttachment": "Add attachment",
         "attachImageTitle": "Attach image",
+        "attachDocumentTitle": "Attach document",
+        "openDocument": "Open document",
         "editAttachmentCaption": "Edit caption",
         "attachmentCaption": "Caption",
         "attachmentCaptionPlaceholder": "Optional caption",
