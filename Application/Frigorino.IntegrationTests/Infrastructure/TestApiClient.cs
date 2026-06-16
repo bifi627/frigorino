@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 namespace Frigorino.IntegrationTests.Infrastructure;
@@ -695,5 +696,82 @@ public class TestApiClient(ScenarioContextHolder ctx)
                 DataObject = new { name, description = (string?)null, servings },
                 Headers = AuthHeaders,
             });
+    }
+
+    // ---- Recipe attachments (multipart upload + byte-serving) ----
+
+    // Minimal PDF bytes — the document path stores the raw bytes as-is (no parsing), so a header +
+    // EOF marker is enough to round-trip and serve back with content-type application/pdf.
+    private static readonly byte[] TinyPdf = Encoding.ASCII.GetBytes(
+        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+
+    public Task<IAPIResponse> TryUploadRecipeImageAttachmentAsync(int recipeId, string caption = "", int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        var form = ctx.BrowserContext.APIRequest.CreateFormData();
+        form.Append("file", new FilePayload { Name = "photo.png", MimeType = "image/png", Buffer = TinyPng });
+        form.Append("caption", caption);
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments",
+            new APIRequestContextOptions { Headers = AuthHeaders, Multipart = form });
+    }
+
+    public Task<IAPIResponse> TryUploadRecipeDocumentAttachmentAsync(int recipeId, string caption = "", int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        var form = ctx.BrowserContext.APIRequest.CreateFormData();
+        form.Append("file", new FilePayload { Name = "sheet.pdf", MimeType = "application/pdf", Buffer = TinyPdf });
+        form.Append("caption", caption);
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments",
+            new APIRequestContextOptions { Headers = AuthHeaders, Multipart = form });
+    }
+
+    public async Task<int> CreateRecipeImageAttachmentAsync(int recipeId, string caption = "")
+    {
+        var response = await TryUploadRecipeImageAttachmentAsync(recipeId, caption);
+        if (!response.Ok)
+        {
+            throw new Exception($"CreateRecipeImageAttachmentAsync failed: {response.Status} {await response.TextAsync()}");
+        }
+
+        var json = await response.JsonAsync();
+        return json!.Value.GetProperty("id").GetInt32();
+    }
+
+    public async Task<int> CreateRecipeDocumentAttachmentAsync(int recipeId, string caption = "")
+    {
+        var response = await TryUploadRecipeDocumentAttachmentAsync(recipeId, caption);
+        if (!response.Ok)
+        {
+            throw new Exception($"CreateRecipeDocumentAttachmentAsync failed: {response.Status} {await response.TextAsync()}");
+        }
+
+        var json = await response.JsonAsync();
+        return json!.Value.GetProperty("id").GetInt32();
+    }
+
+    public Task<IAPIResponse> TryGetRecipeAttachmentsAsync(int recipeId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetRecipeAttachmentFileAsync(int recipeId, int attachmentId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments/{attachmentId}/file",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryGetRecipeAttachmentThumbnailAsync(int recipeId, int attachmentId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments/{attachmentId}/thumbnail",
+            new APIRequestContextOptions { Headers = AuthHeaders });
     }
 }

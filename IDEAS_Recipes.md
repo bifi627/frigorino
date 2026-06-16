@@ -16,10 +16,6 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 - **Why:** Filter recipes by course — Entry / Main / Side / Salad / Dessert / Breakfast / Drink / Snack… Client requirement #3.
 - **Sketch:** Fixed curated **multi-select enum**, stored as flat `RecipeTag` join rows (`RecipeId`, `Tag`), serialized as string names like other enums. Tag-filter chips on the recipes overview. (Free-form household tags considered and set aside in favor of the curated set — revisit only if the fixed list proves limiting.)
 
-## Attachment-flow integration tests (deferred debt)
-
-- **Why:** Both the image-attachments phase (PR #126) and the document-attachments phase shipped covered by unit tests + manual verification only — dedicated Reqnroll/Playwright IT scenarios for the attachment flow (upload, caption edit, reorder, delete/undo, view-page open) were deferred. Tracked here so the gap isn't forgotten.
-
 ## AI-generated cooking instructions from sources
 
 - **Why:** Client requirement #5's end-goal — once a recipe has source material (link/document), use AI to extract in-app cooking instructions, turning the MVP "ingredient list" into a full recipe.
