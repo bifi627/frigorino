@@ -11,7 +11,7 @@ Frigorino's backend is a single .NET 10 ASP.NET Core app (`Frigorino.Web`) that 
 | `Frigorino.Infrastructure` | EF Core (Postgres), Firebase + dev auth, background maintenance + queue, OpenAI classification/extraction, GCS/local file storage + image processing, FCM push | Domain |
 | `Frigorino.Web` | ASP.NET host, `MapGroup` slice wiring, middleware, the `Auth`/`Demo`/`WeatherForecast` scaffold controllers | Features, Infrastructure |
 
-ArchUnit rules pinned today: `Domain → no infrastructure frameworks`, `Infrastructure → no Web`, `Features → no Web`. (The former `Frigorino.Application` project — services + mapping extensions + an integer `SortOrderCalculator` — was deleted once the slice migration completed; its `Application_Should_Not_Depend_On_Infrastructure` rule went with it. See `Migrations/Inventory.md`.)
+ArchUnit rules pinned today: `Domain → no infrastructure frameworks`, `Infrastructure → no Web`, `Features → no Web`. (There is no `Frigorino.Application` project: the former services + mapping extensions + an integer `SortOrderCalculator` were absorbed into the vertical slices and deleted once the slice migration completed; its `Application_Should_Not_Depend_On_Infrastructure` rule went with it.)
 
 Infrastructure types reach the host only through DI extension methods called from `Program.cs`: `AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddBackgroundTaskQueue`, `AddFileStorage`, `AddImageProcessing`, `AddItemClassification`, `AddQuantityExtraction`, `AddRecipeQuantityExtraction`, `AddMaintenanceServices`, `AddExpiryNotifications`.
 
