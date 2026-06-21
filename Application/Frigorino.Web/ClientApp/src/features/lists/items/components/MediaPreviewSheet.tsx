@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
+import { DocumentChip } from "./DocumentChip";
 
 interface Props {
     file: File | null;
@@ -32,6 +33,7 @@ export function MediaPreviewSheet({
     // whether a file is open, so each newly-attached file mounts a fresh sheet (empty caption) while
     // a failed send keeps the same instance — preserving the typed caption for a retry.
     const [caption, setCaption] = useState("");
+    const isPdf = file?.type === "application/pdf";
 
     // Local object URL for the picked file (no server round-trip for the preview). createObjectURL
     // and revokeObjectURL MUST be paired in one effect so the URL survives StrictMode's
@@ -68,7 +70,7 @@ export function MediaPreviewSheet({
                     alignItems: "center",
                 }}
             >
-                {t("lists.attachPhoto")}
+                {isPdf ? t("lists.attachDocument") : t("lists.attachPhoto")}
                 <IconButton
                     onClick={onClose}
                     disabled={isUploading}
@@ -78,7 +80,9 @@ export function MediaPreviewSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                {previewUrl ? (
+                {isPdf ? (
+                    <DocumentChip name={file?.name} />
+                ) : previewUrl ? (
                     <Box
                         component="img"
                         src={previewUrl}

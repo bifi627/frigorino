@@ -27,6 +27,11 @@ export interface AttachPayload {
     file: File;
 }
 
+// One hidden input serves both photo and document picks; `accept` is toggled imperatively per choice
+// (the same imperative technique already used for the camera `capture` attribute below).
+const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+const DOCUMENT_ACCEPT = "application/pdf";
+
 const AttachTrigger = ({
     complete,
     disabled,
@@ -55,11 +60,24 @@ const AttachTrigger = ({
         if (!input) {
             return;
         }
+        input.setAttribute("accept", IMAGE_ACCEPT);
         if (useCamera) {
             input.setAttribute("capture", "environment");
         } else {
             input.removeAttribute("capture");
         }
+        input.click();
+    };
+
+    // Documents: clear the camera capture and constrain the picker to PDFs, then reuse the same input.
+    const openDocumentPicker = () => {
+        setAnchor(null);
+        const input = fileInputRef.current;
+        if (!input) {
+            return;
+        }
+        input.removeAttribute("capture");
+        input.setAttribute("accept", DOCUMENT_ACCEPT);
         input.click();
     };
 
@@ -133,10 +151,9 @@ const AttachTrigger = ({
                                             {t("lists.choosePhoto")}
                                         </ListItemText>
                                     </MenuItem>
-                                    {/* Document arrives in sub-feature #3. */}
                                     <MenuItem
-                                        disabled
                                         data-testid="composer-attach-document"
+                                        onClick={openDocumentPicker}
                                     >
                                         <ListItemIcon>
                                             <Description fontSize="small" />

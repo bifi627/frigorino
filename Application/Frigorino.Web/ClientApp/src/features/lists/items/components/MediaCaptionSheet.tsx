@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
 import type { ListItemResponse } from "../../../../lib/api";
 import { useItemImage } from "../useItemImage";
+import { DocumentChip } from "./DocumentChip";
 
 interface Props {
     householdId: number;
@@ -40,6 +41,7 @@ export function MediaCaptionSheet({
     // Seeded from the item's existing caption on mount. The parent keys this sheet by item id, so
     // opening a different media item remounts and reseeds — no reset-in-effect.
     const [caption, setCaption] = useState(item?.comment ?? "");
+    const isDocument = item?.type === "Document";
 
     const {
         data: url,
@@ -50,7 +52,7 @@ export function MediaCaptionSheet({
         item?.listId ?? 0,
         item?.id ?? 0,
         "thumbnail",
-        Boolean(item),
+        Boolean(item) && !isDocument,
     );
 
     return (
@@ -78,40 +80,47 @@ export function MediaCaptionSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                <Box
-                    sx={{
-                        width: "100%",
-                        height: 160,
-                        mb: 2,
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        bgcolor: "action.hover",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
-                    {isLoading ? (
-                        <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height="100%"
-                        />
-                    ) : isError || !url ? (
-                        <BrokenImage color="disabled" />
-                    ) : (
-                        <Box
-                            component="img"
-                            src={url}
-                            alt=""
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                            }}
-                        />
-                    )}
-                </Box>
+                {isDocument ? (
+                    <DocumentChip
+                        name={item?.fileName}
+                        nameTestId="media-caption-document-name"
+                    />
+                ) : (
+                    <Box
+                        sx={{
+                            width: "100%",
+                            height: 160,
+                            mb: 2,
+                            borderRadius: 1,
+                            overflow: "hidden",
+                            bgcolor: "action.hover",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {isLoading ? (
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height="100%"
+                            />
+                        ) : isError || !url ? (
+                            <BrokenImage color="disabled" />
+                        ) : (
+                            <Box
+                                component="img"
+                                src={url}
+                                alt=""
+                                sx={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                }}
+                            />
+                        )}
+                    </Box>
+                )}
                 <TextField
                     fullWidth
                     multiline

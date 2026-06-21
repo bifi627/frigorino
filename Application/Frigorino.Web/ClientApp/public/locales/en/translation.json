@@ -204,7 +204,8 @@
         "choosePhoto": "Choose from files",
         "attachDocument": "Document",
         "captionPlaceholder": "Add a caption (optional)",
-        "editCaption": "Edit caption"
+        "editCaption": "Edit caption",
+        "openDocument": "Open document"
     },
     "copyToList": {
         "menuAction": "Add to shopping list",

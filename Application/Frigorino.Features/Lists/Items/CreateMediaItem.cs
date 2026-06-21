@@ -53,10 +53,9 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.NotFound();
             }
 
-            var list = await db.Lists
-                .Include(l => l.ListItems)
-                .FirstOrDefaultAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
-            if (list is null)
+            var listExists = await db.Lists
+                .AnyAsync(l => l.Id == listId && l.HouseholdId == householdId && l.IsActive, ct);
+            if (!listExists)
             {
                 return TypedResults.NotFound();
             }
@@ -72,14 +71,19 @@ namespace Frigorino.Features.Lists.Items
                 return TypedResults.StatusCode(StatusCodes.Status413PayloadTooLarge);
             }
 
-            Result<ProcessedImage> processed;
-            await using (var upload = file.OpenReadStream())
+            // Content-type pre-filter: reject anything not allowed for the requested type BEFORE touching
+            // storage. The image path is additionally guarded by the decoder; the document path has no
+            // processor, so this is its only pre-storage gate (and matches the recipe attachment slice).
+            var allowed = type switch
             {
-                processed = await imageProcessor.ProcessAsync(upload, ct);
-            }
-            if (processed.IsFailed)
+                ListItemType.Image => ListItem.ImageContentTypes,
+                ListItemType.Document => ListItem.DocumentContentTypes,
+                _ => System.Array.Empty<string>(),
+            };
+            if (string.IsNullOrWhiteSpace(file.ContentType) || !allowed.Contains(file.ContentType))
             {
-                return processed.ToValidationProblem();
+                return new Error($"Content type '{file.ContentType}' is not allowed for {type} items.")
+                    .WithProperty("file").ToValidationProblemResult();
             }
 
             // Orphan-safe ordering: save blobs BEFORE the row exists; compensate on any later failure.
@@ -88,12 +92,34 @@ namespace Frigorino.Features.Lists.Items
             string? thumbnailKey = null;
             try
             {
-                storageKey = await storage.SaveAsync(new MemoryStream(processed.Value.FullRes), ct);
-                thumbnailKey = await storage.SaveAsync(new MemoryStream(processed.Value.Thumbnail), ct);
+                StoredFile stored;
+                if (type == ListItemType.Image)
+                {
+                    Result<ProcessedImage> processed;
+                    await using (var upload = file.OpenReadStream())
+                    {
+                        processed = await imageProcessor.ProcessAsync(upload, ct);
+                    }
+                    if (processed.IsFailed)
+                    {
+                        return processed.ToValidationProblem();
+                    }
 
-                var stored = new StoredFile(
-                    storageKey, thumbnailKey, processed.Value.ContentType,
-                    file.FileName, processed.Value.FullResSizeBytes);
+                    storageKey = await storage.SaveAsync(new MemoryStream(processed.Value.FullRes), ct);
+                    thumbnailKey = await storage.SaveAsync(new MemoryStream(processed.Value.Thumbnail), ct);
+                    stored = new StoredFile(
+                        storageKey, thumbnailKey, processed.Value.ContentType,
+                        file.FileName, processed.Value.FullResSizeBytes);
+                }
+                else
+                {
+                    // Document path: store the raw PDF bytes, no processing, no thumbnail.
+                    await using (var upload = file.OpenReadStream())
+                    {
+                        storageKey = await storage.SaveAsync(upload, ct);
+                    }
+                    stored = new StoredFile(storageKey, null, file.ContentType, file.FileName, file.Length);
+                }
 
                 // AddMediaItem mints a Rank (append after the last unchecked item); a concurrent append
                 // can collide on the partial unique index. RankRetry reloads fresh state and re-mints —

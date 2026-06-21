@@ -16,6 +16,11 @@ public class MediaItemSteps
     private static readonly byte[] TinyPng = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAFklEQVR4nGOpCDjxnwEPYGEgAIaHAgCvwgKw2JOr9gAAAABJRU5ErkJggg==");
 
+    // Minimal valid PDF bytes — the document path stores the raw bytes (no parsing), so a header +
+    // EOF marker round-trips and serves back as application/pdf.
+    private static readonly byte[] TinyPdf = System.Text.Encoding.ASCII.GetBytes(
+        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+
     [When("I upload a photo with caption {string} to {string} via the API")]
     public async Task WhenIUploadAPhotoViaTheApi(string caption, string listName)
     {
@@ -46,6 +51,37 @@ public class MediaItemSteps
         var resp = await api.TryGetItemFileAsync(listId, itemId);
         Assert.Equal(200, resp.Status);
         Assert.Contains(contentType, resp.Headers["content-type"]);
+    }
+
+    [When("I upload a document with caption {string} to {string} via the API")]
+    public async Task WhenIUploadADocumentViaTheApi(string caption, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryUploadDocumentAsync(listId, caption);
+        if (ctx.LastApiResponse.Ok)
+        {
+            var json = await ctx.LastApiResponse.JsonAsync();
+            ctx.SetListItemId(listName, "__document__", json!.Value.GetProperty("id").GetInt32());
+        }
+    }
+
+    [Then("the uploaded document in {string} serves a file with content-type {string}")]
+    public async Task ThenDocumentServesFile(string listName, string contentType)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, "__document__");
+        var resp = await api.TryGetItemFileAsync(listId, itemId);
+        Assert.Equal(200, resp.Status);
+        Assert.Contains(contentType, resp.Headers["content-type"]);
+    }
+
+    [Then("the uploaded document in {string} has no thumbnail")]
+    public async Task ThenDocumentHasNoThumbnail(string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, "__document__");
+        var resp = await api.TryGetItemThumbnailAsync(listId, itemId);
+        Assert.Equal(404, resp.Status);
     }
 
     [When("I attach a photo with caption {string}")]
@@ -129,5 +165,65 @@ public class MediaItemSteps
         }
 
         Assert.True(loaded, "Thumbnail <img> did not finish loading (complete && naturalWidth > 0) after toggle.");
+    }
+
+    [When("I attach a document to the list with caption {string}")]
+    public async Task WhenIAttachADocument(string caption)
+    {
+        await ctx.Page.GetByTestId("composer-attach-button").ClickAsync();
+        await ctx.Page.GetByTestId("composer-attach-document").ClickAsync();
+        await ctx.Page.GetByTestId("composer-attach-file-input").SetInputFilesAsync(new FilePayload
+        {
+            Name = "manual.pdf",
+            MimeType = "application/pdf",
+            Buffer = TinyPdf,
+        });
+        await ctx.Page.GetByTestId("media-caption-input").FillAsync(caption);
+
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.EndsWith("/items/media") && r.Request.Method == "POST" && r.Status == 201);
+        await ctx.Page.GetByTestId("media-send-button").ClickAsync();
+        await responseTask;
+    }
+
+    [Then("a document row appears in the list")]
+    public async Task ThenDocumentRowAppears()
+    {
+        await Assertions.Expect(
+            ctx.Page.Locator("[data-testid^='list-item-document-']").First).ToBeVisibleAsync();
+    }
+
+    [When("I open the caption editor for the document")]
+    public async Task WhenIOpenTheCaptionEditorForTheDocument()
+    {
+        // Locate the document row, then open its per-row MoreVert menu and click edit.
+        // We scope the menu-button search to the li that contains the document row to
+        // avoid accidental matches on other rows.
+        var documentRow = ctx.Page.Locator("[data-testid^='list-item-document-']").First;
+        await documentRow.ScrollIntoViewIfNeededAsync();
+
+        var rowLi = documentRow.Locator("xpath=ancestor::li[1]");
+        var menuButton = rowLi.Locator("[data-testid^='item-menu-button-']");
+        await menuButton.ScrollIntoViewIfNeededAsync();
+        await menuButton.ClickAsync();
+
+        // Wait for the Menu to be visible before clicking the edit button inside it.
+        var editButton = ctx.Page.GetByTestId("edit-item-button");
+        await Assertions.Expect(editButton).ToBeVisibleAsync();
+        await editButton.ClickAsync();
+
+        // Wait for any stale MUI Menu backdrop to detach so the sheet opens cleanly.
+        await ctx.Page.WaitForSelectorAsync(".MuiBackdrop-root", new() { State = Microsoft.Playwright.WaitForSelectorState.Detached, Timeout = 3000 })
+            .ContinueWith(_ => Task.CompletedTask);
+
+        await Assertions.Expect(ctx.Page.GetByTestId("media-caption-sheet")).ToBeVisibleAsync();
+    }
+
+    [Then("the caption editor shows the document filename")]
+    public async Task ThenCaptionEditorShowsDocumentFilename()
+    {
+        var fileNameEl = ctx.Page.GetByTestId("media-caption-document-name");
+        await Assertions.Expect(fileNameEl).ToBeVisibleAsync();
+        await Assertions.Expect(fileNameEl).ToContainTextAsync("manual.pdf");
     }
 }

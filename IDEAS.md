@@ -47,16 +47,6 @@ Format per item:
 ---
 
 
-## Rich list items: document attachments (sub-feature #3)
-
-- **Context:** The rich-list-items feature shipped incrementally (decomposition in [`docs/superpowers/specs/2026-05-23-rich-list-items-design.md`](docs/superpowers/specs/2026-05-23-rich-list-items-design.md)). Done and promoted to `stage`: typed items (#1), image items end-to-end (#2), and the production Firebase-GCS storage backend + orphaned-blob cleanup (#4). **Document attachments (#3) are the only remaining piece.** `ListItemType.Document` and a currently-disabled "Document" item in the attach menu already exist as placeholders.
-- **Why:** Items can be text or photos today. Users also want to attach a **document** (PDF manual / warranty / receipt) to a list item, while it still checks off, reorders, and soft-deletes like any other item.
-- **Sketch (headline decisions):** Reuse the shipped pipeline wholesale — the vendor-neutral `IFileStorage` port + `GcsFileStorage` backend, the API-proxied upload/serve (the API stays the authz gatekeeper since membership lives in Postgres, not Firebase rules), and the `ReclaimOrphanBlobs` sweep (already tracks `StorageKey`). A `Document` item stores the PDF blob + original filename + content-type on the existing flat media columns; **no thumbnail** — PDFs skip the ImageSharp path, so `ThumbnailStorageKey` stays null. Server-side validation: content-type `application/pdf` only + a size cap. Frontend: enable the existing disabled "Document" attach item; a document renderer showing the filename + an open/download affordance that opens the authz-gated blob (no inline PDF preview for v1).
-- **Dependencies:** none new — builds directly on the image-item slices, storage backend, and orphan cleanup now in `stage`. Confirm during planning whether the media columns already carry original-filename/content-type (add one small nullable column if not); the type enum and storage seam are already present, so likely a minimal or no migration.
-- **Impact / cost:** small, mostly composition — ~1 aggregate path (a PDF-validating `AddDocumentItem`, or extend `AddMediaItem`), one upload slice variant reusing the existing serve endpoint, and one frontend renderer + enabling the attach item. No ImageSharp work, no new storage infra.
-
----
-
 ## Rework user invite to household
 
 - **Status:** placeholder — needs a dedicated brainstorming session before any sketch. This entry just captures the scenarios so they aren't lost.
@@ -103,7 +93,7 @@ Format per item:
 
 ## In-app PDF preview for document attachments
 
-- **Why:** Recipe document attachments shipped opening the PDF in a **new browser tab** (the authenticated `/file` blob → object URL → `window.open`; spec: [`docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md`](docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md)). That works everywhere via the native viewer but leaves the app. An in-app preview (a viewer modal mirroring the image lightbox) would keep users in context. The same need will exist for list-item document attachments (IDEAS #3 above).
+- **Why:** Recipe document attachments shipped opening the PDF in a **new browser tab** (the authenticated `/file` blob → object URL → `window.open`; spec: [`docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md`](docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md)). That works everywhere via the native viewer but leaves the app. An in-app preview (a viewer modal mirroring the image lightbox) would keep users in context. The same need also applies to list-item document attachments, now shipped with the same open-in-tab behaviour (spec: [`docs/superpowers/specs/2026-06-21-list-document-attachments-design.md`](docs/superpowers/specs/2026-06-21-list-document-attachments-design.md)).
 - **The core constraint (why this wasn't done in v1):** Frigorino is a mobile-first PWA, and mobile browsers (iOS Safari especially, often Android Chrome) **refuse to render a PDF inside an `<iframe>`/`<embed>`** — they show a blank box or force a download. So the cheap native-embed approach is unreliable exactly on the primary platform, which is why open-in-tab (native full-tab viewer, works everywhere) was chosen.
 - **Sketch (two options):**
   - **Option A — native `<iframe>` of the blob (~half a day):** reuse the existing authenticated blob fetch + StrictMode-safe object-URL pattern + the `RecipeAttachmentLightbox` modal shell; render `<iframe src={objectUrl}>` instead of `window.open`. **Not recommended** — unreliable on mobile (see constraint above).

@@ -205,6 +205,18 @@ public class TestApiClient(ScenarioContextHolder ctx)
             new APIRequestContextOptions { Headers = AuthHeaders, Multipart = form });
     }
 
+    public Task<IAPIResponse> TryUploadDocumentAsync(int listId, string caption = "", int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        var form = ctx.BrowserContext.APIRequest.CreateFormData();
+        form.Append("file", new FilePayload { Name = "manual.pdf", MimeType = "application/pdf", Buffer = TinyPdf });
+        form.Append("type", "Document");
+        form.Append("caption", caption);
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{targetHouseholdId}/lists/{listId}/items/media",
+            new APIRequestContextOptions { Headers = AuthHeaders, Multipart = form });
+    }
+
     public Task<IAPIResponse> TryGetItemThumbnailAsync(int listId, int itemId, int? householdId = null)
     {
         var targetHouseholdId = householdId ?? ctx.HouseholdId;
