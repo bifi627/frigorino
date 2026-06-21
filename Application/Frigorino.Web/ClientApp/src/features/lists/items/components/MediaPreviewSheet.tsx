@@ -1,4 +1,4 @@
-import { Close, Send } from "@mui/icons-material";
+import { Close, Description, Send } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -9,6 +9,7 @@ import {
     DialogTitle,
     IconButton,
     TextField,
+    Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ export function MediaPreviewSheet({
     // whether a file is open, so each newly-attached file mounts a fresh sheet (empty caption) while
     // a failed send keeps the same instance — preserving the typed caption for a retry.
     const [caption, setCaption] = useState("");
+    const isPdf = file?.type === "application/pdf";
 
     // Local object URL for the picked file (no server round-trip for the preview). createObjectURL
     // and revokeObjectURL MUST be paired in one effect so the URL survives StrictMode's
@@ -68,7 +70,7 @@ export function MediaPreviewSheet({
                     alignItems: "center",
                 }}
             >
-                {t("lists.attachPhoto")}
+                {isPdf ? t("lists.attachDocument") : t("lists.attachPhoto")}
                 <IconButton
                     onClick={onClose}
                     disabled={isUploading}
@@ -78,7 +80,27 @@ export function MediaPreviewSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                {previewUrl ? (
+                {isPdf ? (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            mb: 2,
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: "action.hover",
+                        }}
+                    >
+                        <Description color="action" />
+                        <Typography
+                            variant="body2"
+                            sx={{ wordBreak: "break-word", minWidth: 0 }}
+                        >
+                            {file?.name}
+                        </Typography>
+                    </Box>
+                ) : previewUrl ? (
                     <Box
                         component="img"
                         src={previewUrl}

@@ -233,12 +233,16 @@ export const ListViewPage = () => {
     const handleSendMedia = useCallback(
         async (caption: string | null) => {
             if (!householdId || !pendingFile) return;
+            // The media slice validates the type against the file's content-type, so derive it from the
+            // picked file's MIME: a PDF becomes a Document item, everything else an Image.
+            const itemType =
+                pendingFile.type === "application/pdf" ? "Document" : "Image";
             try {
                 await createMediaMutation.mutateAsync({
                     path: { householdId, listId: listIdNum },
                     body: {
                         file: pendingFile,
-                        type: "Image",
+                        type: itemType,
                         caption: caption ?? undefined,
                     },
                 });
