@@ -48,14 +48,22 @@ namespace Frigorino.Test.Features
             return list.Id;
         }
 
-        private static IFormFile FakeFile(string name, long length, byte[]? content = null)
+        private static IFormFile FakeFile(string name, long length, byte[]? content = null, string contentType = "image/jpeg")
         {
             var stream = new MemoryStream(content ?? Encoding.UTF8.GetBytes("raw-bytes"));
             return new FormFile(stream, 0, length, "file", name)
             {
                 Headers = new HeaderDictionary(),
-                ContentType = "image/jpeg",
+                ContentType = contentType,
             };
+        }
+
+        private static IFileStorage SingleKeyStorage(string key, out IFileStorage storage)
+        {
+            var fake = A.Fake<IFileStorage>();
+            A.CallTo(() => fake.SaveAsync(A<Stream>._, A<CancellationToken>._)).Returns(key);
+            storage = fake;
+            return fake;
         }
 
         private static IImageProcessor OkProcessor() =>
@@ -200,6 +208,58 @@ namespace Frigorino.Test.Features
 
             Assert.Empty(await db.ListItems.ToListAsync());
             A.CallTo(() => storage.DeleteAsync("key-full", A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+        }
+
+        [Fact]
+        public async Task Post_ValidDocument_PersistsDocumentItem_OneBlob_NoThumbnail_NoProcessing()
+        {
+            using var db = NewContext();
+            var listId = await SeedListAsync(db, "u1", householdId: 1);
+            SingleKeyStorage("key-doc", out var storage);
+            var processor = OkProcessor();
+
+            var result = await CreateMediaItemEndpoint.Handle(
+                householdId: 1, listId,
+                FakeFile("manual.pdf", length: 4096, contentType: "application/pdf"),
+                ListItemType.Document, caption: "warranty",
+                UserNamed("u1"), db, storage, processor,
+                NullLoggerFactory.Instance, CancellationToken.None);
+
+            Assert.IsType<Created<ListItemResponse>>(result.Result);
+
+            var row = await db.ListItems.SingleAsync();
+            Assert.Equal(ListItemType.Document, row.Type);
+            Assert.Equal("key-doc", row.StorageKey);
+            Assert.Null(row.ThumbnailStorageKey);
+            Assert.Equal("application/pdf", row.ContentType);
+            Assert.Equal("manual.pdf", row.OriginalFileName);
+            Assert.Equal(4096, row.FileSizeBytes);
+            Assert.Equal("warranty", row.Comment);
+
+            A.CallTo(() => storage.SaveAsync(A<Stream>._, A<CancellationToken>._)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => processor.ProcessAsync(A<Stream>._, A<CancellationToken>._)).MustNotHaveHappened();
+            A.CallTo(() => storage.DeleteAsync(A<string>._, A<CancellationToken>._)).MustNotHaveHappened();
+        }
+
+        [Fact]
+        public async Task Post_DocumentWithDisallowedContentType_Returns400_SavesNoBlobs()
+        {
+            using var db = NewContext();
+            var listId = await SeedListAsync(db, "u1", householdId: 1);
+            SingleKeyStorage("key-doc", out var storage);
+            var processor = OkProcessor();
+
+            var result = await CreateMediaItemEndpoint.Handle(
+                householdId: 1, listId,
+                FakeFile("archive.zip", length: 4096, contentType: "application/zip"),
+                ListItemType.Document, caption: null,
+                UserNamed("u1"), db, storage, processor,
+                NullLoggerFactory.Instance, CancellationToken.None);
+
+            Assert.IsType<ValidationProblem>(result.Result);
+            Assert.Empty(await db.ListItems.ToListAsync());
+            A.CallTo(() => storage.SaveAsync(A<Stream>._, A<CancellationToken>._)).MustNotHaveHappened();
+            A.CallTo(() => processor.ProcessAsync(A<Stream>._, A<CancellationToken>._)).MustNotHaveHappened();
         }
     }
 }
