@@ -1,5 +1,5 @@
 import { Description } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
+import { Box, ButtonBase, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { ListItemResponse } from "../../../../lib/api";
 import { useCurrentHousehold } from "../../../me/activeHousehold/useCurrentHousehold";
@@ -16,31 +16,25 @@ export function DocumentItemRenderer({ item }: Props) {
     const openFile = useOpenItemFile(householdId, item.listId);
 
     return (
-        <Box
-            role="button"
-            tabIndex={0}
+        // ButtonBase (component="div" + nativeButton={false}) supplies role="button", tabIndex and
+        // Enter/Space keyboard activation, so we only wire onClick. component="div" because the inner
+        // Typography renders a <p>, which is invalid inside a native <button>. disabled gates on the
+        // household being resolved — MUI then drops the click/keyboard handlers for us.
+        <ButtonBase
+            component="div"
+            nativeButton={false}
+            disabled={householdId <= 0}
             aria-label={t("lists.openDocument")}
             data-testid={`list-item-document-${item.id}`}
-            onClick={() => {
-                if (householdId > 0) {
-                    openFile(item.id);
-                }
-            }}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    if (householdId > 0) {
-                        openFile(item.id);
-                    }
-                }
-            }}
+            onClick={() => openFile(item.id)}
             sx={{
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "flex-start",
+                textAlign: "left",
                 gap: 1.5,
                 flex: 1,
                 minWidth: 0,
-                cursor: "pointer",
                 borderRadius: 1,
                 p: 0.5,
                 "&:hover": { bgcolor: "action.hover" },
@@ -65,6 +59,6 @@ export function DocumentItemRenderer({ item }: Props) {
                     </Typography>
                 ) : null}
             </Box>
-        </Box>
+        </ButtonBase>
     );
 }

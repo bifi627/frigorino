@@ -1,4 +1,4 @@
-import { Close, Description, Send } from "@mui/icons-material";
+import { Close, Send } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -9,11 +9,11 @@ import {
     DialogTitle,
     IconButton,
     TextField,
-    Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
+import { DocumentChip } from "./DocumentChip";
 
 interface Props {
     file: File | null;
@@ -81,25 +81,7 @@ export function MediaPreviewSheet({
             </DialogTitle>
             <DialogContent>
                 {isPdf ? (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            mb: 2,
-                            p: 1.5,
-                            borderRadius: 1,
-                            bgcolor: "action.hover",
-                        }}
-                    >
-                        <Description color="action" />
-                        <Typography
-                            variant="body2"
-                            sx={{ wordBreak: "break-word", minWidth: 0 }}
-                        >
-                            {file?.name}
-                        </Typography>
-                    </Box>
+                    <DocumentChip name={file?.name} />
                 ) : previewUrl ? (
                     <Box
                         component="img"

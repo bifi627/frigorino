@@ -1,4 +1,4 @@
-import { BrokenImage, Close, Description, Save } from "@mui/icons-material";
+import { BrokenImage, Close, Save } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -10,13 +10,13 @@ import {
     IconButton,
     Skeleton,
     TextField,
-    Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { COMMENT_MAX_LENGTH } from "../../../../components/composer/features/commentComposerFeature";
 import type { ListItemResponse } from "../../../../lib/api";
 import { useItemImage } from "../useItemImage";
+import { DocumentChip } from "./DocumentChip";
 
 interface Props {
     householdId: number;
@@ -81,26 +81,10 @@ export function MediaCaptionSheet({
             </DialogTitle>
             <DialogContent>
                 {isDocument ? (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                            mb: 2,
-                            p: 1.5,
-                            borderRadius: 1,
-                            bgcolor: "action.hover",
-                        }}
-                    >
-                        <Description color="action" />
-                        <Typography
-                            variant="body2"
-                            sx={{ wordBreak: "break-word", minWidth: 0 }}
-                            data-testid="media-caption-document-name"
-                        >
-                            {item?.fileName}
-                        </Typography>
-                    </Box>
+                    <DocumentChip
+                        name={item?.fileName}
+                        nameTestId="media-caption-document-name"
+                    />
                 ) : (
                     <Box
                         sx={{
