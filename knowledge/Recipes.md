@@ -19,10 +19,10 @@ Aggregate methods follow the standard add / update / remove (soft-delete) / rest
 `MapGroup` prefix `/api/household/{householdId:int}/recipes` (+ nested `/{recipeId:int}/items|sections|links|attachments`). All under `RequireAuthorization()`; household membership is checked in each handler.
 
 - **Recipes**: `POST /`, `GET /`, `GET /{id}`, `GET /{id}/revision` (concurrency token), `PUT /{id}`, `DELETE /{id}`, `POST /{id}/copy-to-list`.
-- **Items**: full CRUD + `POST /{itemId}/restore` + `POST /{itemId}/reorder`.
+- **Items**: full CRUD + `POST /{itemId}/restore` + `PATCH /{itemId}/reorder`.
 - **Sections**: CRUD + restore + reorder. Deleting a section cascades to its items; restore brings them back.
 - **Links**: CRUD + restore + reorder.
-- **Attachments**: CRUD + restore + reorder, plus `GET /{attachmentId}/file` and `GET /{attachmentId}/thumbnail` (stream the blob, `Cache-Control: immutable`, 1-year).
+- **Attachments**: CRUD + restore + reorder, plus `GET /{attachmentId}/file` and `GET /{attachmentId}/thumbnail` (stream the blob, `Cache-Control: private, max-age=31536000, immutable` — 1-year).
 
 ## Key flows
 

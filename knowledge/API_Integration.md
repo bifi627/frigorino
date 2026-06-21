@@ -38,7 +38,7 @@ Every endpoint gets generated helpers (`getXOptions`, `xMutation`, `getXQueryKey
 
 - Never write `queryFn`, `mutationFn`, or literal `queryKey` arrays — spread `getXOptions` / `xMutation` / `getXQueryKey()`.
 - **No `*Keys.ts` factories.** Generated keys carry `tags`, supporting both point invalidation and tag-predicate invalidation (`predicate: q => (q.queryKey[0] as { tags?: string[] })?.tags?.includes('Households')`).
-- Mutation hooks are arg-less; the caller passes `{ path, body }` to `mutate` / `mutateAsync`. Invalidation reads `variables.path.*` in `onSuccess`/`onSettled` and rebuilds keys via `getXQueryKey({ path })`. Optimistic hooks keep their own `onMutate`/`onError`/`onSettled` — codegen doesn't replace that substance.
+- Mutation hooks are arg-less; the caller passes `{ path, body }` to `mutate` / `mutateAsync`. Invalidation reads `variables.path.*` in `onSuccess`/`onSettled` and rebuilds keys via `getXQueryKey({ path })`. Optimistic hooks keep their own `onMutate`/`onError` plus an `onSuccess`/`onSettled` reconcile (e.g. create hooks swap the temp id for the server id in `onSuccess`) — codegen doesn't replace that substance.
 - Enums arrive as **string unions** (the backend serializes enum names, not ints).
 - hey-api throws the parsed error **response body** on non-2xx (the generated mutationFn passes `throwOnError: true`) — there is no `ApiError` class. Read field-level errors by narrowing the body: `(error as { errors?: { email?: string[] } } | null)?.errors?.email`. For display, type the local as `unknown` and use `error instanceof Error ? error.message : t("common.errorOccurred")`.
 

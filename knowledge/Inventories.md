@@ -19,7 +19,7 @@ All under `RequireAuthorization()`; each handler checks membership via `db.FindA
 
 - **Inventories** (`/api/household/{householdId}/inventories`): `POST /`, `GET /`, `GET /{inventoryId}`, `GET /{inventoryId}/revision`, `PUT /{inventoryId}`, `DELETE /{inventoryId}`, plus the calendar below.
 - **Expiry calendar**: `GET /calendar`, `GET /calendar/revision` — collection-level over **all** the household's inventories (note the literal `calendar` segment; the `{inventoryId:int}` constraint keeps it from colliding).
-- **Items** (`Inventories/Items/`, `.../{inventoryId}/items`): `GET /`, `POST /`, `PUT /{itemId}`, `DELETE /{itemId}`, `POST /{itemId}/restore`, `POST /{itemId}/reorder`.
+- **Items** (`Inventories/Items/`, `.../{inventoryId}/items`): `GET /`, `POST /`, `PUT /{itemId}`, `DELETE /{itemId}`, `POST /{itemId}/restore`, `PATCH /{itemId}/reorder`.
 - **Settings** (`Inventories/Settings/`, `.../{inventoryId}/settings`): `GET /`, `PUT /`.
 - **Notifications** (`Inventories/Notifications/`, `.../{inventoryId}/notifications`): `GET /`, `PUT /` — per-inventory `{ enabled, leadDays|null }`. See `Push_Notifications.md`.
 

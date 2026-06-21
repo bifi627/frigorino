@@ -20,7 +20,7 @@ The inventory-only `expiryDateAsc` / `expiryDateDesc` modes do sort client-side 
 
 - **Sensors** — `PointerSensor` with an 8px activation distance and `TouchSensor` with a 200ms press delay + 5px tolerance, so scrolling never starts a drag and touch drags are reliable.
 - **Live drag order** — `onDragOver` reorders a local `dragOrder` array (`arrayMove`) so rows shift symmetrically under the pointer; an `isDraggingRef` guard stops a mid-drag refetch (e.g. a previous reorder's debounced invalidation) from yanking the order away. On drop the order is held until the optimistic update resyncs — no snap-back flash.
-- The `DragOverlay` clones the dragged row with a left gutter matching the handle width, so the content stays visible above the finger on touch.
+- The `DragOverlay` clones the dragged row with a left gutter so the content sits clear of the grab point and stays visible above the finger on touch.
 
 ## Memoization (React Compiler + manual)
 

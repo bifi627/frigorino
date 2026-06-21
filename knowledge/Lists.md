@@ -19,7 +19,7 @@ All under `RequireAuthorization()`; each handler checks membership via `db.FindA
 - **Lists** (`/api/household/{householdId}/lists`): `POST /`, `GET /`, `GET /{listId}`, `PUT /{listId}`, `DELETE /{listId}`, `GET /{listId}/revision` (sync token), plus the promote + blueprint endpoints below.
 - **Promote** (`Lists/Promote/`): `GET /{listId}/pending-promotions`, `POST /{listId}/promote`, `POST /{listId}/promote/skip`.
 - **Blueprint** (`Lists/Blueprints/`): `POST /{listId}/apply-blueprint`.
-- **Items** (`Lists/Items/`, `/api/household/{householdId}/lists/{listId}/items`): `GET /`, `GET /{itemId}`, `POST /` (text), `POST /media` (multipart), `GET /{itemId}/file`, `GET /{itemId}/thumbnail`, `PUT /{itemId}`, `DELETE /{itemId}`, `POST /{itemId}/restore`, `POST /{itemId}/toggle`, `POST /{itemId}/reorder`.
+- **Items** (`Lists/Items/`, `/api/household/{householdId}/lists/{listId}/items`): `GET /`, `GET /{itemId}`, `POST /` (text), `POST /media` (multipart), `GET /{itemId}/file`, `GET /{itemId}/thumbnail`, `PUT /{itemId}`, `DELETE /{itemId}`, `POST /{itemId}/restore`, `PATCH /{itemId}/toggle-status`, `PATCH /{itemId}/reorder`.
 
 ## Key flows
 
