@@ -48,6 +48,37 @@ public class MediaItemSteps
         Assert.Contains(contentType, resp.Headers["content-type"]);
     }
 
+    [When("I upload a document with caption {string} to {string} via the API")]
+    public async Task WhenIUploadADocumentViaTheApi(string caption, string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        ctx.LastApiResponse = await api.TryUploadDocumentAsync(listId, caption);
+        if (ctx.LastApiResponse.Ok)
+        {
+            var json = await ctx.LastApiResponse.JsonAsync();
+            ctx.SetListItemId(listName, "__document__", json!.Value.GetProperty("id").GetInt32());
+        }
+    }
+
+    [Then("the uploaded document in {string} serves a file with content-type {string}")]
+    public async Task ThenDocumentServesFile(string listName, string contentType)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, "__document__");
+        var resp = await api.TryGetItemFileAsync(listId, itemId);
+        Assert.Equal(200, resp.Status);
+        Assert.Contains(contentType, resp.Headers["content-type"]);
+    }
+
+    [Then("the uploaded document in {string} has no thumbnail")]
+    public async Task ThenDocumentHasNoThumbnail(string listName)
+    {
+        var listId = ctx.ListIds[listName];
+        var itemId = ctx.GetListItemId(listName, "__document__");
+        var resp = await api.TryGetItemThumbnailAsync(listId, itemId);
+        Assert.Equal(404, resp.Status);
+    }
+
     [When("I attach a photo with caption {string}")]
     public async Task WhenIAttachAPhoto(string caption)
     {
