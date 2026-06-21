@@ -204,7 +204,8 @@
         "choosePhoto": "Aus Dateien wählen",
         "attachDocument": "Dokument",
         "captionPlaceholder": "Bildunterschrift hinzufügen (optional)",
-        "editCaption": "Bildunterschrift bearbeiten"
+        "editCaption": "Bildunterschrift bearbeiten",
+        "openDocument": "Dokument öffnen"
     },
     "copyToList": {
         "menuAction": "Zur Einkaufsliste hinzufügen",

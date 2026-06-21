@@ -1,4 +1,5 @@
 import type { ListItemResponse } from "../../../../lib/api";
+import { DocumentItemRenderer } from "./DocumentItemRenderer";
 import { ImageItemRenderer } from "./ImageItemRenderer";
 import { TextItemRenderer } from "./TextItemRenderer";
 
@@ -8,7 +9,7 @@ interface Props {
     onEditComment?: () => void;
 }
 
-// Renderer switch keyed by item.type. Document renderer arrives in sub-feature #3.
+// Renderer switch keyed by item.type.
 export function ListItemContent({
     item,
     onEditQuantity,
@@ -16,6 +17,9 @@ export function ListItemContent({
 }: Props) {
     if (item.type === "Image") {
         return <ImageItemRenderer item={item} />;
+    }
+    if (item.type === "Document") {
+        return <DocumentItemRenderer item={item} />;
     }
     return (
         <TextItemRenderer
