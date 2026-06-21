@@ -1,4 +1,4 @@
-import { BrokenImage, Close, Save } from "@mui/icons-material";
+import { BrokenImage, Close, Description, Save } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -10,6 +10,7 @@ import {
     IconButton,
     Skeleton,
     TextField,
+    Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,6 +41,7 @@ export function MediaCaptionSheet({
     // Seeded from the item's existing caption on mount. The parent keys this sheet by item id, so
     // opening a different media item remounts and reseeds — no reset-in-effect.
     const [caption, setCaption] = useState(item?.comment ?? "");
+    const isDocument = item?.type === "Document";
 
     const {
         data: url,
@@ -50,7 +52,7 @@ export function MediaCaptionSheet({
         item?.listId ?? 0,
         item?.id ?? 0,
         "thumbnail",
-        Boolean(item),
+        Boolean(item) && !isDocument,
     );
 
     return (
@@ -78,40 +80,63 @@ export function MediaCaptionSheet({
                 </IconButton>
             </DialogTitle>
             <DialogContent>
-                <Box
-                    sx={{
-                        width: "100%",
-                        height: 160,
-                        mb: 2,
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        bgcolor: "action.hover",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
-                    {isLoading ? (
-                        <Skeleton
-                            variant="rectangular"
-                            width="100%"
-                            height="100%"
-                        />
-                    ) : isError || !url ? (
-                        <BrokenImage color="disabled" />
-                    ) : (
-                        <Box
-                            component="img"
-                            src={url}
-                            alt=""
-                            sx={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "contain",
-                            }}
-                        />
-                    )}
-                </Box>
+                {isDocument ? (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            mb: 2,
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: "action.hover",
+                        }}
+                    >
+                        <Description color="action" />
+                        <Typography
+                            variant="body2"
+                            sx={{ wordBreak: "break-word", minWidth: 0 }}
+                            data-testid="media-caption-document-name"
+                        >
+                            {item?.fileName}
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Box
+                        sx={{
+                            width: "100%",
+                            height: 160,
+                            mb: 2,
+                            borderRadius: 1,
+                            overflow: "hidden",
+                            bgcolor: "action.hover",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        {isLoading ? (
+                            <Skeleton
+                                variant="rectangular"
+                                width="100%"
+                                height="100%"
+                            />
+                        ) : isError || !url ? (
+                            <BrokenImage color="disabled" />
+                        ) : (
+                            <Box
+                                component="img"
+                                src={url}
+                                alt=""
+                                sx={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                }}
+                            />
+                        )}
+                    </Box>
+                )}
                 <TextField
                     fullWidth
                     multiline

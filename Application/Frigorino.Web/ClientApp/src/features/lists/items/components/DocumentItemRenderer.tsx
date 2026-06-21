@@ -21,11 +21,17 @@ export function DocumentItemRenderer({ item }: Props) {
             tabIndex={0}
             aria-label={t("lists.openDocument")}
             data-testid={`list-item-document-${item.id}`}
-            onClick={() => openFile(item.id)}
+            onClick={() => {
+                if (householdId > 0) {
+                    openFile(item.id);
+                }
+            }}
             onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    openFile(item.id);
+                    if (householdId > 0) {
+                        openFile(item.id);
+                    }
                 }
             }}
             sx={{

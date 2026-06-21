@@ -192,4 +192,38 @@ public class MediaItemSteps
         await Assertions.Expect(
             ctx.Page.Locator("[data-testid^='list-item-document-']").First).ToBeVisibleAsync();
     }
+
+    [When("I open the caption editor for the document")]
+    public async Task WhenIOpenTheCaptionEditorForTheDocument()
+    {
+        // Locate the document row, then open its per-row MoreVert menu and click edit.
+        // We scope the menu-button search to the li that contains the document row to
+        // avoid accidental matches on other rows.
+        var documentRow = ctx.Page.Locator("[data-testid^='list-item-document-']").First;
+        await documentRow.ScrollIntoViewIfNeededAsync();
+
+        var rowLi = documentRow.Locator("xpath=ancestor::li[1]");
+        var menuButton = rowLi.Locator("[data-testid^='item-menu-button-']");
+        await menuButton.ScrollIntoViewIfNeededAsync();
+        await menuButton.ClickAsync();
+
+        // Wait for the Menu to be visible before clicking the edit button inside it.
+        var editButton = ctx.Page.GetByTestId("edit-item-button");
+        await Assertions.Expect(editButton).ToBeVisibleAsync();
+        await editButton.ClickAsync();
+
+        // Wait for any stale MUI Menu backdrop to detach so the sheet opens cleanly.
+        await ctx.Page.WaitForSelectorAsync(".MuiBackdrop-root", new() { State = Microsoft.Playwright.WaitForSelectorState.Detached, Timeout = 3000 })
+            .ContinueWith(_ => Task.CompletedTask);
+
+        await Assertions.Expect(ctx.Page.GetByTestId("media-caption-sheet")).ToBeVisibleAsync();
+    }
+
+    [Then("the caption editor shows the document filename")]
+    public async Task ThenCaptionEditorShowsDocumentFilename()
+    {
+        var fileNameEl = ctx.Page.GetByTestId("media-caption-document-name");
+        await Assertions.Expect(fileNameEl).ToBeVisibleAsync();
+        await Assertions.Expect(fileNameEl).ToContainTextAsync("manual.pdf");
+    }
 }

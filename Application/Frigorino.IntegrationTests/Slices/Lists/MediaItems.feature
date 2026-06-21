@@ -24,3 +24,10 @@ Feature: Media Items
     When I open the list "Trip"
     And I attach a document to the list with caption "warranty"
     Then a document row appears in the list
+
+  Scenario: Editing a document's caption shows the filename, not a broken image
+    Given there is a list named "Trip"
+    When I open the list "Trip"
+    And I attach a document to the list with caption "warranty"
+    And I open the caption editor for the document
+    Then the caption editor shows the document filename
