@@ -16,6 +16,11 @@ public class MediaItemSteps
     private static readonly byte[] TinyPng = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAFklEQVR4nGOpCDjxnwEPYGEgAIaHAgCvwgKw2JOr9gAAAABJRU5ErkJggg==");
 
+    // Minimal valid PDF bytes — the document path stores the raw bytes (no parsing), so a header +
+    // EOF marker round-trips and serves back as application/pdf.
+    private static readonly byte[] TinyPdf = System.Text.Encoding.ASCII.GetBytes(
+        "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+
     [When("I upload a photo with caption {string} to {string} via the API")]
     public async Task WhenIUploadAPhotoViaTheApi(string caption, string listName)
     {
@@ -160,5 +165,31 @@ public class MediaItemSteps
         }
 
         Assert.True(loaded, "Thumbnail <img> did not finish loading (complete && naturalWidth > 0) after toggle.");
+    }
+
+    [When("I attach a document to the list with caption {string}")]
+    public async Task WhenIAttachADocument(string caption)
+    {
+        await ctx.Page.GetByTestId("composer-attach-button").ClickAsync();
+        await ctx.Page.GetByTestId("composer-attach-document").ClickAsync();
+        await ctx.Page.GetByTestId("composer-attach-file-input").SetInputFilesAsync(new FilePayload
+        {
+            Name = "manual.pdf",
+            MimeType = "application/pdf",
+            Buffer = TinyPdf,
+        });
+        await ctx.Page.GetByTestId("media-caption-input").FillAsync(caption);
+
+        var responseTask = ctx.Page.WaitForResponseAsync(r =>
+            r.Url.EndsWith("/items/media") && r.Request.Method == "POST" && r.Status == 201);
+        await ctx.Page.GetByTestId("media-send-button").ClickAsync();
+        await responseTask;
+    }
+
+    [Then("a document row appears in the list")]
+    public async Task ThenDocumentRowAppears()
+    {
+        await Assertions.Expect(
+            ctx.Page.Locator("[data-testid^='list-item-document-']").First).ToBeVisibleAsync();
     }
 }
