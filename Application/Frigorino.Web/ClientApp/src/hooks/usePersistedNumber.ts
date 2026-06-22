@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 // localStorage-backed number, used to remember a single-select choice per device
-// (e.g. which recipe-edit section accordion is open). The key is global (shared across
-// recipes). Sibling of usePersistedExpanded, which only handles booleans.
+// (e.g. the recipe-edit composer's target section). The key is global (shared across recipes).
 export const usePersistedNumber = (
     key: string,
     defaultValue: number,
