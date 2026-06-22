@@ -190,7 +190,7 @@ export const EditRecipeForm = ({ householdId, recipe }: EditRecipeFormProps) => 
                 <IconButton
                     size="small"
                     onClick={() => stepServings(-1)}
-                    disabled={editedServings !== null && editedServings <= 1}
+                    disabled={editedServings === null || editedServings <= 1}
                     data-testid="recipe-servings-decrement"
                 >
                     <Remove fontSize="small" />
