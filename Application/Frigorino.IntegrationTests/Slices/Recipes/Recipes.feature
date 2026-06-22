@@ -47,13 +47,6 @@ Feature: Recipes
     And I increment the servings
     Then the recipe item "Flour" shows quantity "250"
 
-  Scenario: Recipe edit section collapse state persists across reload
-    Given there is a recipe named "Pasta Carbonara"
-    When I open the recipe "Pasta Carbonara" for editing
-    And I collapse the "details" recipe section
-    And I reload the page
-    Then the "details" recipe section is collapsed
-
   Scenario: User deletes a recipe from the recipe list
     Given there is a recipe named "Old Recipe"
     When I navigate to "/recipes"

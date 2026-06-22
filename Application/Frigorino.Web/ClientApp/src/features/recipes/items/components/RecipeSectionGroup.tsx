@@ -1,8 +1,12 @@
-import { Delete, MoreVert } from "@mui/icons-material";
 import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
+    Check,
+    Delete,
+    DriveFileRenameOutline,
+    MoreVert,
+} from "@mui/icons-material";
+import {
+    Box,
+    Collapse,
     IconButton,
     ListItemIcon,
     ListItemText,
@@ -25,17 +29,17 @@ import type {
     RecipeItemResponse,
     RecipeSectionResponse,
 } from "../../../../lib/api";
+import { sectionColors } from "../../../../theme";
 import { useUpdateRecipeSection } from "../../sections/useUpdateRecipeSection";
 import { RecipeContainer } from "./RecipeContainer";
 
 const SAVE_DEBOUNCE_MS = 600;
+const coral = sectionColors.recipes;
 
-interface RecipeSectionCardProps {
+interface RecipeSectionGroupProps {
     householdId: number;
     recipeId: number;
     section: RecipeSectionResponse;
-    expanded: boolean;
-    onToggle: (expanded: boolean) => void;
     canDelete: boolean;
     onDelete: () => void;
     editingItem: RecipeItemResponse | null;
@@ -45,12 +49,10 @@ interface RecipeSectionCardProps {
     dragHandle: ReactNode;
 }
 
-export const RecipeSectionCard = ({
+export const RecipeSectionGroup = ({
     householdId,
     recipeId,
     section,
-    expanded,
-    onToggle,
     canDelete,
     onDelete,
     editingItem,
@@ -58,24 +60,25 @@ export const RecipeSectionCard = ({
     isExtracting,
     extractingItemId,
     dragHandle,
-}: RecipeSectionCardProps) => {
+}: RecipeSectionGroupProps) => {
     const { t } = useTranslation();
     const updateSection = useUpdateRecipeSection();
 
     const [name, setName] = useState(section.name ?? "");
     const [description, setDescription] = useState(section.description ?? "");
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+    // The name/description fields are hidden by default — the coral header already shows the name.
+    // The ⋮ menu toggles them open ("Rename") / closed ("Done").
+    const [renaming, setRenaming] = useState(false);
+
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Latest field state, read by the debounced/blur flush without re-creating the timer.
-    // Synced in useLayoutEffect (not during render) so the React Compiler's ref rule is happy
-    // and the value is current before any pending timer or blur handler fires.
     const latest = useRef({ name, description });
     useLayoutEffect(() => {
         latest.current = { name, description };
     });
 
     const { mutate } = updateSection;
-
     const save = useCallback(() => {
         mutate({
             path: { householdId, recipeId, sectionId: section.id },
@@ -109,39 +112,38 @@ export const RecipeSectionCard = ({
     const displayName = section.name?.trim() || t("recipes.ingredientsHeading");
 
     return (
-        <Accordion
-            expanded={expanded}
-            onChange={(_e, isExpanded) => onToggle(isExpanded)}
-            disableGutters
-            elevation={4}
-            data-testid={`recipe-section-${section.id}`}
-        >
-            <AccordionSummary
-                data-testid={`recipe-section-${section.id}-summary`}
-                sx={{
-                    "& .MuiAccordionSummary-content": { alignItems: "center" },
-                }}
+        <Box data-testid={`recipe-section-${section.id}`}>
+            <Stack
+                direction="row"
+                spacing={1}
+                sx={{ alignItems: "center", mt: 1, mb: 0.5 }}
             >
                 {dragHandle}
                 <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 600, flex: 1 }}
+                    variant="subtitle2"
+                    sx={{
+                        fontWeight: 700,
+                        color: coral,
+                        letterSpacing: 0.8,
+                        textTransform: "uppercase",
+                        fontSize: "0.72rem",
+                    }}
                 >
                     {displayName}
                 </Typography>
+                <Box sx={{ flex: 1, height: "1px", bgcolor: "divider" }} />
                 <IconButton
                     size="small"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuAnchor(e.currentTarget);
-                    }}
+                    sx={{ opacity: 0.6 }}
+                    onClick={(e) => setMenuAnchor(e.currentTarget)}
                     data-testid={`recipe-section-${section.id}-menu`}
                 >
                     <MoreVert fontSize="small" />
                 </IconButton>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 0 }}>
-                <Stack spacing={2} sx={{ px: 2, pt: 1, pb: 2 }}>
+            </Stack>
+
+            <Collapse in={renaming}>
+                <Stack spacing={2} sx={{ px: 0.5, pb: 1 }}>
                     <TextField
                         label={t("recipes.sectionName")}
                         value={name}
@@ -181,23 +183,48 @@ export const RecipeSectionCard = ({
                         }}
                     />
                 </Stack>
-                <RecipeContainer
-                    householdId={householdId}
-                    recipeId={recipeId}
-                    sectionId={section.id}
-                    editingItem={editingItem}
-                    onEdit={onEditItem}
-                    isExtracting={isExtracting}
-                    extractingItemId={extractingItemId}
-                    scrollable={false}
-                />
-            </AccordionDetails>
+            </Collapse>
+
+            <RecipeContainer
+                householdId={householdId}
+                recipeId={recipeId}
+                sectionId={section.id}
+                editingItem={editingItem}
+                onEdit={onEditItem}
+                isExtracting={isExtracting}
+                extractingItemId={extractingItemId}
+                scrollable={false}
+            />
 
             <Menu
                 anchorEl={menuAnchor}
                 open={Boolean(menuAnchor)}
                 onClose={() => setMenuAnchor(null)}
             >
+                <MenuItem
+                    onClick={() => {
+                        setMenuAnchor(null);
+                        if (renaming) {
+                            // Closing the editor — persist any pending edit immediately.
+                            flushSave();
+                        }
+                        setRenaming((r) => !r);
+                    }}
+                    data-testid={`recipe-section-${section.id}-rename`}
+                >
+                    <ListItemIcon>
+                        {renaming ? (
+                            <Check fontSize="small" />
+                        ) : (
+                            <DriveFileRenameOutline fontSize="small" />
+                        )}
+                    </ListItemIcon>
+                    <ListItemText>
+                        {renaming
+                            ? t("common.done")
+                            : t("recipes.renameSection")}
+                    </ListItemText>
+                </MenuItem>
                 <MenuItem
                     disabled={!canDelete}
                     onClick={() => {
@@ -215,6 +242,6 @@ export const RecipeSectionCard = ({
                     <ListItemText>{t("recipes.deleteSection")}</ListItemText>
                 </MenuItem>
             </Menu>
-        </Accordion>
+        </Box>
     );
 };

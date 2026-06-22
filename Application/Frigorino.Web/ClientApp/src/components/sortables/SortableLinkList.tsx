@@ -8,6 +8,7 @@ import {
     type DragEndEvent,
 } from "@dnd-kit/core";
 import {
+    horizontalListSortingStrategy,
     SortableContext,
     useSortable,
     verticalListSortingStrategy,
@@ -28,16 +29,21 @@ interface SortableLinkListProps<T extends SortableLinkItem> {
     // spreading the dnd-kit listeners/attributes in the hook's own component satisfies the React
     // Compiler ref rule.
     renderLink: (link: T, dragHandle: ReactNode) => ReactNode;
+    // Lay items out left-to-right (chip/tile strip) instead of stacked rows. Swaps the sorting
+    // strategy and drops the inter-row divider/spacing that only makes sense vertically.
+    horizontal?: boolean;
 }
 
 function SortableLink<T extends SortableLinkItem>({
     link,
     renderLink,
     isLast,
+    horizontal,
 }: {
     link: T;
     renderLink: (link: T, dragHandle: ReactNode) => ReactNode;
     isLast: boolean;
+    horizontal: boolean;
 }) {
     const {
         attributes,
@@ -76,10 +82,15 @@ function SortableLink<T extends SortableLinkItem>({
                 opacity: isDragging ? 0.5 : 1,
                 // Group each link's label+url pair: a divider + extra gap between links makes the
                 // boundary clearer than the tight intra-row spacing. The last link drops both.
-                pb: isLast ? 0 : 1.5,
-                mb: isLast ? 0 : 1.5,
-                borderBottom: isLast ? 0 : 1,
-                borderColor: "divider",
+                // Horizontal strips space their items via the parent's gap, so skip it there.
+                ...(horizontal
+                    ? {}
+                    : {
+                          pb: isLast ? 0 : 1.5,
+                          mb: isLast ? 0 : 1.5,
+                          borderBottom: isLast ? 0 : 1,
+                          borderColor: "divider",
+                      }),
             }}
         >
             {renderLink(link, dragHandle)}
@@ -91,6 +102,7 @@ export function SortableLinkList<T extends SortableLinkItem>({
     links,
     onReorder,
     renderLink,
+    horizontal = false,
 }: SortableLinkListProps<T>) {
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -119,7 +131,11 @@ export function SortableLinkList<T extends SortableLinkItem>({
         >
             <SortableContext
                 items={links.map((l) => l.id)}
-                strategy={verticalListSortingStrategy}
+                strategy={
+                    horizontal
+                        ? horizontalListSortingStrategy
+                        : verticalListSortingStrategy
+                }
             >
                 {links.map((link, index) => (
                     <SortableLink
@@ -127,6 +143,7 @@ export function SortableLinkList<T extends SortableLinkItem>({
                         link={link}
                         renderLink={renderLink}
                         isLast={index === links.length - 1}
+                        horizontal={horizontal}
                     />
                 ))}
             </SortableContext>
