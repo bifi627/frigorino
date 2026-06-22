@@ -391,6 +391,7 @@
         "renameSection": "Abschnitt umbenennen",
         "addingTo": "Hinzufügen zu {{section}}",
         "sectionDeleted": "Abschnitt gelöscht",
+        "sourcesAndPhotos": "Quellen & Fotos",
         "sourceLinks": "Quellenlinks",
         "addLink": "Link hinzufügen",
         "linkUrl": "URL",

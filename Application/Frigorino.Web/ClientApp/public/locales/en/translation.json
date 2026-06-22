@@ -391,6 +391,7 @@
         "renameSection": "Rename section",
         "addingTo": "Adding to {{section}}",
         "sectionDeleted": "Section deleted",
+        "sourcesAndPhotos": "Sources & photos",
         "sourceLinks": "Source links",
         "addLink": "Add link",
         "linkUrl": "URL",
