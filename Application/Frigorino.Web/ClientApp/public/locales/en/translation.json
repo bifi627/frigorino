@@ -389,6 +389,7 @@
         "sectionDescriptionPlaceholder": "Optional notes for this section",
         "deleteSection": "Delete section",
         "renameSection": "Rename section",
+        "addingTo": "Adding to {{section}}",
         "sectionDeleted": "Section deleted",
         "sourceLinks": "Source links",
         "addLink": "Add link",

@@ -1,5 +1,6 @@
-import { Container } from "@mui/material";
-import { memo, useCallback, useMemo } from "react";
+import { ExpandMore } from "@mui/icons-material";
+import { Box, Button, Container, Menu, MenuItem } from "@mui/material";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     Composer,
@@ -12,8 +13,17 @@ import {
     type DuplicateResult,
 } from "../../../../components/composer";
 import { useItemComposer } from "../../../../hooks/useItemComposer";
-import type { QuantityDto, RecipeItemResponse } from "../../../../lib/api";
-import { featureContentPx } from "../../../../theme";
+import type {
+    QuantityDto,
+    RecipeItemResponse,
+    RecipeSectionResponse,
+} from "../../../../lib/api";
+import { featureContentPx, sectionColors, tintedActionButtonSx } from "../../../../theme";
+
+const existingSectionsTarget = (
+    sections: RecipeSectionResponse[],
+    targetSectionId: number,
+) => sections.find((s) => s.id === targetSectionId) ?? sections[0];
 
 const EDIT_FEATURES = [
     quantityComposerFeature,
@@ -24,6 +34,9 @@ const ADD_FEATURES = [commentComposerFeature] as const;
 interface RecipeFooterProps {
     editingItem: RecipeItemResponse | null;
     existingItems: RecipeItemResponse[];
+    sections: RecipeSectionResponse[];
+    targetSectionId: number;
+    onChangeTargetSection: (sectionId: number) => void;
     onAddItem: (text: string, comment: string | null) => void;
     onUpdateItem: (
         text: string,
@@ -39,6 +52,9 @@ export const RecipeFooter = memo(
     ({
         editingItem,
         existingItems,
+        sections,
+        targetSectionId,
+        onChangeTargetSection,
         onAddItem,
         onUpdateItem,
         onCancelEdit,
@@ -46,6 +62,7 @@ export const RecipeFooter = memo(
         onScrollToLast,
     }: RecipeFooterProps) => {
         const { t } = useTranslation();
+        const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
         const onDuplicate = useCallback(
             (): DuplicateResult => ({
@@ -106,6 +123,11 @@ export const RecipeFooter = memo(
             [onAddItem, onUpdateItem, onScrollToLast],
         );
 
+        const targetSection = existingSectionsTarget(sections, targetSectionId);
+        const targetLabel =
+            targetSection?.name?.trim() || t("recipes.ingredientsHeading");
+        const canSwitch = sections.length > 1;
+
         return (
             <Container
                 maxWidth="sm"
@@ -119,6 +141,55 @@ export const RecipeFooter = memo(
                     bgcolor: "background.paper",
                 }}
             >
+                {!editingItem && (
+                    <Box sx={{ mb: 0.5 }}>
+                        <Button
+                            size="small"
+                            endIcon={canSwitch ? <ExpandMore /> : undefined}
+                            onClick={(e) =>
+                                canSwitch && setMenuAnchor(e.currentTarget)
+                            }
+                            disabled={!canSwitch}
+                            data-testid="recipe-composer-target"
+                            sx={{
+                                ...tintedActionButtonSx(sectionColors.recipes),
+                                borderRadius: 999,
+                                textTransform: "none",
+                                py: 0.25,
+                                px: 1,
+                                minWidth: 0,
+                                // a disabled tinted button still needs to read as a label
+                                "&.Mui-disabled": {
+                                    color: sectionColors.recipes,
+                                    opacity: 0.9,
+                                },
+                            }}
+                        >
+                            {t("recipes.addingTo", { section: targetLabel })}
+                        </Button>
+                        <Menu
+                            anchorEl={menuAnchor}
+                            open={Boolean(menuAnchor)}
+                            onClose={() => setMenuAnchor(null)}
+                        >
+                            {sections.map((s) => (
+                                <MenuItem
+                                    key={s.id}
+                                    selected={s.id === targetSectionId}
+                                    onClick={() => {
+                                        onChangeTargetSection(s.id);
+                                        setMenuAnchor(null);
+                                    }}
+                                    data-testid={`recipe-composer-target-${s.id}`}
+                                >
+                                    {s.name?.trim() ||
+                                        t("recipes.ingredientsHeading")}
+                                </MenuItem>
+                            ))}
+                        </Menu>
+                    </Box>
+                )}
+
                 <Composer
                     key={editingItem?.id ?? "new"}
                     features={features}
