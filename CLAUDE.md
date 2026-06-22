@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Common
+
+1. Ask, don't assume. If something is unclear, ask before writing a single line. Never make silent assumptions about intent, architecture, or requirements. When running unattended, pick the most reasonable interpretation, proceed, and record the assumption rather than blocking.
+
+2. Implement the simplest solution for simple problems, better solutions for harder problems. Do not over-engineer or add flexibility that isn't needed yet.
+
+3. Don't touch unrelated code but please do surface bad code or design smells you discover with me so we can address them as a separate issue.
+
+4. Flag uncertainty explicitly. If you're unsure about something, see point 1 above. If it makes sense to do so, conduct a small, localised and low-risk experiment and bring the hypothesis and results to me to discuss. Confidence without certainty causes more damage than admitting a gap.
+
+5. I'm always open to ideas on better ways to do things. Please don't hesitate to suggest a better way, or one that has long lasting impact over a tactical change. (as a few examples)
+
 ## Project overview
 
 Frigorino is a multi-tenant household management app (lists, inventories, recipes) built as a single deployable .NET 10 web application that serves a React SPA from `wwwroot` in production. In development the SPA is served by Vite and proxies API/openapi/scalar calls to the backend.
@@ -29,6 +41,7 @@ Deeper notes live in `knowledge/` — start at `knowledge/README.md` (the index)
 ## Common commands
 
 Backend (run from repo root or `Application/`):
+
 ```powershell
 dotnet restore Application/Frigorino.sln
 dotnet build   Application/Frigorino.sln
@@ -37,9 +50,11 @@ dotnet test    Application/Frigorino.sln                   # runs Frigorino.Test
 dotnet test    Application/Frigorino.Test --filter "FullyQualifiedName~<TestClass>"
 dotnet ef migrations add <Name> --project Application/Frigorino.Infrastructure --startup-project Application/Frigorino.Web
 ```
+
 Migrations are applied automatically at startup via `context.Database.MigrateAsync()` in `Program.cs`.
 
 Frontend (run from `Application/Frigorino.Web/ClientApp/`):
+
 ```powershell
 npm install
 npm run dev            # Vite dev server on https://localhost:44375 (proxies /api, /openapi, /scalar to :5001)
@@ -51,17 +66,20 @@ npm run api            # rebuild backend (emits ./src/lib/openapi.json via MSBui
 ```
 
 Docker (full stack image, used in deployment):
+
 ```powershell
 docker build -f Application/Dockerfile -t frigorino .
 ```
+
 The Dockerfile publishes `Frigorino.Web` (solution-wide restore, web-only publish) and builds the SPA in parallel stages, then copies the SPA `build/` output into `wwwroot/` of the final image.
 
 ## Configuration
 
 `Frigorino.Web/appsettings.json` has empty placeholders for all secrets — they MUST be supplied via user-secrets, environment variables, or `appsettings.Development.json`:
+
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (auto-converted by a static helper in `Infrastructure/EntityFramework/DependencyInjection.cs`).
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
-- `Ai:ApiKey` + `Ai:Classifier:*` / `Ai:QuantityExtractor:*` — OpenAI key + per-feature model + `Enabled` flags; both AI features no-op (Null* triggers) unless key **and** flag are set (`knowledge/AI_Classification.md`).
+- `Ai:ApiKey` + `Ai:Classifier:*` / `Ai:QuantityExtractor:*` — OpenAI key + per-feature model + `Enabled` flags; both AI features no-op (Null\* triggers) unless key **and** flag are set (`knowledge/AI_Classification.md`).
 - `FileStorage:Provider` (`Local`/`Gcs`) + `Bucket` / `Environment` / `LocalPath` — blob storage for recipe attachments + list-item media (`knowledge/File_Storage.md`).
 - `MaintenanceSettings:TriggerToken` — shared secret guarding the `/internal/expiry-scan` cron endpoint (`knowledge/Push_Notifications.md`).
 - `OpenTelemetry:*` — OTLP export endpoint/headers/protocol (`knowledge/Observability.md`).
@@ -86,6 +104,7 @@ Authoritative shape: `knowledge/Vertical_Slices.md`. Trust it over older archite
 The whole API is vertical slices. Each slice = one file = one endpoint, with request DTO + response DTO + endpoint registration + handler colocated. Domain rules (validation, role policy, aggregate invariants) live in `Frigorino.Domain` — either in entity factories (`Entity.Create`) for construction or in aggregate methods (`aggregate.DoXxx`) for mutations. Domain methods return `FluentResults.Result<T>`; the slice handler dispatches by error type (`EntityNotFoundError` → 404, `AccessDeniedError` → 403, generic `Error` with `Property` metadata → `ValidationProblem`). Reads stay handler-only — inline EF projection into the response DTO (no mapping libraries).
 
 Canonical references:
+
 - Write-via-factory template: `Application/Frigorino.Features/Households/CreateHousehold.cs` (rules-as-comments header at lines 1-20 — overrides `Vertical_Slices.md` when they drift; the factory write template itself is at lines 32-65).
 - Write-via-aggregate-method template: `Application/Frigorino.Features/Households/Members/AddMember.cs` (most complex — cross-aggregate user resolution + 3 internal branches).
 - Domain marker errors: `Application/Frigorino.Domain/Errors/DomainErrors.cs`.
@@ -94,9 +113,11 @@ Canonical references:
 All features are slices: Households (+ Members/Blueprints/Settings), Lists (+ Items/Blueprints/Promote), Inventories (+ Items/Settings/per-user Notifications), Recipes (+ Items/Sections/Links/Attachments/CopyToList), Me/ActiveHousehold/Settings, Notifications (FCM token register + expiry-scan trigger), Version. The only remaining controllers (`Frigorino.Web/Controllers/`) are non-domain scaffold (`Auth`, `Demo`, `WeatherForecast`). Per-feature decisions and dropped-endpoint rationale are folded into the feature docs under `knowledge/` (`Households.md`, `Members.md`, `Lists.md`, `Inventories.md`, …). **When adding a new endpoint, write a slice; do not add controllers.**
 
 ### Request pipeline (`Frigorino.Web/Program.cs`)
+
 Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. Lazy `Users`-row sync runs inside `JwtBearerEvents.OnTokenValidated` (`Frigorino.Infrastructure/Auth/FirebaseAuth.cs` → `UserSync.EnsureAsync`) — gated on the JWT's `auth_time` claim so it fires once per real Firebase login, not per request. `MapControllers` is followed by `UseSpa` + `MapFallbackToFile("index.html")` so unknown routes fall through to the React app.
 
 ### Multi-tenant household context
+
 - `ICurrentUserService` resolves the user identity (id/email/name) from the Firebase JWT claims — it deliberately injects no DbContext. The lazy `User`-row creation on first login happens in `UserSync` (see Request pipeline above), not here.
 - `ICurrentHouseholdService` keeps the active household ID in the **HTTP session** (`AddSession`, 30-min idle) and persists it to `User.LastActiveHouseholdId` as a durable fallback. Switching households mutates session state, not the JWT — this is why session middleware is mandatory.
 - All household-scoped slices should go through these interfaces rather than reading claims directly.
@@ -104,11 +125,13 @@ Order matters: `UseSession` runs before `UseAuthentication`/`UseAuthorization`. 
 - `IsActive` soft-delete and automatic `CreatedAt`/`UpdatedAt` are managed centrally in `ApplicationDbContext` (timestamps auto-stamped in `SaveChangesAsync`; `IsActive` is filtered per-slice, not via a global query filter). New entities should follow the same pattern instead of setting timestamps in handlers.
 
 ### Background jobs (startup maintenance)
+
 Periodic maintenance runs as an in-process startup batch, **not** a wall-clock scheduler — Railway's serverless tier sleeps the container on idle, so any scheduled job would silently miss its window. `MaintenanceHostedService` (`Frigorino.Infrastructure/Services/`) waits a few seconds after boot, then runs every registered `IMaintenanceTask` once inside a DI scope (per-task errors are logged, never crash startup). Three tasks run today: `DeleteInactiveItems` (purges soft-deleted households/lists/inventories/items, plus checked-off list items older than each household's `CheckedItemRetentionDays`, default 30), `ReclaimOrphanBlobs` (mark-and-sweep of unreferenced blobs per `IBlobReferenceSource` area — see `knowledge/File_Storage.md`), and `BackfillProductClassification` (enqueues classification for un-classified products — only registered when AI is enabled). Each re-runs on every cold start — i.e. roughly whenever the app is used after sleeping — cheap and idempotent. Add a task by implementing `IMaintenanceTask` and registering it in `AddMaintenanceServices` (`MaintenanceDependencyInjection.cs`).
 
 Request-triggered fire-and-forget work should use an in-process `System.Threading.Channels` queue drained by a `BackgroundService` (event-driven, no idle polling), **not** Hangfire — reverted because its always-on `BackgroundJobServer` polls Postgres continuously and defeats Railway's serverless sleep (see IDEAS.md). This queue now exists — `BackgroundTaskQueue` + `QueuedHostedService` (`Frigorino.Infrastructure/Services/`), drained by a single bounded-concurrency consumer; it carries the AI classification + quantity-extraction jobs (`knowledge/AI_Classification.md`). The expiry-notification scan is the exception: it runs synchronously in-request behind the key-guarded `/internal/expiry-scan` endpoint (external Railway cron), writing its `NotificationDispatch` ledger row claim-slot-first so concurrent/duplicate calls are idempotent — durability the in-memory queue can't promise (`knowledge/Push_Notifications.md`).
 
 ### API surface
+
 - The API is wired entirely as vertical slices in `Frigorino.Features`, registered in `Program.cs` via `app.MapGroup(prefix).RequireAuthorization().WithTags(...)` groups whose endpoints are added with per-slice extension methods (`households.MapCreateHousehold()`, `lists.MapCreateList()`, …). `MapControllers` remains only for the `Auth`/`Demo` scaffold. New endpoints are slices — see "Vertical slice architecture" above. In Development, the spec is served at `/openapi/v1.json` and the [Scalar](https://scalar.com) UI at `/scalar/v1`.
 - Enums serialize as their **string names** on the wire (e.g. `HouseholdRole` emits `enum: ["Member","Admin","Owner"]` / TS string union) via a `JsonStringEnumConverter` registered on both `ConfigureHttpJsonOptions` (slices) and `AddControllers().AddJsonOptions` (scaffold) in `Program.cs`. The DB still stores enums as **int** (EF default — no migration). The `IntegerSchemaTransformer` (`Frigorino.Web/OpenApi/IntegerSchemaTransformer.cs`, registered via `AddSchemaTransformer` in `AddOpenApi`) only collapses CLR int **primitives** (e.g. stringified-number inputs) to plain integers; it does not touch string enum schemas.
 - OpenAPI is generated via `Microsoft.AspNetCore.OpenApi` + `Microsoft.Extensions.ApiDescription.Server`. `dotnet build Frigorino.Web` writes `ClientApp/src/lib/openapi.json` (configured via `OpenApiDocumentsDirectory` + `OpenApiGenerateDocumentsOptions` in the csproj).
@@ -116,6 +139,7 @@ Request-triggered fire-and-forget work should use an in-process `System.Threadin
 - The frontend client is generated by `npm run api` from `src/lib/openapi.json` via [`@hey-api/openapi-ts`](https://heyapi.dev) (config: `ClientApp/openapi-ts.config.ts`). The full workflow is one command from `ClientApp/`: change endpoints/DTOs → `npm run api` (rebuilds the backend, emits the spec, regenerates the TS client). No backend boot, no DB, no manual copy. Generated code under `src/lib/api/` is committed.
 
 ### Frontend
+
 - TanStack Router uses **file-based routing**; `routeTree.gen.ts` is auto-generated by the `@tanstack/router-plugin/vite` plugin — do not edit by hand.
 - Auth gating is per-route: each protected route's `beforeLoad` calls `requireAuth` (`src/common/authGuard.ts`), which reads the Zustand auth store and redirects to `/auth/login` when there's no Firebase user. (There is no `_protected` layout route.)
 - Server state goes through TanStack Query. Every endpoint has generated hooks-ready helpers in `src/lib/api/@tanstack/react-query.gen.ts` (from the hey-api `@tanstack/react-query` plugin). One-hook-per-file under `features/<area>/` spreads the generated options into `useQuery`/`useMutation` — never write `queryFn`/`mutationFn`/`queryKey` by hand. See the "API hook conventions" section below. Client state uses Zustand. Do not introduce a third state layer (Redux, Context-as-store) for new features.
@@ -134,6 +158,7 @@ Every TanStack Query hook in `features/<area>/use*.ts` follows one exact shape (
 - **Mutation hook** — arg-less; the caller passes the full `{ path, body }` to `mutate`/`mutateAsync`. Spread `xMutation()`; invalidation reads `variables.path.*` in `onSuccess`/`onSettled` and builds keys via `getXQueryKey({ path: {...} })`.
 
 **Rules:**
+
 - Never write `queryFn`, `mutationFn`, or manual `queryKey` arrays. Spread `getXOptions` / `xMutation` / `getXQueryKey()`.
 - Never reintroduce `*Keys.ts` files — auto-generated keys carry `tags` for both point and tag-based invalidation. Tag-predicate invalidation isn't used anywhere today, but the keys support it if you ever need broad cross-domain invalidation: `queryClient.invalidateQueries({ predicate: q => (q.queryKey[0] as { tags?: string[] })?.tags?.includes('Households') })`.
 - Mutation hooks are arg-less; callers pass `{ path: {...}, body: ... }` to `mutate` / `mutateAsync`.
