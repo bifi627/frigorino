@@ -3,13 +3,11 @@ import { Alert, Box, Button, Container, Skeleton, Stack } from "@mui/material";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CollapsibleSection } from "../../../components/shared/CollapsibleSection";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
 } from "../../../components/shared/PageHeadActionBar";
 import { SortableSectionList } from "../../../components/sortables/SortableSectionList";
-import { usePersistedExpanded } from "../../../hooks/usePersistedExpanded";
 import { usePersistedNumber } from "../../../hooks/usePersistedNumber";
 import type { QuantityDto, RecipeItemResponse } from "../../../lib/api";
 import { featureContentPx, pageContainerSx } from "../../../theme";
@@ -47,10 +45,6 @@ export const RecipeEditPage = () => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<RecipeItemResponse | null>(
         null,
-    );
-    const [detailsExpanded, setDetailsExpanded] = usePersistedExpanded(
-        "recipe-edit-section:details",
-        true,
     );
     const [openSectionId, setOpenSectionId] = usePersistedNumber(
         "recipe-edit:open-section",
@@ -282,18 +276,11 @@ export const RecipeEditPage = () => {
                     sx={{ px: featureContentPx, pt: 2, pb: 1 }}
                 >
                     <Stack spacing={2}>
-                        <CollapsibleSection
-                            title={t("recipes.detailsSection")}
-                            expanded={detailsExpanded}
-                            onChange={setDetailsExpanded}
-                            testId="recipe-section-details"
-                        >
-                            <EditRecipeForm
-                                key={recipe.id}
-                                householdId={householdId}
-                                recipe={recipe}
-                            />
-                        </CollapsibleSection>
+                        <EditRecipeForm
+                            key={recipe.id}
+                            householdId={householdId}
+                            recipe={recipe}
+                        />
 
                         <RecipeLinksSection
                             householdId={householdId}
