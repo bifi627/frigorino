@@ -56,6 +56,16 @@ On item create/update the text is triaged by `ItemTextRouter` and, if it needs p
 
 Thin route shells under `src/routes/recipes/` (`index`, `create`, `$recipeId/view`, `$recipeId/edit`) delegate to `features/recipes/pages/`. Sub-areas each follow the one-hook-per-file convention with their own `components/`: `items/`, `sections/`, `links/`, `attachments/` (lightbox, preview sheet, caption sheet, `useAttachmentImage` — note the StrictMode object-URL rule: create+revoke the blob URL in one paired effect, cache the Blob in Query not the URL), `copyToList/`. Root hooks: `useHouseholdRecipes`, `useRecipe`, `useCreateRecipe`, `useUpdateRecipe`, `useDeleteRecipe`, `useRecipeRevision`.
 
+**Edit page is a "recipe sheet"** (recomposed from a flat stack of five collapsible CRUD panels):
+
+- `components/EditRecipeForm.tsx` — the inline header: borderless title field + servings pill-stepper + multiline description, all saved by one debounced single-PUT (`recipe-description-input` keeps the autosave + blur-flush).
+- `components/RecipeSourcesStrip.tsx` — one always-visible "Sources & photos" strip: link chips + photo/document tiles share a single horizontal row (two `SortableLinkList horizontal` instances — separate reorder endpoints), with the add-link / add-photo controls pinned in the header. The photo tiles live in `data-testid="recipe-section-attachments-content"`. Reuses the attachment preview/caption sheets verbatim.
+- `items/components/RecipeSectionGroup.tsx` — lightweight always-visible section (coral small-caps header + drag handle + ⋮ menu). Name/description fields are collapsed by default; the ⋮ menu toggles **Rename ⇄ Done** (the header already shows the name).
+- `items/components/RecipeFooter.tsx` — the composer is always visible and **section-aware**: a target-section switcher chip names where new items land, persisted per-device under `recipe-edit:target-section` (`hooks/usePersistedNumber.ts`).
+- Item rows still render through the **shared** `SortableList` / `SortableListItem` (drag handle + per-row ⋮ edit/delete menu). Prototype-style compact rows are deliberately deferred — see `IDEAS.md`.
+
+Removed in the recompose: `RecipeSectionCard`, `RecipeLinksSection`, `RecipeAttachmentsSection`, `RecipeAttachmentRow`, `RecipeLinkRow`, and the then-orphaned shared `CollapsibleSection` + `usePersistedExpanded`.
+
 ## Links out
 
 - Slice pattern: `Vertical_Slices.md`
