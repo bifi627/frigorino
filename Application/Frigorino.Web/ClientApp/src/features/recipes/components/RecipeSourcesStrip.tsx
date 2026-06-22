@@ -188,7 +188,9 @@ const PhotoTile = ({
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
-                    color: attachment.caption ? "text.secondary" : "transparent",
+                    color: attachment.caption
+                        ? "text.secondary"
+                        : "transparent",
                 }}
             >
                 {attachment.caption ||
@@ -480,7 +482,11 @@ export const RecipeSourcesStrip = ({
             ) : null}
 
             {draftOpen ? (
-                <Stack spacing={1} data-testid="recipe-link-draft" sx={{ pt: 1 }}>
+                <Stack
+                    spacing={1}
+                    data-testid="recipe-link-draft"
+                    sx={{ pt: 1 }}
+                >
                     <TextField
                         label={t("recipes.linkLabel")}
                         value={draftLabel}
@@ -504,7 +510,9 @@ export const RecipeSourcesStrip = ({
                         autoFocus
                         error={draftUrlInvalid}
                         helperText={
-                            draftUrlInvalid ? t("recipes.invalidUrl") : undefined
+                            draftUrlInvalid
+                                ? t("recipes.invalidUrl")
+                                : undefined
                         }
                         placeholder={t("recipes.linkUrlPlaceholder")}
                         slotProps={{

@@ -18,7 +18,11 @@ import type {
     RecipeItemResponse,
     RecipeSectionResponse,
 } from "../../../../lib/api";
-import { featureContentPx, sectionColors, tintedActionButtonSx } from "../../../../theme";
+import {
+    featureContentPx,
+    sectionColors,
+    tintedActionButtonSx,
+} from "../../../../theme";
 
 const existingSectionsTarget = (
     sections: RecipeSectionResponse[],
