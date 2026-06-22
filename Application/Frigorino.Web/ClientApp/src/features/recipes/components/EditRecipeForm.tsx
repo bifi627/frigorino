@@ -1,4 +1,5 @@
-import { Box, Stack, TextField, Typography } from "@mui/material";
+import { Add, Remove, Restaurant } from "@mui/icons-material";
+import { Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import {
     useCallback,
     useEffect,
@@ -8,40 +9,37 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeResponse } from "../../../lib/api";
+import { sectionColors } from "../../../theme";
 import { useUpdateRecipe } from "../useUpdateRecipe";
 
 const SAVE_DEBOUNCE_MS = 600;
+const coral = sectionColors.recipes;
 
 interface EditRecipeFormProps {
     householdId: number;
     recipe: RecipeResponse;
 }
 
-export const EditRecipeForm = ({
-    householdId,
-    recipe,
-}: EditRecipeFormProps) => {
+export const EditRecipeForm = ({ householdId, recipe }: EditRecipeFormProps) => {
     const { t } = useTranslation();
     const updateRecipeMutation = useUpdateRecipe();
 
-    // Seeded once on mount. The parent keys this form by recipe.id, so switching to a different
-    // recipe remounts and reseeds — no reset-on-prop effect (which would also clobber edits).
+    // Seeded once on mount; parent keys this by recipe.id so switching recipes remounts.
     const [editedName, setEditedName] = useState(recipe.name || "");
     const [editedDescription, setEditedDescription] = useState(
         recipe.description ?? "",
     );
-    const [editedServings, setEditedServings] = useState(
-        recipe.servings != null ? String(recipe.servings) : "",
+    const [editedServings, setEditedServings] = useState<number | null>(
+        recipe.servings ?? null,
     );
     const [dirty, setDirty] = useState(false);
 
     const nameInvalid = editedName.trim().length === 0;
-    const servingsNum = editedServings === "" ? null : Number(editedServings);
     const servingsInvalid =
-        editedServings !== "" &&
-        (!Number.isInteger(servingsNum) ||
-            (servingsNum as number) < 1 ||
-            (servingsNum as number) > 99);
+        editedServings !== null &&
+        (!Number.isInteger(editedServings) ||
+            editedServings < 1 ||
+            editedServings > 99);
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Latest field state, read by the debounced/blur flush without re-creating the timer.
@@ -80,7 +78,7 @@ export const EditRecipeForm = ({
                 body: {
                     name: cur.name.trim(),
                     description: cur.description.trim() || null,
-                    servings: cur.servings === "" ? null : Number(cur.servings),
+                    servings: cur.servings,
                 },
             },
             { onSuccess: () => setDirty(false) },
@@ -110,6 +108,19 @@ export const EditRecipeForm = ({
         [],
     );
 
+    // Stepper: clamp 1..99; unset (null) starts at 1 going up.
+    const stepServings = useCallback(
+        (delta: number) => {
+            setEditedServings((prev) => {
+                const base = prev ?? (delta > 0 ? 0 : 1);
+                return Math.min(99, Math.max(1, base + delta));
+            });
+            setDirty(true);
+            scheduleSave();
+        },
+        [scheduleSave],
+    );
+
     let status: "saving" | "saved" | "idle" = "idle";
     if (updateRecipeMutation.isPending) {
         status = "saving";
@@ -118,9 +129,9 @@ export const EditRecipeForm = ({
     }
 
     return (
-        <Stack spacing={3}>
+        <Box>
             <TextField
-                label={t("recipes.recipeName")}
+                variant="standard"
                 value={editedName}
                 onChange={(e) => {
                     setEditedName(e.target.value);
@@ -132,10 +143,70 @@ export const EditRecipeForm = ({
                 required
                 error={nameInvalid}
                 helperText={nameInvalid ? t("recipes.recipeNameRequired") : ""}
+                placeholder={t("recipes.recipeName")}
+                slotProps={{
+                    input: {
+                        sx: {
+                            fontSize: "1.7rem",
+                            fontWeight: 700,
+                            lineHeight: 1.2,
+                        },
+                    },
+                    htmlInput: { "data-testid": "recipe-name-input" },
+                }}
             />
 
+            <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{
+                    alignItems: "center",
+                    border: 1,
+                    borderColor: servingsInvalid ? "error.main" : "divider",
+                    borderRadius: 999,
+                    pl: 1.25,
+                    pr: 0.25,
+                    py: 0.25,
+                    mt: 1.5,
+                    width: "fit-content",
+                }}
+                data-testid="recipe-servings-stepper"
+            >
+                <Restaurant fontSize="small" sx={{ color: coral }} />
+                <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 700, minWidth: 16, textAlign: "center" }}
+                    data-testid="recipe-servings-value"
+                >
+                    {editedServings ?? "–"}
+                </Typography>
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mr: 0.5 }}
+                >
+                    {t("recipes.servings")}
+                </Typography>
+                <IconButton
+                    size="small"
+                    onClick={() => stepServings(-1)}
+                    disabled={editedServings !== null && editedServings <= 1}
+                    data-testid="recipe-servings-decrement"
+                >
+                    <Remove fontSize="small" />
+                </IconButton>
+                <IconButton
+                    size="small"
+                    onClick={() => stepServings(1)}
+                    disabled={editedServings !== null && editedServings >= 99}
+                    data-testid="recipe-servings-increment"
+                >
+                    <Add fontSize="small" />
+                </IconButton>
+            </Stack>
+
             <TextField
-                label={t("recipes.description")}
+                variant="standard"
                 value={editedDescription}
                 onChange={(e) => {
                     setEditedDescription(e.target.value);
@@ -147,7 +218,15 @@ export const EditRecipeForm = ({
                 multiline
                 minRows={2}
                 placeholder={t("recipes.descriptionPlaceholder")}
+                sx={{ mt: 1.5 }}
                 slotProps={{
+                    input: {
+                        sx: {
+                            fontSize: "0.875rem",
+                            fontStyle: "italic",
+                            color: "text.secondary",
+                        },
+                    },
                     htmlInput: {
                         maxLength: 1000,
                         "data-testid": "recipe-description-input",
@@ -155,32 +234,10 @@ export const EditRecipeForm = ({
                 }}
             />
 
-            <TextField
-                type="number"
-                label={t("recipes.servings")}
-                value={editedServings}
-                onChange={(e) => {
-                    setEditedServings(e.target.value);
-                    setDirty(true);
-                    scheduleSave();
-                }}
-                onBlur={flushSave}
-                sx={{ width: 140 }}
-                error={servingsInvalid}
-                helperText={servingsInvalid ? t("recipes.servingsRange") : ""}
-                slotProps={{
-                    htmlInput: {
-                        min: 1,
-                        max: 99,
-                        "data-testid": "recipe-servings-input",
-                    },
-                }}
-            />
-
             <Box
                 data-testid="recipe-metadata-status"
                 data-status={status}
-                sx={{ minHeight: 20 }}
+                sx={{ minHeight: 20, mt: 0.5 }}
             >
                 <Typography variant="caption" color="text.secondary">
                     {status === "saving"
@@ -190,6 +247,6 @@ export const EditRecipeForm = ({
                           : ""}
                 </Typography>
             </Box>
-        </Stack>
+        </Box>
     );
 };
