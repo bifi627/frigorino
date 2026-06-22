@@ -576,7 +576,10 @@ export const RecipeSourcesStrip = ({
                                         },
                                     })
                                 }
-                                dragHandle={dragHandle}
+                                // Nothing to reorder in a group of one — hide the handle.
+                                dragHandle={
+                                    links.length > 1 ? dragHandle : null
+                                }
                             />
                         )}
                     />
@@ -610,7 +613,10 @@ export const RecipeSourcesStrip = ({
                                         },
                                     })
                                 }
-                                dragHandle={dragHandle}
+                                // Nothing to reorder in a group of one — hide the handle.
+                                dragHandle={
+                                    attachments.length > 1 ? dragHandle : null
+                                }
                             />
                         )}
                     />
