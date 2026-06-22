@@ -14,8 +14,7 @@ import { featureContentPx, pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
-import { RecipeAttachmentsSection } from "../attachments/components/RecipeAttachmentsSection";
-import { RecipeLinksSection } from "../links/components/RecipeLinksSection";
+import { RecipeSourcesStrip } from "../components/RecipeSourcesStrip";
 import { RecipeSectionGroup } from "../items/components/RecipeSectionGroup";
 import { RecipeFooter } from "../items/components/RecipeFooter";
 import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
@@ -263,12 +262,7 @@ export const RecipeEditPage = () => {
                             recipe={recipe}
                         />
 
-                        <RecipeLinksSection
-                            householdId={householdId}
-                            recipeId={recipeId}
-                        />
-
-                        <RecipeAttachmentsSection
+                        <RecipeSourcesStrip
                             householdId={householdId}
                             recipeId={recipeId}
                         />
