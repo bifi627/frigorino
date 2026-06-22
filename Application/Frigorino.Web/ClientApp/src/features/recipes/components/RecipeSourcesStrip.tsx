@@ -535,12 +535,18 @@ export const RecipeSourcesStrip = ({
                 </Stack>
             ) : null}
 
-            {links.length > 0 ? (
-                <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: "center", overflowX: "auto", pt: 1 }}
-                >
+            {/* Links + photos share one horizontally-scrollable strip: link chips first, then photo
+                tiles. Each group keeps its own SortableLinkList (separate reorder endpoints). */}
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    overflowX: "auto",
+                    pt: 1,
+                }}
+            >
+                {links.length > 0 ? (
                     <SortableLinkList
                         horizontal
                         links={links}
@@ -566,41 +572,41 @@ export const RecipeSourcesStrip = ({
                             />
                         )}
                     />
-                </Stack>
-            ) : null}
+                ) : null}
 
-            <Box
-                data-testid="recipe-section-attachments-content"
-                sx={{ display: "flex", gap: 1.5, overflowX: "auto", pt: 1 }}
-            >
-                <SortableLinkList
-                    horizontal
-                    links={attachments}
-                    onReorder={async (attachmentId, afterId) => {
-                        await reorderAttachment.mutateAsync({
-                            path: { householdId, recipeId, attachmentId },
-                            body: { afterId },
-                        });
-                    }}
-                    renderLink={(attachment, dragHandle) => (
-                        <PhotoTile
-                            householdId={householdId}
-                            recipeId={recipeId}
-                            attachment={attachment}
-                            onEdit={() => setEditingAttachment(attachment)}
-                            onDelete={() =>
-                                deleteAttachment.mutate({
-                                    path: {
-                                        householdId,
-                                        recipeId,
-                                        attachmentId: attachment.id,
-                                    },
-                                })
-                            }
-                            dragHandle={dragHandle}
-                        />
-                    )}
-                />
+                <Box
+                    data-testid="recipe-section-attachments-content"
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                >
+                    <SortableLinkList
+                        horizontal
+                        links={attachments}
+                        onReorder={async (attachmentId, afterId) => {
+                            await reorderAttachment.mutateAsync({
+                                path: { householdId, recipeId, attachmentId },
+                                body: { afterId },
+                            });
+                        }}
+                        renderLink={(attachment, dragHandle) => (
+                            <PhotoTile
+                                householdId={householdId}
+                                recipeId={recipeId}
+                                attachment={attachment}
+                                onEdit={() => setEditingAttachment(attachment)}
+                                onDelete={() =>
+                                    deleteAttachment.mutate({
+                                        path: {
+                                            householdId,
+                                            recipeId,
+                                            attachmentId: attachment.id,
+                                        },
+                                    })
+                                }
+                                dragHandle={dragHandle}
+                            />
+                        )}
+                    />
+                </Box>
             </Box>
 
             <RecipeAttachmentPreviewSheet

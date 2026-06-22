@@ -1,4 +1,4 @@
-import { Delete, DriveFileRenameOutline, MoreVert } from "@mui/icons-material";
+import { Check, Delete, DriveFileRenameOutline, MoreVert } from "@mui/icons-material";
 import {
     Box,
     Collapse,
@@ -62,10 +62,9 @@ export const RecipeSectionGroup = ({
     const [name, setName] = useState(section.name ?? "");
     const [description, setDescription] = useState(section.description ?? "");
     const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-    // Fields are revealed when the section already carries a name/description, or on "Rename".
-    const [renaming, setRenaming] = useState(
-        Boolean(section.name?.trim() || section.description?.trim()),
-    );
+    // The name/description fields are hidden by default — the coral header already shows the name.
+    // The ⋮ menu toggles them open ("Rename") / closed ("Done").
+    const [renaming, setRenaming] = useState(false);
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Latest field state, read by the debounced/blur flush without re-creating the timer.
@@ -200,14 +199,26 @@ export const RecipeSectionGroup = ({
                 <MenuItem
                     onClick={() => {
                         setMenuAnchor(null);
-                        setRenaming(true);
+                        if (renaming) {
+                            // Closing the editor — persist any pending edit immediately.
+                            flushSave();
+                        }
+                        setRenaming((r) => !r);
                     }}
                     data-testid={`recipe-section-${section.id}-rename`}
                 >
                     <ListItemIcon>
-                        <DriveFileRenameOutline fontSize="small" />
+                        {renaming ? (
+                            <Check fontSize="small" />
+                        ) : (
+                            <DriveFileRenameOutline fontSize="small" />
+                        )}
                     </ListItemIcon>
-                    <ListItemText>{t("recipes.renameSection")}</ListItemText>
+                    <ListItemText>
+                        {renaming
+                            ? t("common.done")
+                            : t("recipes.renameSection")}
+                    </ListItemText>
                 </MenuItem>
                 <MenuItem
                     disabled={!canDelete}
