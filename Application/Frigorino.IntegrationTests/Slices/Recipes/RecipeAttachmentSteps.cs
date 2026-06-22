@@ -42,14 +42,9 @@ public class RecipeAttachmentSteps
     [When("I expand the attachments section")]
     public async Task WhenIExpandTheAttachmentsSection()
     {
-        // The attachments section persists collapsed by default — expand it (idempotently) so the
-        // upload affordance and attachment rows are interactable.
-        var summary = ctx.Page.GetByTestId("recipe-section-attachments-summary");
-        if (await summary.GetAttributeAsync("aria-expanded") != "true")
-        {
-            await summary.ClickAsync();
-        }
-        await Assertions.Expect(summary).ToHaveAttributeAsync("aria-expanded", "true");
+        // Attachments now live in an always-visible "Sources & photos" strip — there is no accordion
+        // to expand. Just wait for the add-attachment control to be ready.
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-add-attachment")).ToBeVisibleAsync();
     }
 
     // ---- Upload via UI ----
