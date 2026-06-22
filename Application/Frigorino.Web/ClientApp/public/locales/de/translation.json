@@ -388,6 +388,7 @@
         "sectionDescription": "Abschnittsbeschreibung",
         "sectionDescriptionPlaceholder": "Optionale Notizen für diesen Abschnitt",
         "deleteSection": "Abschnitt löschen",
+        "renameSection": "Abschnitt umbenennen",
         "sectionDeleted": "Abschnitt gelöscht",
         "sourceLinks": "Quellenlinks",
         "addLink": "Link hinzufügen",
