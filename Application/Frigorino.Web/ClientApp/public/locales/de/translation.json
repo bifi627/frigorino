@@ -365,6 +365,7 @@
         "loadingRecipe": "Rezept wird geladen...",
         "failedToLoadRecipe": "Wir konnten dieses Rezept nicht laden. Bitte versuch es erneut.",
         "untitledRecipe": "Unbenanntes Rezept",
+        "openRecipe": "Rezept öffnen",
         "editRecipe": "Rezept bearbeiten",
         "deleteRecipe": "Rezept löschen",
         "alreadyInRecipe": "Bereits in diesem Rezept",

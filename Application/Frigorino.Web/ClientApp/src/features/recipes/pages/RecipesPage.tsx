@@ -44,6 +44,9 @@ export const RecipesPage = () => {
     const [recipeToDelete, setRecipeToDelete] = useState<RecipeResponse | null>(
         null,
     );
+    const [expandedRecipeId, setExpandedRecipeId] = useState<number | null>(
+        null,
+    );
 
     const handleBack = () => navigate({ to: "/" });
     const handleCreateRecipe = () => navigate({ to: "/recipes/create" });
@@ -72,6 +75,11 @@ export const RecipesPage = () => {
         }
         handleMenuClose();
     };
+
+    const handleToggleExpand = (recipeId: number) =>
+        setExpandedRecipeId((current) =>
+            current === recipeId ? null : recipeId,
+        );
 
     if (!householdId) {
         return (
@@ -141,12 +149,16 @@ export const RecipesPage = () => {
                     </Card>
                 )}
                 {recipes && recipes.length > 0 && (
-                    <Stack spacing={2}>
+                    <Stack spacing={1.5}>
                         {recipes.map((recipe) => (
                             <RecipeSummaryCard
                                 key={recipe.id}
                                 recipe={recipe}
-                                onClick={handleRecipeClick}
+                                householdId={householdId}
+                                expanded={expandedRecipeId === recipe.id}
+                                query=""
+                                onToggleExpand={handleToggleExpand}
+                                onOpen={handleRecipeClick}
                                 onMenuOpen={handleMenuOpen}
                             />
                         ))}

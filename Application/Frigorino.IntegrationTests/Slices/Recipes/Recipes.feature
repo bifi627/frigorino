@@ -53,3 +53,12 @@ Feature: Recipes
     And I open the recipe card menu for "Old Recipe"
     And I confirm deleting the recipe "Old Recipe" from the card menu
     Then "Old Recipe" no longer appears in the recipe overview
+
+  Scenario: Expanding a recipe card peeks its ingredients without leaving the overview
+    Given there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Flour"
+    When I navigate to "/recipes"
+    And I expand the recipe card "Pancakes"
+    Then the recipe card peek for "Pancakes" shows "Flour"
+    When I open the peeked recipe "Pancakes"
+    Then I am on the recipe view page for "Pancakes"

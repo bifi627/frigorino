@@ -129,7 +129,28 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I open the recipe card menu for {string}")]
     public async Task WhenIOpenTheRecipeCardMenuFor(string recipeName)
     {
+        // The ⋮ menu lives inside the card's expanded peek — open the peek first.
+        await ctx.Page.GetByTestId($"recipe-card-toggle-{recipeName}").ClickAsync();
         await ctx.Page.GetByTestId($"recipe-item-menu-button-{recipeName}").ClickAsync();
+    }
+
+    [When("I expand the recipe card {string}")]
+    public async Task WhenIExpandTheRecipeCard(string recipeName)
+    {
+        await ctx.Page.GetByTestId($"recipe-card-toggle-{recipeName}").ClickAsync();
+    }
+
+    [Then("the recipe card peek for {string} shows {string}")]
+    public async Task ThenTheRecipeCardPeekShows(string recipeName, string text)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId($"recipe-card-peek-{recipeName}"))
+            .ToContainTextAsync(text);
+    }
+
+    [When("I open the peeked recipe {string}")]
+    public async Task WhenIOpenThePeekedRecipe(string recipeName)
+    {
+        await ctx.Page.GetByTestId($"recipe-open-button-{recipeName}").ClickAsync();
     }
 
     [When("I confirm deleting the recipe {string} from the card menu")]

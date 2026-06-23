@@ -365,6 +365,7 @@
         "loadingRecipe": "Loading recipe...",
         "failedToLoadRecipe": "We couldn't load this recipe. Please try again.",
         "untitledRecipe": "Untitled recipe",
+        "openRecipe": "Open recipe",
         "editRecipe": "Edit recipe",
         "deleteRecipe": "Delete recipe",
         "alreadyInRecipe": "Already in this recipe",
