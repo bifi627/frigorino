@@ -305,6 +305,8 @@ export type RecipeResponse = {
     updatedAt: string;
     createdByUser: RecipeCreatorResponse;
     itemCount: number;
+    coverAttachmentId: null | number;
+    ingredients: Array<string>;
 };
 
 export type RecipeSectionResponse = {

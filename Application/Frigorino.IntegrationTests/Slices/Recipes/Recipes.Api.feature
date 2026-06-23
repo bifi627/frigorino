@@ -154,3 +154,19 @@ Feature: Recipes API
     And I POST a source link "https://example.com/pizza" labelled "Best Pizza" to recipe "Pizza" via the API
     And I capture the revision of recipe "Pizza" via the API
     Then the two captured recipe revisions differ
+
+  Scenario: Recipe list includes ingredient names and a null cover for an image-less recipe
+    Given there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Flour"
+    And the recipe "Pancakes" has an item "Eggs"
+    When I GET the recipes of the active household via the API
+    Then the API response status is 200
+    And the API recipe list entry "Pancakes" has ingredients "Flour, Eggs"
+    And the API recipe list entry "Pancakes" has no cover attachment
+
+  Scenario: Recipe list includes the cover attachment id when the recipe has an image
+    Given there is a recipe named "PhotoCake"
+    And the recipe "PhotoCake" has an image attachment
+    When I GET the recipes of the active household via the API
+    Then the API response status is 200
+    And the API recipe list entry "PhotoCake" has a cover attachment

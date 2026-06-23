@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Frigorino.Domain.Entities;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,5 +94,55 @@ public class RecipeApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var json = (await ctx.LastApiResponse!.JsonAsync())!.Value;
         Assert.Equal(expected, json.GetProperty("servings").GetInt32());
+    }
+
+    [Given("the recipe {string} has an image attachment")]
+    public async Task GivenTheRecipeHasAnImageAttachment(string recipeName)
+    {
+        var recipeId = ctx.RecipeIds[recipeName];
+        await api.CreateRecipeImageAttachmentAsync(recipeId);
+    }
+
+    [When("I GET the recipes of the active household via the API")]
+    public async Task WhenIGetTheRecipesOfTheActiveHouseholdViaTheApi()
+    {
+        ctx.LastApiResponse = await api.TryGetRecipesAsync();
+    }
+
+    [Then("the API recipe list entry {string} has ingredients {string}")]
+    public async Task ThenTheApiRecipeListEntryHasIngredients(string recipeName, string csv)
+    {
+        var entry = await FindRecipeListEntryAsync(recipeName);
+        var actual = entry.GetProperty("ingredients").EnumerateArray()
+            .Select(e => e.GetString()).ToArray();
+        var expected = csv.Split(',').Select(s => s.Trim()).ToArray();
+        Assert.Equal(expected, actual);
+    }
+
+    [Then("the API recipe list entry {string} has no cover attachment")]
+    public async Task ThenTheApiRecipeListEntryHasNoCoverAttachment(string recipeName)
+    {
+        var entry = await FindRecipeListEntryAsync(recipeName);
+        Assert.Equal(JsonValueKind.Null, entry.GetProperty("coverAttachmentId").ValueKind);
+    }
+
+    [Then("the API recipe list entry {string} has a cover attachment")]
+    public async Task ThenTheApiRecipeListEntryHasACoverAttachment(string recipeName)
+    {
+        var entry = await FindRecipeListEntryAsync(recipeName);
+        Assert.Equal(JsonValueKind.Number, entry.GetProperty("coverAttachmentId").ValueKind);
+    }
+
+    private async Task<JsonElement> FindRecipeListEntryAsync(string recipeName)
+    {
+        var json = (await ctx.LastApiResponse!.JsonAsync())!.Value;
+        foreach (var entry in json.EnumerateArray())
+        {
+            if (entry.GetProperty("name").GetString() == recipeName)
+            {
+                return entry.Clone();
+            }
+        }
+        throw new Xunit.Sdk.XunitException($"Recipe '{recipeName}' not found in list response");
     }
 }

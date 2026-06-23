@@ -6074,7 +6074,9 @@
           "createdAt",
           "updatedAt",
           "createdByUser",
-          "itemCount"
+          "itemCount",
+          "coverAttachmentId",
+          "ingredients"
         ],
         "type": "object",
         "properties": {
@@ -6116,6 +6118,19 @@
           "itemCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "coverAttachmentId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
