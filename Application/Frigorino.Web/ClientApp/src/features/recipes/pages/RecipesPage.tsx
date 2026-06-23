@@ -1,4 +1,4 @@
-import { Add } from "@mui/icons-material";
+import { Add, Search } from "@mui/icons-material";
 import {
     Alert,
     Box,
@@ -7,11 +7,13 @@ import {
     CardContent,
     CircularProgress,
     Container,
+    InputAdornment,
     Stack,
+    TextField,
     Typography,
 } from "@mui/material";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeResponse } from "../../../lib/api";
 import { pageContainerSx } from "../../../theme";
@@ -20,6 +22,7 @@ import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehol
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { RecipeActionsMenu } from "../components/RecipeActionsMenu";
 import { RecipeSummaryCard } from "../components/RecipeSummaryCard";
+import { rankRecipes } from "../searchRecipes";
 import { useHouseholdRecipes } from "../useHouseholdRecipes";
 
 export const RecipesPage = () => {
@@ -46,6 +49,12 @@ export const RecipesPage = () => {
     );
     const [expandedRecipeId, setExpandedRecipeId] = useState<number | null>(
         null,
+    );
+    const [query, setQuery] = useState("");
+
+    const visibleRecipes = useMemo(
+        () => rankRecipes(recipes ?? [], query),
+        [recipes, query],
     );
 
     const handleBack = () => navigate({ to: "/" });
@@ -149,20 +158,56 @@ export const RecipesPage = () => {
                     </Card>
                 )}
                 {recipes && recipes.length > 0 && (
-                    <Stack spacing={1.5}>
-                        {recipes.map((recipe) => (
-                            <RecipeSummaryCard
-                                key={recipe.id}
-                                recipe={recipe}
-                                householdId={householdId}
-                                expanded={expandedRecipeId === recipe.id}
-                                query=""
-                                onToggleExpand={handleToggleExpand}
-                                onOpen={handleRecipeClick}
-                                onMenuOpen={handleMenuOpen}
-                            />
-                        ))}
-                    </Stack>
+                    <>
+                        <TextField
+                            fullWidth
+                            size="small"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t("recipes.searchRecipesPlaceholder")}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                },
+                                htmlInput: {
+                                    "data-testid": "recipe-search-input",
+                                },
+                            }}
+                            sx={{ mb: 2 }}
+                        />
+                        {visibleRecipes.length > 0 ? (
+                            <Stack spacing={1.5}>
+                                {visibleRecipes.map((recipe) => (
+                                    <RecipeSummaryCard
+                                        key={recipe.id}
+                                        recipe={recipe}
+                                        householdId={householdId}
+                                        expanded={
+                                            expandedRecipeId === recipe.id
+                                        }
+                                        query={query}
+                                        onToggleExpand={handleToggleExpand}
+                                        onOpen={handleRecipeClick}
+                                        onMenuOpen={handleMenuOpen}
+                                    />
+                                ))}
+                            </Stack>
+                        ) : (
+                            <Typography
+                                sx={{
+                                    color: "text.secondary",
+                                    textAlign: "center",
+                                    py: 4,
+                                }}
+                            >
+                                {t("recipes.noRecipeMatches")}
+                            </Typography>
+                        )}
+                    </>
                 )}
                 <RecipeActionsMenu
                     anchorEl={anchorEl}

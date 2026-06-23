@@ -366,6 +366,8 @@
         "failedToLoadRecipe": "Wir konnten dieses Rezept nicht laden. Bitte versuch es erneut.",
         "untitledRecipe": "Unbenanntes Rezept",
         "openRecipe": "Rezept öffnen",
+        "searchRecipesPlaceholder": "Rezepte durchsuchen",
+        "noRecipeMatches": "Keine Rezepte gefunden.",
         "editRecipe": "Rezept bearbeiten",
         "deleteRecipe": "Rezept löschen",
         "alreadyInRecipe": "Bereits in diesem Rezept",

@@ -153,6 +153,34 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GetByTestId($"recipe-open-button-{recipeName}").ClickAsync();
     }
 
+    [When("I search the recipe overview for {string}")]
+    public async Task WhenISearchTheRecipeOverviewFor(string query)
+    {
+        // Client-side filter — no network round-trip; the Then-step's retrying
+        // assertion absorbs the React re-render.
+        await ctx.Page.GetByTestId("recipe-search-input").FillAsync(query);
+    }
+
+    [Then("the recipe {string} appears in the recipe overview")]
+    public async Task ThenTheRecipeAppearsInTheRecipeOverview(string recipeName)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId($"recipe-item-{recipeName}"))
+            .ToBeVisibleAsync();
+    }
+
+    [Then("the recipe overview lists {string} before {string}")]
+    public async Task ThenTheRecipeOverviewListsBefore(string first, string second)
+    {
+        var names = await ctx.Page.Locator("[data-recipe-name]")
+            .EvaluateAllAsync<string[]>(
+                "els => els.map(e => e.getAttribute('data-recipe-name'))");
+        var i1 = Array.IndexOf(names, first);
+        var i2 = Array.IndexOf(names, second);
+        Assert.True(
+            i1 >= 0 && i2 >= 0 && i1 < i2,
+            $"Expected '{first}' before '{second}', got: {string.Join(", ", names)}");
+    }
+
     [When("I confirm deleting the recipe {string} from the card menu")]
     public async Task WhenIConfirmDeletingTheRecipeFromTheCardMenu(string recipeName)
     {

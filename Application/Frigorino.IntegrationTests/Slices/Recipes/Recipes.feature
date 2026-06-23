@@ -62,3 +62,28 @@ Feature: Recipes
     Then the recipe card peek for "Pancakes" shows "Flour"
     When I open the peeked recipe "Pancakes"
     Then I am on the recipe view page for "Pancakes"
+
+  Scenario: Searching the overview filters recipes by name
+    Given there is a recipe named "Pancakes"
+    And there is a recipe named "Lasagna"
+    When I navigate to "/recipes"
+    And I search the recipe overview for "pancake"
+    Then the recipe "Pancakes" appears in the recipe overview
+    And "Lasagna" no longer appears in the recipe overview
+
+  Scenario: Searching the overview matches an ingredient name
+    Given there is a recipe named "Omelette"
+    And the recipe "Omelette" has an item "Eggs"
+    And there is a recipe named "Toast"
+    When I navigate to "/recipes"
+    And I search the recipe overview for "egg"
+    Then the recipe "Omelette" appears in the recipe overview
+    And "Toast" no longer appears in the recipe overview
+
+  Scenario: Name matches rank above ingredient-only matches
+    Given there is a recipe named "Egg Salad"
+    And there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Eggs"
+    When I navigate to "/recipes"
+    And I search the recipe overview for "egg"
+    Then the recipe overview lists "Egg Salad" before "Pancakes"
