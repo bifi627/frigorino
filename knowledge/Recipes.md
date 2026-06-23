@@ -66,6 +66,8 @@ Thin route shells under `src/routes/recipes/` (`index`, `create`, `$recipeId/vie
 
 Removed in the recompose: `RecipeSectionCard`, `RecipeLinksSection`, `RecipeAttachmentsSection`, `RecipeAttachmentRow`, `RecipeLinkRow`, and the then-orphaned shared `CollapsibleSection` + `usePersistedExpanded`.
 
+**Overview is a search hub** (`pages/RecipesPage.tsx`): a search field filters the loaded list live via `searchRecipes.ts` (`rankRecipes` — tiered relevance: name > description > ingredient match; empty query keeps newest-first). Cards (`components/RecipeSummaryCard.tsx`) are one-line with a cover thumbnail (`components/RecipeCoverThumb.tsx`, reusing `useAttachmentImage`); a chevron expands an inline peek (full description + ingredient chips + Open + the ⋮ menu). The list endpoint carries `coverAttachmentId` (first active Image attachment) + `ingredients` for this (`RecipeResponse.ToProjection`). Search is client-side over the full list — fine at household scale, server-side at hundreds of recipes (`TECH_DEBT.md`).
+
 ## Links out
 
 - Slice pattern: `Vertical_Slices.md`
