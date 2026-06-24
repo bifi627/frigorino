@@ -307,6 +307,7 @@ export type RecipeResponse = {
     itemCount: number;
     coverAttachmentId: null | number;
     ingredients: Array<string>;
+    tags: Array<RecipeTag>;
 };
 
 export type RecipeSectionResponse = {
@@ -318,6 +319,8 @@ export type RecipeSectionResponse = {
     createdAt: string;
     updatedAt: string;
 };
+
+export type RecipeTag = 'Breakfast' | 'Starter' | 'Main' | 'Side' | 'Salad' | 'Soup' | 'Dessert' | 'Snack' | 'Drink' | 'Sauce' | 'Baking' | 'Bread' | 'Vegetarian' | 'Vegan' | 'GlutenFree' | 'DairyFree' | 'LactoseFree' | 'LowCarb';
 
 export type RegisterFcmTokenRequest = {
     token: string;
@@ -335,6 +338,10 @@ export type SetActiveHouseholdRequest = {
     householdId: number;
 };
 
+export type SetRecipeTagsRequest = {
+    tags: Array<RecipeTag>;
+};
+
 export type SkipPromotionRequest = {
     listItemIds: Array<number>;
 };
@@ -343,6 +350,10 @@ export type SortBlueprintResponse = {
     id: number;
     name: string;
     categories: Array<ProductCategory>;
+};
+
+export type SuggestRecipeTagsResponse = {
+    suggestedTags: Array<RecipeTag>;
 };
 
 export type UpdateBlueprintRequest = {
@@ -2190,6 +2201,68 @@ export type CopyRecipeToListResponses = {
 };
 
 export type CopyRecipeToListResponse2 = CopyRecipeToListResponses[keyof CopyRecipeToListResponses];
+
+export type SetRecipeTagsData = {
+    body: SetRecipeTagsRequest;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/tags';
+};
+
+export type SetRecipeTagsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type SetRecipeTagsError = SetRecipeTagsErrors[keyof SetRecipeTagsErrors];
+
+export type SetRecipeTagsResponses = {
+    /**
+     * OK
+     */
+    200: RecipeResponse;
+};
+
+export type SetRecipeTagsResponse = SetRecipeTagsResponses[keyof SetRecipeTagsResponses];
+
+export type SuggestRecipeTagsData = {
+    body?: never;
+    path: {
+        householdId: number;
+        recipeId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/{recipeId}/suggest-tags';
+};
+
+export type SuggestRecipeTagsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type SuggestRecipeTagsResponses = {
+    /**
+     * OK
+     */
+    200: SuggestRecipeTagsResponse;
+};
+
+export type SuggestRecipeTagsResponse2 = SuggestRecipeTagsResponses[keyof SuggestRecipeTagsResponses];
 
 export type GetRecipeItemsData = {
     body?: never;
