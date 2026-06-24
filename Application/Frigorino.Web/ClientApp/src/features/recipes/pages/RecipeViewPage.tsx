@@ -22,6 +22,7 @@ import { CopyToListSheet } from "../copyToList/CopyToListSheet";
 import { RecipeViewList } from "../items/components/RecipeViewList";
 import { useRecipeRevision } from "../items/useRecipeRevision";
 import { RecipeViewAttachments } from "../attachments/components/RecipeViewAttachments";
+import { RecipeTagChips } from "../components/RecipeTagChips";
 import { RecipeViewLinks } from "../links/components/RecipeViewLinks";
 import { useRecipe } from "../useRecipe";
 
@@ -173,6 +174,12 @@ export const RecipeViewPage = () => {
                         >
                             {recipe.description}
                         </Typography>
+                    </Container>
+                ) : null}
+
+                {recipe.tags && recipe.tags.length > 0 ? (
+                    <Container maxWidth="sm" sx={{ px: 2, pb: 1.5 }}>
+                        <RecipeTagChips tags={recipe.tags} />
                     </Container>
                 ) : null}
 

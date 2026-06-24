@@ -15,13 +15,14 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { RecipeResponse } from "../../../lib/api";
+import type { RecipeResponse, RecipeTag } from "../../../lib/api";
 import { pageContainerSx } from "../../../theme";
 import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { RecipeActionsMenu } from "../components/RecipeActionsMenu";
 import { RecipeSummaryCard } from "../components/RecipeSummaryCard";
+import { RecipeTagFilter } from "../components/RecipeTagFilter";
 import { rankRecipes } from "../searchRecipes";
 import { useHouseholdRecipes } from "../useHouseholdRecipes";
 
@@ -51,11 +52,23 @@ export const RecipesPage = () => {
         null,
     );
     const [query, setQuery] = useState("");
+    const [selectedTags, setSelectedTags] = useState<RecipeTag[]>([]);
 
-    const visibleRecipes = useMemo(
-        () => rankRecipes(recipes ?? [], query),
-        [recipes, query],
-    );
+    const toggleTag = (tag: RecipeTag) =>
+        setSelectedTags((cur) =>
+            cur.includes(tag) ? cur.filter((x) => x !== tag) : [...cur, tag],
+        );
+
+    const visibleRecipes = useMemo(() => {
+        const all = recipes ?? [];
+        const byTags =
+            selectedTags.length === 0
+                ? all
+                : all.filter((r) =>
+                      selectedTags.every((tag) => (r.tags ?? []).includes(tag)),
+                  );
+        return rankRecipes(byTags, query);
+    }, [recipes, query, selectedTags]);
 
     const handleBack = () => navigate({ to: "/" });
     const handleCreateRecipe = () => navigate({ to: "/recipes/create" });
@@ -159,6 +172,10 @@ export const RecipesPage = () => {
                 )}
                 {recipes && recipes.length > 0 && (
                     <>
+                        <RecipeTagFilter
+                            selected={selectedTags}
+                            onToggle={toggleTag}
+                        />
                         <TextField
                             fullWidth
                             size="small"
