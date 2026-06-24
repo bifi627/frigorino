@@ -10,6 +10,7 @@ namespace Frigorino.Domain.Entities
         public const int NameMaxLength = 255;
         public const int DescriptionMaxLength = 1000;
         public const int ServingsMax = 99;
+        public const int MaxTags = 10;
 
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -20,6 +21,7 @@ namespace Frigorino.Domain.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+        public List<RecipeTag> Tags { get; set; } = [];
 
         public Household Household { get; set; } = null!;
         public User CreatedByUser { get; set; } = null!;
@@ -91,6 +93,33 @@ namespace Frigorino.Domain.Entities
             }
 
             IsActive = false;
+            UpdatedAt = DateTime.UtcNow;
+            return Result.Ok();
+        }
+
+        // Replace-whole-set semantics (matches a multi-select). Role-gated like Update/SoftDelete.
+        // De-dupes, rejects unknown enum values and over-cap sets. An empty set clears all tags.
+        public Result SetTags(string callerUserId, HouseholdRole callerRole, IEnumerable<RecipeTag> tags)
+        {
+            if (!CanBeManagedBy(callerUserId, callerRole))
+            {
+                return Result.Fail(new AccessDeniedError("Only the recipe creator or an admin can edit this recipe."));
+            }
+
+            var distinct = (tags ?? Enumerable.Empty<RecipeTag>()).Distinct().ToList();
+
+            if (distinct.Any(t => !Enum.IsDefined(t)))
+            {
+                return Result.Fail(new Error("One or more tags are not recognized.")
+                    .WithMetadata("Property", nameof(Tags)));
+            }
+            if (distinct.Count > MaxTags)
+            {
+                return Result.Fail(new Error($"A recipe can have at most {MaxTags} tags.")
+                    .WithMetadata("Property", nameof(Tags)));
+            }
+
+            Tags = distinct;
             UpdatedAt = DateTime.UtcNow;
             return Result.Ok();
         }

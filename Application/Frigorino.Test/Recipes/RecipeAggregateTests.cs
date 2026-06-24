@@ -596,5 +596,71 @@ namespace Frigorino.Test.Recipes
             Assert.True(result.IsSuccess);
             Assert.True(string.CompareOrdinal(second.Rank, first.Rank) < 0);
         }
+
+        // ---- Tags ----
+
+        [Fact]
+        public void SetTags_ReplacesWholeSet_AndDeduplicates()
+        {
+            var recipe = NewRecipe();
+
+            var result = recipe.SetTags("u1", HouseholdRole.Member,
+                new[] { RecipeTag.Main, RecipeTag.Vegetarian, RecipeTag.Main });
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(new[] { RecipeTag.Main, RecipeTag.Vegetarian }, recipe.Tags);
+        }
+
+        [Fact]
+        public void SetTags_EmptySet_ClearsTags()
+        {
+            var recipe = NewRecipe();
+            recipe.SetTags("u1", HouseholdRole.Member, new[] { RecipeTag.Main });
+
+            var result = recipe.SetTags("u1", HouseholdRole.Member, Array.Empty<RecipeTag>());
+
+            Assert.True(result.IsSuccess);
+            Assert.Empty(recipe.Tags);
+        }
+
+        [Fact]
+        public void SetTags_OverCap_Fails()
+        {
+            var recipe = NewRecipe();
+            // 11 distinct values > MaxTags (10).
+            var tooMany = new[]
+            {
+                RecipeTag.Breakfast, RecipeTag.Starter, RecipeTag.Main, RecipeTag.Side,
+                RecipeTag.Salad, RecipeTag.Soup, RecipeTag.Dessert, RecipeTag.Snack,
+                RecipeTag.Drink, RecipeTag.Sauce, RecipeTag.Baking,
+            };
+
+            var result = recipe.SetTags("u1", HouseholdRole.Member, tooMany);
+
+            Assert.True(result.IsFailed);
+            Assert.Equal("Tags", result.Errors[0].Metadata["Property"]);
+        }
+
+        [Fact]
+        public void SetTags_UnknownValue_Fails()
+        {
+            var recipe = NewRecipe();
+
+            var result = recipe.SetTags("u1", HouseholdRole.Member, new[] { (RecipeTag)999 });
+
+            Assert.True(result.IsFailed);
+            Assert.Equal("Tags", result.Errors[0].Metadata["Property"]);
+        }
+
+        [Fact]
+        public void SetTags_NonManager_Denied()
+        {
+            var recipe = NewRecipe();
+
+            var result = recipe.SetTags("someone-else", HouseholdRole.Member, new[] { RecipeTag.Main });
+
+            Assert.True(result.IsFailed);
+            Assert.IsType<AccessDeniedError>(result.Errors[0]);
+        }
     }
 }

@@ -2994,6 +2994,115 @@
         }
       }
     },
+    "/api/household/{householdId}/recipes/{recipeId}/tags": {
+      "put": {
+        "tags": [
+          "Recipes"
+        ],
+        "operationId": "SetRecipeTags",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "recipeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetRecipeTagsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/recipes/{recipeId}/suggest-tags": {
+      "post": {
+        "tags": [
+          "Recipes"
+        ],
+        "operationId": "SuggestRecipeTags",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "recipeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestRecipeTagsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/recipes/{recipeId}/items": {
       "get": {
         "tags": [
@@ -6076,7 +6185,8 @@
           "createdByUser",
           "itemCount",
           "coverAttachmentId",
-          "ingredients"
+          "ingredients",
+          "tags"
         ],
         "type": "object",
         "properties": {
@@ -6131,6 +6241,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeTag"
+            }
           }
         }
       },
@@ -6179,6 +6295,28 @@
           }
         }
       },
+      "RecipeTag": {
+        "enum": [
+          "Breakfast",
+          "Starter",
+          "Main",
+          "Side",
+          "Salad",
+          "Soup",
+          "Dessert",
+          "Snack",
+          "Drink",
+          "Sauce",
+          "Baking",
+          "Bread",
+          "Vegetarian",
+          "Vegan",
+          "GlutenFree",
+          "DairyFree",
+          "LactoseFree",
+          "LowCarb"
+        ]
+      },
       "RegisterFcmTokenRequest": {
         "required": [
           "token"
@@ -6225,6 +6363,20 @@
           }
         }
       },
+      "SetRecipeTagsRequest": {
+        "required": [
+          "tags"
+        ],
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeTag"
+            }
+          }
+        }
+      },
       "SkipPromotionRequest": {
         "required": [
           "listItemIds"
@@ -6259,6 +6411,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProductCategory"
+            }
+          }
+        }
+      },
+      "SuggestRecipeTagsResponse": {
+        "required": [
+          "suggestedTags"
+        ],
+        "type": "object",
+        "properties": {
+          "suggestedTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecipeTag"
             }
           }
         }

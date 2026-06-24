@@ -18,6 +18,7 @@ using Frigorino.Features.Recipes.CopyToList;
 using Frigorino.Features.Recipes.Items;
 using Frigorino.Features.Recipes.Sections;
 using Frigorino.Features.Recipes.Links;
+using Frigorino.Features.Recipes.Tags;
 using Frigorino.Features.Lists.Promote;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Features.Me.Settings;
@@ -94,6 +95,7 @@ builder.Services.AddImageProcessing();
 builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
 builder.Services.AddRecipeQuantityExtraction(builder.Configuration);
+builder.Services.AddRecipeTagSuggestion(builder.Configuration);
 builder.Services.AddMaintenanceServices(builder.Configuration);
 builder.Services.AddExpiryNotifications(builder.Configuration);
 
@@ -430,6 +432,8 @@ recipes.MapGetRecipeRevision();
 recipes.MapUpdateRecipe();
 recipes.MapDeleteRecipe();
 recipes.MapCopyRecipeToList();
+recipes.MapSetRecipeTags();
+recipes.MapSuggestRecipeTags();
 
 var recipeItems = app.MapGroup("/api/household/{householdId:int}/recipes/{recipeId:int}/items")
     .RequireAuthorization()

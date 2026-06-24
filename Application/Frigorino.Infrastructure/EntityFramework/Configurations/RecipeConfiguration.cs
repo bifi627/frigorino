@@ -19,6 +19,11 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(r => r.UpdatedAt).IsRequired();
             builder.Property(r => r.IsActive).IsRequired().HasDefaultValue(true);
 
+            // Recipe.Tags (the integer[] value-set) is mapped provider-conditionally in
+            // ApplicationDbContext.OnModelCreating — its Npgsql-specific List<RecipeTag> <-> int[]
+            // converter can't be composed by the EF InMemory provider used in some unit tests, so it's
+            // applied only on a relational provider. Kept out of this (provider-agnostic) config block.
+
             builder.HasOne(r => r.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(r => r.CreatedByUserId)

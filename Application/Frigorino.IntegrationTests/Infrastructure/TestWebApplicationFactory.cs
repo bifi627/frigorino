@@ -80,6 +80,11 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IQuantityExtractor>();
             services.AddScoped<IQuantityExtractor, StubQuantityExtractor>();
 
+            // Deterministic, network-free recipe tag suggester (IRecipeTagSuggester is always
+            // registered — real or Null — so RemoveAll + replace works regardless of AI config).
+            services.RemoveAll<IRecipeTagSuggester>();
+            services.AddScoped<IRecipeTagSuggester, StubRecipeTagSuggester>();
+
             // Real blob storage bound to a unique temp dir per factory instance, registered under BOTH
             // keyed storage interfaces (one shared instance per area) so the startup orphan-sweep operates
             // on the temp dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor

@@ -87,3 +87,15 @@ Feature: Recipes
     When I navigate to "/recipes"
     And I search the recipe overview for "egg"
     Then the recipe overview lists "Egg Salad" before "Pancakes"
+
+  Scenario: Filtering by multiple ingredient chips requires all of them
+    Given there is a recipe named "Pancakes"
+    And the recipe "Pancakes" has an item "Eggs"
+    And the recipe "Pancakes" has an item "Flour"
+    And there is a recipe named "Omelette"
+    And the recipe "Omelette" has an item "Eggs"
+    When I navigate to "/recipes"
+    And I add the search filter "Eggs"
+    And I add the search filter "Flour"
+    Then the recipe "Pancakes" appears in the recipe overview
+    And "Omelette" no longer appears in the recipe overview
