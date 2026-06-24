@@ -6,5 +6,6 @@ namespace Frigorino.Infrastructure.Services
     {
         public const string Classifier = "ai-classifier";
         public const string Extractor = "ai-extractor";
+        public const string RecipeTagSuggester = "ai-recipe-tag-suggester";
     }
 }
