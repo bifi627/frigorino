@@ -14,7 +14,8 @@ namespace Frigorino.Features.Recipes
         RecipeCreatorResponse CreatedByUser,
         int ItemCount,
         int? CoverAttachmentId,
-        IReadOnlyList<string> Ingredients)
+        IReadOnlyList<string> Ingredients,
+        IReadOnlyList<RecipeTag> Tags)
     {
         // CoverAttachmentId + Ingredients are populated authoritatively by ToProjection (the list
         // endpoint, their only consumer). Create/Update load neither attachments nor items, and their
@@ -25,7 +26,8 @@ namespace Frigorino.Features.Recipes
                    recipe.CreatedAt, recipe.UpdatedAt,
                    new RecipeCreatorResponse(creator.ExternalId, creator.Name, creator.Email), itemCount,
                    CoverAttachmentId: null,
-                   Ingredients: []);
+                   Ingredients: [],
+                   Tags: recipe.Tags.ToList());
 
         public static readonly Expression<Func<Recipe, RecipeResponse>> ToProjection = r => new RecipeResponse(
             r.Id, r.Name, r.Description, r.Servings, r.HouseholdId, r.CreatedAt, r.UpdatedAt,
@@ -41,7 +43,8 @@ namespace Frigorino.Features.Recipes
                 .OrderBy(i => i.Section.Rank)
                 .ThenBy(i => i.Rank)
                 .Select(i => i.Text)
-                .ToList());
+                .ToList(),
+            r.Tags);
     }
 
     public sealed record RecipeCreatorResponse(string ExternalId, string Name, string? Email);
