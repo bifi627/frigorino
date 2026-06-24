@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import type { RecipeResponse } from "../../../lib/api";
 import { sectionColors } from "../../../theme";
 import { useUpdateRecipe } from "../useUpdateRecipe";
+import { RecipeTagSelector } from "./RecipeTagSelector";
 
 const SAVE_DEBOUNCE_MS = 600;
 const coral = sectionColors.recipes;
@@ -236,6 +237,8 @@ export const EditRecipeForm = ({
                     },
                 }}
             />
+
+            <RecipeTagSelector householdId={householdId} recipe={recipe} />
 
             <Box
                 data-testid="recipe-metadata-status"
