@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Frigorino.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
