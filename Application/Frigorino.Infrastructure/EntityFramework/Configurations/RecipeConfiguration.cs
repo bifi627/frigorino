@@ -1,6 +1,5 @@
 using Frigorino.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Frigorino.Infrastructure.EntityFramework.Configurations
@@ -20,21 +19,10 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(r => r.UpdatedAt).IsRequired();
             builder.Property(r => r.IsActive).IsRequired().HasDefaultValue(true);
 
-            // Value-set of curated tags stored as a native PostgreSQL integer[] column. A value
-            // converter maps List<RecipeTag> <-> int[] (Npgsql maps int[] to integer[] natively), with
-            // a value comparer so EF tracks element changes on the mutable list. Filtering is
-            // client-side, so no index is needed here.
-            builder.Property(r => r.Tags)
-                .HasConversion(
-                    v => v.Select(t => (int)t).ToArray(),
-                    v => v.Select(i => (RecipeTag)i).ToList(),
-                    new ValueComparer<List<RecipeTag>>(
-                        (a, b) => a != null && b != null && a.SequenceEqual(b),
-                        v => v.Aggregate(0, (hash, t) => System.HashCode.Combine(hash, (int)t)),
-                        v => v.ToList()))
-                .HasColumnType("integer[]")
-                .HasDefaultValueSql("'{}'")
-                .IsRequired();
+            // Recipe.Tags (the integer[] value-set) is mapped provider-conditionally in
+            // ApplicationDbContext.OnModelCreating — its Npgsql-specific List<RecipeTag> <-> int[]
+            // converter can't be composed by the EF InMemory provider used in some unit tests, so it's
+            // applied only on a relational provider. Kept out of this (provider-agnostic) config block.
 
             builder.HasOne(r => r.CreatedByUser)
                 .WithMany()

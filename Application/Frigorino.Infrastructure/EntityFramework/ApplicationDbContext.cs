@@ -1,5 +1,6 @@
 ﻿using Frigorino.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Reflection;
 
 namespace Frigorino.Infrastructure.EntityFramework
@@ -43,6 +44,27 @@ namespace Frigorino.Infrastructure.EntityFramework
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            // Recipe.Tags is stored as a native PostgreSQL integer[] via a List<RecipeTag> <-> int[]
+            // value converter. That converter is Npgsql-specific: the EF InMemory provider used by some
+            // unit tests can't compose it with its own array handling and throws at model-build time.
+            // So apply the relational storage mapping only on a relational provider; under InMemory the
+            // property falls back to EF's native primitive-collection mapping for List<RecipeTag>.
+            if (Database.IsRelational())
+            {
+                builder.Entity<Recipe>()
+                    .Property(r => r.Tags)
+                    .HasConversion(
+                        v => v.Select(t => (int)t).ToArray(),
+                        v => v.Select(i => (RecipeTag)i).ToList(),
+                        new ValueComparer<List<RecipeTag>>(
+                            (a, b) => a != null && b != null && a.SequenceEqual(b),
+                            v => v.Aggregate(0, (hash, t) => System.HashCode.Combine(hash, (int)t)),
+                            v => v.ToList()))
+                    .HasColumnType("integer[]")
+                    .HasDefaultValueSql("'{}'")
+                    .IsRequired();
+            }
 
             base.OnModelCreating(builder);
         }
