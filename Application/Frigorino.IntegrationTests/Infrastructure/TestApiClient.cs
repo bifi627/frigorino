@@ -740,6 +740,29 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    // ---- Recipe tags ----
+
+    public Task<IAPIResponse> TrySetRecipeTagsAsync(int recipeId, string[] tags, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/recipes/{recipeId}/tags",
+            new APIRequestContextOptions
+            {
+                DataObject = new { tags },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public async Task SetRecipeTagsAsync(int recipeId, params string[] tags)
+    {
+        var resp = await TrySetRecipeTagsAsync(recipeId, tags);
+        if (!resp.Ok)
+        {
+            throw new Exception($"SetRecipeTagsAsync failed: {resp.Status} {await resp.TextAsync()}");
+        }
+    }
+
     // ---- Recipe attachments (multipart upload + byte-serving) ----
 
     // Minimal PDF bytes — the document path stores the raw bytes as-is (no parsing), so a header +
