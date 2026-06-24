@@ -161,6 +161,16 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
         await ctx.Page.GetByTestId("recipe-search-input").FillAsync(query);
     }
 
+    [When("I add the search filter {string}")]
+    public async Task WhenIAddTheSearchFilter(string term)
+    {
+        // The search box is a freeSolo chip Autocomplete: typing then Enter pins the
+        // term as a chip (an AND requirement). Client-side filter, retrying Then-step.
+        var input = ctx.Page.GetByTestId("recipe-search-input");
+        await input.FillAsync(term);
+        await input.PressAsync("Enter");
+    }
+
     [Then("the recipe {string} appears in the recipe overview")]
     public async Task ThenTheRecipeAppearsInTheRecipeOverview(string recipeName)
     {

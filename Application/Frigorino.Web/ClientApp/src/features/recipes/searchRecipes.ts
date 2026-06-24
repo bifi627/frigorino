@@ -1,19 +1,21 @@
 import type { RecipeResponse } from "../../lib/api";
 
-// Tiered relevance: a name hit (3) outranks a description hit (2), which outranks an
-// ingredient-only hit (1). Empty query returns the list unchanged (already newest-first
-// from the API). Non-matching recipes are dropped when a query is present. Array.sort is
-// stable, so ties keep the API order (newest-first) — that is the tiebreak.
+// Multi-term AND search. Each term is matched independently and a recipe is kept only if EVERY
+// term hits some field — so several expiring ingredients can be required at once. A term's hit
+// tier ranks a name match (3) above a description match (2) above an ingredient-only match (1);
+// a recipe's score is the sum across terms, so broader/stronger matches float up. Empty term
+// list returns the list unchanged (already newest-first from the API). Array.sort is stable, so
+// ties keep the API order (newest-first) — that is the tiebreak.
 export const rankRecipes = (
     recipes: RecipeResponse[],
-    query: string,
+    terms: string[],
 ): RecipeResponse[] => {
-    const q = query.trim().toLowerCase();
-    if (!q) {
+    const queries = terms.map((t) => t.trim().toLowerCase()).filter(Boolean);
+    if (queries.length === 0) {
         return recipes;
     }
 
-    const score = (r: RecipeResponse): number => {
+    const termScore = (r: RecipeResponse, q: string): number => {
         if (r.name?.toLowerCase().includes(q)) {
             return 3;
         }
@@ -27,8 +29,15 @@ export const rankRecipes = (
     };
 
     return recipes
-        .map((recipe) => ({ recipe, s: score(recipe) }))
-        .filter((x) => x.s > 0)
-        .sort((a, b) => b.s - a.s)
+        .map((recipe) => ({
+            recipe,
+            scores: queries.map((q) => termScore(recipe, q)),
+        }))
+        .filter((x) => x.scores.every((s) => s > 0))
+        .map((x) => ({
+            recipe: x.recipe,
+            total: x.scores.reduce((a, b) => a + b, 0),
+        }))
+        .sort((a, b) => b.total - a.total)
         .map((x) => x.recipe);
 };

@@ -1,6 +1,7 @@
 import { Add, Search } from "@mui/icons-material";
 import {
     Alert,
+    Autocomplete,
     Box,
     Button,
     Card,
@@ -51,7 +52,11 @@ export const RecipesPage = () => {
     const [expandedRecipeId, setExpandedRecipeId] = useState<number | null>(
         null,
     );
-    const [query, setQuery] = useState("");
+    // Committed chips (each an AND term) plus the pending text the user is still typing. The
+    // pending text also filters live, so a single typed word behaves exactly like the old box
+    // and selecting/Entering an ingredient just pins it as a chip.
+    const [terms, setTerms] = useState<string[]>([]);
+    const [inputValue, setInputValue] = useState("");
     const [selectedTags, setSelectedTags] = useState<RecipeTag[]>([]);
 
     const toggleTag = (tag: RecipeTag) =>
@@ -59,16 +64,63 @@ export const RecipesPage = () => {
             cur.includes(tag) ? cur.filter((x) => x !== tag) : [...cur, tag],
         );
 
-    const visibleRecipes = useMemo(() => {
+    const byTags = useMemo(() => {
         const all = recipes ?? [];
-        const byTags =
-            selectedTags.length === 0
-                ? all
-                : all.filter((r) =>
-                      selectedTags.every((tag) => (r.tags ?? []).includes(tag)),
-                  );
-        return rankRecipes(byTags, query);
-    }, [recipes, query, selectedTags]);
+        if (selectedTags.length === 0) {
+            return all;
+        }
+        return all.filter((r) =>
+            selectedTags.every((tag) => (r.tags ?? []).includes(tag)),
+        );
+    }, [recipes, selectedTags]);
+
+    const committedTerms = useMemo(
+        () => terms.map((s) => s.trim()).filter(Boolean),
+        [terms],
+    );
+
+    // Recipes that already match the committed chips + tags (ignoring the half-typed text). Each
+    // chip narrows this pool, and the next ingredient suggestion is drawn only from it — so you
+    // can only add ingredients that still lead to a result.
+    const suggestionPool = useMemo(
+        () => rankRecipes(byTags, committedTerms),
+        [byTags, committedTerms],
+    );
+
+    const ingredientOptions = useMemo(() => {
+        const committed = new Set(committedTerms.map((s) => s.toLowerCase()));
+        const seen = new Set<string>();
+        for (const recipe of suggestionPool) {
+            for (const ingredient of recipe.ingredients ?? []) {
+                if (!committed.has(ingredient.toLowerCase())) {
+                    seen.add(ingredient);
+                }
+            }
+        }
+        return [...seen].sort((a, b) => a.localeCompare(b));
+    }, [suggestionPool, committedTerms]);
+
+    const searchTerms = useMemo(
+        () => [...terms, inputValue].map((s) => s.trim()).filter(Boolean),
+        [terms, inputValue],
+    );
+
+    const visibleRecipes = useMemo(
+        () => rankRecipes(byTags, searchTerms),
+        [byTags, searchTerms],
+    );
+
+    // Only offer tag filters still present in the visible subset (plus any already selected, so
+    // they stay toggleable) — narrowing by ingredient or tag shrinks the row to what's reachable.
+    const availableTags = useMemo(() => {
+        const set = new Set<RecipeTag>(selectedTags);
+        for (const recipe of visibleRecipes) {
+            for (const tag of recipe.tags ?? []) {
+                set.add(tag);
+            }
+        }
+        return set;
+    }, [visibleRecipes, selectedTags]);
 
     const handleBack = () => navigate({ to: "/" });
     const handleCreateRecipe = () => navigate({ to: "/recipes/create" });
@@ -174,26 +226,80 @@ export const RecipesPage = () => {
                     <>
                         <RecipeTagFilter
                             selected={selectedTags}
+                            available={availableTags}
                             onToggle={toggleTag}
                         />
-                        <TextField
-                            fullWidth
+                        <Autocomplete
+                            multiple
+                            freeSolo
                             size="small"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t("recipes.searchRecipesPlaceholder")}
-                            slotProps={{
-                                input: {
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search fontSize="small" />
-                                        </InputAdornment>
-                                    ),
-                                },
-                                htmlInput: {
-                                    "data-testid": "recipe-search-input",
-                                },
+                            options={ingredientOptions}
+                            value={terms}
+                            onChange={(_, value) => {
+                                setTerms(value);
+                                setInputValue("");
                             }}
+                            inputValue={inputValue}
+                            onInputChange={(_, value, reason) => {
+                                // Track typing and the clear button; ignore MUI's "reset"
+                                // (fired after a chip is committed) — we clear inputValue in
+                                // onChange so the box empties but the chip stays.
+                                if (reason === "input" || reason === "clear") {
+                                    setInputValue(value);
+                                }
+                            }}
+                            filterOptions={(opts, state) => {
+                                // Suggest only after 3 chars, then substring-match within the
+                                // committed-chip subset (opts is already that subset).
+                                const input = state.inputValue
+                                    .trim()
+                                    .toLowerCase();
+                                if (input.length < 3) {
+                                    return [];
+                                }
+                                return opts.filter((o) =>
+                                    o.toLowerCase().includes(input),
+                                );
+                            }}
+                            noOptionsText={
+                                inputValue.trim().length >= 3
+                                    ? t("common.noMatchingItems")
+                                    : t("common.typeAtLeastCharacters")
+                            }
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder={
+                                        terms.length === 0
+                                            ? t(
+                                                  "recipes.searchRecipesPlaceholder",
+                                              )
+                                            : undefined
+                                    }
+                                    slotProps={{
+                                        ...params.slotProps,
+                                        input: {
+                                            ...params.slotProps.input,
+                                            startAdornment: (
+                                                <>
+                                                    <InputAdornment position="start">
+                                                        <Search fontSize="small" />
+                                                    </InputAdornment>
+                                                    {
+                                                        params.slotProps.input
+                                                            ?.startAdornment
+                                                    }
+                                                </>
+                                            ),
+                                        },
+                                        htmlInput: {
+                                            ...params.slotProps.htmlInput,
+                                            "data-testid":
+                                                "recipe-search-input",
+                                        },
+                                    }}
+                                />
+                            )}
                             sx={{ mb: 2 }}
                         />
                         {visibleRecipes.length > 0 ? (
@@ -206,7 +312,7 @@ export const RecipesPage = () => {
                                         expanded={
                                             expandedRecipeId === recipe.id
                                         }
-                                        query={query}
+                                        searchTerms={searchTerms}
                                         onToggleExpand={handleToggleExpand}
                                         onOpen={handleRecipeClick}
                                         onMenuOpen={handleMenuOpen}

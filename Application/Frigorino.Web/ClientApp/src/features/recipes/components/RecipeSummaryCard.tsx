@@ -17,7 +17,7 @@ interface RecipeSummaryCardProps {
     recipe: RecipeResponse;
     householdId: number;
     expanded: boolean;
-    query: string;
+    searchTerms: string[];
     onToggleExpand: (recipeId: number) => void;
     onOpen: (recipeId: number) => void;
     onMenuOpen: (
@@ -37,13 +37,15 @@ export const RecipeSummaryCard = ({
     recipe,
     householdId,
     expanded,
-    query,
+    searchTerms,
     onToggleExpand,
     onOpen,
     onMenuOpen,
 }: RecipeSummaryCardProps) => {
     const { t } = useTranslation();
-    const q = query.trim().toLowerCase();
+    const queries = searchTerms
+        .map((term) => term.trim().toLowerCase())
+        .filter(Boolean);
     const ingredients = recipe.ingredients ?? [];
     const shownIngredients = ingredients.slice(0, MAX_PEEK_CHIPS);
     const overflowCount = ingredients.length - shownIngredients.length;
@@ -157,9 +159,10 @@ export const RecipeSummaryCard = ({
                                 }}
                             >
                                 {shownIngredients.map((text, i) => {
-                                    const isHit =
-                                        q.length > 0 &&
-                                        text.toLowerCase().includes(q);
+                                    const lower = text.toLowerCase();
+                                    const isHit = queries.some((q) =>
+                                        lower.includes(q),
+                                    );
                                     return (
                                         <Chip
                                             key={`${text}-${i}`}
