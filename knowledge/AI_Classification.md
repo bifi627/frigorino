@@ -1,15 +1,16 @@
 # AI: Product Classification & Quantity Extraction
 
-Two independent, optional AI features, both backed by OpenAI through Domain-owned ports and both **off by default**:
+Three independent, optional AI features, all backed by OpenAI through Domain-owned ports and all **off by default**:
 
 1. **Product classification** — assigns a `Product` (per-household catalog entry) a retail aisle + expiry handling, so list items can be grouped and promoted to inventory with sensible expiry defaults.
 2. **Quantity extraction** — turns a free-text item ("2 kg Äpfel", "two cups flour") into a clean name + structured `Quantity`.
+3. **Recipe tag suggestion** — given a recipe's name + description + ingredients, suggests curated course/dietary tags the user can accept (see `Recipes.md`).
 
-Both run as **fire-and-forget jobs on the `BackgroundTaskQueue`** (request-triggered, best-effort), never inline in the request. The only synchronous AI-adjacent path is unrelated (the expiry scan — see `Push_Notifications.md`).
+Classification and extraction run as **fire-and-forget jobs on the `BackgroundTaskQueue`** (request-triggered, best-effort), never inline. Recipe tag suggestion is the deliberate exception — it runs **synchronously in-request** because it's the user's primary action (a button tap), not a side-effect of a write. (The other synchronous AI-adjacent path, the expiry scan, is unrelated — see `Push_Notifications.md`.)
 
 ## Vendor-agnostic boundary
 
-All contracts live in `Frigorino.Domain/Interfaces/` (`IItemClassifier`, `IQuantityExtractor`, the `I*Trigger`s, the `I*Job`s) and `Frigorino.Domain/{Products,Quantities}/` (value objects). The OpenAI SDK is referenced **only** in `Frigorino.Infrastructure/Services/` (`OpenAiItemClassifier`, `OpenAiQuantityExtractor`). Swapping vendors = a new adapter behind the unchanged port; DI and call sites don't move. (This is the standard "define `IXxx`, keep vendor selection separate" pattern.)
+All contracts live in `Frigorino.Domain/Interfaces/` (`IItemClassifier`, `IQuantityExtractor`, `IRecipeTagSuggester`, the `I*Trigger`s, the `I*Job`s) and `Frigorino.Domain/{Products,Quantities}/` (value objects). The OpenAI SDK is referenced **only** in `Frigorino.Infrastructure/Services/` (`OpenAiItemClassifier`, `OpenAiQuantityExtractor`, `OpenAiRecipeTagSuggester`). Swapping vendors = a new adapter behind the unchanged port; DI and call sites don't move. (This is the standard "define `IXxx`, keep vendor selection separate" pattern.)
 
 ## Product domain (`Frigorino.Domain/`)
 
@@ -46,6 +47,13 @@ Triage is free and synchronous: `Quantities/ItemTextRouter.Analyze(text)` → `I
 | Classification → extraction | No (independent, gated separately) |
 | List-item extraction → classification | Yes (on the clean name) |
 | Recipe extraction → classification | Never (MVP: recipes don't classify) |
+| Recipe tag suggestion → anything | Never (suggest-only; writes no `Product` rows, persists nothing) |
+
+## Recipe tag suggestion
+
+The odd one out: **synchronous, on-demand, stateless, suggest-only** — no trigger, no queue, no job. The `SuggestRecipeTags` slice (`POST /{id}/suggest-tags`) resolves `IRecipeTagSuggester` and awaits it in-request, returning the suggested tags directly to the caller; the user accepts a chip, which is a separate `PUT /{id}/tags` write. Nothing is persisted from the suggest call.
+
+`OpenAiRecipeTagSuggester` uses Structured Outputs whose allowed `enum` values are interpolated from `Enum.GetNames<RecipeTag>()` (so the schema can't drift from the enum). Refusals / empties / **any error** map to an empty list — a valid "no confident suggestions" — so a user's button tap never 500s. `NullRecipeTagSuggester` (disabled path) always returns empty, so the endpoint is always safe to call. The port returns `IReadOnlyList<RecipeTag>` directly (not `Result<T>`): an empty list is the success-with-nothing case, not an error. See `Recipes.md`.
 
 ## Gating & DI
 
@@ -53,13 +61,15 @@ Config (`appsettings.json` → user-secrets / Railway env):
 
 | Key | Effect |
 |---|---|
-| `Ai:ApiKey` | OpenAI key. **Required** to enable either feature. |
+| `Ai:ApiKey` | OpenAI key. **Required** to enable any feature. |
 | `Ai:Classifier:Enabled` | Turns on classification (default off). |
 | `Ai:Classifier:Model` | default `gpt-5.4-mini`. |
 | `Ai:QuantityExtractor:Enabled` | Turns on extraction (default off). |
 | `Ai:QuantityExtractor:Model` | default `gpt-5.4-nano`. |
+| `Ai:RecipeTagSuggester:Enabled` | Turns on tag suggestion (default off). |
+| `Ai:RecipeTagSuggester:Model` | default `gpt-5.4-mini`. |
 
-DI methods run **in order** in `Program.cs`: `AddItemClassification` → `AddQuantityExtraction` → `AddRecipeQuantityExtraction` (each downstream one reuses ports the previous registered, e.g. the disabled extractor needs the classification trigger). Each registers the keyed OpenAI `ChatClient` (`Services/AiKeys.cs`: `Classifier` / `Extractor`) + real impls only when `ApiKey` **and** the feature's `Enabled` flag are set; otherwise the `Null*` trigger. The `*Job` types are registered **only on the enabled path** (they depend on `IItemClassifier`/`IQuantityExtractor`, which don't exist when disabled — registering them unconditionally would fail `ValidateOnBuild`).
+DI methods run **in order** in `Program.cs`: `AddItemClassification` → `AddQuantityExtraction` → `AddRecipeQuantityExtraction` → `AddRecipeTagSuggestion` (each of the first three reuses ports the previous registered, e.g. the disabled extractor needs the classification trigger; `AddRecipeTagSuggestion` is standalone — it depends on no other AI port). Each registers the keyed OpenAI `ChatClient` (`Services/AiKeys.cs`: `Classifier` / `Extractor` / `RecipeTagSuggester`) + real impls only when `ApiKey` **and** the feature's `Enabled` flag are set; otherwise the `Null*` impl. The classification/extraction `*Job` types are registered **only on the enabled path** (they depend on `IItemClassifier`/`IQuantityExtractor`, which don't exist when disabled — registering them unconditionally would fail `ValidateOnBuild`); the tag suggester has no job, and registers `IRecipeTagSuggester` on **both** paths (real or `Null`) so the slice always resolves it.
 
 ## Backfill
 

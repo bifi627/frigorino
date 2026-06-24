@@ -34,7 +34,7 @@ Application/
 knowledge/                   # Longer-form architecture notes (read these before bigger changes)
 ```
 
-The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Domain` depends on no infrastructure frameworks, `Infrastructure` does not reference `Web`, and `Features` does not reference `Web`. Infrastructure types are wired into the host via DI extension methods (`AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddBackgroundTaskQueue`, `AddFileStorage`, `AddImageProcessing`, `AddItemClassification`, `AddQuantityExtraction`, `AddRecipeQuantityExtraction`, `AddMaintenanceServices`, `AddExpiryNotifications`) called from `Frigorino.Web/Program.cs`.
+The Clean Architecture dependency direction is enforced by project references AND ArchUnitNET tests in `Frigorino.Test/Architecture/ArchitectureTests.cs`: `Domain` depends on no infrastructure frameworks, `Infrastructure` does not reference `Web`, and `Features` does not reference `Web`. Infrastructure types are wired into the host via DI extension methods (`AddEntityFramework`, `AddFirebaseAuth`, `AddDevAuth`, `AddBackgroundTaskQueue`, `AddFileStorage`, `AddImageProcessing`, `AddItemClassification`, `AddQuantityExtraction`, `AddRecipeQuantityExtraction`, `AddRecipeTagSuggestion`, `AddMaintenanceServices`, `AddExpiryNotifications`) called from `Frigorino.Web/Program.cs`.
 
 Deeper notes live in `knowledge/` — start at `knowledge/README.md` (the index). It splits into **pattern** docs (`Backend_Architecture`, `Vertical_Slices`, `Frontend_Architecture`, `Frontend_Styling`, `API_Integration`, `Testing`, `Observability`, `Performance_Optimization`), **capability** docs (`AI_Classification`, `File_Storage`, `Firebase_Auth_Setup`), and **feature** docs (`Households`, `Members`, `Lists`, `Inventories`, `Recipes`, `Push_Notifications`) — a feature doc is the self-contained, citable unit for a spec/plan.
 
@@ -79,7 +79,7 @@ The Dockerfile publishes `Frigorino.Web` (solution-wide restore, web-only publis
 
 - `ConnectionStrings:Database` — Postgres connection string OR a `postgres://` URL (auto-converted by a static helper in `Infrastructure/EntityFramework/DependencyInjection.cs`).
 - `FirebaseSettings:ValidIssuer` / `ValidAudience` / `AccessJson` — Firebase JWT validation + service account JSON.
-- `Ai:ApiKey` + `Ai:Classifier:*` / `Ai:QuantityExtractor:*` — OpenAI key + per-feature model + `Enabled` flags; both AI features no-op (Null\* triggers) unless key **and** flag are set (`knowledge/AI_Classification.md`).
+- `Ai:ApiKey` + `Ai:Classifier:*` / `Ai:QuantityExtractor:*` / `Ai:RecipeTagSuggester:*` — OpenAI key + per-feature model + `Enabled` flags; all three AI features no-op (Null\* impl) unless key **and** flag are set. The tag suggester is the one synchronous on-demand AI path (the other two are fire-and-forget jobs) (`knowledge/AI_Classification.md`).
 - `FileStorage:Provider` (`Local`/`Gcs`) + `Bucket` / `Environment` / `LocalPath` — blob storage for recipe attachments + list-item media (`knowledge/File_Storage.md`).
 - `MaintenanceSettings:TriggerToken` — shared secret guarding the `/internal/expiry-scan` cron endpoint (`knowledge/Push_Notifications.md`).
 - `OpenTelemetry:*` — OTLP export endpoint/headers/protocol (`knowledge/Observability.md`).

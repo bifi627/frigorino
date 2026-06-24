@@ -6,7 +6,7 @@ Recipes are a household-scoped feature alongside Lists and Inventories. A recipe
 
 | Entity | Key fields | Notes |
 |---|---|---|
-| `Recipe.cs` | `Name`, `Description`, `Servings?`, `HouseholdId`, `CreatedByUserId` | Aggregate root. Holds Items/Sections/Links/Attachments collections + all their mutation methods. `CanBeManagedBy(userId, role)` gates writes. Create auto-seeds one unnamed section. |
+| `Recipe.cs` | `Name`, `Description`, `Servings?`, `HouseholdId`, `CreatedByUserId`, `Tags` | Aggregate root. Holds Items/Sections/Links/Attachments collections + all their mutation methods. `CanBeManagedBy(userId, role)` gates writes. Create auto-seeds one unnamed section. `Tags` is a `List<RecipeTag>` **value-set** (curated course + dietary enum, `integer[]` column, no join table), set via `SetTags` (replace-whole-set, dedupes, role-gated, capped at `MaxTags`=10). |
 | `RecipeSection.cs` | `Name?`, `Description?`, `Rank` (lexicographic fractional-index per recipe) | Groups items. An unnamed section renders as the default "Ingredients" header. |
 | `RecipeItem.cs` | `Text`, `Comment?`, `QuantityValue?`, `QuantityUnit?`, `SectionId`, `Rank` (FI per section) | An ingredient line. Quantity is structured (value + `QuantityUnit`), populated by AI extraction — see below. |
 | `RecipeLink.cs` | `Url` (required), `Label?`, `Rank` (FI per recipe) | External source (blog/video). |
@@ -19,6 +19,7 @@ Aggregate methods follow the standard add / update / remove (soft-delete) / rest
 `MapGroup` prefix `/api/household/{householdId:int}/recipes` (+ nested `/{recipeId:int}/items|sections|links|attachments`). All under `RequireAuthorization()`; household membership is checked in each handler.
 
 - **Recipes**: `POST /`, `GET /`, `GET /{id}`, `GET /{id}/revision` (concurrency token), `PUT /{id}`, `DELETE /{id}`, `POST /{id}/copy-to-list`.
+- **Tags**: `PUT /{id}/tags` (replace-whole-set via `Recipe.SetTags`), `POST /{id}/suggest-tags` (synchronous, on-demand AI suggestion — the deliberate exception to "AI runs fire-and-forget"; stateless, persists nothing; see `AI_Classification.md`).
 - **Items**: full CRUD + `POST /{itemId}/restore` + `PATCH /{itemId}/reorder`.
 - **Sections**: CRUD + restore + reorder. Deleting a section cascades to its items; restore brings them back.
 - **Links**: CRUD + restore + reorder.
@@ -44,12 +45,14 @@ On item create/update the text is triaged by `ItemTextRouter` and, if it needs p
 - **Two distinct media paths, not one polymorphic attachment.** Image and document uploads take separate factory paths (`AddAttachment` vs `AddDocumentAttachment`) — images are re-encoded to WebP + thumbnail, documents stored raw with no thumbnail. Keeping the two kinds separate avoids a branchy mode-dependent method (clean domain separation over a "dirty invariant").
 - **Caption is its own field**, never overloaded onto a filename or text column.
 - **Recipe items deliberately do not chain into product classification.** They never create `Product` catalog rows — that's a list-item concern. Quantity extraction runs; classification does not.
+- **Tags are a value-set, not an aggregate child.** A flat `RecipeTag[]` on the recipe (no rank, no soft-delete, no separate table) — they're a small fixed vocabulary, not user-ordered/owned rows. AI suggestions are **suggest-only**: nothing is persisted from the suggest endpoint; the user accepts a chip, which is a normal `SetTags` write. Overview filtering is **client-side** (AND across selected tags, combined with search) — fine at household scale.
 - **Blob-before-row, compensate on failure.** Writing the blob before the DB row (and best-effort deleting it on insert failure) means a crash can't leave a row referencing a missing blob; the inverse orphan is reclaimed by the mark-and-sweep, not guarded inline.
 
 ## Cross-feature touchpoints
 
 - **Copy to list → Lists** (`CopyToList/CopyRecipeToList.cs`): `POST /{recipeId}/copy-to-list` takes a target list id + selected items (with optionally scaled quantities) and calls `list.AddItem(text, quantity, comment)` per item — they land unchecked on the list. Because the quantities are already structured it **skips** AI quantity extraction, but it **must** still fire `IProductClassificationTrigger.OnProductReferenced` (fire-and-forget after commit) so the copied names enter the product catalog and promote-to-inventory keeps working. This trigger is easy to forget — it bit this slice in PR #130. See `Lists.md`.
 - **Quantity extraction → AI pipeline**: recipe item parsing runs through the shared OpenAI extraction queue and gating. See `AI_Classification.md`.
+- **Tag suggestion → AI pipeline**: `POST /{id}/suggest-tags` calls `IRecipeTagSuggester` synchronously in-request (no queue/job). Off by default; the `Null*` impl returns an empty list so the endpoint is always safe to call. See `AI_Classification.md`.
 - **Attachments → File storage**: blobs + image processing go through `IFileStorage` / `IImageProcessor` and are reclaimed by `ReclaimOrphanBlobs`. See `File_Storage.md`.
 
 ## Frontend (`ClientApp/src/features/recipes/`)
@@ -58,7 +61,7 @@ Thin route shells under `src/routes/recipes/` (`index`, `create`, `$recipeId/vie
 
 **Edit page is a "recipe sheet"** (recomposed from a flat stack of five collapsible CRUD panels):
 
-- `components/EditRecipeForm.tsx` — the inline header: borderless title field + servings pill-stepper + multiline description, all saved by one debounced single-PUT (`recipe-description-input` keeps the autosave + blur-flush).
+- `components/EditRecipeForm.tsx` — the inline header: borderless title field + servings pill-stepper + multiline description, all saved by one debounced single-PUT (`recipe-description-input` keeps the autosave + blur-flush). Below it, `components/RecipeTagSelector.tsx` — grouped selectable course/dietary chips (each toggle is a full `SetTags` write via `useSetRecipeTags`) + a "Suggest tags" button (`useSuggestRecipeTags`) that renders returned tags as ephemeral ghost chips the user taps to accept. Read-only display elsewhere uses `components/RecipeTagChips.tsx` (view page).
 - `components/RecipeSourcesStrip.tsx` — one always-visible "Sources & photos" strip: link chips + photo/document tiles share a single horizontal row (two `SortableLinkList horizontal` instances — separate reorder endpoints), with the add-link / add-photo controls pinned in the header. The photo tiles live in `data-testid="recipe-section-attachments-content"`. Reuses the attachment preview/caption sheets verbatim.
 - `items/components/RecipeSectionGroup.tsx` — lightweight always-visible section (coral small-caps header + drag handle + ⋮ menu). Name/description fields are collapsed by default; the ⋮ menu toggles **Rename ⇄ Done** (the header already shows the name).
 - `items/components/RecipeFooter.tsx` — the composer is always visible and **section-aware**: a target-section switcher chip names where new items land, persisted per-device under `recipe-edit:target-section` (`hooks/usePersistedNumber.ts`).
@@ -66,7 +69,7 @@ Thin route shells under `src/routes/recipes/` (`index`, `create`, `$recipeId/vie
 
 Removed in the recompose: `RecipeSectionCard`, `RecipeLinksSection`, `RecipeAttachmentsSection`, `RecipeAttachmentRow`, `RecipeLinkRow`, and the then-orphaned shared `CollapsibleSection` + `usePersistedExpanded`.
 
-**Overview is a search hub** (`pages/RecipesPage.tsx`): a search field filters the loaded list live via `searchRecipes.ts` (`rankRecipes` — tiered relevance: name > description > ingredient match; empty query keeps newest-first). Cards (`components/RecipeSummaryCard.tsx`) are one-line with a cover thumbnail (`components/RecipeCoverThumb.tsx`, reusing `useAttachmentImage`); a chevron expands an inline peek (full description + ingredient chips + Open + the ⋮ menu). The list endpoint carries `coverAttachmentId` (first active Image attachment) + `ingredients` for this (`RecipeResponse.ToProjection`). Search is client-side over the full list — fine at household scale, server-side at hundreds of recipes (`TECH_DEBT.md`).
+**Overview is a search hub** (`pages/RecipesPage.tsx`): a search field filters the loaded list live via `searchRecipes.ts` (`rankRecipes` — tiered relevance: name > description > ingredient match; empty query keeps newest-first). Cards (`components/RecipeSummaryCard.tsx`) are one-line with a cover thumbnail (`components/RecipeCoverThumb.tsx`, reusing `useAttachmentImage`); a chevron expands an inline peek (full description + ingredient chips + Open + the ⋮ menu). The list endpoint carries `coverAttachmentId` (first active Image attachment) + `ingredients` for this (`RecipeResponse.ToProjection`). Search is client-side over the full list — fine at household scale, server-side at hundreds of recipes (`TECH_DEBT.md`). `components/RecipeTagFilter.tsx` adds a grouped tag-chip row above the search field; selected tags narrow the list (AND across tags) before search ranking, also client-side. Tag vocabulary + label hook live in `features/recipes/tags.ts`.
 
 ## Links out
 
