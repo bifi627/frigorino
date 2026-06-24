@@ -7,7 +7,7 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RecipeResponse, RecipeTag } from "../../../lib/api";
 import { COURSE_TAGS, DIETARY_TAGS, useTagLabel } from "../tags";
@@ -33,26 +33,47 @@ export const RecipeTagSelector = ({
     // re-seeds — no reset effect needed.
     const [selected, setSelected] = useState<RecipeTag[]>(recipe.tags ?? []);
     const [ghosts, setGhosts] = useState<RecipeTag[]>([]);
+    // True only after a Suggest call that produced no new chips — drives the "no suggestions" hint.
+    const [emptySuggestion, setEmptySuggestion] = useState(false);
+
+    // Authoritative latest set, read by the handlers instead of the `selected` render closure so
+    // rapid consecutive taps each build on the previous one (no lost update). `selected` still
+    // drives rendering; persist keeps the two in lockstep.
+    const selectedRef = useRef<RecipeTag[]>(selected);
 
     const persist = (next: RecipeTag[]) => {
+        const previous = selectedRef.current;
+        selectedRef.current = next;
         setSelected(next);
-        setTags.mutate({
-            path: { householdId, recipeId: recipe.id },
-            body: { tags: next },
-        });
+        setTags.mutate(
+            {
+                path: { householdId, recipeId: recipe.id },
+                body: { tags: next },
+            },
+            {
+                // Roll the optimistic set back if the write fails, so local state can't silently
+                // diverge from the server.
+                onError: () => {
+                    selectedRef.current = previous;
+                    setSelected(previous);
+                },
+            },
+        );
     };
 
     const toggle = (tag: RecipeTag) => {
-        const next = selected.includes(tag)
-            ? selected.filter((x) => x !== tag)
-            : [...selected, tag];
+        const current = selectedRef.current;
+        const next = current.includes(tag)
+            ? current.filter((x) => x !== tag)
+            : [...current, tag];
         persist(next);
     };
 
     const acceptGhost = (tag: RecipeTag) => {
         setGhosts((g) => g.filter((x) => x !== tag));
-        if (!selected.includes(tag)) {
-            persist([...selected, tag]);
+        setEmptySuggestion(false);
+        if (!selectedRef.current.includes(tag)) {
+            persist([...selectedRef.current, tag]);
         }
     };
 
@@ -60,9 +81,11 @@ export const RecipeTagSelector = ({
         const res = await suggest.mutateAsync({
             path: { householdId, recipeId: recipe.id },
         });
-        setGhosts(
-            (res.suggestedTags ?? []).filter((tg) => !selected.includes(tg)),
+        const fresh = (res.suggestedTags ?? []).filter(
+            (tg) => !selectedRef.current.includes(tg),
         );
+        setGhosts(fresh);
+        setEmptySuggestion(fresh.length === 0);
     };
 
     const renderGroup = (heading: string, tags: readonly RecipeTag[]) => (
@@ -135,6 +158,19 @@ export const RecipeTagSelector = ({
                             />
                         ))}
                     </Box>
+                )}
+                {emptySuggestion && (
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            display: "block",
+                            mt: 0.5,
+                            color: "text.secondary",
+                        }}
+                        data-testid="recipe-no-tag-suggestions"
+                    >
+                        {t("recipes.noTagSuggestions")}
+                    </Typography>
                 )}
             </Box>
         </Stack>

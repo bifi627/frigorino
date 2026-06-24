@@ -14,6 +14,11 @@ namespace Frigorino.Features.Recipes.Tags
 
     public static class SuggestRecipeTagsEndpoint
     {
+        // Bound the prompt size: an authenticated member could otherwise create thousands of
+        // ingredient lines and repeatedly call this synchronous endpoint to drive large/expensive
+        // completions. The first ~100 lines are more than enough context to tag a recipe.
+        private const int MaxIngredientLines = 100;
+
         public static IEndpointRouteBuilder MapSuggestRecipeTags(this IEndpointRouteBuilder app)
         {
             app.MapPost("/{recipeId:int}/suggest-tags", Handle)
@@ -50,6 +55,7 @@ namespace Frigorino.Features.Recipes.Tags
                 .OrderBy(i => i.Section.Rank)
                 .ThenBy(i => i.Rank)
                 .Select(i => i.Text)
+                .Take(MaxIngredientLines)
                 .ToListAsync(ct);
 
             var suggested = await suggester.SuggestAsync(recipe.Name, recipe.Description, ingredients, ct);

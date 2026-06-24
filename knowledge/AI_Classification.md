@@ -55,6 +55,8 @@ The odd one out: **synchronous, on-demand, stateless, suggest-only** — no trig
 
 `OpenAiRecipeTagSuggester` uses Structured Outputs whose allowed `enum` values are interpolated from `Enum.GetNames<RecipeTag>()` (so the schema can't drift from the enum). Refusals / empties / **any error** map to an empty list — a valid "no confident suggestions" — so a user's button tap never 500s. `NullRecipeTagSuggester` (disabled path) always returns empty, so the endpoint is always safe to call. The port returns `IReadOnlyList<RecipeTag>` directly (not `Result<T>`): an empty list is the success-with-nothing case, not an error. See `Recipes.md`.
 
+**Model choice — full `gpt-5.4`, on purpose.** Unlike the classifier (`mini`) and quantity extractor (`nano`), tag suggestion defaults to the **full** `gpt-5.4`. It's a deliberate per-feature trade-off: suggestion is **low-volume** (one synchronous call per explicit button tap, not a per-item background job) and **accuracy-sensitive** (a wrong dietary tag is worse than a missed one), so the extra cost buys real quality where volume can't make it expensive. This is exactly why each AI feature has its own `:Model` knob rather than a shared default — don't "normalize" this to `mini`/`nano` to match its siblings.
+
 ## Gating & DI
 
 Config (`appsettings.json` → user-secrets / Railway env):
@@ -67,7 +69,7 @@ Config (`appsettings.json` → user-secrets / Railway env):
 | `Ai:QuantityExtractor:Enabled` | Turns on extraction (default off). |
 | `Ai:QuantityExtractor:Model` | default `gpt-5.4-nano`. |
 | `Ai:RecipeTagSuggester:Enabled` | Turns on tag suggestion (default off). |
-| `Ai:RecipeTagSuggester:Model` | default `gpt-5.4-mini`. |
+| `Ai:RecipeTagSuggester:Model` | default `gpt-5.4` (the **full** model, not mini/nano — see below). |
 
 DI methods run **in order** in `Program.cs`: `AddItemClassification` → `AddQuantityExtraction` → `AddRecipeQuantityExtraction` → `AddRecipeTagSuggestion` (each of the first three reuses ports the previous registered, e.g. the disabled extractor needs the classification trigger; `AddRecipeTagSuggestion` is standalone — it depends on no other AI port). Each registers the keyed OpenAI `ChatClient` (`Services/AiKeys.cs`: `Classifier` / `Extractor` / `RecipeTagSuggester`) + real impls only when `ApiKey` **and** the feature's `Enabled` flag are set; otherwise the `Null*` impl. The classification/extraction `*Job` types are registered **only on the enabled path** (they depend on `IItemClassifier`/`IQuantityExtractor`, which don't exist when disabled — registering them unconditionally would fail `ValidateOnBuild`); the tag suggester has no job, and registers `IRecipeTagSuggester` on **both** paths (real or `Null`) so the slice always resolves it.
 

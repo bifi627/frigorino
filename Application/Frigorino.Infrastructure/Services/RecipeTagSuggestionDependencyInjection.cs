@@ -18,7 +18,9 @@ namespace Frigorino.Infrastructure.Services
             var model = configuration["Ai:RecipeTagSuggester:Model"];
             if (string.IsNullOrWhiteSpace(model))
             {
-                model = "gpt-5.4-mini";
+                // Deliberately the full model, not a mini/nano: tag suggestion is low-volume and
+                // accuracy-sensitive (the whole point of a per-feature model knob). See appsettings.
+                model = "gpt-5.4";
             }
 
             if (enabled && !string.IsNullOrWhiteSpace(apiKey))
