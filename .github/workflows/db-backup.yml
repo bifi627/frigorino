@@ -1,0 +1,60 @@
+name: Database backup
+
+on:
+  schedule:
+    # 02:00 UTC daily, before the 05:00 expiry scan. Adjust if it ever clashes with load.
+    - cron: "0 2 * * *"
+  workflow_dispatch: {} # manual — run this right before a risky migration (e.g. pg16→18)
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One leg per environment. Each GitHub Environment (stage, production) holds its own
+    # DB_BACKUP_URL secret (the public Railway connection string, incl. credentials).
+    # The expiry-scan workflow matrixes a non-secret URL from a repo var; a DB URL is
+    # secret per-env, so we use Environments instead. fail-fast off so a stage failure
+    # does not skip production.
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [stage, production]
+    environment: ${{ matrix.env }}
+    steps:
+      # ponytail: pin pg_dump to 18 — a client >= server dumps fine, so 18 covers both
+      # today's pg16 and the post-upgrade pg18. Bump only if the server ever goes past 18.
+      - name: Install pg_dump 18
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-18
+
+      - name: Dump and upload
+        env:
+          DB_URL: ${{ secrets.DB_BACKUP_URL }}
+          SA_KEY: ${{ secrets.GCS_BACKUP_SA_KEY }}
+          BUCKET: ${{ vars.GCS_BACKUP_BUCKET }}
+          ENV_NAME: ${{ matrix.env }}
+        run: |
+          set -euo pipefail
+          : "${DB_URL:?DB_BACKUP_URL secret not set for $ENV_NAME}"
+          : "${BUCKET:?GCS_BACKUP_BUCKET variable not set}"
+
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          FILE="frigorino-${ENV_NAME}-${STAMP}.dump"
+
+          # -Fc: custom format = compressed + restorable selectively/in parallel via pg_restore.
+          pg_dump --no-owner --no-privileges -Fc "$DB_URL" > "$FILE"
+
+          printf '%s' "$SA_KEY" > "$RUNNER_TEMP/gcs.json"
+          gcloud auth activate-service-account --key-file="$RUNNER_TEMP/gcs.json"
+          gcloud storage cp "$FILE" "gs://${BUCKET}/${ENV_NAME}/${FILE}"
+
+          echo "Backed up ${ENV_NAME} → gs://${BUCKET}/${ENV_NAME}/${FILE} ($(du -h "$FILE" | cut -f1))"
