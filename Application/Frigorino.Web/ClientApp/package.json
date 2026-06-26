@@ -27,7 +27,7 @@
         "@emotion/styled": "^11.14.1",
         "@fullcalendar/core": "^6.1.20",
         "@fullcalendar/daygrid": "^6.1.20",
-        "@fullcalendar/react": "^6.1.20",
+        "@fullcalendar/react": "^6.1.21",
         "@grafana/faro-web-sdk": "^2.7.1",
         "@grafana/faro-web-tracing": "^2.8.0",
         "@hey-api/client-fetch": "^0.13.1",
