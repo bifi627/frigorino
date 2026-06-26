@@ -59,7 +59,7 @@
         "@rolldown/plugin-babel": "^0.2.3",
         "@tanstack/router-generator": "^1.167.13",
         "@tanstack/router-plugin": "^1.168.14",
-        "@types/node": "^25.9.1",
+        "@types/node": "^26.0.0",
         "@types/react": "^19.2.15",
         "@types/react-dom": "^19.1.6",
         "@vitejs/plugin-react": "^6.0.2",
