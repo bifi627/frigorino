@@ -24,18 +24,6 @@ jobs:
         env: [stage, production]
     environment: ${{ matrix.env }}
     steps:
-      # ponytail: pin pg_dump to 18 — a client >= server dumps fine, so 18 covers both
-      # today's pg16 and the post-upgrade pg18. Bump only if the server ever goes past 18.
-      - name: Install pg_dump 18
-        run: |
-          sudo install -d /usr/share/postgresql-common/pgdg
-          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
-            https://www.postgresql.org/media/keys/ACCC4CF8.asc
-          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-            | sudo tee /etc/apt/sources.list.d/pgdg.list
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-18
-
       - name: Dump and upload
         env:
           DB_URL: ${{ secrets.DB_BACKUP_URL }}
@@ -51,7 +39,10 @@ jobs:
           FILE="frigorino-${ENV_NAME}-${STAMP}.dump"
 
           # -Fc: custom format = compressed + restorable selectively/in parallel via pg_restore.
-          pg_dump --no-owner --no-privileges -Fc "$DB_URL" > "$FILE"
+          # ponytail: dump via the postgres:18 image, not the runner's preinstalled pg16
+          # client — pg_dump >= server dumps both pg16 (production) and pg18 (stage).
+          docker run --rm -e DB_URL -v "$PWD:/out" postgres:18 \
+            pg_dump --no-owner --no-privileges -Fc "$DB_URL" -f "/out/$FILE"
 
           printf '%s' "$SA_KEY" > "$RUNNER_TEMP/gcs.json"
           gcloud auth activate-service-account --key-file="$RUNNER_TEMP/gcs.json"
