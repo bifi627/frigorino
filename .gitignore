@@ -475,6 +475,9 @@ Application/Frigorino.Web/ClientApp/build/
 # Local-only screenshots used for visual diffs across dep bumps (e.g. .screenshots/before/ vs .screenshots/after/)
 .screenshots/
 
+# Postgres dumps (backup/restore working files — hold real data, never commit)
+*.dump
+
 Application/Frigorino.Web/ClientApp/.tanstack/tmp/
 
 .claude/worktrees/
