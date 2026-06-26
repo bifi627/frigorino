@@ -25,6 +25,10 @@ Longer-form architecture notes for Frigorino. Read the relevant doc before a big
 - [File_Storage.md](File_Storage.md) — blob storage (Local/GCS), image processing, orphan reclamation, blob areas. **Cite for attachments / media.**
 - [Firebase_Auth_Setup.md](Firebase_Auth_Setup.md) — Firebase JWT validation, service account, dev-auth bypass.
 
+## Operations
+
+- [Database_Backup.md](Database_Backup.md) — self-hosted Postgres backups (scheduled GitHub Actions → GCS) + the `restore-db.ps1` / `mirror-db.ps1` scripts and their rationale. **Recovery runbook:** [../playbooks/database-recovery.md](../playbooks/database-recovery.md).
+
 ## Feature docs — one reference per user-facing area
 
 - [Households.md](Households.md) — the tenant container: household CRUD, settings, sort blueprints, active-household + user settings. **Canonical home for the small-aggregates / not-a-god-aggregate rationale.**
