@@ -537,6 +537,45 @@
         }
       }
     },
+    "/api/household/{householdId}/products/{productId}": {
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "operationId": "DeleteProduct",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/blueprints": {
       "get": {
         "tags": [

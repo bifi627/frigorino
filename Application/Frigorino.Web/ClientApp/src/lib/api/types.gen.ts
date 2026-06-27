@@ -827,6 +827,36 @@ export type OverrideProductClassificationResponses = {
 
 export type OverrideProductClassificationResponse = OverrideProductClassificationResponses[keyof OverrideProductClassificationResponses];
 
+export type DeleteProductData = {
+    body?: never;
+    path: {
+        householdId: number;
+        productId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/products/{productId}';
+};
+
+export type DeleteProductErrors = {
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type DeleteProductResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteProductResponse = DeleteProductResponses[keyof DeleteProductResponses];
+
 export type GetBlueprintsData = {
     body?: never;
     path: {

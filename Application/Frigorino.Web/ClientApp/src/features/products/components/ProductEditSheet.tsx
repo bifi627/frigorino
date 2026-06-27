@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { ConfirmDialog } from "../../../components/dialogs/ConfirmDialog";
 import type {
     ExpiryHandling,
     ProductCatalogItem,
@@ -25,6 +26,7 @@ import {
     EXPIRY_HANDLING_OPTIONS,
     PRODUCT_CATEGORY_OPTIONS,
 } from "../productClassificationOptions";
+import { useDeleteProduct } from "../useDeleteProduct";
 import { useOverrideProductClassification } from "../useOverrideProductClassification";
 import { useResetProductClassification } from "../useResetProductClassification";
 
@@ -67,6 +69,9 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
     const { t } = useTranslation();
     const override = useOverrideProductClassification();
     const reset = useResetProductClassification();
+    const del = useDeleteProduct();
+
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     const [category, setCategory] = useState<ProductCategory>(
         product.effectiveCategory,
@@ -124,7 +129,20 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
         }
     };
 
-    const busy = override.isPending || reset.isPending;
+    const deleteProduct = async () => {
+        try {
+            await del.mutateAsync({
+                path: { householdId, productId: product.id },
+            });
+            toast.success(t("products.deleted"));
+            onClose();
+        } catch {
+            toast.error(t("products.deleteFailed"));
+            setConfirmDelete(false);
+        }
+    };
+
+    const busy = override.isPending || reset.isPending || del.isPending;
 
     return (
         <>
@@ -204,6 +222,14 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
             </DialogContent>
             <DialogActions sx={{ justifyContent: "space-between" }}>
                 <Box>
+                    <Button
+                        color="error"
+                        disabled={busy}
+                        onClick={() => setConfirmDelete(true)}
+                        data-testid="product-delete-button"
+                    >
+                        {t("products.delete")}
+                    </Button>
                     {product.isOverridden && (
                         <Button
                             color="inherit"
@@ -229,6 +255,22 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
                     </Button>
                 </Box>
             </DialogActions>
+
+            <ConfirmDialog
+                open={confirmDelete}
+                onClose={() => setConfirmDelete(false)}
+                onConfirm={deleteProduct}
+                title={t("products.deleteConfirmTitle")}
+                description={t("products.deleteConfirmBody", {
+                    name: product.name,
+                })}
+                confirmLabel={t("products.delete")}
+                cancelLabel={t("products.cancel")}
+                isPending={del.isPending}
+                confirmTestId="product-delete-confirm-button"
+                cancelTestId="product-delete-cancel-button"
+                maxWidth="xs"
+            />
         </>
     );
 }

@@ -34,11 +34,26 @@ Feature: Products catalog API
     Then the API response status is 400
     And the API response has a validation error for "ShelfLifeDays"
 
+  Scenario: Owner deletes a product
+    Given a classified product "milk" with AI shelf life 7
+    When I DELETE the product entirely
+    Then the API response status is 204
+    When I GET the product catalog via the API
+    Then the API response status is 200
+    And the product catalog API response is empty
+
   Scenario: Member cannot override a product
     Given I am logged in as "alice"
     And an existing household "Family" owned by "bob" with me as a "member"
     And a classified product "milk" with AI shelf life 7
     When I PUT a product override with category "Pantry" expiry "NonPerishable" and no shelf life
+    Then the API response status is 403
+
+  Scenario: Member cannot delete a product
+    Given I am logged in as "alice"
+    And an existing household "Family" owned by "bob" with me as a "member"
+    And a classified product "milk" with AI shelf life 7
+    When I DELETE the product entirely
     Then the API response status is 403
 
   Scenario: Non-member cannot read the catalog

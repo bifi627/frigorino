@@ -46,6 +46,12 @@ public class ProductsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
         ctx.LastApiResponse = await api.TryResetProductClassificationAsync(_productId);
     }
 
+    [When("I DELETE the product entirely")]
+    public async Task WhenIDeleteTheProductEntirely()
+    {
+        ctx.LastApiResponse = await api.TryDeleteProductAsync(_productId);
+    }
+
     [When("I GET the product catalog via the API")]
     public async Task WhenIGetTheProductCatalogViaTheApi()
     {
@@ -85,6 +91,14 @@ public class ProductsApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var body = await ReadBodyAsync();
         Assert.Equal(JsonValueKind.Null, body.GetProperty("effectiveShelfLifeDays").ValueKind);
+    }
+
+    [Then("the product catalog API response is empty")]
+    public async Task ThenTheProductCatalogApiResponseIsEmpty()
+    {
+        var body = await ReadBodyAsync();
+        Assert.Equal(JsonValueKind.Array, body.ValueKind);
+        Assert.Equal(0, body.GetArrayLength());
     }
 
     private async Task<JsonElement> ReadBodyAsync()

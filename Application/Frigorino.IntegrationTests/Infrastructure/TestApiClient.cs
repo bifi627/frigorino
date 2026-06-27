@@ -870,4 +870,12 @@ public class TestApiClient(ScenarioContextHolder ctx)
             $"/api/household/{targetHouseholdId}/products/{productId}/classification",
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
+
+    public Task<IAPIResponse> TryDeleteProductAsync(int productId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/products/{productId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
 }
