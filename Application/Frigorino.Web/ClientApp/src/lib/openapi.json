@@ -390,6 +390,153 @@
         }
       }
     },
+    "/api/household/{householdId}/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "operationId": "GetProducts",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductCatalogItem"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/household/{householdId}/products/{productId}/classification": {
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "operationId": "OverrideProductClassification",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideProductClassificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCatalogItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Products"
+        ],
+        "operationId": "ResetProductClassification",
+        "parameters": [
+          {
+            "name": "householdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCatalogItem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/blueprints": {
       "get": {
         "tags": [
@@ -5807,6 +5954,29 @@
           }
         }
       },
+      "OverrideProductClassificationRequest": {
+        "required": [
+          "category",
+          "expiryHandling",
+          "shelfLifeDays"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "expiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "shelfLifeDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "PendingPromotionResponse": {
         "required": [
           "listItemId",
@@ -5843,6 +6013,58 @@
               "string"
             ],
             "format": "date"
+          }
+        }
+      },
+      "ProductCatalogItem": {
+        "required": [
+          "id",
+          "name",
+          "effectiveCategory",
+          "effectiveExpiryHandling",
+          "effectiveShelfLifeDays",
+          "isOverridden",
+          "aiCategory",
+          "aiExpiryHandling",
+          "aiShelfLifeDays"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "effectiveCategory": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "effectiveExpiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "effectiveShelfLifeDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isOverridden": {
+            "type": "boolean"
+          },
+          "aiCategory": {
+            "$ref": "#/components/schemas/ProductCategory"
+          },
+          "aiExpiryHandling": {
+            "$ref": "#/components/schemas/ExpiryHandling"
+          },
+          "aiShelfLifeDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -6835,6 +7057,9 @@
     },
     {
       "name": "HouseholdSettings"
+    },
+    {
+      "name": "Products"
     },
     {
       "name": "Blueprints"

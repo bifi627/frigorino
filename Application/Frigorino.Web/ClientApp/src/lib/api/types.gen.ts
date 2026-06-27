@@ -216,12 +216,30 @@ export type MyInventoryNotificationResponse = {
     leadDays: null | number;
 };
 
+export type OverrideProductClassificationRequest = {
+    category: ProductCategory;
+    expiryHandling: ExpiryHandling;
+    shelfLifeDays: null | number;
+};
+
 export type PendingPromotionResponse = {
     listItemId: number;
     text: string;
     quantity: null | QuantityDto;
     expiryHandling: ExpiryHandling;
     suggestedExpiry: null | string;
+};
+
+export type ProductCatalogItem = {
+    id: number;
+    name: string;
+    effectiveCategory: ProductCategory;
+    effectiveExpiryHandling: ExpiryHandling;
+    effectiveShelfLifeDays: null | number;
+    isOverridden: boolean;
+    aiCategory: ProductCategory;
+    aiExpiryHandling: ExpiryHandling;
+    aiShelfLifeDays: null | number;
 };
 
 export type ProductCategory = 'Unknown' | 'Other' | 'Produce' | 'Bakery' | 'Meat' | 'Fish' | 'DairyAndEggs' | 'Cheese' | 'DeliAndColdCuts' | 'Frozen' | 'Pantry' | 'CannedGoods' | 'Sauces' | 'OilsAndVinegar' | 'Spices' | 'Cereal' | 'Spreads' | 'Snacks' | 'Sweets' | 'Beverages' | 'Alcohol' | 'HouseholdAndCleaning' | 'HealthAndBeauty' | 'Baby' | 'Pet';
@@ -717,6 +735,97 @@ export type UpdateHouseholdSettingsResponses = {
 };
 
 export type UpdateHouseholdSettingsResponse = UpdateHouseholdSettingsResponses[keyof UpdateHouseholdSettingsResponses];
+
+export type GetProductsData = {
+    body?: never;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/products';
+};
+
+export type GetProductsErrors = {
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type GetProductsResponses = {
+    /**
+     * OK
+     */
+    200: Array<ProductCatalogItem>;
+};
+
+export type GetProductsResponse = GetProductsResponses[keyof GetProductsResponses];
+
+export type ResetProductClassificationData = {
+    body?: never;
+    path: {
+        householdId: number;
+        productId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/products/{productId}/classification';
+};
+
+export type ResetProductClassificationErrors = {
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type ResetProductClassificationResponses = {
+    /**
+     * OK
+     */
+    200: ProductCatalogItem;
+};
+
+export type ResetProductClassificationResponse = ResetProductClassificationResponses[keyof ResetProductClassificationResponses];
+
+export type OverrideProductClassificationData = {
+    body: OverrideProductClassificationRequest;
+    path: {
+        householdId: number;
+        productId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/products/{productId}/classification';
+};
+
+export type OverrideProductClassificationErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Forbidden
+     */
+    403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
+};
+
+export type OverrideProductClassificationError = OverrideProductClassificationErrors[keyof OverrideProductClassificationErrors];
+
+export type OverrideProductClassificationResponses = {
+    /**
+     * OK
+     */
+    200: ProductCatalogItem;
+};
+
+export type OverrideProductClassificationResponse = OverrideProductClassificationResponses[keyof OverrideProductClassificationResponses];
 
 export type GetBlueprintsData = {
     body?: never;
