@@ -144,5 +144,29 @@ namespace Frigorino.Test.Infrastructure
             using var verify = NewContext(dbName);
             Assert.Equal(0, await verify.Products.CountAsync());
         }
+
+        [Fact]
+        public async Task Run_OverriddenProduct_SkipsClassifier()
+        {
+            var dbName = Guid.NewGuid().ToString();
+            using (var seed = NewContext(dbName))
+            {
+                var product = Product.Create(HouseholdId, "milk", AiResult(7).Value, 1).Value;
+                product.OverrideClassification(
+                    new ProductClassification(ProductCategory.Pantry, ExpiryProfile.NonPerishable));
+                seed.Products.Add(product);
+                await seed.SaveChangesAsync();
+            }
+
+            // A newer classifier version would normally re-classify a stale row — but the override wins.
+            var classifier = new FakeClassifier(AiResult(7), version: 2);
+            using (var db = NewContext(dbName))
+            {
+                var job = new ClassifyProductJob(db, classifier, NullLogger<ClassifyProductJob>.Instance);
+                await job.Run(HouseholdId, "milk", CancellationToken.None);
+            }
+
+            Assert.Equal(0, classifier.Calls);
+        }
     }
 }
