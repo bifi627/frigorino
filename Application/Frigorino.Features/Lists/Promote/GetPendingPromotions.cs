@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Products;
 using Frigorino.Features.Households;
@@ -51,12 +52,14 @@ namespace Frigorino.Features.Lists.Promote
                 return TypedResults.NotFound();
             }
 
+            var promoteCutoff = DateTime.UtcNow.AddDays(-ListItem.PromoteWindowDays);
             var pending = await db.ListItems
                 .Where(i => i.ListId == listId
                             && i.IsActive
                             && i.Status
                             && i.PromotionExpiryHandling != null
-                            && i.PromotionResolvedAt == null)
+                            && i.PromotionResolvedAt == null
+                            && i.UpdatedAt >= promoteCutoff)
                 .OrderBy(i => i.Rank)
                 .ThenBy(i => i.Id)
                 .Select(i => new PendingPromotionResponse(

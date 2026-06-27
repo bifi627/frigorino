@@ -30,10 +30,12 @@ namespace Frigorino.Features.Lists
                 pendingPromotionCount);
         }
 
-        // EF-translatable projection used by read slices (GetList, GetLists). Lifted out of
-        // both queries so the shape stays in one place; expression body must stay simple
-        // enough for EF to translate (no method calls outside Count, no captured variables).
-        public static readonly Expression<Func<List, ListResponse>> ToProjection = l => new ListResponse(
+        // EF-translatable projection used by read slices (GetList, GetLists). A factory (not a static
+        // field) so the per-request promote-candidacy cutoff (UtcNow - PromoteWindowDays) is baked in
+        // as a captured constant EF binds to a query parameter; the body must stay EF-translatable
+        // (no method calls outside Count). Keep the pending predicate in lockstep with UpdateList +
+        // GetPendingPromotions (see ListItem.PromotionExpiryHandling comment).
+        public static Expression<Func<List, ListResponse>> ToProjection(DateTime promoteCutoff) => l => new ListResponse(
             l.Id,
             l.Name,
             l.Description,
@@ -43,7 +45,7 @@ namespace Frigorino.Features.Lists
             new ListCreatorResponse(l.CreatedByUser.ExternalId, l.CreatedByUser.Name, l.CreatedByUser.Email),
             l.ListItems.Count(i => i.IsActive && !i.Status),
             l.ListItems.Count(i => i.IsActive && i.Status),
-            l.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null));
+            l.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null && i.UpdatedAt >= promoteCutoff));
     }
 
     public sealed record ListCreatorResponse(

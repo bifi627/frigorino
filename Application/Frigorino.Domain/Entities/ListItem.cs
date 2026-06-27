@@ -57,11 +57,21 @@ namespace Frigorino.Domain.Entities
         public DateTime UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
 
+        // How long a checked candidate stays a promote candidate. Read-time suppression only: past
+        // this window the item drops out of the pending predicate (stops the PromoteBar count climbing
+        // forever for households that never promote) but stays checked and keeps its promotion columns
+        // untouched — the checked-item retention sweep eventually purges it.
+        public const int PromoteWindowDays = 7;
+
         // Promotion-to-inventory state (replaces the device-local localStorage batch). All null
-        // for items never checked-while-perishable. Pending promotion =
-        //   Status && PromotionExpiryHandling != null && PromotionResolvedAt == null.
-        // Stamped/cleared exclusively by List aggregate methods (ToggleItemStatus,
-        // ApplyPromotionSuggestion, ResolvePromotion).
+        // for items never checked-while-perishable. Pending promotion (read-time) =
+        //   Status && PromotionExpiryHandling != null && PromotionResolvedAt == null
+        //   && UpdatedAt >= UtcNow - PromoteWindowDays.
+        // No shared expression — the three read sites run in different shapes (SQL .Where, SQL
+        // projection Count, in-memory Count), so the predicate is duplicated in lockstep across
+        // GetPendingPromotions, ListResponse.ToProjection, and UpdateList; change all three together.
+        // Columns are stamped/cleared only by List methods (ToggleItemStatus, ApplyPromotionSuggestion,
+        // ResolvePromotion).
         public ExpiryHandling? PromotionExpiryHandling { get; set; }
         public DateOnly? PromotionSuggestedExpiry { get; set; }
         public DateTime? PromotionResolvedAt { get; set; }
