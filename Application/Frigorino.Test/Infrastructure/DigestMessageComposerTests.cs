@@ -6,10 +6,12 @@ namespace Frigorino.Test.Infrastructure
     {
         private static readonly DateOnly Today = new(2026, 6, 1);
 
+        private const int HouseholdId = 7;
+
         private static DigestPlan PlanWith(int inventoryId, string inventoryName, string? language, params (string text, int days)[] items)
         {
             var lines = items.Select(i => new DigestLine(i.text, Today.AddDays(i.days), i.days)).ToList();
-            return new DigestPlan("u1", inventoryId, inventoryName, language, lines);
+            return new DigestPlan("u1", inventoryId, HouseholdId, inventoryName, language, lines);
         }
 
         [Fact]
@@ -20,7 +22,7 @@ namespace Frigorino.Test.Infrastructure
             var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Equal("Fridge: 2 items expiring soon", msg.Title);
-            Assert.Equal("/inventories/42/view", msg.DeepLinkPath);
+            Assert.Equal("/inventories/42/view?householdId=7", msg.DeepLinkPath);
             Assert.Contains("Milk", msg.Body);
             Assert.Contains("Yogurt", msg.Body);
         }
@@ -33,7 +35,7 @@ namespace Frigorino.Test.Infrastructure
             var msg = DigestMessageComposer.Compose(plan);
 
             Assert.Equal("Fridge: 2 Artikel laufen bald ab", msg.Title);
-            Assert.Equal("/inventories/42/view", msg.DeepLinkPath);
+            Assert.Equal("/inventories/42/view?householdId=7", msg.DeepLinkPath);
         }
 
         [Fact]

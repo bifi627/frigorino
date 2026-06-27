@@ -29,16 +29,3 @@ target, and audit the same pattern on the existing list/inventory create flows.
 Noted while designing the recipe view/edit split (recipe metadata feature) —
 the new "create recipe → land on /edit" flow will hit the same path, so verify
 it there too. Not yet reproduced/debugged.
-
-## Inventory fails to load when opening a notification for a non-active household
-
-With multiple households: if you receive an expiry notification for Household B
-while Household A is the active household, tapping the notification opens the app
-to the deep-link target (an inventory in Household B), but the inventory does not
-load. The active household is still A (kept in the HTTP session + persisted to
-`User.LastActiveHouseholdId`), so the household-scoped request is mismatched
-against the link's Household B target. Likely fix: the notification deep-link
-should carry the target household id and switch the active household to it on
-open (or the inventory route should detect the mismatch and switch) before
-issuing the scoped query. Root cause is the implicit household-context model —
-see "Household context is implicit (LastActiveHouseholdId)…" in `TECH_DEBT.md`.

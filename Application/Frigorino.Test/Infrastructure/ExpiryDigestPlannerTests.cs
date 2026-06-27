@@ -30,6 +30,7 @@ namespace Frigorino.Test.Infrastructure
 
             Assert.Equal(2, plans.Count);
             var plan1 = Assert.Single(plans, p => p.InventoryId == 1);
+            Assert.Equal(10, plan1.HouseholdId); // threaded from the recipient for the deep-link
             Assert.Equal("Fridge", plan1.InventoryName);
             Assert.Equal("Milk", Assert.Single(plan1.Lines).Text);
             var plan2 = Assert.Single(plans, p => p.InventoryId == 2);
