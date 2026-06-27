@@ -31,6 +31,10 @@ namespace Frigorino.Infrastructure.EntityFramework.Configurations
             builder.Property(p => p.ClassifierVersion)
                 .IsRequired();
 
+            builder.Property(p => p.OverrideProductCategory);
+            builder.Property(p => p.OverrideExpiryHandling);
+            builder.Property(p => p.OverrideShelfLifeDays);
+
             builder.Property(p => p.CreatedAt)
                 .IsRequired();
 

@@ -20,6 +20,9 @@ declare module "i18next" {
                 blueprints: Record<string, string>;
                 recipes: Record<string, string>;
                 copyToList: Record<string, string>;
+                products: Record<string, string>;
+                productCategories: Record<string, string>;
+                expiryHandlings: Record<string, string>;
             };
         };
     }

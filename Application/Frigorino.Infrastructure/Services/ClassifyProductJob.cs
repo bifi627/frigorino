@@ -34,9 +34,9 @@ namespace Frigorino.Infrastructure.Services
             var existing = await _db.Products
                 .FirstOrDefaultAsync(p => p.HouseholdId == householdId && p.NormalizedName == normalized, ct);
 
-            if (existing is not null && existing.ClassifierVersion >= _classifier.Version)
+            if (existing is not null && (existing.IsOverridden || existing.ClassifierVersion >= _classifier.Version))
             {
-                // Cache hit — already classified at the current version.
+                // Cache hit, or a user override we must not clobber.
                 return;
             }
 

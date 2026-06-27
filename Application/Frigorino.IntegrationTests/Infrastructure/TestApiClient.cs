@@ -839,4 +839,43 @@ public class TestApiClient(ScenarioContextHolder ctx)
             $"/api/household/{targetHouseholdId}/recipes/{recipeId}/attachments/{attachmentId}/thumbnail",
             new APIRequestContextOptions { Headers = AuthHeaders });
     }
+
+    // ---- Products ----
+
+    public Task<IAPIResponse> TryGetProductsAsync(int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.GetAsync(
+            $"/api/household/{targetHouseholdId}/products",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryOverrideProductClassificationAsync(
+        int productId, string category, string expiryHandling, int? shelfLifeDays, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.PutAsync(
+            $"/api/household/{targetHouseholdId}/products/{productId}/classification",
+            new APIRequestContextOptions
+            {
+                DataObject = new { category, expiryHandling, shelfLifeDays },
+                Headers = AuthHeaders,
+            });
+    }
+
+    public Task<IAPIResponse> TryResetProductClassificationAsync(int productId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/products/{productId}/classification",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
+
+    public Task<IAPIResponse> TryDeleteProductAsync(int productId, int? householdId = null)
+    {
+        var targetHouseholdId = householdId ?? ctx.HouseholdId;
+        return ctx.BrowserContext.APIRequest.DeleteAsync(
+            $"/api/household/{targetHouseholdId}/products/{productId}",
+            new APIRequestContextOptions { Headers = AuthHeaders });
+    }
 }

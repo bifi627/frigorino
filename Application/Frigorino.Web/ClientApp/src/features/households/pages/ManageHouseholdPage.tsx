@@ -1,4 +1,4 @@
-import { Delete, Sort } from "@mui/icons-material";
+import { Delete, Inventory2, Sort } from "@mui/icons-material";
 import { Alert, Box, Button, Container, Skeleton } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -127,6 +127,18 @@ export function ManageHouseholdPage() {
                         data-testid="household-manage-blueprints-link"
                     >
                         {t("blueprints.manage")}
+                    </Button>
+                </Box>
+
+                <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+                    <Button
+                        component={Link}
+                        to="/household/products"
+                        variant="outlined"
+                        startIcon={<Inventory2 />}
+                        data-testid="household-manage-products-link"
+                    >
+                        {t("products.title")}
                     </Button>
                 </Box>
 
