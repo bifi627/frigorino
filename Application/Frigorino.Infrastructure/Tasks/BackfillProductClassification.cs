@@ -38,7 +38,8 @@ namespace Frigorino.Infrastructure.Tasks
                 .ToListAsync(cancellationToken);
 
             var existing = await _dbContext.Products
-                .Select(p => new ExistingProduct(p.HouseholdId, p.NormalizedName, p.ClassifierVersion))
+                .Select(p => new ExistingProduct(
+                    p.HouseholdId, p.NormalizedName, p.ClassifierVersion, p.OverrideExpiryHandling != null))
                 .ToListAsync(cancellationToken);
 
             var gaps = ProductClassificationGaps.SelectGaps(candidates, existing, _classifier.Version);

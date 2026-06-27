@@ -102,5 +102,19 @@ namespace Frigorino.Test.Infrastructure
 
             Assert.Empty(gaps);
         }
+
+        [Fact]
+        public void OverriddenProduct_IsSkipped_EvenWhenStale()
+        {
+            var candidates = new[] { new ListItemNameCandidate(10, "Milk") };
+            var existing = new[]
+            {
+                new ExistingProduct(10, "milk", ClassifierVersion: CurrentVersion - 1, IsOverridden: true),
+            };
+
+            var gaps = ProductClassificationGaps.SelectGaps(candidates, existing, CurrentVersion);
+
+            Assert.Empty(gaps);
+        }
     }
 }

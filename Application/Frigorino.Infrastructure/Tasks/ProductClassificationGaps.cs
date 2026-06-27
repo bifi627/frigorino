@@ -7,7 +7,8 @@ namespace Frigorino.Infrastructure.Tasks
     public sealed record ListItemNameCandidate(int HouseholdId, string RawText);
 
     // An existing product catalog row, reduced to the fields needed to decide staleness.
-    public sealed record ExistingProduct(int HouseholdId, string NormalizedName, int ClassifierVersion);
+    public sealed record ExistingProduct(
+        int HouseholdId, string NormalizedName, int ClassifierVersion, bool IsOverridden = false);
 
     // A name needing (re)classification, carrying one representative raw name so the trigger/job
     // normalizes it consistently with the live path.
@@ -35,6 +36,15 @@ namespace Frigorino.Infrastructure.Tasks
                 }
             }
 
+            var overriddenNames = new HashSet<(int Household, string Name)>();
+            foreach (var product in existingProducts)
+            {
+                if (product.IsOverridden)
+                {
+                    overriddenNames.Add((product.HouseholdId, product.NormalizedName));
+                }
+            }
+
             var gaps = new List<ClassificationGap>();
             var seen = new HashSet<(int Household, string Name)>();
             foreach (var candidate in candidates)
@@ -51,8 +61,9 @@ namespace Frigorino.Infrastructure.Tasks
                     continue;
                 }
 
-                var isUpToDate = versionByName.TryGetValue(key, out var version)
-                    && version >= currentClassifierVersion;
+                var hasOverride = overriddenNames.Contains(key);
+                var isUpToDate = hasOverride
+                    || (versionByName.TryGetValue(key, out var version) && version >= currentClassifierVersion);
                 if (!isUpToDate)
                 {
                     gaps.Add(new ClassificationGap(candidate.HouseholdId, candidate.RawText));
