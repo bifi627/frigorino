@@ -14,8 +14,8 @@ interface RecipeContainerProps {
     sectionId: number;
     editingItem: RecipeItemResponse | null;
     onEdit: (item: RecipeItemResponse) => void;
-    isExtracting?: boolean;
-    extractingItemId?: number | null;
+    /** Per-row predicate: true while the row's async quantity extraction is still pending. */
+    isItemExtracting?: (id: number) => boolean;
     // When false, the container flows in its parent's scroll instead of being its own
     // scroll region (used on the edit page where it shares scroll with the metadata form).
     scrollable?: boolean;
@@ -29,8 +29,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
             sectionId,
             editingItem,
             onEdit,
-            isExtracting,
-            extractingItemId,
+            isItemExtracting,
             scrollable = true,
         },
         ref,
@@ -81,7 +80,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
                     editingItem={editingItem}
                     showDragHandles={true}
                     isItemProcessing={(item) =>
-                        Boolean(isExtracting) && item.id === extractingItemId
+                        isItemExtracting?.(item.id) ?? false
                     }
                     renderContent={(item) => <RecipeItemContent item={item} />}
                 />

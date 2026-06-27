@@ -21,8 +21,8 @@ interface ListContainerProps {
     /** Opens edit mode with the comment panel expanded (triggered by tapping the comment). */
     onEditComment: (item: ListItemResponse) => void;
     showDragHandles: boolean;
-    isExtracting?: boolean;
-    extractingItemId?: number | null;
+    /** Per-row predicate: true while the row's async quantity extraction is still pending. */
+    isItemExtracting?: (id: number) => boolean;
     searchQuery?: string;
 }
 
@@ -41,8 +41,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
             onEditQuantity,
             onEditComment,
             showDragHandles,
-            isExtracting,
-            extractingItemId,
+            isItemExtracting,
             searchQuery = "",
         },
         ref,
@@ -121,8 +120,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                         showDragHandles={showDragHandles && !filterActive}
                         showCheckbox={true}
                         isItemProcessing={(item) =>
-                            Boolean(isExtracting) &&
-                            item.id === extractingItemId
+                            isItemExtracting?.(item.id) ?? false
                         }
                         renderContent={(item) => (
                             <ListItemContent

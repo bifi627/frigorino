@@ -17,8 +17,9 @@ import { EditRecipeForm } from "../components/EditRecipeForm";
 import { RecipeSourcesStrip } from "../components/RecipeSourcesStrip";
 import { RecipeSectionGroup } from "../items/components/RecipeSectionGroup";
 import { RecipeFooter } from "../items/components/RecipeFooter";
+import { useExtractionPoll } from "../../../hooks/useExtractionPoll";
+import { getRecipeItemsOptions } from "../../../lib/api/@tanstack/react-query.gen";
 import { useCreateRecipeItem } from "../items/useCreateRecipeItem";
-import { useRecipeExtractionPoll } from "../items/useRecipeExtractionPoll";
 import { useRecipeItems } from "../items/useRecipeItems";
 import { useRecipeRevision } from "../items/useRecipeRevision";
 import { useUpdateRecipeItem } from "../items/useUpdateRecipeItem";
@@ -47,11 +48,6 @@ export const RecipeEditPage = () => {
         "recipe-edit:target-section",
         0,
     );
-    const [pendingExtraction, setPendingExtraction] = useState<{
-        id: number;
-        extractionPending: boolean;
-    } | null>(null);
-
     const {
         currentHousehold,
         isLoading: householdLoading,
@@ -99,11 +95,8 @@ export const RecipeEditPage = () => {
         (i) => i.sectionId === targetSectionId,
     );
 
-    const { isExtracting, extractingItemId } = useRecipeExtractionPoll(
-        householdId,
-        recipeId,
-        pendingExtraction?.id ?? null,
-        pendingExtraction?.extractionPending ?? false,
+    const { markPending, isItemExtracting } = useExtractionPoll(
+        getRecipeItemsOptions({ path: { householdId, recipeId } }),
     );
 
     const scrollToLastItem = useCallback(() => {
@@ -130,15 +123,16 @@ export const RecipeEditPage = () => {
                     path: { householdId, recipeId },
                     body: { sectionId: targetSectionId, text, comment },
                 });
-                setPendingExtraction({
-                    id: created.id,
-                    extractionPending: created.extractionPending,
-                });
+                // Track this row's id so its extraction spinner stays up until the quantity lands —
+                // the poll watches the whole items list, so rapid adds are tracked independently.
+                if (created.extractionPending) {
+                    markPending(created.id);
+                }
             } catch {
                 // createMutation.onError rolls back the optimistic item.
             }
         },
-        [createMutation, householdId, recipeId, targetSectionId],
+        [createMutation, householdId, recipeId, targetSectionId, markPending],
     );
 
     const handleUpdateItem = useCallback(
@@ -292,8 +286,7 @@ export const RecipeEditPage = () => {
                                     }
                                     editingItem={editingItem}
                                     onEditItem={setEditingItem}
-                                    isExtracting={isExtracting}
-                                    extractingItemId={extractingItemId}
+                                    isItemExtracting={isItemExtracting}
                                     dragHandle={dragHandle}
                                 />
                             )}

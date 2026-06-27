@@ -12,12 +12,6 @@ Format per item:
 
 ---
 
-## - **List-level extraction poll instead of single-item poll** — removes the temp-id reconciliation and the "only the last add polls" gap in one move.
-- **Where:** `Application/Frigorino.Web/ClientApp/src/features/lists/items/useExtractionPoll.ts`, `useCreateListItem.ts` (the `tempId = Date.now()` → real-id swap in `onSuccess`), `features/lists/pages/ListViewPage.tsx` (`pendingExtraction` is a single slot; rapid successive adds overwrite it so earlier rows show stale raw text until a debounced refetch). Surfaced in the 6-hat review (Black + Green hats).
-- **Why deferred:** the single-item poll + optimistic temp-id reconciliation works correctly for the common one-at-a-time add; the multi-add gap is acknowledged "v1" behavior, not a regression.
-- **Plan:** drop the per-item `getItem` poll; instead `refetchInterval` the existing `getItems` list query for a bounded window after any digit-bearing add, comparing each row's `quantity` to detect arrival. The indicator is already rendered per-row from list data. This makes `pendingExtraction` a set (or just "poll the list while any add is in flight"), and deletes the `tempId` swap entirely. Trade-off: refetches the whole (small) list vs one item.
-- **Risk if left:** after rapid multi-item adds, earlier extracted quantities don't reflect until the ~1s debounced invalidation (which keeps resetting if the user keeps typing); the temp-id `Date.now()` is also a latent duplicate-key risk on same-millisecond adds.
-
 ## - **Household context is implicit (LastActiveHouseholdId) instead of carried per request** — most APIs infer the target household from session/last-active state rather than an explicit parameter.
 - **Where:** `Application/Frigorino.Infrastructure` household-context resolution (`ICurrentHouseholdService` — active id in HTTP session, persisted to `User.LastActiveHouseholdId` as durable fallback) and every household-scoped slice in `Application/Frigorino.Features` that reads the active household instead of taking a household id. See "Multi-tenant household context" in `CLAUDE.md`.
 - **Why deferred:** the implicit active-household model works for the single-window, one-household-at-a-time case it was designed for; making household explicit touches the URL/route shape and many slices, so it wants its own deliberate change rather than being folded into a feature.
