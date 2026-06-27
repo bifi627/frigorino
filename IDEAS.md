@@ -10,43 +10,6 @@ Format per item:
 
 ---
 
-## Domain event infrastructure (EF Core SaveChangesInterceptor)
-
-- **Why:** Today aggregate methods (`Household.AddMember`, `RemoveMember`, `ChangeMemberRole`, `SoftDelete`) succeed silently — there's no signal emitted. When audit log, in-app notifications, analytics events, or cross-aggregate side effects (e.g., "when a household is deleted, archive its Lists and Inventories") land, they will need to retrofit each aggregate method to do the publishing inline. Worse, that publishing usually wants to fire **after** the database transaction commits (otherwise an event for a never-saved row is a bug). The canonical .NET pattern for this is `SaveChangesInterceptor` capturing aggregate-emitted `IDomainEvent` lists and dispatching post-save. Wiring the infrastructure now (before there are subscribers) means future features just emit events from the aggregate without touching the slice handler or the persistence path.
-- **Sketch:**
-  - Add `IDomainEvent` marker interface in `Frigorino.Domain/Events/`.
-  - Add abstract `AggregateRoot` in `Frigorino.Domain/Entities/` with `private List<IDomainEvent> _events`, `IReadOnlyCollection<IDomainEvent> DomainEvents`, `protected void Raise(IDomainEvent)`, and `void ClearDomainEvents()`. Make `Household` inherit it.
-  - Define concrete events as sealed records: `MemberAdded(HouseholdId, ExternalUserId, HouseholdRole)`, `MemberRemoved(...)`, `MemberRoleChanged(...)`, `HouseholdSoftDeleted(...)`. Live in `Frigorino.Domain/Events/Households/`.
-  - Aggregate methods append to the event list at the end of each successful branch (1 line each).
-  - `PublishDomainEventsInterceptor : SaveChangesInterceptor` in `Frigorino.Infrastructure/EntityFramework/Interceptors/`. Override `SavedChangesAsync` (note: post-save, not pre-save — events fire only if the transaction succeeded). Drains `ChangeTracker.Entries<AggregateRoot>().SelectMany(e => e.Entity.DomainEvents)`, dispatches via a thin `IDomainEventDispatcher` (start with an in-process implementation: scan registered `IDomainEventHandler<TEvent>` services, invoke each).
-  - Register the interceptor in `AddEntityFramework`: `options.AddInterceptors(sp.GetRequiredService<PublishDomainEventsInterceptor>())`.
-  - **No subscribers initially** — the infra is "armed but unused". When the first feature wants to subscribe (e.g., audit log), it writes one `IDomainEventHandler<MemberAdded>` implementation; everything else stays untouched.
-  - **Outbox upgrade path:** for cross-process / at-least-once delivery, swap the in-process dispatcher for one that writes events to an `Outbox` table inside the same transaction (move from `SavedChangesAsync` to `SavingChangesAsync` + a separate poller/worker). Out of scope for the initial introduction; document the upgrade as a follow-up if cross-process integration emerges.
-- **Impact / cost:** ~3 new files (`IDomainEvent`, `AggregateRoot`, `PublishDomainEventsInterceptor`), one DI registration, ~5 lines per aggregate method to raise events, ~half-day total. Zero subscribers = zero behavior change today. Future features avoid retrofitting.
-
----
-
-## Frontend business events (Faro `pushEvent`)
-
-- **Why:** Faro is wired and capturing pageviews + errors + Web Vitals automatically. What it doesn't yet give us is **which features people actually use** — when someone creates a household, switches active household, invites a member, etc. Without these, dashboards show traffic but not behaviour, and "did anyone use the new feature?" is unanswerable. This is the natural follow-up to the Faro rollout and the missing piece for a usable product-side view in Grafana's Frontend Observability dashboards.
-- **Sketch:**
-  - Add a `pushEvent(name, attrs)` helper next to the existing `identifyUser` / `pushPageView` exports in `ClientApp/src/common/observability.ts`. No-op when Faro is gated off (mirrors the existing helpers).
-  - Wire into the migrated vertical-slice hook layer. Inject the call from `onSuccess` of the mutation hook, not from the React component — so the event fires on real success, not on optimistic update.
-  - **Event taxonomy v1** (frozen list; cardinality bounded by feature count, attribute values bounded by IDs):
-    - Household lifecycle: `household_created`, `household_switched`, `household_deleted`
-    - Membership: `member_invited`, `member_role_changed`, `member_removed`
-  - **Attribute shape:** keep tenant IDs (`householdId`, `userId`) on events but NEVER on metric labels — the high-cardinality-on-metrics rule from the OTel side still applies (see `knowledge/Observability.md`). Faro events are not metrics so IDs as attributes are fine.
-  - **PII discipline:** household names, list-item names, and inventory-item names are user-private content. Never include them in event attributes. IDs only.
-  - **Lists / inventories events** (`list_item_added`, `inventory_item_classified`, etc.) — defer until those features are migrated to the vertical-slice pattern. Instrumenting the legacy controller layer would just have to be re-wired during slice migration.
-- **Out of scope:**
-  - Backend-emitted events. Background tasks and other backend paths don't need to push Faro events; backend behaviour is already covered by OTel traces.
-  - Cross-tool bridging (Faro events → Loki). They live in the Faro app inside Grafana Cloud; no bridging needed at this scale.
-  - Custom funnels / retention curves. Grafana's Frontend Observability standard cuts cover event volume by user / env. DIY LogQL funnel queries are possible but only worth building when a product team starts consuming them — at which point PostHog becomes the better tool, see the revisit triggers in `OBSERVABILITY.md`.
-- **Impact / cost:** ~15 LOC (one helper export, ~6 hook call sites). No new dependencies. No backend changes. No env-var changes. Zero ongoing cost (well within Faro free-tier event volume). ~1 hour once the slices to instrument are agreed on. Reversible: deletes cleanly.
-
----
-
-
 ## Rework user invite to household
 
 - **Status:** placeholder — needs a dedicated brainstorming session before any sketch. This entry just captures the scenarios so they aren't lost.
@@ -60,51 +23,54 @@ Format per item:
 
 ---
 
-## Release notes modal on first launch after a major update
+## Recipe edit polish: collapse extras + compact ingredient rows
 
-- **Why:** Today an update ships silently — the SPA's `index.html` is swapped on the next deploy and users get the new behaviour with no signal that anything changed. The only version surface is the backend `GetVersion` slice (`Frigorino.Features/Version/GetVersion.cs`, returns the Railway commit SHA). When a notable feature lands (promote-to-inventory, settings, sorting, …) there's no "here's what's new" moment. The ask: on first start after a *major* update, show a small modal with maintainer-authored release notes, dismissible once, and **not** shown for every routine deploy.
-- **The core design tension (which version triggers it):** the SHA from `GetVersion` changes on *every* deploy, so it can't be the trigger — that would pop the modal on every bugfix push, which the requirement explicitly rules out. The notes need a **separate, maintainer-controlled "release identifier"** that only bumps when there's something worth announcing. Decoupling the announce-version from the deploy-SHA is the whole point: the maintainer decides what counts as "major," not the CI pipeline.
-- **Sketch (headline decisions):**
-  - **Maintainer-authored, versioned content.** Each announcement is `{ releaseId, notes (i18n keys, EN/DE per [[#frontend]] — translation files live under `public/locales/{en,de}` and **tests never assert on translated text**) }`. `releaseId` is a monotonic integer or semver the maintainer bumps deliberately. Simplest v1: a static frontend artifact (a `releaseNotes.ts` / JSON the maintainer edits at release time — zero backend, zero migration, ships with the bundle). If notes ever need to change without a redeploy, promote to a backend slice later (see upgrade path).
-  - **"Show once, never again" = persisted dismissal keyed by `releaseId`.** Store the last-seen `releaseId` in `localStorage` (device-scoped, mirrors the [[Promote checked list items into inventory (classifier-driven)]] promote-batch + onboarding-skip `localStorage` pattern — see `features/households/onboardingSkip.ts`). On boot: if `latestReleaseId > lastSeenReleaseId`, show the modal; on dismiss, write `latestReleaseId`. Routine deploys don't bump `releaseId`, so the modal stays closed. **Trade-off:** device-scoped means a user sees the notes once per device/browser, and clearing storage re-shows them — acceptable for an announcement (matches onboarding-skip). A per-user backend flag (cross-device, survives storage clears) is the heavier alternative — defer unless cross-device "seen" actually matters.
-  - **Major-only is the maintainer's call, encoded as "did `releaseId` change."** No heuristic, no comparing SHAs — the maintainer simply doesn't bump `releaseId` for minor releases. This keeps "what counts as major" a human editorial decision rather than logic to maintain.
-  - **Frontend.** A small MUI `<Dialog>` shown from a top-level boot check (e.g. in the root route, alongside the existing onboarding redirect in `routes/index.tsx`), gated so it never competes with the first-run onboarding flow (show onboarding first; release notes only for returning users who already have households). One dismiss action writes the `localStorage` key. No new state layer — local component state + the `localStorage` helper.
-- **Upgrade path (backend-authored notes):** if editing notes without a redeploy becomes desirable, add a `GetReleaseNotes` read slice (inline EF projection or even a static in-memory list) returning `{ releaseId, notes }`, fetched via a TanStack Query hook following the canonical one-hook-per-file shape. The frontend dismissal logic is unchanged — only the *source* of the notes moves. Out of scope for v1; the static-bundle approach is enough to validate the feature.
-- **Out of scope:** a full in-app changelog history page (this is a one-shot "what's new since you were last here" modal, not a browsable archive); rich media in notes (text + basic formatting only); per-feature granularity (one announcement per release, not per feature).
-- **Impact / cost:** small. v1 is frontend-only — one editable notes artifact, one `localStorage` helper (mirrors `onboardingSkip.ts`), one MUI dialog + a boot-time gate. No backend, no migration, no new dependencies. Reversible: deletes cleanly. The optional backend upgrade is a single read slice + hook if it's ever needed.
+Two related refinements to the recipe edit page, best done as one pass.
 
----
-
-## In-app PDF preview for document attachments
-
-- **Why:** Recipe document attachments shipped opening the PDF in a **new browser tab** (the authenticated `/file` blob → object URL → `window.open`; spec: [`docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md`](docs/superpowers/specs/2026-06-16-recipe-document-attachments-design.md)). That works everywhere via the native viewer but leaves the app. An in-app preview (a viewer modal mirroring the image lightbox) would keep users in context. The same need also applies to list-item document attachments, now shipped with the same open-in-tab behaviour (spec: [`docs/superpowers/specs/2026-06-21-list-document-attachments-design.md`](docs/superpowers/specs/2026-06-21-list-document-attachments-design.md)).
-- **The core constraint (why this wasn't done in v1):** Frigorino is a mobile-first PWA, and mobile browsers (iOS Safari especially, often Android Chrome) **refuse to render a PDF inside an `<iframe>`/`<embed>`** — they show a blank box or force a download. So the cheap native-embed approach is unreliable exactly on the primary platform, which is why open-in-tab (native full-tab viewer, works everywhere) was chosen.
-- **Sketch (two options):**
-  - **Option A — native `<iframe>` of the blob (~half a day):** reuse the existing authenticated blob fetch + StrictMode-safe object-URL pattern + the `RecipeAttachmentLightbox` modal shell; render `<iframe src={objectUrl}>` instead of `window.open`. **Not recommended** — unreliable on mobile (see constraint above).
-  - **Option B — JS renderer (`react-pdf` / `pdfjs-dist`, ~1–2 days):** renders pages to canvas, reliable cross-platform incl. mobile, supports page nav/zoom. Feed the authenticated blob in as an ArrayBuffer (`getDocument({ data })`). Cost: a heavy new dependency (pdf.js worker needs Vite worker config), a viewer component (page/loading/zoom/mobile-gesture state), bundle weight, ongoing maintenance. Pin a broad caret (registry release-age guard). Keep open-in-tab as the fallback.
-- **Impact / cost:** Option B is the only one reliable on mobile — ~1–2 days, one new client dependency, a viewer component reused across recipe + (later) list-item documents. No backend or migration changes — the `/file` endpoint already serves the authenticated blob. Reversible. Sequence whenever in-app preview becomes a real requirement; until then the shipped open-in-tab is the lowest-risk behaviour.
-
----
-
-## Local memory "dreams": mine past session transcripts to curate the agent memory store
-
-- **Note on scope:** This is an *agent-tooling* idea, not a Frigorino product feature — it improves how Claude works on this repo, not the app itself. Captured here because there's no better home; move to a separate notes file if IDEAS.md should stay product-only.
-- **Context:** Anthropic's Managed-Agents [Dreams](https://platform.claude.com/docs/en/managed-agents/dreams) (research preview, API-only, billed at standard token rates) reads an existing agent memory store **plus** 1–100 past session transcripts and produces a *new, separate* reorganized store — duplicates merged, stale/contradicted entries replaced with the latest value, fresh cross-session insights surfaced; the input store is never mutated. We already own both inputs locally: the file-based memory store (`~/.claude/projects/<project>/memory/` markdown-with-frontmatter + the `MEMORY.md` index) and Claude Code's per-session JSONL transcripts. A `/dreamer` skill already exists but covers only the **hygiene half** — audit/prune the memory dir, fix a drifted index, dangling `[[wiki-links]]`, or `name:` frontmatter that no longer matches filenames. It does **not** mine transcripts for insights that were never written down. This entry is about closing that gap: a local, **subscription-billed** (not token-billed) Dreams equivalent.
-- **Why:** The per-write memory discipline ("update don't duplicate, delete what's wrong") still lets duplication, staleness, and contradiction accumulate across many sessions — exactly what `/dreamer` cleans up reactively. The missing capability is the *generative* half: surfacing patterns and preferences that recurred across sessions but were never saved as a memory. Doing it locally on the subscription avoids the API's per-token billing (which scales linearly with session count) — the curation pass is just ordinary Claude Code usage.
-- **Sketch (headline decisions):**
-  - **The one real engineering problem is scale**, and the answer is map-reduce — which the Workflow primitives are built for: (1) **map (parallel)** — one subagent per transcript extracts candidate memories; (2) **reduce (barrier)** — merge candidates, dedupe, resolve contradictions against the existing store; (3) **synthesize** — write the new memory set. Everything else (file I/O, diffing, triggering) is trivial here.
-  - **Non-destructive by construction** — mirror Dreams: write to a parallel `memory.dream/` dir, show a diff against the live `memory/`, apply only on approval. (Init git on the memory dir, or just diff dirs.)
-  - **"Latest value wins" needs a time signal** the pipeline must be given — file mtimes, git history on the memory dir, or transcript timestamps. (`Date.now()` is unavailable inside Workflow scripts, so stamp from outside and pass it in.)
-  - **Status / effort tiers:** (a) ✅ **Shipped** as a *sibling* skill `replay` (`.claude/skills/replay/` — `SKILL.md` + `reduce_transcript.py`; design in `DESIGN.md`), **not** by extending `/dreamer`: in-session map (Sonnet subagents) → reduce/triage → guided human-in-the-loop apply, with `/dreamer` as the verify post-pass. (b) promote the map to a Workflow when transcript volume outgrows a single context — still open; (c) schedule it (cron/`/loop` + a SessionStart hook) to run over new transcripts and notify — still open.
-- **Caveats / out of scope:** You won't match Anthropic's tuned multi-stage pipeline — this is a flexible approximation whose quality rides on the prompt. Transcript JSONL location/schema is an undocumented implementation detail that can shift across CC versions (pin loosely). Subscription **usage windows** still apply, so a huge batch can eat your window — start small, scale once curation quality looks right (same advice as the real feature).
-- **Impact / cost:** Small prototype, not a research project. Tier (a) is an afternoon extending `/dreamer`; tier (b) is a few hours of Workflow authoring. No app code, no dependencies, no infra — purely agent tooling under `~/.claude/`. Fully reversible (non-destructive output + diff-before-apply).
----
-
-## Recipe edit: compact, prototype-style ingredient rows
-
-- **Why:** The recipe-sheet recompose (Phase 1–3) tightened the page everywhere except the ingredient rows themselves, which still render via the shared `SortableListItem` card chrome (outlined card per item, quantity chip stacked *below* the name). Next to the calm new header/sections/strip they read as bulky. The approved prototype (`RecipeEditPrototype.tsx`, deleted in Phase 4) showed denser rows: name + small italic comment on the left, quantity pill right-aligned on the **same** line, hairline dividers instead of per-item cards, and no per-row ⋮ menu (tap the row to edit). Deferred deliberately during the recompose because it touches shared infrastructure.
+- **Why:** The page over-weights the *optional* extras and under-weights the actual recipe-building. `RecipeTagSelector` (`EditRecipeForm.tsx:241`) and `RecipeSourcesStrip` links (`RecipeEditPage.tsx:265`) sit above the fold, pushing the composer + sections down. And the ingredient rows themselves still render via the shared `SortableListItem` card chrome (outlined card per item, quantity chip stacked *below* the name), so they read bulky next to the calmer new header/sections/strip. The approved prototype (`RecipeEditPrototype.tsx`, deleted in Phase 4) showed denser rows: name + small italic comment left, quantity pill right-aligned on the **same** line, hairline dividers instead of per-item cards, no per-row ⋮ menu (tap the row to edit).
 - **Sketch:**
-  - **Content (recipe-only, low risk):** restructure `RecipeItemContent.tsx` to a flex row — name (+ comment underneath) left, `ItemQuantityChip` right — instead of the current `ListItemText` primary/secondary stack. Keep testids `recipe-item-{id}`, `recipe-item-quantity-{text}`, `recipe-item-comment-{id}`.
-  - **Chrome (shared — the careful part):** `SortableListItem`/`SortableList` are shared with Lists + Inventories. Add an **opt-in** `dense` prop (default false → those features unchanged) that swaps the per-item card border for a bottom hairline divider, drops the inter-row `mb`, and tightens padding. Only `RecipeContainer` passes it.
-  - **Menu vs tap-to-edit (the real decision):** the prototype has no per-row ⋮ menu — editing is tap-the-row. Dropping the menu removes `item-menu-button-{text}` / `edit-item-button` / `delete-item-button`, which the Reqnroll item IT drives. Either keep the menu (safe, preserves IT, ~80% of the look) or go full tap-to-edit and rewrite `ComposerSteps`/`RecipeSteps` to open the editor by clicking the row + a separate delete affordance. Pick at planning time.
-- **Impact / cost:** Content change is ~1 file, recipe-only. Chrome change adds one threaded prop across 3 shared files. Half a day if keeping the menu; more if going menu-less (IT rewrite). No backend.
+  - **(a) Collapse extras (quick win):** wrap `RecipeTagSelector` + `RecipeSourcesStrip` in a single collapsed MUI `<Accordion>` ("Details", default closed) between the name/servings block and `SortableSectionList`. No API change; tag suggestion still works behind the fold.
+  - **(b) Compact rows — content (recipe-only, low risk):** restructure `RecipeItemContent.tsx` to a flex row — name (+ comment underneath) left, `ItemQuantityChip` right — instead of the current `ListItemText` primary/secondary stack. Keep testids `recipe-item-{id}`, `recipe-item-quantity-{text}`, `recipe-item-comment-{id}`.
+  - **(c) Compact rows — chrome (shared — the careful part):** `SortableListItem`/`SortableList` are shared with Lists + Inventories. Add an **opt-in** `dense` prop (default false → those features unchanged) that swaps the per-item card border for a bottom hairline divider, drops the inter-row `mb`, and tightens padding. Only `RecipeContainer` passes it.
+  - **(d) Menu vs tap-to-edit (the real decision):** the prototype has no per-row ⋮ menu — editing is tap-the-row. Dropping the menu removes `item-menu-button-{text}` / `edit-item-button` / `delete-item-button`, which the Reqnroll item IT drives. Either keep the menu (safe, preserves IT, ~80% of the look) or go full tap-to-edit and rewrite `ComposerSteps`/`RecipeSteps` to open the editor by clicking the row + a separate delete affordance. Pick at planning time.
+- **Impact / cost:** (a) is tiny, ~1–2 frontend files. (b) is ~1 recipe-only file. (c) threads one prop across 3 shared files. Half a day total if keeping the menu; more if going menu-less (IT rewrite). No backend, no migration.
+
+---
+
+## Import a recipe from a URL (and later PDF/photo)
+
+- **Why:** Creating a recipe means typing every ingredient one at a time into the composer; quantity can't even be set on entry (only via edit / async AI extraction). Bulk-paste-a-block is weak on mobile. The mobile-native answer is **import**: paste a recipe URL (or later snap/upload a page) and have the app populate the recipe for review. This is the highest-leverage fix for "recipe creation is tedious," but it's a real feature, not a quick win.
+- **Sketch (headline decisions):**
+  - **URL import — deterministic parse first, AI only as fallback.** Most recipe sites embed `schema.org/Recipe` JSON-LD (`<script type="application/ld+json">`) with name, servings, ingredients, and steps already structured. Fetch the page server-side → parse JSON-LD → map straight to recipe + sections + items. Only fall back to an LLM when no JSON-LD is present. Don't pay an LLM (or risk hallucinated quantities) for data the page already hands you structured — ladder: native structure beats AI.
+  - **Vendor-neutral, config-gated**, mirroring the existing AI features: an `IRecipeImporter` interface with a Null impl when disabled (see `AddItemClassification` / `AddQuantityExtraction` siblings).
+  - **Foreground + review, never blind-trust.** Import is a user-initiated action they wait a few seconds for; on success, drop them on the recipe **edit** page to correct before it's saved as theirs.
+  - **PDF/photo** is a heavier second phase — needs PDF-text/OCR + LLM. A *photo of a cookbook page* may be more mobile-native than PDF; sequence after URL import proves out.
+- **Caveats / out of scope:** Server-side URL fetch is an SSRF surface and won't handle JS-rendered or paywalled pages that lack JSON-LD. Blind auto-save (always review). Needs a dedicated brainstorm/spec before sizing.
+- **Impact / cost:** Real feature. URL-via-JSON-LD MVP is moderate (one fetch+parse path, one slice, one import screen, AI fallback optional). PDF/photo is a separate, larger track. New interface; reuses existing AI config pattern; no new vendor lock-in if kept behind `IRecipeImporter`.
+
+---
+
+## Dedup list items on add, gated on matching unit
+
+- **Why:** `CopyRecipeToList` and manual list-add blindly append (`List.AddItem`), so the same item piles up as duplicate rows — copy a recipe whose milk is already on the list and you get milk twice, no merge, no warning. Unlike inventory (where per-item expiry makes each purchase a deliberately distinct lot — dedup there is explicitly **not** wanted), list items have no expiry, so duplicates are pure noise.
+- **Sketch:** Match on `ProductName.Normalize(name)` + unit (reuse the existing normalizer already used in `ToggleItemStatus.cs:74` — no new code). Merge rule: same name **and** same unit (or both unitless) → sum quantities; different unit, or one has a qty and the other doesn't → **add separate** (never guess a conversion — this is what sidesteps the whole unit-conversion problem). Centralize in `List.AddItem` so both copy-to-list and manual add benefit.
+- **Open decisions:** (a) silent merge + informative toast ("merged into milk, now 2 L") vs. ask first — silent surprises people ("why did the count change instead of adding a row?"); lean silent + toast for v1. (b) scope: copy-to-list only, or manual add too.
+- **Impact / cost:** Small — a domain method change + one IT. No migration. Pairs naturally with the toast work below.
+
+---
+
+## Toast placement + follow-through actions
+
+- **Why:** `<Toaster>` (`main.tsx:136`) sets no `position`, so sonner defaults to the **bottom** — directly over the fixed composer footer on recipe/list pages, so toasts overlap the input. Separately, success toasts dead-end: "Added 6 to Groceries" closes the sheet and leaves you on the recipe with no way to jump to what you just built.
+- **Sketch:** Set `position="top-center"` (robust regardless of composer height — a bottom `offset` is brittle because the composer grows when quantity/comment panels open; just verify no collision with the top AppBar). Add contextual actions via sonner `action: { label, onClick }` — copy-to-list → "View list"; promote success → "View pantry"; and undo on copy-to-list for parity with list-item delete. The pattern already exists (the `undo-action-button` class in the current `toastOptions`).
+- **Impact / cost:** Tiny — frontend only, native sonner props, no new dependency. Reversible.
+
+---
+
+## Expire promote-to-inventory candidacy after ~7 days
+
+- **Why:** A checked perishable becomes a promote candidate and stays one until it's resolved or purged at 30 days. Households that don't use promote-to-inventory see the `PromoteBar` count only ever climb — it "fills up over a couple weeks." A short candidacy window suppresses the nag without touching the check-off itself.
+- **Sketch:** Candidacy = `IsActive && Status && PromotionExpiryHandling != null && PromotionResolvedAt == null`. Add `&& <checkedAt> >= today.AddDays(-PromoteWindowDays)` (const 7) at **read time only** — no clearing job; the item stays checked, just stops being a candidate, and the existing 30-day purge sweeps it. Hardcode the const; make it a household setting only if asked.
+- **Open decision — which timestamp:** there's no dedicated "checked-at" field today. (a) Reuse `UpdatedAt` — zero migration, but it moves on *any* edit, so editing a checked item resets the 7-day clock (mildly wrong). (b) Add a `PromotionCandidacyAt` column stamped in `ApplyPromotionSuggestion` at check time — clean semantics, costs a migration. Since this is durable state shared across household members, lean (b) to avoid "why did the bar vanish?" confusion.
+- **Smell to fix in the same change:** the candidacy predicate is copy-pasted across at least `GetPendingPromotions.cs:55`, `UpdateList.cs:71`, and likely `GetList` — adding the window clause means editing all of them in lockstep, or the bar count and the review sheet will disagree. Extract it to one shared expression.
+- **Impact / cost:** Small–medium, backend only. A migration if going with (b); otherwise zero schema change. One IT for the window boundary.
