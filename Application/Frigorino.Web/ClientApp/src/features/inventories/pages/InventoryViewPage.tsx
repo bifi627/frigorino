@@ -6,7 +6,7 @@ import {
     Container,
     Typography,
 } from "@mui/material";
-import { useParams, useRouter } from "@tanstack/react-router";
+import { useParams, useRouter, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +20,7 @@ import type {
     UpdateInventoryItemRequest,
 } from "../../../lib/api";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
+import { useSetCurrentHousehold } from "../../me/activeHousehold/useSetCurrentHousehold";
 import { InventoryContainer } from "../items/components/InventoryContainer";
 import { InventoryFooter } from "../items/components/InventoryFooter";
 import { useCreateInventoryItem } from "../items/useCreateInventoryItem";
@@ -69,8 +70,28 @@ export const InventoryViewPage = () => {
         }
     }, [sortMode, sortModeStorageKey]);
 
+    // A deep-link (e.g. an expiry notification) can target a household other than the
+    // active one. Query the linked household directly so the page loads, and persist the
+    // switch so the rest of the app (nav, back to the list) follows it.
+    // ponytail: only inventory expiry notifications deep-link today — switch is inline here,
+    // not a shared hook. Extract if another deep-link target appears.
+    const { householdId: linkHouseholdId } = useSearch({
+        from: "/inventories/$inventoryId/view",
+    });
     const { data: currentHousehold } = useCurrentHousehold();
-    const householdId = currentHousehold?.householdId ?? 0;
+    const activeHouseholdId = currentHousehold?.householdId ?? 0;
+    const householdId = linkHouseholdId ?? activeHouseholdId;
+
+    const { mutate: switchActiveHousehold } = useSetCurrentHousehold();
+    useEffect(() => {
+        if (
+            linkHouseholdId !== undefined &&
+            activeHouseholdId > 0 &&
+            activeHouseholdId !== linkHouseholdId
+        ) {
+            switchActiveHousehold({ body: { householdId: linkHouseholdId } });
+        }
+    }, [linkHouseholdId, activeHouseholdId, switchActiveHousehold]);
 
     const {
         data: inventory,

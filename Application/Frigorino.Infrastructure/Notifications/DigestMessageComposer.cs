@@ -28,7 +28,9 @@ namespace Frigorino.Infrastructure.Notifications
             }
 
             // Deep-link straight to the inventory detail page so a click lands on the items.
-            var deepLinkPath = $"/inventories/{plan.InventoryId}/view";
+            // Carry the target household id — the recipient's active household may differ, and
+            // the inventory request is household-scoped, so the SPA switches to it on landing.
+            var deepLinkPath = $"/inventories/{plan.InventoryId}/view?householdId={plan.HouseholdId}";
 
             return new ExpiryDigestNotification(title, body, deepLinkPath);
         }

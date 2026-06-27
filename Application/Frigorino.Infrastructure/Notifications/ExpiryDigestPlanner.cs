@@ -12,9 +12,10 @@ namespace Frigorino.Infrastructure.Notifications
 
     public sealed record DigestLine(string Text, DateOnly ExpiryDate, int DaysUntil);
 
-    // One notification per (user, inventory).
+    // One notification per (user, inventory). HouseholdId rides along so the deep-link can
+    // name the target household — the SPA's active household may be a different one.
     public sealed record DigestPlan(
-        string UserId, int InventoryId, string InventoryName, string? Language, IReadOnlyList<DigestLine> Lines);
+        string UserId, int InventoryId, int HouseholdId, string InventoryName, string? Language, IReadOnlyList<DigestLine> Lines);
 
     public static class ExpiryDigestPlanner
     {
@@ -81,7 +82,7 @@ namespace Frigorino.Infrastructure.Notifications
                         .ThenBy(l => l.Text)
                         .ToList();
                     plans.Add(new DigestPlan(
-                        recipient.UserId, inventoryId, first.InventoryName, recipient.Language, ordered));
+                        recipient.UserId, inventoryId, recipient.HouseholdId, first.InventoryName, recipient.Language, ordered));
                 }
             }
 
