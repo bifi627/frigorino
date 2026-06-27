@@ -23,6 +23,7 @@ using Frigorino.Features.Lists.Promote;
 using Frigorino.Features.Me.ActiveHousehold;
 using Frigorino.Features.Me.Settings;
 using Frigorino.Features.Notifications;
+using Frigorino.Features.Products;
 using Frigorino.Features.Version;
 using Frigorino.Infrastructure.Auth;
 using Frigorino.Infrastructure.EntityFramework;
@@ -348,6 +349,11 @@ var householdSettings = app.MapGroup("/api/household/{householdId:int}/settings"
     .WithTags("HouseholdSettings");
 householdSettings.MapGetHouseholdSettings();
 householdSettings.MapUpdateHouseholdSettings();
+
+var products = app.MapGroup("/api/household/{householdId:int}/products")
+    .RequireAuthorization()
+    .WithTags("Products");
+products.MapGetProducts();
 
 var blueprints = app.MapGroup("/api/household/{householdId:int}/blueprints")
     .RequireAuthorization()
