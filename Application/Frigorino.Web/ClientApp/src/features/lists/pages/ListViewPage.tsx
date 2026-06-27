@@ -10,6 +10,8 @@ import {
 import { useParams, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getItemsOptions } from "../../../lib/api/@tanstack/react-query.gen";
+import { useExtractionPoll } from "../../../hooks/useExtractionPoll";
 import {
     PageHeadActionBar,
     type HeadNavigationAction,
@@ -27,7 +29,6 @@ import { useCreateMediaItem } from "../items/useCreateMediaItem";
 import { useListItems } from "../items/useListItems";
 import { useToggleListItemStatus } from "../items/useToggleListItemStatus";
 import { useUpdateListItem } from "../items/useUpdateListItem";
-import { useExtractionPoll } from "../items/useExtractionPoll";
 import { useListRevision } from "../items/useListRevision";
 import { useList } from "../useList";
 import { PromoteBar } from "../promote/PromoteBar";
@@ -49,10 +50,6 @@ export const ListViewPage = () => {
     // True when edit mode was opened via tapping the comment — the composer then starts
     // with the comment panel expanded.
     const [editOpenComment, setEditOpenComment] = useState(false);
-    const [pendingExtraction, setPendingExtraction] = useState<{
-        id: number;
-        extractionPending: boolean;
-    } | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     // Media items have no text/quantity — editing one opens the caption sheet, not the footer composer.
     const [editingMediaItem, setEditingMediaItem] =
@@ -77,11 +74,8 @@ export const ListViewPage = () => {
     const toggleMutation = useToggleListItemStatus();
     const createMediaMutation = useCreateMediaItem();
 
-    const { isExtracting, extractingItemId } = useExtractionPoll(
-        householdId,
-        listIdNum,
-        pendingExtraction?.id ?? null,
-        pendingExtraction?.extractionPending ?? false,
+    const { markPending, isItemExtracting } = useExtractionPoll(
+        getItemsOptions({ path: { householdId, listId: listIdNum } }),
     );
 
     const scrollToLastUncheckedItem = useCallback(() => {
@@ -129,19 +123,17 @@ export const ListViewPage = () => {
                     path: { householdId, listId: listIdNum },
                     body: { text: data, comment },
                 });
-                // Only the latest add is polled for extraction; rapid successive adds
-                // replace this, so just the last item shows the extracting spinner (v1).
-                // The server's create response is the single authority on whether an async
-                // extraction was enqueued — no client-side digit gate to drift from it.
-                setPendingExtraction({
-                    id: created.id,
-                    extractionPending: created.extractionPending,
-                });
+                // The create response is the single authority on whether an async extraction was
+                // enqueued. Track this row's id so its spinner stays up until its quantity lands —
+                // each rapid add is tracked independently (the poll watches the whole list).
+                if (created.extractionPending) {
+                    markPending(created.id);
+                }
             } catch {
                 // createMutation.onError rolls back the optimistic item; nothing to do here.
             }
         },
-        [createMutation, householdId, listIdNum],
+        [createMutation, householdId, listIdNum, markPending],
     );
 
     const handleUpdateItem = useCallback(
@@ -375,8 +367,7 @@ export const ListViewPage = () => {
                 onEditQuantity={handleEditQuantity}
                 onEditComment={handleEditComment}
                 showDragHandles={showDragHandles}
-                isExtracting={isExtracting}
-                extractingItemId={extractingItemId}
+                isItemExtracting={isItemExtracting}
                 searchQuery={searchQuery}
             />
 

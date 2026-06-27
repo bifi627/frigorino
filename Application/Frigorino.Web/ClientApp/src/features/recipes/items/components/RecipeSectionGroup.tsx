@@ -44,8 +44,8 @@ interface RecipeSectionGroupProps {
     onDelete: () => void;
     editingItem: RecipeItemResponse | null;
     onEditItem: (item: RecipeItemResponse) => void;
-    isExtracting?: boolean;
-    extractingItemId?: number | null;
+    /** Per-row predicate: true while the row's async quantity extraction is still pending. */
+    isItemExtracting?: (id: number) => boolean;
     dragHandle: ReactNode;
 }
 
@@ -57,8 +57,7 @@ export const RecipeSectionGroup = ({
     onDelete,
     editingItem,
     onEditItem,
-    isExtracting,
-    extractingItemId,
+    isItemExtracting,
     dragHandle,
 }: RecipeSectionGroupProps) => {
     const { t } = useTranslation();
@@ -191,8 +190,7 @@ export const RecipeSectionGroup = ({
                 sectionId={section.id}
                 editingItem={editingItem}
                 onEdit={onEditItem}
-                isExtracting={isExtracting}
-                extractingItemId={extractingItemId}
+                isItemExtracting={isItemExtracting}
                 scrollable={false}
             />
 
