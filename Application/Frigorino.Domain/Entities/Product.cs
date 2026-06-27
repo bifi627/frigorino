@@ -4,8 +4,8 @@ using Frigorino.Domain.Products;
 namespace Frigorino.Domain.Entities
 {
     // Per-household product catalog row, keyed (HouseholdId, NormalizedName). Holds the AI
-    // Classification layer as flat columns. A user Override layer is a future additive set of
-    // nullable columns; EffectiveExpiry will become Override ?? Classification then.
+    // Classification layer as flat columns, plus a nullable user Override layer; EffectiveCategory
+    // and EffectiveExpiry read Override ?? Classification.
     public class Product
     {
         public const int NormalizedNameMaxLength = 200;
