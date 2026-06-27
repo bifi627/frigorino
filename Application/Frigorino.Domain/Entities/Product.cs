@@ -20,6 +20,13 @@ namespace Frigorino.Domain.Entities
         public int? ClassificationShelfLifeDays { get; set; }
         public int ClassifierVersion { get; set; }
 
+        // User Override layer (additive, nullable). Set/cleared atomically via
+        // OverrideClassification / ResetToAiClassification. Presence shields the row from
+        // backfill re-classification; EffectiveX prefers it over the AI Classification layer.
+        public ProductCategory? OverrideProductCategory { get; set; }
+        public ExpiryHandling? OverrideExpiryHandling { get; set; }
+        public int? OverrideShelfLifeDays { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -70,14 +77,39 @@ namespace Frigorino.Domain.Entities
             ClassifierVersion = classifierVersion;
         }
 
-        // Effective category the rest of the app reads. Minimal today (Classification only); becomes
-        // Override ?? Classification when override columns land.
-        public ProductCategory EffectiveCategory => ClassificationProductCategory;
+        // User override: take ownership of this product's classification. UpdatedAt is auto-stamped
+        // by ApplicationDbContext.SaveChangesAsync. The AI Classification layer is left untouched.
+        public void OverrideClassification(ProductClassification classification)
+        {
+            OverrideProductCategory = classification.Category;
+            OverrideExpiryHandling = classification.Expiry.Handling;
+            OverrideShelfLifeDays = classification.Expiry.ShelfLifeDays;
+        }
 
-        // Effective expiry the rest of the app reads. Minimal today (Classification only); becomes
-        // Override ?? Classification when override columns land. Safe .Value — columns are written
-        // through a validated ExpiryProfile.
+        // Reset to AI: drop the override; EffectiveCategory/EffectiveExpiry fall back to the
+        // preserved AI layer immediately. A stale ClassifierVersion re-enters the backfill gap
+        // set on the next cold start.
+        public void ResetToAiClassification()
+        {
+            OverrideProductCategory = null;
+            OverrideExpiryHandling = null;
+            OverrideShelfLifeDays = null;
+        }
+
+        // Atomic: the three override columns are written/cleared together, so any one is a
+        // valid presence flag.
+        public bool IsOverridden => OverrideExpiryHandling.HasValue;
+
+        // Effective category the rest of the app reads: user override wins over the AI layer.
+        public ProductCategory EffectiveCategory =>
+            OverrideProductCategory ?? ClassificationProductCategory;
+
+        // Effective expiry the rest of the app reads. Expiry is taken as a WHOLE facet, not
+        // column-by-column: a NonPerishable override must null the days, never fall back to the
+        // AI's shelf life. Safe .Value — both layers are written through a validated ExpiryProfile.
         public ExpiryProfile EffectiveExpiry =>
-            ExpiryProfile.Create(ClassificationExpiryHandling, ClassificationShelfLifeDays).Value;
+            OverrideExpiryHandling.HasValue
+                ? ExpiryProfile.Create(OverrideExpiryHandling.Value, OverrideShelfLifeDays).Value
+                : ExpiryProfile.Create(ClassificationExpiryHandling, ClassificationShelfLifeDays).Value;
     }
 }
