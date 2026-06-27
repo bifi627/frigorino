@@ -35,7 +35,12 @@ interface Props {
     product: ProductCatalogItem | null;
 }
 
-export function ProductEditSheet({ open, onClose, householdId, product }: Props) {
+export function ProductEditSheet({
+    open,
+    onClose,
+    householdId,
+    product,
+}: Props) {
     // Remount the inner form per opened product so fields seed from the row via useState
     // initializers (no reset-in-effect).
     return (
@@ -128,12 +133,18 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={2} sx={{ mt: 1 }}>
-                    <FormControl fullWidth size="small" data-testid="product-category-control">
+                    <FormControl
+                        fullWidth
+                        size="small"
+                        data-testid="product-category-control"
+                    >
                         <InputLabel>{t("products.category")}</InputLabel>
                         <Select
                             label={t("products.category")}
                             value={category}
-                            onChange={(e) => setCategory(e.target.value as ProductCategory)}
+                            onChange={(e) =>
+                                setCategory(e.target.value as ProductCategory)
+                            }
                         >
                             {PRODUCT_CATEGORY_OPTIONS.map((c) => (
                                 <MenuItem key={c} value={c}>
@@ -143,13 +154,19 @@ function ProductEditSheetInner({ onClose, householdId, product }: InnerProps) {
                         </Select>
                     </FormControl>
 
-                    <FormControl fullWidth size="small" data-testid="product-expiry-control">
+                    <FormControl
+                        fullWidth
+                        size="small"
+                        data-testid="product-expiry-control"
+                    >
                         <InputLabel>{t("products.expiry")}</InputLabel>
                         <Select
                             label={t("products.expiry")}
                             value={handling}
                             onChange={(e) =>
-                                onHandlingChange(e.target.value as ExpiryHandling)
+                                onHandlingChange(
+                                    e.target.value as ExpiryHandling,
+                                )
                             }
                         >
                             {EXPIRY_HANDLING_OPTIONS.map((h) => (

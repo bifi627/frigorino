@@ -1,5 +1,7 @@
 import {
     Alert,
+    Box,
+    Button,
     Chip,
     Container,
     List,
@@ -12,12 +14,17 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import type { ProductCatalogItem } from "../../../lib/api/types.gen";
 import { pageContainerSx } from "../../../theme";
 import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurrentHouseholdWithDetails";
 import { HouseholdRoleValue, roleRank } from "../../households/householdRole";
 import { ProductEditSheet } from "../components/ProductEditSheet";
 import { useProducts } from "../useProducts";
+
+// Render in pages so a household with hundreds of products doesn't paint them
+// all at once; mirrors the checked-items "show more" in SortableList.
+const PRODUCTS_PAGE_SIZE = 25;
 
 export function ProductCatalogPage() {
     const { t } = useTranslation();
@@ -33,6 +40,7 @@ export function ProductCatalogPage() {
     const { data: products, isLoading } = useProducts(householdId);
 
     const [query, setQuery] = useState("");
+    const [visibleCount, setVisibleCount] = useState(PRODUCTS_PAGE_SIZE);
     const [selected, setSelected] = useState<ProductCatalogItem | null>(null);
 
     const filtered = useMemo(() => {
@@ -43,6 +51,9 @@ export function ProductCatalogPage() {
         }
         return rows.filter((p) => p.name.toLowerCase().includes(q));
     }, [products, query]);
+
+    const visible = filtered.slice(0, visibleCount);
+    const remaining = filtered.length - visible.length;
 
     if (!hasActiveHousehold || householdId === 0) {
         return (
@@ -55,85 +66,127 @@ export function ProductCatalogPage() {
     }
 
     return (
-        <Container maxWidth="md" sx={pageContainerSx}>
-            <Typography variant="h5" sx={{ mb: 0.5 }}>
-                {t("products.title")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {t("products.subtitle")}
-            </Typography>
-
-            <TextField
-                fullWidth
-                size="small"
-                placeholder={t("products.search")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                sx={{ mb: 2 }}
-                slotProps={{ htmlInput: { "data-testid": "product-search-input" } }}
+        <>
+            <PageHeadActionBar
+                title={t("products.title")}
+                subtitle={t("products.subtitle")}
+                section="household"
+                maxWidth="md"
+                directActions={[]}
+                menuActions={[]}
             />
+            <Container maxWidth="md" sx={pageContainerSx}>
+                <TextField
+                    fullWidth
+                    size="small"
+                    placeholder={t("products.search")}
+                    value={query}
+                    onChange={(e) => {
+                        setQuery(e.target.value);
+                        setVisibleCount(PRODUCTS_PAGE_SIZE);
+                    }}
+                    sx={{ mb: 2 }}
+                    slotProps={{
+                        htmlInput: { "data-testid": "product-search-input" },
+                    }}
+                />
 
-            {isLoading && <Skeleton variant="rectangular" height={240} />}
+                {isLoading && <Skeleton variant="rectangular" height={240} />}
 
-            {!isLoading && filtered.length === 0 && (
-                <Alert severity="info">{t("products.empty")}</Alert>
-            )}
+                {!isLoading && filtered.length === 0 && (
+                    <Alert severity="info">{t("products.empty")}</Alert>
+                )}
 
-            {!isLoading && filtered.length > 0 && (
-                <List data-testid="product-catalog-list">
-                    {filtered.map((p) => {
-                        const expiryLabel =
-                            p.effectiveExpiryHandling === "AiRecommendsShelfLife" &&
-                            p.effectiveShelfLifeDays != null
-                                ? `${t(`expiryHandlings.${p.effectiveExpiryHandling}`)} · ${p.effectiveShelfLifeDays}d`
-                                : t(`expiryHandlings.${p.effectiveExpiryHandling}`);
-                        return (
-                            <ListItemButton
-                                key={p.id}
-                                disabled={!canManage}
-                                onClick={() => canManage && setSelected(p)}
-                                data-testid={`product-row-${p.id}`}
-                                data-overridden={p.isOverridden ? "true" : "false"}
-                            >
-                                <ListItemText
-                                    primary={
-                                        <Stack
-                                            direction="row"
-                                            spacing={1}
-                                            sx={{ alignItems: "center" }}
-                                        >
-                                            <span style={{ textTransform: "capitalize" }}>
-                                                {p.name}
-                                            </span>
-                                            {p.isOverridden && (
-                                                <Chip
-                                                    size="small"
-                                                    label={t("products.overridden")}
-                                                    data-testid={`product-overridden-${p.id}`}
-                                                />
-                                            )}
-                                        </Stack>
+                {!isLoading && filtered.length > 0 && (
+                    <List data-testid="product-catalog-list">
+                        {visible.map((p) => {
+                            const expiryLabel =
+                                p.effectiveExpiryHandling ===
+                                    "AiRecommendsShelfLife" &&
+                                p.effectiveShelfLifeDays != null
+                                    ? `${t(`expiryHandlings.${p.effectiveExpiryHandling}`)} · ${p.effectiveShelfLifeDays}d`
+                                    : t(
+                                          `expiryHandlings.${p.effectiveExpiryHandling}`,
+                                      );
+                            return (
+                                <ListItemButton
+                                    key={p.id}
+                                    disabled={!canManage}
+                                    onClick={() => canManage && setSelected(p)}
+                                    data-testid={`product-row-${p.id}`}
+                                    data-overridden={
+                                        p.isOverridden ? "true" : "false"
                                     }
-                                    secondary={`${t(`productCategories.${p.effectiveCategory}`)} · ${expiryLabel}`}
-                                />
-                            </ListItemButton>
-                        );
-                    })}
-                </List>
-            )}
+                                >
+                                    <ListItemText
+                                        primary={
+                                            <Stack
+                                                direction="row"
+                                                spacing={1}
+                                                sx={{ alignItems: "center" }}
+                                            >
+                                                <span
+                                                    style={{
+                                                        textTransform:
+                                                            "capitalize",
+                                                    }}
+                                                >
+                                                    {p.name}
+                                                </span>
+                                                {p.isOverridden && (
+                                                    <Chip
+                                                        size="small"
+                                                        label={t(
+                                                            "products.overridden",
+                                                        )}
+                                                        data-testid={`product-overridden-${p.id}`}
+                                                    />
+                                                )}
+                                            </Stack>
+                                        }
+                                        secondary={`${t(`productCategories.${p.effectiveCategory}`)} · ${expiryLabel}`}
+                                    />
+                                </ListItemButton>
+                            );
+                        })}
+                    </List>
+                )}
 
-            {!canManage && (
-                <Typography variant="caption" color="text.secondary">
-                    {t("products.readOnlyHint")}
-                </Typography>
-            )}
+                {!isLoading && remaining > 0 && (
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            py: 1,
+                        }}
+                    >
+                        <Button
+                            size="small"
+                            onClick={() =>
+                                setVisibleCount((c) => c + PRODUCTS_PAGE_SIZE)
+                            }
+                            data-testid="products-show-more-button"
+                        >
+                            {t("products.showMore", {
+                                count: Math.min(PRODUCTS_PAGE_SIZE, remaining),
+                            })}
+                        </Button>
+                    </Box>
+                )}
 
-            <ProductEditSheet
-                open={selected !== null}
-                onClose={() => setSelected(null)}
-                householdId={householdId}
-                product={selected}
-            />
-        </Container>
+                {!canManage && (
+                    <Typography variant="caption" color="text.secondary">
+                        {t("products.readOnlyHint")}
+                    </Typography>
+                )}
+
+                <ProductEditSheet
+                    open={selected !== null}
+                    onClose={() => setSelected(null)}
+                    householdId={householdId}
+                    product={selected}
+                />
+            </Container>
+        </>
     );
 }

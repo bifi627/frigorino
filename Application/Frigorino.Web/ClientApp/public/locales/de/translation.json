@@ -449,6 +449,7 @@
         "subtitle": "Überprüfe und korrigiere die Produktklassifizierung",
         "search": "Produkte suchen",
         "empty": "Noch keine Produkte",
+        "showMore": "{{count}} weitere anzeigen",
         "overridden": "Bearbeitet",
         "edit": "Klassifizierung bearbeiten",
         "reset": "Auf KI zurücksetzen",

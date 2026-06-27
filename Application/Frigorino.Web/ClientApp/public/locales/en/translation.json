@@ -449,6 +449,7 @@
         "subtitle": "Review and correct how products are classified",
         "search": "Search products",
         "empty": "No products yet",
+        "showMore": "Show {{count}} more",
         "overridden": "Edited",
         "edit": "Edit classification",
         "reset": "Reset to AI",
