@@ -2,7 +2,6 @@ using System.Text.Json;
 using Frigorino.Domain.Entities;
 using Frigorino.Domain.Products;
 using Frigorino.Infrastructure.EntityFramework;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Frigorino.IntegrationTests.Slices.Products;
