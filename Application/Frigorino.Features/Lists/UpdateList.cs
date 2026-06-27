@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Errors;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
@@ -63,12 +64,13 @@ namespace Frigorino.Features.Lists
 
             await db.SaveChangesAsync(ct);
 
+            var promoteCutoff = DateTime.UtcNow.AddDays(-ListItem.PromoteWindowDays);
             var response = ListResponse.From(
                 list,
                 list.CreatedByUser,
                 list.ListItems.Count(i => i.IsActive && !i.Status),
                 list.ListItems.Count(i => i.IsActive && i.Status),
-                list.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null));
+                list.ListItems.Count(i => i.IsActive && i.Status && i.PromotionExpiryHandling != null && i.PromotionResolvedAt == null && i.UpdatedAt >= promoteCutoff));
             return TypedResults.Ok(response);
         }
     }

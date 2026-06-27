@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Features.Households;
 using Frigorino.Infrastructure.EntityFramework;
@@ -32,10 +33,11 @@ namespace Frigorino.Features.Lists
                 return TypedResults.NotFound();
             }
 
+            var promoteCutoff = DateTime.UtcNow.AddDays(-ListItem.PromoteWindowDays);
             var response = await db.Lists
                 .Where(l => l.HouseholdId == householdId && l.IsActive)
                 .OrderByDescending(l => l.CreatedAt)
-                .Select(ListResponse.ToProjection)
+                .Select(ListResponse.ToProjection(promoteCutoff))
                 .ToArrayAsync(ct);
 
             return TypedResults.Ok(response);

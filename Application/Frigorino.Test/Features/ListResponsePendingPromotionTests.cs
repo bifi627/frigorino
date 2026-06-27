@@ -4,11 +4,12 @@ using Frigorino.Features.Lists;
 
 namespace Frigorino.Test.Features
 {
-    // Verifies the EF-translatable projection counts only checked, candidate, unresolved items.
+    // Verifies the EF-translatable projection counts only checked, candidate, unresolved items
+    // checked-off within the promote-candidacy window.
     public class ListResponsePendingPromotionTests
     {
         [Fact]
-        public void ToProjection_CountsOnlyCheckedCandidateUnresolved()
+        public void ToProjection_CountsOnlyCheckedCandidateUnresolvedInWindow()
         {
             var list = new List
             {
@@ -21,7 +22,7 @@ namespace Frigorino.Test.Features
                 UpdatedAt = DateTime.UtcNow,
                 IsActive = true,
             };
-            // Pending: checked + candidate + unresolved.
+            // Pending: checked + candidate + unresolved, fresh.
             list.ListItems.Add(Item(1, status: true, handling: ExpiryHandling.AiRecommendsShelfLife, resolvedAt: null));
             // Not pending: resolved.
             list.ListItems.Add(Item(2, status: true, handling: ExpiryHandling.AiRecommendsShelfLife, resolvedAt: DateTime.UtcNow));
@@ -29,13 +30,20 @@ namespace Frigorino.Test.Features
             list.ListItems.Add(Item(3, status: true, handling: null, resolvedAt: null));
             // Not pending: unchecked.
             list.ListItems.Add(Item(4, status: false, handling: ExpiryHandling.AiRecommendsShelfLife, resolvedAt: null));
+            // Pending: candidate just inside the window (UtcNow - 6d, window is 7d).
+            list.ListItems.Add(Item(5, status: true, handling: ExpiryHandling.AiRecommendsShelfLife, resolvedAt: null,
+                updatedAt: DateTime.UtcNow.AddDays(-(ListItem.PromoteWindowDays - 1))));
+            // Not pending: candidate aged out of the window (UtcNow - 8d).
+            list.ListItems.Add(Item(6, status: true, handling: ExpiryHandling.AiRecommendsShelfLife, resolvedAt: null,
+                updatedAt: DateTime.UtcNow.AddDays(-(ListItem.PromoteWindowDays + 1))));
 
-            var projected = ListResponse.ToProjection.Compile()(list);
+            var promoteCutoff = DateTime.UtcNow.AddDays(-ListItem.PromoteWindowDays);
+            var projected = ListResponse.ToProjection(promoteCutoff).Compile()(list);
 
-            Assert.Equal(1, projected.PendingPromotionCount);
+            Assert.Equal(2, projected.PendingPromotionCount);
         }
 
-        private static ListItem Item(int id, bool status, ExpiryHandling? handling, DateTime? resolvedAt)
+        private static ListItem Item(int id, bool status, ExpiryHandling? handling, DateTime? resolvedAt, DateTime? updatedAt = null)
         {
             return new ListItem
             {
@@ -47,7 +55,7 @@ namespace Frigorino.Test.Features
                 PromotionExpiryHandling = handling,
                 PromotionResolvedAt = resolvedAt,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                UpdatedAt = updatedAt ?? DateTime.UtcNow,
             };
         }
     }
