@@ -23,6 +23,8 @@ All contracts live in `Frigorino.Domain/Interfaces/` (`IItemClassifier`, `IQuant
 
 Value objects: `ProductClassification` (Category + `ExpiryProfile`), `ExpiryProfile` (`Handling` + optional `ShelfLifeDays`, invariant: days set only for `AiRecommendsShelfLife`; `.SuggestsInventoryTracking` for perishables). Enum **names** are interpolated into the OpenAI Structured-Outputs JSON schema, so renaming an enum member changes the model contract.
 
+**User override layer.** `Product` carries nullable `OverrideProductCategory` / `OverrideExpiryHandling` / `OverrideShelfLifeDays`, set/cleared atomically via `OverrideClassification` / `ResetToAiClassification`. `EffectiveCategory` / `EffectiveExpiry` read `Override ?? Classification` (expiry as a whole facet — a `NonPerishable` override nulls the days, never falls back to the AI's). `IsOverridden` (`OverrideExpiryHandling.HasValue`) shields the row: `ProductClassificationGaps.SelectGaps` and `ClassifyProductJob` treat an overridden row as up-to-date regardless of `ClassifierVersion`, so a version bump never clobbers a user correction (after a reset, the stale version re-enters the gap set). Surfaced via the `Products` slices (`GET` any member / `PUT`+`DELETE` Owner-Admin, under `/api/household/{id}/products`) and the catalog page under household management.
+
 ## Classification pipeline
 
 `IProductClassificationTrigger.OnProductReferenced(householdId, rawName)` is the entry point. Call sites: `Lists/Items/CreateItem` + `UpdateItem` (via the quantity-extraction chain, below), `Recipes/CopyToList/CopyRecipeToList` (direct), and the startup backfill. The enabled impl (`QueueingProductClassificationTrigger`) enqueues `ClassifyProductJob`; the disabled impl (`NullProductClassificationTrigger`) is a no-op.
