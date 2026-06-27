@@ -33,8 +33,8 @@ Pause and confirm before starting each major. Workflow pattern: user says "conti
 **Sequence matters** — never parallelize verify steps that share state, see `feedback-verify-with-integration-tests` memory. The sln test internally calls `npm run build` via MSBuild, so a standalone build alongside it races; a second `dotnet test` against IT collides on the Testcontainers port.
 
 ```bash
-# 1. NuGet (after csproj edits)
-dotnet restore Application/Frigorino.sln --force-evaluate
+# 1. NuGet (after Directory.Packages.props edits)
+dotnet restore Application/Frigorino.sln
 
 # 2. npm (range edit → `npm install`; within-^ → `npm update <pkgs>` — see npm specifics)
 cd Application/Frigorino.Web/ClientApp && npm install
@@ -53,9 +53,8 @@ IntegrationTests (~2 min) are NOT "expensive" — include by default. They catch
 
 ## NuGet specifics
 
-- `Directory.Build.props` sets `RestorePackagesWithLockFile=true`; CI uses `--locked-mode`. After every csproj edit run `dotnet restore Application/Frigorino.sln --force-evaluate` to refresh `packages.lock.json`.
+- Central Package Management: **all** NuGet versions live in `Application/Directory.Packages.props` (`<PackageVersion>`), the `.csproj` files carry version-less `<PackageReference>`. Edit the version there, once. No lock files / `--locked-mode` — a plain `dotnet restore` is enough.
 - `Microsoft.EntityFrameworkCore*` packages all move in lockstep — bump them together.
-- Match the exact version string used elsewhere in the solution to avoid downgrade warnings.
 
 ## npm specifics
 

@@ -86,8 +86,8 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      - name: Restore (locked)
-        run: dotnet restore Application/Frigorino.Test/Frigorino.Test.csproj --locked-mode
+      - name: Restore
+        run: dotnet restore Application/Frigorino.Test/Frigorino.Test.csproj
 
       - name: Run Frigorino.Test
         run: >
@@ -128,8 +128,8 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      - name: Restore (locked)
-        run: dotnet restore Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj --locked-mode
+      - name: Restore
+        run: dotnet restore Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj
 
       - name: Download SPA build artifact
         uses: actions/download-artifact@v8

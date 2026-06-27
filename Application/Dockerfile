@@ -22,14 +22,8 @@ COPY Application/Frigorino.Web/Frigorino.Web.csproj ./Application/Frigorino.Web/
 COPY Application/Frigorino.Test/Frigorino.Test.csproj ./Application/Frigorino.Test/
 COPY Application/Frigorino.Features/Frigorino.Features.csproj ./Application/Frigorino.Features/
 COPY Application/Frigorino.IntegrationTests/Frigorino.IntegrationTests.csproj ./Application/Frigorino.IntegrationTests/
-COPY Application/Directory.Build.props ./Application/
-COPY Application/Frigorino.Domain/packages.lock.json ./Application/Frigorino.Domain/
-COPY Application/Frigorino.Features/packages.lock.json ./Application/Frigorino.Features/
-COPY Application/Frigorino.Infrastructure/packages.lock.json ./Application/Frigorino.Infrastructure/
-COPY Application/Frigorino.Web/packages.lock.json ./Application/Frigorino.Web/
-COPY Application/Frigorino.Test/packages.lock.json ./Application/Frigorino.Test/
-COPY Application/Frigorino.IntegrationTests/packages.lock.json ./Application/Frigorino.IntegrationTests/
-RUN dotnet restore ./Application/Frigorino.sln --locked-mode
+COPY Application/Directory.Packages.props ./Application/
+RUN dotnet restore ./Application/Frigorino.sln
 COPY . .
 # Web-only publish, RID-pinned so PublishReadyToRun pre-JITs IL for linux-x64.
 # --self-contained false keeps the runtime in the base image, not in /app/publish.
