@@ -464,6 +464,7 @@
         "resetDone": "Auf KI-Klassifizierung zurückgesetzt"
     },
     "productCategories": {
+        "Unknown": "Nicht klassifiziert",
         "Other": "Sonstiges",
         "Produce": "Obst & Gemüse",
         "Bakery": "Backwaren",
@@ -490,6 +491,7 @@
         "Pet": "Haustier"
     },
     "expiryHandlings": {
+        "Unknown": "Unbekannt",
         "NonPerishable": "Verdirbt nicht",
         "UserEntersFromPackage": "Datum auf der Verpackung",
         "AiRecommendsShelfLife": "Geschätzte Haltbarkeit"

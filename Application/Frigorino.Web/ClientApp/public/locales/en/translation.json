@@ -464,6 +464,7 @@
         "resetDone": "Reset to the AI classification"
     },
     "productCategories": {
+        "Unknown": "Unclassified",
         "Other": "Other",
         "Produce": "Produce",
         "Bakery": "Bakery",
@@ -490,6 +491,7 @@
         "Pet": "Pet"
     },
     "expiryHandlings": {
+        "Unknown": "Unknown",
         "NonPerishable": "Doesn't expire",
         "UserEntersFromPackage": "Date on the package",
         "AiRecommendsShelfLife": "Estimated shelf life"
