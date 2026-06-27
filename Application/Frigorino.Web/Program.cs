@@ -355,6 +355,7 @@ var products = app.MapGroup("/api/household/{householdId:int}/products")
     .WithTags("Products");
 products.MapGetProducts();
 products.MapOverrideProductClassification();
+products.MapResetProductClassification();
 
 var blueprints = app.MapGroup("/api/household/{householdId:int}/blueprints")
     .RequireAuthorization()
