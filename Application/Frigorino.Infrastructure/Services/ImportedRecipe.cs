@@ -7,5 +7,6 @@ namespace Frigorino.Infrastructure.Services
         string? Description,
         int? Servings,
         IReadOnlyList<string> Ingredients,
-        string? SourceName);
+        string? SourceName,
+        string? ImageUrl = null);
 }

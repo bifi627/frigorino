@@ -1,5 +1,6 @@
 using FluentResults;
 using Frigorino.Domain.Entities;
+using Frigorino.Domain.Files;
 using Frigorino.Domain.Interfaces;
 using Frigorino.Domain.Quantities;
 using Frigorino.Features.Households;
@@ -11,6 +12,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Frigorino.Features.Recipes
 {
@@ -38,6 +41,9 @@ namespace Frigorino.Features.Recipes
             ApplicationDbContext db,
             RecipeImportService importService,
             IRecipeQuantityExtractionTrigger quantityTrigger,
+            [FromKeyedServices(BlobAreas.RecipeAttachment)] IFileStorage coverStorage,
+            IImageProcessor imageProcessor,
+            ILoggerFactory loggerFactory,
             CancellationToken ct)
         {
             var membership = await db.FindActiveMembershipWithUserAsync(householdId, currentUser.UserId, ct);
@@ -99,9 +105,79 @@ namespace Frigorino.Features.Recipes
                 quantityTrigger.OnItemRouted(householdId, recipe.Id, item.Id, analysis);
             }
 
+            // Best-effort cover: pull the JSON-LD image through the same guarded fetch path, re-encode,
+            // and attach it (becomes coverAttachmentId). Never fails the import — see TryAttachCoverAsync.
+            if (!string.IsNullOrWhiteSpace(imported.ImageUrl))
+            {
+                await TryAttachCoverAsync(db, importService, imageProcessor, coverStorage, recipe,
+                    imported.ImageUrl, loggerFactory.CreateLogger(typeof(ImportRecipeEndpoint)), ct);
+            }
+
             return TypedResults.Created(
                 $"/api/household/{householdId}/recipes/{recipe.Id}",
                 RecipeResponse.From(recipe, creator, routed.Count));
+        }
+
+        // Fetch → process → store → attach, all best-effort: any failure (bad URL, blocked IP,
+        // non-image, undecodable bytes, save error) is swallowed so the import still succeeds without a
+        // cover. Orphaned blobs (a write that lands before a later throw) are reclaimed by ReclaimOrphanBlobs.
+        private static async Task TryAttachCoverAsync(
+            ApplicationDbContext db,
+            RecipeImportService importService,
+            IImageProcessor imageProcessor,
+            IFileStorage storage,
+            Recipe recipe,
+            string imageUrl,
+            ILogger logger,
+            CancellationToken ct)
+        {
+            try
+            {
+                var fetch = await importService.FetchImageAsync(imageUrl, ct);
+                if (fetch.IsFailed)
+                {
+                    return;
+                }
+
+                Result<ProcessedImage> processed;
+                await using (var input = new MemoryStream(fetch.Value))
+                {
+                    processed = await imageProcessor.ProcessAsync(input, ct);
+                }
+                if (processed.IsFailed)
+                {
+                    return;
+                }
+
+                var storageKey = await storage.SaveAsync(new MemoryStream(processed.Value.FullRes), ct);
+                var thumbnailKey = await storage.SaveAsync(new MemoryStream(processed.Value.Thumbnail), ct);
+                var stored = new StoredFile(
+                    storageKey, thumbnailKey, processed.Value.ContentType,
+                    CoverFileName(imageUrl), processed.Value.FullResSizeBytes);
+
+                var add = recipe.AddAttachment(caption: null, stored);
+                if (add.IsFailed)
+                {
+                    return;
+                }
+                await db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Cover image import failed for recipe {RecipeId}.", recipe.Id);
+            }
+        }
+
+        private static string CoverFileName(string imageUrl)
+        {
+            var name = Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri) ? Path.GetFileName(uri.LocalPath) : null;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = "cover";
+            }
+            return name.Length > RecipeAttachment.OriginalFileNameMaxLength
+                ? name[..RecipeAttachment.OriginalFileNameMaxLength]
+                : name;
         }
     }
 }

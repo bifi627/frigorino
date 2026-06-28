@@ -33,12 +33,6 @@ Split off while scoping the **URL import MVP** (JSON-LD-only, deterministic, no 
 - **Sketch:** Add a `share_target` entry to the web manifest (GET with `url`/`text`/`title` params) + a receiver route that reads the shared URL and fires the existing import endpoint. The push-only SW needs no fetch handling for a GET target. Mind the [[Railway VITE_ build args]] rule if any build-arg is involved.
 - **Impact / cost:** Small once the import engine exists — manifest entry + one route + an IT.
 
-## Import the recipe cover image
-
-- **Why:** JSON-LD carries an `image` URL that the MVP drops. Pulling it in gives the imported recipe a cover thumbnail for free — the overview already renders `coverAttachmentId`.
-- **Sketch:** Fetch `image` through the **same hardened fetch path** (SSRF guard + size cap apply equally), run it through `IImageProcessor` → WebP + thumbnail → `recipe.AddAttachment` so it becomes the cover. Best-effort: a failed image fetch must never fail the whole import.
-- **Impact / cost:** Small–moderate; reuses image processing + attachment storage.
-
 ## Store cooking instructions / steps in the recipe model
 
 - **Why:** The MVP **drops** `recipeInstructions` (link-only) because a recipe has nowhere to store the method — it's an ingredient list today. Keeping the steps in-app is the obvious next step. Distinct from [[AI-generated cooking instructions from sources]] (that's *generate when missing*; this is *store what the import already hands us*).

@@ -119,5 +119,43 @@ namespace Frigorino.Test.Infrastructure
             Assert.NotNull(result);
             Assert.Equal("Complete", result!.Name);
         }
+
+        [Fact]
+        public void Reads_image_as_string()
+        {
+            var html = Html("""{"@type":"Recipe","name":"R","recipeIngredient":["a"],"image":"https://x/img.jpg"}""");
+            Assert.Equal("https://x/img.jpg", JsonLdRecipeParser.Parse(html)!.ImageUrl);
+        }
+
+        [Fact]
+        public void Reads_first_image_from_string_array()
+        {
+            var html = Html("""{"@type":"Recipe","name":"R","recipeIngredient":["a"],"image":["https://x/a.jpg","https://x/b.jpg"]}""");
+            Assert.Equal("https://x/a.jpg", JsonLdRecipeParser.Parse(html)!.ImageUrl);
+        }
+
+        [Fact]
+        public void Reads_image_object_url()
+        {
+            var html = Html("""{"@type":"Recipe","name":"R","recipeIngredient":["a"],"image":{"@type":"ImageObject","url":"https://x/o.jpg"}}""");
+            Assert.Equal("https://x/o.jpg", JsonLdRecipeParser.Parse(html)!.ImageUrl);
+        }
+
+        [Fact]
+        public void Reads_first_url_from_image_object_array()
+        {
+            var html = Html("""
+                {"@type":"Recipe","name":"R","recipeIngredient":["a"],
+                 "image":[{"@type":"ImageObject","url":"https://x/o1.jpg"},{"@type":"ImageObject","url":"https://x/o2.jpg"}]}
+            """);
+            Assert.Equal("https://x/o1.jpg", JsonLdRecipeParser.Parse(html)!.ImageUrl);
+        }
+
+        [Fact]
+        public void Image_url_is_null_when_absent()
+        {
+            var html = Html("""{"@type":"Recipe","name":"R","recipeIngredient":["a"]}""");
+            Assert.Null(JsonLdRecipeParser.Parse(html)!.ImageUrl);
+        }
     }
 }
