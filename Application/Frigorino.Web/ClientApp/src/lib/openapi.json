@@ -3353,6 +3353,56 @@
         }
       }
     },
+    "/api/recipes/import/preview": {
+      "post": {
+        "tags": [
+          "Recipes"
+        ],
+        "operationId": "PreviewRecipeImport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewRecipeImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipeImportPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/household/{householdId}/recipes/{recipeId}/items": {
       "get": {
         "tags": [
@@ -6142,6 +6192,17 @@
           }
         }
       },
+      "PreviewRecipeImportRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -6446,6 +6507,24 @@
             "type": "string"
           },
           "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RecipeImportPreviewResponse": {
+        "required": [
+          "name",
+          "imageUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "imageUrl": {
             "type": [
               "null",
               "string"

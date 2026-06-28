@@ -27,11 +27,11 @@ Split off while scoping the **URL import MVP** (JSON-LD-only, deterministic, no 
 - **Impact / cost:** Moderate. New port + OpenAI adapter + config; reuses the MVP's hardened fetch path and the slice's domain mapping.
 - **Caveat — doesn't cover bot-blocked sites:** some sites drop server-side fetches entirely (DataDome and similar — e.g. `kaufland.de` returned no body at all during MVP testing), so neither JSON-LD nor an LLM fallback helps: there's no HTML to read. Those need **headless rendering** (a separate, heavier track), not this.
 
-## PWA share-target for recipe import
+## authGuard drops search params on login redirect
 
-- **Why:** The mobile-native entry point — from a recipe page in the phone browser (or another app's share sheet), tap Share → Frigorino → it imports. Far smoother than copy-pasting a URL.
-- **Sketch:** Add a `share_target` entry to the web manifest (GET with `url`/`text`/`title` params) + a receiver route that reads the shared URL and fires the existing import endpoint. The push-only SW needs no fetch handling for a GET target. Mind the [[Railway VITE_ build args]] rule if any build-arg is involved.
-- **Impact / cost:** Small once the import engine exists — manifest entry + one route + an IT.
+- **Why:** `requireAuth` (`src/common/authGuard.ts`) redirects an unauthenticated user to `/auth/login` carrying only `location.pathname`, not the search string. Any route launched cold (e.g. the recipe share-target `/recipes/import?text=…`) while logged out loses its params after login. Rare for an installed PWA (normally already authed), but a real gap surfaced while shipping the share-target.
+- **Sketch:** Make `requireAuth` carry `location.search` (or the full href) into the login `redirect`, and have the login page restore it. Cross-cutting — affects every protected route — so verify the existing `/auth/login` redirect handling round-trips search.
+- **Impact / cost:** Small but broad; needs a careful pass over all `redirect`-consuming routes.
 
 ## Store cooking instructions / steps in the recipe model
 

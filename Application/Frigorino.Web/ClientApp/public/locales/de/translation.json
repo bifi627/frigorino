@@ -451,12 +451,15 @@
             "orManually": "oder manuell eingeben",
             "urlPlaceholder": "https://example.com/beste-pfannkuchen",
             "submit": "Importieren",
+            "preview": "Vorschau",
             "importing": "Wird importiert…",
             "success": "Rezept importiert – prüfen und speichern",
             "invalidUrl": "Gib eine gültige Rezept-URL ein (http oder https).",
             "fetchFailed": "Seite nicht erreichbar. Prüfe den Link oder füge das Rezept manuell hinzu.",
             "pageTooLarge": "Diese Seite ist zu groß zum Importieren. Füge das Rezept manuell hinzu.",
-            "noRecipeFound": "Auf dieser Seite wurde kein Rezept gefunden. Bitte manuell hinzufügen."
+            "noRecipeFound": "Auf dieser Seite wurde kein Rezept gefunden. Bitte manuell hinzufügen.",
+            "shareTitle": "Rezept importieren",
+            "chooseHousehold": "Haushalt wählen"
         }
     },
     "products": {

@@ -15,6 +15,11 @@ Feature: Recipe import API
     And the imported recipe item eventually has text "apples" with quantity 20
     And the Products table is empty
 
+  Scenario: Importing a recipe applies the AI-suggested tags
+    When I import the recipe URL "https://example.com/pancakes" via the API
+    Then the API response status is 201
+    And the imported recipe has the tags "Dessert,Baking"
+
   Scenario: Importing a page with no recipe returns 422 with a no_recipe_found code
     When I import the recipe URL "https://example.com/norecipe" via the API
     Then the API response status is 422

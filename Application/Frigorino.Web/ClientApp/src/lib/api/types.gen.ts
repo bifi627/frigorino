@@ -236,6 +236,10 @@ export type PendingPromotionResponse = {
     suggestedExpiry: null | string;
 };
 
+export type PreviewRecipeImportRequest = {
+    url: string;
+};
+
 export type ProblemDetails = {
     type?: null | string;
     title?: null | string;
@@ -302,6 +306,11 @@ export type RecipeCreatorResponse = {
     externalId: string;
     name: string;
     email: null | string;
+};
+
+export type RecipeImportPreviewResponse = {
+    name: string;
+    imageUrl: null | string;
 };
 
 export type RecipeItemResponse = {
@@ -2451,6 +2460,35 @@ export type SuggestRecipeTagsResponses = {
 };
 
 export type SuggestRecipeTagsResponse2 = SuggestRecipeTagsResponses[keyof SuggestRecipeTagsResponses];
+
+export type PreviewRecipeImportData = {
+    body: PreviewRecipeImportRequest;
+    path?: never;
+    query?: never;
+    url: '/api/recipes/import/preview';
+};
+
+export type PreviewRecipeImportErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Unprocessable Entity
+     */
+    422: ProblemDetails;
+};
+
+export type PreviewRecipeImportError = PreviewRecipeImportErrors[keyof PreviewRecipeImportErrors];
+
+export type PreviewRecipeImportResponses = {
+    /**
+     * OK
+     */
+    200: RecipeImportPreviewResponse;
+};
+
+export type PreviewRecipeImportResponse = PreviewRecipeImportResponses[keyof PreviewRecipeImportResponses];
 
 export type GetRecipeItemsData = {
     body?: never;
