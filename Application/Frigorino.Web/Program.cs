@@ -446,6 +446,12 @@ recipes.MapCopyRecipeToList();
 recipes.MapSetRecipeTags();
 recipes.MapSuggestRecipeTags();
 
+// Recipe import preview is identity-only (no household scope — the peek precedes household choice).
+var recipeImport = app.MapGroup("/api/recipes")
+    .RequireAuthorization()
+    .WithTags("Recipes");
+recipeImport.MapPreviewRecipeImport();
+
 var recipeItems = app.MapGroup("/api/household/{householdId:int}/recipes/{recipeId:int}/items")
     .RequireAuthorization()
     .WithTags("RecipeItems");
