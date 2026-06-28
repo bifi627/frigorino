@@ -131,6 +131,8 @@ export type IFormFile = Blob | File;
 
 export type ImportRecipeRequest = {
     url: string;
+    name?: null | string;
+    description?: null | string;
 };
 
 export type InventoryCreatorResponse = {

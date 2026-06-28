@@ -1,4 +1,4 @@
-import { Add, Download, Search } from "@mui/icons-material";
+import { Add, Search } from "@mui/icons-material";
 import {
     Alert,
     Autocomplete,
@@ -21,7 +21,6 @@ import { pageContainerSx } from "../../../theme";
 import { PageHeadActionBar } from "../../../components/shared/PageHeadActionBar";
 import { useCurrentHousehold } from "../../me/activeHousehold/useCurrentHousehold";
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
-import { ImportRecipeSheet } from "../components/ImportRecipeSheet";
 import { RecipeActionsMenu } from "../components/RecipeActionsMenu";
 import { RecipeSummaryCard } from "../components/RecipeSummaryCard";
 import { RecipeTagFilter } from "../components/RecipeTagFilter";
@@ -40,7 +39,6 @@ export const RecipesPage = () => {
         error,
     } = useHouseholdRecipes(householdId, householdId > 0);
 
-    const [importOpen, setImportOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedRecipe, setSelectedRecipe] = useState<RecipeResponse | null>(
         null,
@@ -178,14 +176,7 @@ export const RecipesPage = () => {
             <PageHeadActionBar
                 title={t("recipes.recipes")}
                 section="recipes"
-                directActions={[
-                    {
-                        icon: <Download />,
-                        onClick: () => setImportOpen(true),
-                        testId: "recipe-import-open",
-                    },
-                    { icon: <Add />, onClick: handleCreateRecipe },
-                ]}
+                directActions={[{ icon: <Add />, onClick: handleCreateRecipe }]}
                 menuActions={[]}
             />
             <Container maxWidth="sm" sx={pageContainerSx}>
@@ -358,11 +349,6 @@ export const RecipesPage = () => {
                     />
                 )}
             </Container>
-            <ImportRecipeSheet
-                open={importOpen}
-                onClose={() => setImportOpen(false)}
-                householdId={householdId}
-            />
         </>
     );
 };

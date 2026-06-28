@@ -5,7 +5,7 @@ namespace Frigorino.Infrastructure.Services
 {
     public class RecipeImportService
     {
-        public const long MaxResponseBytes = 8 * 1024 * 1024;
+        public const long MaxResponseBytes = 15 * 1024 * 1024;
         private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
 
         private readonly HttpClient _http;
@@ -56,9 +56,13 @@ namespace Frigorino.Infrastructure.Services
                 }
                 if (resp.Content.Headers.ContentLength is > MaxResponseBytes)
                 {
-                    return Fail("fetch_failed", "The page is too large to import.");
+                    return Fail("page_too_large", "The page is too large to import.");
                 }
                 html = await ReadCappedAsync(resp, ct);
+            }
+            catch (ResponseTooLargeException)
+            {
+                return Fail("page_too_large", "The page is too large to import.");
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
             {
@@ -82,7 +86,7 @@ namespace Frigorino.Infrastructure.Services
             {
                 if (buffer.Length + read > MaxResponseBytes)
                 {
-                    throw new IOException("Response exceeded size cap.");
+                    throw new ResponseTooLargeException();
                 }
                 buffer.Write(chunk, 0, read);
             }
@@ -91,5 +95,11 @@ namespace Frigorino.Infrastructure.Services
 
         private static Result<ImportedRecipe> Fail(string code, string message)
             => Result.Fail<ImportedRecipe>(new Error(message).WithMetadata("code", code));
+
+        // Distinguishes the streaming size-cap abort from a genuine network IOException so the
+        // caller can report page_too_large rather than the generic fetch_failed.
+        private sealed class ResponseTooLargeException : IOException
+        {
+        }
     }
 }

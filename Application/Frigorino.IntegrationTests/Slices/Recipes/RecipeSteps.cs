@@ -70,7 +70,9 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
     [When("I fill in the recipe name {string}")]
     public async Task WhenIFillInTheRecipeName(string name)
     {
-        await ctx.Page.GetByRole(AriaRole.Textbox).First.FillAsync(name);
+        // Target the name field by testid: the create page now leads with the import URL field,
+        // so the first textbox on the page is no longer the name.
+        await ctx.Page.GetByTestId("recipe-create-name").FillAsync(name);
     }
 
     [When("I submit the recipe form")]
