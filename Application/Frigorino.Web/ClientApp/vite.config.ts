@@ -90,6 +90,18 @@ export default defineConfig(({ command }) => ({
                         purpose: "maskable",
                     },
                 ],
+                // Web Share Target: a shared recipe page (GET) routes into the receiver, which
+                // peeks + imports. Android/Chromium only — iOS Safari has no Share Target API.
+                // Static action path → no VITE_ build arg involved (no Railway build-args concern).
+                share_target: {
+                    action: "/recipes/import",
+                    method: "GET",
+                    params: {
+                        url: "url",
+                        text: "text",
+                        title: "title",
+                    },
+                },
             },
         }),
         compression({
