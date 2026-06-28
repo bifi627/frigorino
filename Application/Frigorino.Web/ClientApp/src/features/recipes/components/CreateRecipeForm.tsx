@@ -15,8 +15,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { recipeImportErrorMessage } from "../recipeImportError";
 import { useCreateRecipe } from "../useCreateRecipe";
 import { useImportRecipe } from "../useImportRecipe";
+import { usePreviewRecipeImport } from "../usePreviewRecipeImport";
+import { RecipeImportPreviewCard } from "./RecipeImportPreviewCard";
 
 interface CreateRecipeFormProps {
     householdId: number;
@@ -37,41 +40,34 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
     const navigate = useNavigate();
     const createRecipeMutation = useCreateRecipe();
     const importRecipeMutation = useImportRecipe();
+    const previewMutation = usePreviewRecipeImport();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [servings, setServings] = useState("");
     const [url, setUrl] = useState("");
 
     const isBusy =
-        createRecipeMutation.isPending || importRecipeMutation.isPending;
-    const error: unknown = createRecipeMutation.error;
+        createRecipeMutation.isPending ||
+        importRecipeMutation.isPending ||
+        previewMutation.isPending;
+    const createError: unknown = createRecipeMutation.error;
     const isInvalid = !name.trim() && name.length > 0;
 
     const trimmedUrl = url.trim();
     const urlInvalid = trimmedUrl.length > 0 && !isValidHttpUrl(trimmedUrl);
+    const hasPreview = previewMutation.data !== undefined;
+    const showPreview =
+        previewMutation.isPending || previewMutation.isError || hasPreview;
 
-    const messageFor = (err: unknown): string => {
-        const code = (err as { code?: string } | null)?.code;
-        if (code === "no_recipe_found") {
-            return t("recipes.import.noRecipeFound");
+    const handlePeek = (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!isValidHttpUrl(trimmedUrl) || isBusy) {
+            return;
         }
-        if (code === "page_too_large") {
-            return t("recipes.import.pageTooLarge");
-        }
-        if (code === "fetch_failed") {
-            return t("recipes.import.fetchFailed");
-        }
-        // 400 ValidationProblem (invalid_url) has an { errors: { Url: [...] } } body and no code.
-        const errors = (err as { errors?: Record<string, string[]> } | null)
-            ?.errors;
-        if (errors && Object.keys(errors).length > 0) {
-            return t("recipes.import.invalidUrl");
-        }
-        return t("common.errorOccurred");
+        previewMutation.mutate({ body: { url: trimmedUrl } });
     };
 
-    const handleImport = async (event: React.FormEvent) => {
-        event.preventDefault();
+    const handleConfirmImport = async () => {
         if (!isValidHttpUrl(trimmedUrl) || isBusy) {
             return;
         }
@@ -126,7 +122,7 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
         <Card elevation={4}>
             <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Stack spacing={3}>
-                    <form onSubmit={handleImport}>
+                    <form onSubmit={handlePeek}>
                         <Stack spacing={2}>
                             <Typography
                                 variant="subtitle1"
@@ -134,15 +130,6 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                             >
                                 {t("recipes.import.open")}
                             </Typography>
-
-                            {importRecipeMutation.isError && (
-                                <Alert
-                                    severity="error"
-                                    data-testid="recipe-import-error"
-                                >
-                                    {messageFor(importRecipeMutation.error)}
-                                </Alert>
-                            )}
 
                             <Stack
                                 direction="row"
@@ -177,7 +164,7 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                                         !trimmedUrl || urlInvalid || isBusy
                                     }
                                     startIcon={
-                                        importRecipeMutation.isPending ? (
+                                        previewMutation.isPending ? (
                                             <CircularProgress
                                                 size={16}
                                                 color="inherit"
@@ -189,11 +176,50 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                                     sx={{ flexShrink: 0, mt: 0.5 }}
                                     data-testid="recipe-import-submit"
                                 >
+                                    {t("recipes.import.preview")}
+                                </Button>
+                            </Stack>
+
+                            {showPreview ? (
+                                <RecipeImportPreviewCard
+                                    isPending={previewMutation.isPending}
+                                    isError={previewMutation.isError}
+                                    error={previewMutation.error}
+                                    preview={previewMutation.data}
+                                />
+                            ) : null}
+
+                            {hasPreview ? (
+                                <Button
+                                    variant="contained"
+                                    onClick={handleConfirmImport}
+                                    disabled={isBusy}
+                                    startIcon={
+                                        importRecipeMutation.isPending ? (
+                                            <CircularProgress
+                                                size={16}
+                                                color="inherit"
+                                            />
+                                        ) : (
+                                            <Download />
+                                        )
+                                    }
+                                    data-testid="recipe-import-confirm"
+                                >
                                     {importRecipeMutation.isPending
                                         ? t("recipes.import.importing")
                                         : t("recipes.import.submit")}
                                 </Button>
-                            </Stack>
+                            ) : null}
+
+                            {importRecipeMutation.isError ? (
+                                <Alert severity="error">
+                                    {recipeImportErrorMessage(
+                                        importRecipeMutation.error,
+                                        t,
+                                    )}
+                                </Alert>
+                            ) : null}
                         </Stack>
                     </form>
 
@@ -201,10 +227,10 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
 
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={3}>
-                            {error ? (
+                            {createError ? (
                                 <Alert severity="error">
-                                    {error instanceof Error
-                                        ? error.message
+                                    {createError instanceof Error
+                                        ? createError.message
                                         : t("common.errorOccurred")}
                                 </Alert>
                             ) : null}

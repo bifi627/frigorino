@@ -16,6 +16,18 @@ public class RecipeImportUiSteps(ScenarioContextHolder ctx)
         await ctx.Page.GetByTestId("recipe-import-url").FillAsync(url);
     }
 
+    [When("the import preview shows {string}")]
+    public async Task WhenTheImportPreviewShows(string name)
+    {
+        await Assertions.Expect(ctx.Page.GetByTestId("recipe-peek-name")).ToHaveTextAsync(name);
+    }
+
+    [When("I confirm the import")]
+    public async Task WhenIConfirmTheImport()
+    {
+        await ctx.Page.GetByTestId("recipe-import-confirm").ClickAsync();
+    }
+
     [Then("I am taken to the recipe edit page")]
     public async Task ThenIAmTakenToTheRecipeEditPage()
     {

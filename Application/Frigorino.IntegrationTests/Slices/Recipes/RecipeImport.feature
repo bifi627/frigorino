@@ -6,6 +6,8 @@ Feature: Recipe import UI
   Scenario: Importing a URL from the create page lands on the edit page
     When I navigate to "/recipes/create"
     And I submit the import URL "https://example.com/pancakes"
+    And the import preview shows "Imported Pancakes"
+    And I confirm the import
     Then I am taken to the recipe edit page
 
   Scenario: A page with no recipe shows an inline error
@@ -17,6 +19,8 @@ Feature: Recipe import UI
     When I navigate to "/recipes/create"
     And I fill in the recipe name "My Own Title"
     And I submit the import URL "https://example.com/pancakes"
+    And the import preview shows "Imported Pancakes"
+    And I confirm the import
     Then I am taken to the recipe edit page
     And the recipe name field shows "My Own Title"
 

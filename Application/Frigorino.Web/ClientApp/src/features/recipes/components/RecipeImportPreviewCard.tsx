@@ -1,4 +1,11 @@
-import { Alert, Box, Card, CardContent, Skeleton, Typography } from "@mui/material";
+import {
+    Alert,
+    Box,
+    Card,
+    CardContent,
+    Skeleton,
+    Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { recipeImportErrorMessage } from "../recipeImportError";
 
@@ -66,8 +73,9 @@ export const RecipeImportPreviewCard = ({
                             flexShrink: 0,
                         }}
                         onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display =
-                                "none";
+                            (
+                                e.currentTarget as HTMLImageElement
+                            ).style.display = "none";
                         }}
                     />
                 ) : null}
