@@ -58,7 +58,7 @@ var effectiveDescription = string.IsNullOrWhiteSpace(request.Description) ? impo
 var creation = Recipe.Create(effectiveName, effectiveDescription, householdId, currentUser.UserId, imported.Servings);
 ```
 
-Side benefit: a user-typed name now rescues an import whose page has no parseable name (today `Recipe.Create` hard-fails → 400). The source link still uses `imported.SourceName` for its label (unchanged).
+The source link still uses `imported.SourceName` for its label (unchanged). (A successful import always carries a name — the parser skips name-less nodes — so the override simply replaces a present value; it cannot rescue a nameless page.)
 
 `Name`/`Description` are optional with defaults, so existing callers and the IT stub contract are source-compatible. The generated TS client picks up the two optional body fields on `npm run api`.
 

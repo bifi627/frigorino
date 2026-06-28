@@ -51,12 +51,6 @@ Split off while scoping the **URL import MVP** (JSON-LD-only, deterministic, no 
 - **Sketch:** Evaluate adopting more standard fields: `recipeInstructions` as `HowToStep`/`HowToSection` (see [[Store cooking instructions / steps in the recipe model]]), prep/cook/total time, richer `recipeYield`, ingredient grouping, `recipeCategory`/`keywords` ↔ the existing tag vocabulary, nutrition (heavy — needs an external data source). Don't adopt wholesale — pick the fields that serve the waste-reduction mission; keep the flat schema.
 - **Impact / cost:** Umbrella/strategic — decompose per field. Several migrations + UI over time.
 
-## Import entry point on the create page (prefill + user-input precedence)
-
-- **Why:** The MVP put import as a Download action on the recipes **overview** (paste URL → create → land on edit). Feedback after first use: it belongs on the **create recipe page**, and if the user has already typed a title/description, those should win over the parsed values — import as *prefill*, not a separate create path.
-- **Sketch:** Move the import affordance onto the create page. Decisions to settle first (needs a short brainstorm): (a) does importing **prefill the create form in place** (no recipe row until the user saves) or keep today's **create-then-navigate-to-edit**? (b) precedence — frontend overlay (keep the user's non-empty fields, fill the rest from the parse) vs. backend (optional `name`/`description` on `ImportRecipeRequest` that the slice prefers); (c) remove the overview Download action or keep both. Also collect the user's other queued minor UI tweaks at the start of this track.
-- **Impact / cost:** Small–moderate, mostly frontend. The in-place-prefill option is the bigger change (the recipe isn't created until save, so the import endpoint would return a parsed payload rather than a created recipe).
-
 # Phase 3 — directional bets
 
 Bigger-picture directions, not features. The strategic thesis: phase 1–2 build the recipe *entity*; **phase 3 is where recipes become the hub that connects inventory + expiry + lists**, exploiting assets a generic recipe app doesn't have. These are theme-level — revisit and decompose when phase 2 is in hand, don't plan from here.

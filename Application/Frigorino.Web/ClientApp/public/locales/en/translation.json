@@ -448,14 +448,14 @@
         "unsupportedFileType": "Unsupported file type",
         "import": {
             "open": "Import from URL",
-            "title": "Import a recipe",
-            "urlLabel": "Recipe URL",
+            "orManually": "or fill in manually",
             "urlPlaceholder": "https://example.com/best-pancakes",
             "submit": "Import",
             "importing": "Importing…",
             "success": "Recipe imported — review and save",
             "invalidUrl": "Enter a valid recipe URL (http or https).",
             "fetchFailed": "Couldn't reach that page. Check the link or add the recipe manually.",
+            "pageTooLarge": "This page is too large to import. Add the recipe manually.",
             "noRecipeFound": "Couldn't read a recipe from that page. Add it manually instead."
         }
     },

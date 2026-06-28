@@ -14,7 +14,9 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Frigorino.Features.Recipes
 {
-    public sealed record ImportRecipeRequest(string Url);
+    // Name/Description are optional caller overrides: when the user has typed them on the create
+    // page they take precedence over whatever the page parses to (import-as-prefill).
+    public sealed record ImportRecipeRequest(string Url, string? Name = null, string? Description = null);
 
     public static class ImportRecipeEndpoint
     {
@@ -60,7 +62,11 @@ namespace Frigorino.Features.Recipes
             }
 
             var imported = import.Value;
-            var creation = Recipe.Create(imported.Name, imported.Description, householdId, currentUser.UserId, imported.Servings);
+            // User-typed name/description win over the parsed values; when absent the parsed values
+            // are used (a successful import always carries a name — the parser skips name-less nodes).
+            var effectiveName = string.IsNullOrWhiteSpace(request.Name) ? imported.Name : request.Name.Trim();
+            var effectiveDescription = string.IsNullOrWhiteSpace(request.Description) ? imported.Description : request.Description.Trim();
+            var creation = Recipe.Create(effectiveName, effectiveDescription, householdId, currentUser.UserId, imported.Servings);
             if (creation.IsFailed)
             {
                 return creation.ToValidationProblem();
