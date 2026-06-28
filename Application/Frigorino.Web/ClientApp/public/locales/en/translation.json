@@ -217,7 +217,8 @@
         "noLists": "Create a list first to add ingredients to it.",
         "createList": "Create a list",
         "addCount": "Add {{count}} to {{list}}",
-        "added": "Added {{count}} to {{list}}"
+        "added": "Added {{count}} to {{list}}",
+        "viewList": "View list"
     },
     "promote": {
         "barReady_one": "{{count}} item ready for inventory",
@@ -236,7 +237,8 @@
         "addCount_one": "Add {{count}} to {{inventory}}",
         "addCount_other": "Add {{count}} to {{inventory}}",
         "added_one": "Added {{count}} item to {{inventory}}",
-        "added_other": "Added {{count}} items to {{inventory}}"
+        "added_other": "Added {{count}} items to {{inventory}}",
+        "viewInventory": "View inventory"
     },
     "reorder": {
         "addToList": "Add to list",

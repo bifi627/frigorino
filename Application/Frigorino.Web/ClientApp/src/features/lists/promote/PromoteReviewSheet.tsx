@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
     draftToQuantity,
@@ -52,6 +53,7 @@ export const PromoteReviewSheet = ({
     listId,
 }: PromoteReviewSheetProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { data: entries = [] } = usePendingPromotions(
         householdId,
         listId,
@@ -164,11 +166,24 @@ export const PromoteReviewSheet = ({
                 body: { inventoryId: targetId, items },
             });
             if (result.promotedCount > 0) {
+                const targetInventoryId = targetId;
                 toast.success(
                     t("promote.added", {
                         count: result.promotedCount,
                         inventory: targetName,
                     }),
+                    {
+                        action: {
+                            label: t("promote.viewInventory"),
+                            onClick: () =>
+                                navigate({
+                                    to: "/inventories/$inventoryId/view",
+                                    params: {
+                                        inventoryId: String(targetInventoryId),
+                                    },
+                                }),
+                        },
+                    },
                 );
             }
             onClose();

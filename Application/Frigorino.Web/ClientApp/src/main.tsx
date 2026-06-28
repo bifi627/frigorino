@@ -134,6 +134,7 @@ createRoot(document.getElementById("root")!).render(
                     })}
                 />
                 <Toaster
+                    position="top-center"
                     theme="dark"
                     closeButton
                     toastOptions={{
