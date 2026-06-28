@@ -81,11 +81,13 @@ namespace Frigorino.Infrastructure.Services
             if (root.ValueKind == JsonValueKind.Object)
             {
                 yield return root;
-                if (root.TryGetProperty("@graph", out var graph) && graph.ValueKind == JsonValueKind.Array)
+                // Deep-walk every nested object/array (not just @graph): recipes are commonly
+                // nested under mainEntity / mainEntityOfPage, which a @graph-only walk misses.
+                foreach (var prop in root.EnumerateObject())
                 {
-                    foreach (var el in graph.EnumerateArray())
+                    if (prop.Value.ValueKind == JsonValueKind.Object || prop.Value.ValueKind == JsonValueKind.Array)
                     {
-                        foreach (var n in EnumerateNodes(el))
+                        foreach (var n in EnumerateNodes(prop.Value))
                         {
                             yield return n;
                         }

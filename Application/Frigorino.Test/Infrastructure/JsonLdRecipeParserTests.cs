@@ -89,5 +89,35 @@ namespace Frigorino.Test.Infrastructure
             Assert.Null(JsonLdRecipeParser.Parse("<html><script type=\"application/ld+json\">{ not json </script></html>"));
             Assert.Null(JsonLdRecipeParser.Parse("<html><body>no jsonld here</body></html>"));
         }
+
+        [Fact]
+        public void Finds_recipe_nested_under_mainEntity()
+        {
+            var html = Html("""
+                {"@context":"https://schema.org","@type":"WebPage","name":"Page",
+                 "mainEntity":{"@type":"Recipe","name":"Soup","recipeIngredient":["water","salt"]}}
+            """);
+
+            var result = JsonLdRecipeParser.Parse(html);
+
+            Assert.NotNull(result);
+            Assert.Equal("Soup", result!.Name);
+            Assert.Equal(new[] { "water", "salt" }, result.Ingredients);
+        }
+
+        [Fact]
+        public void Skips_recipe_stub_without_ingredients_and_returns_complete_one()
+        {
+            // Mimics rewe.de: a Recipe stub with no ingredients precedes the real recipe.
+            var html = Html("""
+                [{"@type":"Recipe","name":"Stub"},
+                 {"@type":"Recipe","name":"Complete","recipeIngredient":["x"]}]
+            """);
+
+            var result = JsonLdRecipeParser.Parse(html);
+
+            Assert.NotNull(result);
+            Assert.Equal("Complete", result!.Name);
+        }
     }
 }

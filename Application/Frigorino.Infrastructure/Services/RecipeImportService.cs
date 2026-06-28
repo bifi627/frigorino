@@ -5,7 +5,7 @@ namespace Frigorino.Infrastructure.Services
 {
     public class RecipeImportService
     {
-        public const long MaxResponseBytes = 3 * 1024 * 1024;
+        public const long MaxResponseBytes = 8 * 1024 * 1024;
         private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
 
         private readonly HttpClient _http;
