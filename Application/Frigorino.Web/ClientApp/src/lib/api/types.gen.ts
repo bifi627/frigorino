@@ -129,6 +129,10 @@ export type HttpValidationProblemDetails = {
 
 export type IFormFile = Blob | File;
 
+export type ImportRecipeRequest = {
+    url: string;
+};
+
 export type InventoryCreatorResponse = {
     externalId: string;
     name: string;
@@ -228,6 +232,14 @@ export type PendingPromotionResponse = {
     quantity: null | QuantityDto;
     expiryHandling: ExpiryHandling;
     suggestedExpiry: null | string;
+};
+
+export type ProblemDetails = {
+    type?: null | string;
+    title?: null | string;
+    status?: null | number;
+    detail?: null | string;
+    instance?: null | string;
 };
 
 export type ProductCatalogItem = {
@@ -2190,6 +2202,41 @@ export type CreateRecipeResponses = {
 };
 
 export type CreateRecipeResponse = CreateRecipeResponses[keyof CreateRecipeResponses];
+
+export type ImportRecipeData = {
+    body: ImportRecipeRequest;
+    path: {
+        householdId: number;
+    };
+    query?: never;
+    url: '/api/household/{householdId}/recipes/import';
+};
+
+export type ImportRecipeErrors = {
+    /**
+     * Bad Request
+     */
+    400: HttpValidationProblemDetails;
+    /**
+     * Not Found
+     */
+    404: unknown;
+    /**
+     * Unprocessable Entity
+     */
+    422: ProblemDetails;
+};
+
+export type ImportRecipeError = ImportRecipeErrors[keyof ImportRecipeErrors];
+
+export type ImportRecipeResponses = {
+    /**
+     * Created
+     */
+    201: RecipeResponse;
+};
+
+export type ImportRecipeResponse = ImportRecipeResponses[keyof ImportRecipeResponses];
 
 export type DeleteRecipeData = {
     body?: never;

@@ -97,6 +97,7 @@ builder.Services.AddItemClassification(builder.Configuration);
 builder.Services.AddQuantityExtraction(builder.Configuration);
 builder.Services.AddRecipeQuantityExtraction(builder.Configuration);
 builder.Services.AddRecipeTagSuggestion(builder.Configuration);
+builder.Services.AddRecipeImport();
 builder.Services.AddMaintenanceServices(builder.Configuration);
 builder.Services.AddExpiryNotifications(builder.Configuration);
 
@@ -435,6 +436,7 @@ var recipes = app.MapGroup("/api/household/{householdId:int}/recipes")
     .RequireAuthorization()
     .WithTags("Recipes");
 recipes.MapCreateRecipe();
+recipes.MapImportRecipe();
 recipes.MapGetRecipes();
 recipes.MapGetRecipe();
 recipes.MapGetRecipeRevision();

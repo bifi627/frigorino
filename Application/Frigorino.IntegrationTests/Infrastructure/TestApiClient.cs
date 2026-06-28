@@ -740,6 +740,17 @@ public class TestApiClient(ScenarioContextHolder ctx)
             });
     }
 
+    public Task<IAPIResponse> TryImportRecipeAsync(string url)
+    {
+        return ctx.BrowserContext.APIRequest.PostAsync(
+            $"/api/household/{ctx.HouseholdId}/recipes/import",
+            new APIRequestContextOptions
+            {
+                Headers = AuthHeaders,
+                DataObject = new { url },
+            });
+    }
+
     // ---- Recipe tags ----
 
     public Task<IAPIResponse> TrySetRecipeTagsAsync(int recipeId, string[] tags, int? householdId = null)
