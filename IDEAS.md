@@ -41,12 +41,4 @@ Format per item:
 - **Why:** `CopyRecipeToList` and manual list-add blindly append (`List.AddItem`), so the same item piles up as duplicate rows — copy a recipe whose milk is already on the list and you get milk twice, no merge, no warning. Unlike inventory (where per-item expiry makes each purchase a deliberately distinct lot — dedup there is explicitly **not** wanted), list items have no expiry, so duplicates are pure noise.
 - **Sketch:** Match on `ProductName.Normalize(name)` + unit (reuse the existing normalizer already used in `ToggleItemStatus.cs:74` — no new code). Merge rule: same name **and** same unit (or both unitless) → sum quantities; different unit, or one has a qty and the other doesn't → **add separate** (never guess a conversion — this is what sidesteps the whole unit-conversion problem). Centralize in `List.AddItem` so both copy-to-list and manual add benefit.
 - **Open decisions:** (a) silent merge + informative toast ("merged into milk, now 2 L") vs. ask first — silent surprises people ("why did the count change instead of adding a row?"); lean silent + toast for v1. (b) scope: copy-to-list only, or manual add too.
-- **Impact / cost:** Small — a domain method change + one IT. No migration. Pairs naturally with the toast work below.
-
----
-
-## Toast placement + follow-through actions
-
-- **Why:** `<Toaster>` (`main.tsx:136`) sets no `position`, so sonner defaults to the **bottom** — directly over the fixed composer footer on recipe/list pages, so toasts overlap the input. Separately, success toasts dead-end: "Added 6 to Groceries" closes the sheet and leaves you on the recipe with no way to jump to what you just built.
-- **Sketch:** Set `position="top-center"` (robust regardless of composer height — a bottom `offset` is brittle because the composer grows when quantity/comment panels open; just verify no collision with the top AppBar). Add contextual actions via sonner `action: { label, onClick }` — copy-to-list → "View list"; promote success → "View pantry"; and undo on copy-to-list for parity with list-item delete. The pattern already exists (the `undo-action-button` class in the current `toastOptions`).
-- **Impact / cost:** Tiny — frontend only, native sonner props, no new dependency. Reversible.
+- **Impact / cost:** Small — a domain method change + one IT. No migration.
