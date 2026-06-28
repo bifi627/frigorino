@@ -59,6 +59,51 @@ namespace Frigorino.Test.Infrastructure
             Assert.Equal("page_too_large", Code(result));
         }
 
+        [Fact]
+        public async Task FetchImage_returns_bytes_for_image_response()
+        {
+            var bytes = new byte[] { 1, 2, 3, 4, 5 };
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            var service = new RecipeImportService(StubClient(content));
+
+            var result = await service.FetchImageAsync("https://example.com/img.jpg", CancellationToken.None);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(bytes, result.Value);
+        }
+
+        [Fact]
+        public async Task FetchImage_rejects_non_image_content_type()
+        {
+            var content = new StringContent("<html></html>", System.Text.Encoding.UTF8, "text/html");
+            var service = new RecipeImportService(StubClient(content));
+
+            var result = await service.FetchImageAsync("https://example.com/notimage", CancellationToken.None);
+
+            Assert.True(result.IsFailed);
+        }
+
+        [Fact]
+        public async Task FetchImage_rejects_non_http_url()
+        {
+            var service = RecipeImportService.CreateDefault();
+            var result = await service.FetchImageAsync("ftp://example.com/img.jpg", CancellationToken.None);
+            Assert.True(result.IsFailed);
+        }
+
+        [Fact]
+        public async Task FetchImage_fails_when_streamed_body_exceeds_cap()
+        {
+            var content = new StreamContent(new FixedLengthStream(RecipeImportService.MaxResponseBytes + 1));
+            content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            var service = new RecipeImportService(StubClient(content));
+
+            var result = await service.FetchImageAsync("https://example.com/big.jpg", CancellationToken.None);
+
+            Assert.True(result.IsFailed);
+        }
+
         private static HttpClient StubClient(HttpContent content)
             => new(new StubHandler(new HttpResponseMessage(HttpStatusCode.OK) { Content = content }));
 

@@ -144,7 +144,36 @@ namespace Frigorino.Infrastructure.Services
                 sourceName = sourceName[..RecipeLink.LabelMaxLength];
             }
 
-            return new ImportedRecipe(name, description, ParseServings(node), ingredients, sourceName);
+            return new ImportedRecipe(name, description, ParseServings(node), ingredients, sourceName, ReadImageUrl(node));
+        }
+
+        // schema.org `image` is a string, an array of strings, an ImageObject{url}, or an array of
+        // those — take the first usable URL. ponytail: relative URLs aren't resolved (no base href);
+        // FetchImageAsync rejects non-absolute-http(s) values, so they just no-op the best-effort cover.
+        private static string? ReadImageUrl(JsonElement node)
+            => node.TryGetProperty("image", out var image) ? FirstImageUrl(image) : null;
+
+        private static string? FirstImageUrl(JsonElement image)
+        {
+            switch (image.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return CleanText(image.GetString());
+                case JsonValueKind.Object:
+                    return image.TryGetProperty("url", out var url) ? FirstImageUrl(url) : null;
+                case JsonValueKind.Array:
+                    foreach (var el in image.EnumerateArray())
+                    {
+                        var found = FirstImageUrl(el);
+                        if (found is not null)
+                        {
+                            return found;
+                        }
+                    }
+                    return null;
+                default:
+                    return null;
+            }
         }
 
         private static List<string> ReadIngredients(JsonElement node)
