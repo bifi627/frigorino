@@ -1,3 +1,4 @@
+using Frigorino.Domain.Entities;
 using Frigorino.Infrastructure.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,5 +65,20 @@ public class RecipeImportApiSteps(ScenarioContextHolder ctx, TestApiClient api)
     {
         var json = (await ctx.LastApiResponse!.JsonAsync())!.Value;
         Assert.Equal(code, json.GetProperty("code").GetString());
+    }
+
+    [Then("the imported recipe has the tags {string}")]
+    public async Task ThenTheImportedRecipeHasTheTags(string csv)
+    {
+        var expected = csv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(Enum.Parse<RecipeTag>)
+            .OrderBy(t => t)
+            .ToList();
+
+        using var scope = ctx.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var recipe = await db.Recipes.FirstAsync(r => r.Id == _importedRecipeId);
+        Assert.Equal(expected, recipe.Tags.OrderBy(t => t).ToList());
     }
 }

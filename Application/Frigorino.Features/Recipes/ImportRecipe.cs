@@ -23,6 +23,10 @@ namespace Frigorino.Features.Recipes
 
     public static class ImportRecipeEndpoint
     {
+        // Bound the tag-suggestion prompt — the parsed page could carry hundreds of ingredient lines;
+        // the first ~100 are ample context (mirrors the SuggestRecipeTags on-demand endpoint's cap).
+        private const int MaxTagIngredientLines = 100;
+
         public static IEndpointRouteBuilder MapImportRecipe(this IEndpointRouteBuilder app)
         {
             app.MapPost("import", Handle)
@@ -41,6 +45,7 @@ namespace Frigorino.Features.Recipes
             ApplicationDbContext db,
             RecipeImportService importService,
             IRecipeQuantityExtractionTrigger quantityTrigger,
+            IRecipeTagSuggester tagSuggester,
             [FromKeyedServices(BlobAreas.RecipeAttachment)] IFileStorage coverStorage,
             IImageProcessor imageProcessor,
             ILoggerFactory loggerFactory,
@@ -105,6 +110,14 @@ namespace Frigorino.Features.Recipes
                 quantityTrigger.OnItemRouted(householdId, recipe.Id, item.Id, analysis);
             }
 
+            // Best-effort AI tags: suggest from the parsed recipe and apply them so the user lands on
+            // the edit page with tags already set (and editable). Inline by design (the heavy on-demand
+            // model), like the cover. Disabled AI / adapter errors → empty list → no-op; a tagging
+            // failure never fails the import.
+            await TryApplySuggestedTagsAsync(db, tagSuggester, recipe, currentUser.UserId, membership.Role,
+                effectiveName, effectiveDescription, imported.Ingredients,
+                loggerFactory.CreateLogger(typeof(ImportRecipeEndpoint)), ct);
+
             // Best-effort cover: pull the JSON-LD image through the same guarded fetch path, re-encode,
             // and attach it (becomes coverAttachmentId). Never fails the import — see TryAttachCoverAsync.
             if (!string.IsNullOrWhiteSpace(imported.ImageUrl))
@@ -116,6 +129,44 @@ namespace Frigorino.Features.Recipes
             return TypedResults.Created(
                 $"/api/household/{householdId}/recipes/{recipe.Id}",
                 RecipeResponse.From(recipe, creator, routed.Count));
+        }
+
+        // Suggest tags from the parsed recipe and apply them, all best-effort. The suggester already
+        // swallows adapter errors to an empty list (and the Null impl returns empty when AI is off), so
+        // the only thing guarded here is the persistence: a tagging failure must never fail an import
+        // whose recipe is already saved. The importing user is the creator, so SetTags' role check passes.
+        private static async Task TryApplySuggestedTagsAsync(
+            ApplicationDbContext db,
+            IRecipeTagSuggester tagSuggester,
+            Recipe recipe,
+            string callerUserId,
+            HouseholdRole callerRole,
+            string name,
+            string? description,
+            IReadOnlyList<string> ingredients,
+            ILogger logger,
+            CancellationToken ct)
+        {
+            try
+            {
+                var capped = ingredients.Take(MaxTagIngredientLines).ToList();
+                var suggested = await tagSuggester.SuggestAsync(name, description, capped, ct);
+                if (suggested.Count == 0)
+                {
+                    return;
+                }
+
+                var set = recipe.SetTags(callerUserId, callerRole, suggested);
+                if (set.IsFailed)
+                {
+                    return;
+                }
+                await db.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Tag suggestion failed for imported recipe {RecipeId}.", recipe.Id);
+            }
         }
 
         // Fetch → process → store → attach, all best-effort: any failure (bad URL, blocked IP,
