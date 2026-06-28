@@ -1,5 +1,3 @@
-using Microsoft.Playwright;
-
 namespace Frigorino.IntegrationTests.Slices.Recipes;
 
 [Binding]
