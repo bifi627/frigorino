@@ -136,7 +136,13 @@ namespace Frigorino.Infrastructure.Services
                 return null;
             }
 
-            return new ImportedRecipe(name, description, ParseServings(node), ingredients, CleanText(GetString(node, "author")));
+            var sourceName = CleanText(GetString(node, "author"));
+            if (sourceName is not null && sourceName.Length > RecipeLink.LabelMaxLength)
+            {
+                sourceName = sourceName[..RecipeLink.LabelMaxLength];
+            }
+
+            return new ImportedRecipe(name, description, ParseServings(node), ingredients, sourceName);
         }
 
         private static List<string> ReadIngredients(JsonElement node)
