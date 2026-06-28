@@ -1,10 +1,4 @@
-import {
-    Box,
-    ListItemText,
-    Snackbar,
-    Tooltip,
-    Typography,
-} from "@mui/material";
+import { Box, Snackbar, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -61,75 +55,55 @@ export function InventoryItemContent({ item }: Props) {
                     }}
                 />
             )}
-            <ListItemText
+            <Box
                 {...events}
-                sx={{ pl: item.expiryDate ? 2 : 0 }} // Add padding when highlight bar is present
-                slotProps={{ secondary: { component: "div" } }}
-                primary={
+                sx={{
+                    display: "flex",
+                    width: "100%",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    pl: item.expiryDate ? 2 : 0, // Clear the highlight bar when present
+                }}
+            >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                         variant="body2"
-                        sx={{
-                            fontWeight: 500,
-                            wordBreak: "break-word",
-                        }}
+                        sx={{ fontWeight: 500, wordBreak: "break-word" }}
                     >
                         {item.text}
                     </Typography>
-                }
-                secondary={
-                    <Box
-                        sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            mt: 0.5,
-                            minHeight: 20,
-                        }}
-                    >
-                        {/* Left side - Quantity */}
-                        <Box>
-                            {item.quantity && (
-                                <ItemQuantityChip
-                                    quantity={item.quantity}
-                                    testId={`inventory-item-quantity-${item.text}`}
-                                />
-                            )}
-                        </Box>
-
-                        {/* Right side - Human readable date with tooltip and mobile support */}
-                        <Box>
-                            {item.expiryDate && (
-                                <Tooltip
-                                    title={`${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`}
-                                    arrow
-                                >
-                                    <Typography
-                                        variant="caption"
-                                        onClick={handleDateClick}
-                                        sx={{
-                                            color: "text.secondary",
-                                            cursor: "pointer",
-                                            userSelect: "none",
-                                            "&:hover": {
-                                                color: "text.primary",
-                                            },
-                                            "&:active": {
-                                                color: "text.primary",
-                                            },
-                                        }}
-                                    >
-                                        {getExpiryInfo(
-                                            item.expiryDate,
-                                            translateKey,
-                                        ).humanReadable ||
-                                            formatLocalDate(item.expiryDate)}
-                                    </Typography>
-                                </Tooltip>
-                            )}
-                        </Box>
-                    </Box>
-                }
-            />
+                    {item.expiryDate && (
+                        <Tooltip
+                            title={`${t("inventory.expiryDate")}: ${formatLocalDate(item.expiryDate)}`}
+                            arrow
+                        >
+                            <Typography
+                                variant="caption"
+                                onClick={handleDateClick}
+                                sx={{
+                                    display: "block",
+                                    color: "text.secondary",
+                                    cursor: "pointer",
+                                    userSelect: "none",
+                                    "&:hover": { color: "text.primary" },
+                                    "&:active": { color: "text.primary" },
+                                }}
+                            >
+                                {getExpiryInfo(item.expiryDate, translateKey)
+                                    .humanReadable ||
+                                    formatLocalDate(item.expiryDate)}
+                            </Typography>
+                        </Tooltip>
+                    )}
+                </Box>
+                {item.quantity && (
+                    <ItemQuantityChip
+                        quantity={item.quantity}
+                        testId={`inventory-item-quantity-${item.text}`}
+                    />
+                )}
+            </Box>
             {/* Snackbar for mobile date display */}
             <Snackbar
                 open={showDateSnackbar}

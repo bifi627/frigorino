@@ -96,6 +96,7 @@ export const InventoryContainer = forwardRef<
                     ) : (
                         <SortableList
                             items={visibleItems}
+                            dense
                             isLoading={isLoading}
                             error={error}
                             onReorder={async (itemId, afterId) => {

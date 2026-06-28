@@ -1,5 +1,16 @@
-import { Add, Delete } from "@mui/icons-material";
-import { Alert, Box, Button, Container, Skeleton, Stack } from "@mui/material";
+import { Add, Delete, ExpandMore } from "@mui/icons-material";
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Alert,
+    Box,
+    Button,
+    Container,
+    Skeleton,
+    Stack,
+    Typography,
+} from "@mui/material";
 import { useParams } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +26,7 @@ import { useCurrentHouseholdWithDetails } from "../../me/activeHousehold/useCurr
 import { DeleteRecipeConfirmDialog } from "../components/DeleteRecipeConfirmDialog";
 import { EditRecipeForm } from "../components/EditRecipeForm";
 import { RecipeSourcesStrip } from "../components/RecipeSourcesStrip";
+import { RecipeTagSelector } from "../components/RecipeTagSelector";
 import { RecipeSectionGroup } from "../items/components/RecipeSectionGroup";
 import { RecipeFooter } from "../items/components/RecipeFooter";
 import { useExtractionPoll } from "../../../hooks/useExtractionPoll";
@@ -256,10 +268,36 @@ export const RecipeEditPage = () => {
                             recipe={recipe}
                         />
 
-                        <RecipeSourcesStrip
-                            householdId={householdId}
-                            recipeId={recipeId}
-                        />
+                        <Accordion
+                            disableGutters
+                            elevation={0}
+                            sx={{
+                                bgcolor: "transparent",
+                                "&:before": { display: "none" },
+                            }}
+                        >
+                            <AccordionSummary
+                                expandIcon={<ExpandMore />}
+                                data-testid="recipe-details-accordion"
+                                sx={{ px: 0 }}
+                            >
+                                <Typography variant="subtitle2">
+                                    {t("recipes.details")}
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails sx={{ px: 0 }}>
+                                <Stack spacing={2}>
+                                    <RecipeTagSelector
+                                        householdId={householdId}
+                                        recipe={recipe}
+                                    />
+                                    <RecipeSourcesStrip
+                                        householdId={householdId}
+                                        recipeId={recipeId}
+                                    />
+                                </Stack>
+                            </AccordionDetails>
+                        </Accordion>
 
                         <SortableSectionList
                             sections={sections}

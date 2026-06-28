@@ -23,20 +23,6 @@ Format per item:
 
 ---
 
-## Recipe edit polish: collapse extras + compact ingredient rows
-
-Two related refinements to the recipe edit page, best done as one pass.
-
-- **Why:** The page over-weights the *optional* extras and under-weights the actual recipe-building. `RecipeTagSelector` (`EditRecipeForm.tsx:241`) and `RecipeSourcesStrip` links (`RecipeEditPage.tsx:265`) sit above the fold, pushing the composer + sections down. And the ingredient rows themselves still render via the shared `SortableListItem` card chrome (outlined card per item, quantity chip stacked *below* the name), so they read bulky next to the calmer new header/sections/strip. The approved prototype (`RecipeEditPrototype.tsx`, deleted in Phase 4) showed denser rows: name + small italic comment left, quantity pill right-aligned on the **same** line, hairline dividers instead of per-item cards, no per-row ⋮ menu (tap the row to edit).
-- **Sketch:**
-  - **(a) Collapse extras (quick win):** wrap `RecipeTagSelector` + `RecipeSourcesStrip` in a single collapsed MUI `<Accordion>` ("Details", default closed) between the name/servings block and `SortableSectionList`. No API change; tag suggestion still works behind the fold.
-  - **(b) Compact rows — content (recipe-only, low risk):** restructure `RecipeItemContent.tsx` to a flex row — name (+ comment underneath) left, `ItemQuantityChip` right — instead of the current `ListItemText` primary/secondary stack. Keep testids `recipe-item-{id}`, `recipe-item-quantity-{text}`, `recipe-item-comment-{id}`.
-  - **(c) Compact rows — chrome (shared — the careful part):** `SortableListItem`/`SortableList` are shared with Lists + Inventories. Add an **opt-in** `dense` prop (default false → those features unchanged) that swaps the per-item card border for a bottom hairline divider, drops the inter-row `mb`, and tightens padding. Only `RecipeContainer` passes it.
-  - **(d) Menu vs tap-to-edit (the real decision):** the prototype has no per-row ⋮ menu — editing is tap-the-row. Dropping the menu removes `item-menu-button-{text}` / `edit-item-button` / `delete-item-button`, which the Reqnroll item IT drives. Either keep the menu (safe, preserves IT, ~80% of the look) or go full tap-to-edit and rewrite `ComposerSteps`/`RecipeSteps` to open the editor by clicking the row + a separate delete affordance. Pick at planning time.
-- **Impact / cost:** (a) is tiny, ~1–2 frontend files. (b) is ~1 recipe-only file. (c) threads one prop across 3 shared files. Half a day total if keeping the menu; more if going menu-less (IT rewrite). No backend, no migration.
-
----
-
 ## Import a recipe from a URL (and later PDF/photo)
 
 - **Why:** Creating a recipe means typing every ingredient one at a time into the composer; quantity can't even be set on entry (only via edit / async AI extraction). Bulk-paste-a-block is weak on mobile. The mobile-native answer is **import**: paste a recipe URL (or later snap/upload a page) and have the app populate the recipe for review. This is the highest-leverage fix for "recipe creation is tedious," but it's a real feature, not a quick win.

@@ -67,6 +67,8 @@ export interface SortableListProps<T extends SortableItemInterface> {
     editingItem?: T | null;
     showDragHandles?: boolean;
     showCheckbox?: boolean;
+    /** Opt-in compact chrome forwarded to each row (default false). */
+    dense?: boolean;
     renderContent: (item: T) => React.ReactNode;
     /** Optional per-item flag for background work in progress (pulsing accent border). */
     isItemProcessing?: (item: T) => boolean;
@@ -88,6 +90,7 @@ export const SortableList = <T extends SortableItemInterface>({
     editingItem: externalEditingItem,
     showDragHandles = false,
     showCheckbox = false,
+    dense = false,
     renderContent,
     isItemProcessing,
     sortMode = "custom",
@@ -318,7 +321,7 @@ export const SortableList = <T extends SortableItemInterface>({
                             data-section="unchecked-items"
                             sx={{
                                 py: 0,
-                                "& .MuiListItem-root": { mb: 0.5 },
+                                "& .MuiListItem-root": { mb: dense ? 0 : 0.5 },
                             }}
                         >
                             {displayUnchecked.map((item) => (
@@ -337,6 +340,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                     }
                                     showCheckbox={showCheckbox}
                                     showDragHandles={showDragHandles}
+                                    dense={dense}
                                     renderContent={renderContent}
                                 />
                             ))}
@@ -362,7 +366,7 @@ export const SortableList = <T extends SortableItemInterface>({
                         data-section="checked-items"
                         sx={{
                             py: 0,
-                            "& .MuiListItem-root": { mb: 0.5 },
+                            "& .MuiListItem-root": { mb: dense ? 0 : 0.5 },
                         }}
                     >
                         {visibleChecked.map((item) => (
@@ -377,6 +381,7 @@ export const SortableList = <T extends SortableItemInterface>({
                                 isProcessing={isItemProcessing?.(item) ?? false}
                                 showCheckbox={showCheckbox}
                                 showDragHandles={false}
+                                dense={dense}
                                 renderContent={renderContent}
                             />
                         ))}

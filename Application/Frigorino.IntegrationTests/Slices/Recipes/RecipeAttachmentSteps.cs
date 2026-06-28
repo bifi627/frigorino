@@ -42,8 +42,9 @@ public class RecipeAttachmentSteps
     [When("I expand the attachments section")]
     public async Task WhenIExpandTheAttachmentsSection()
     {
-        // Attachments now live in an always-visible "Sources & photos" strip — there is no accordion
-        // to expand. Just wait for the add-attachment control to be ready.
+        // The "Sources & photos" strip lives inside the collapsed "Details" accordion on the edit
+        // page — open it, then wait for the add-attachment control to become actionable.
+        await ctx.Page.GetByTestId("recipe-details-accordion").ClickAsync();
         await Assertions.Expect(ctx.Page.GetByTestId("recipe-add-attachment")).ToBeVisibleAsync();
     }
 

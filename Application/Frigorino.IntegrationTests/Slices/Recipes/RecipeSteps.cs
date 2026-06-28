@@ -48,6 +48,13 @@ public class RecipeSteps(ScenarioContextHolder ctx, TestApiClient api)
             new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded });
     }
 
+    [When("I open the recipe details")]
+    public async Task WhenIOpenTheRecipeDetails()
+    {
+        // Tags + sources live behind the collapsed "Details" accordion on the edit page.
+        await ctx.Page.GetByTestId("recipe-details-accordion").ClickAsync();
+    }
+
     // ---- View interactions ----
 
     [When("I increment the servings")]

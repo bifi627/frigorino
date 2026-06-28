@@ -25,6 +25,7 @@ Feature: Recipe tags
   Scenario: Suggest tags offers ghost chips the user can accept
     Given there is a recipe named "Carrot Cake"
     When I open the recipe "Carrot Cake" for editing
+    And I open the recipe details
     And I tap suggest tags
     Then a suggested tag chip "Dessert" is shown
     When I accept the suggested tag "Dessert"

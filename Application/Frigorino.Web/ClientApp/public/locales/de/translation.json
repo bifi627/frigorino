@@ -350,6 +350,7 @@
         }
     },
     "recipes": {
+        "details": "Details",
         "recipes": "Rezepte",
         "tagsHeading": "Tags",
         "courseHeading": "Gang",
