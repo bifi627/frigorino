@@ -350,6 +350,7 @@
         }
     },
     "recipes": {
+        "details": "Details",
         "recipes": "Recipes",
         "tagsHeading": "Tags",
         "courseHeading": "Course",
