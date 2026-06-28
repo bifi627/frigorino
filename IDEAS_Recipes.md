@@ -16,6 +16,40 @@ Same intent as `IDEAS.md` (forward-looking enhancements), scoped to recipes. Eac
 - **Why:** Client requirement #5's end-goal — once a recipe has source material (link/document), use AI to extract in-app cooking instructions, turning the MVP "ingredient list" into a full recipe.
 - **Sketch:** Big one, needs its own brainstorm. Depends on attachments landing first. Vendor-neutral per the existing `IXxx` interface convention. Out of sight until attachments + a real cooking-instruction data model exist.
 
+# Recipe URL import — deferred follow-ups
+
+Split off while scoping the **URL import MVP** (JSON-LD-only, deterministic, no AI; save-then-edit; paste-URL only — see `IDEAS.md` → "Import a recipe from a URL" and the import design spec). Each is its own later track, parked so the MVP stays small.
+
+## AI fallback for URL import
+
+- **Why:** The MVP only reads sites that embed `schema.org/Recipe` JSON-LD. JS-rendered, paywalled, or unstructured pages just return "couldn't read this page." An LLM fallback covers that long tail.
+- **Sketch:** The second rung of the import ladder — when the JSON-LD parse finds nothing, send the fetched page text to an LLM that returns the same `ImportedRecipe` shape the deterministic path produces. This is where the vendor-neutral ceremony the MVP deliberately skipped earns its keep: an `IRecipeImporter` port + `Null` impl + `Ai:RecipeImporter:Enabled`/`:Model` config, mirroring `AddItemClassification`/`AddQuantityExtraction`. Foreground call (user waits); hallucinated-quantity risk is contained because import already drops the user on the edit page to review.
+- **Impact / cost:** Moderate. New port + OpenAI adapter + config; reuses the MVP's hardened fetch path and the slice's domain mapping.
+
+## PWA share-target for recipe import
+
+- **Why:** The mobile-native entry point — from a recipe page in the phone browser (or another app's share sheet), tap Share → Frigorino → it imports. Far smoother than copy-pasting a URL.
+- **Sketch:** Add a `share_target` entry to the web manifest (GET with `url`/`text`/`title` params) + a receiver route that reads the shared URL and fires the existing import endpoint. The push-only SW needs no fetch handling for a GET target. Mind the [[Railway VITE_ build args]] rule if any build-arg is involved.
+- **Impact / cost:** Small once the import engine exists — manifest entry + one route + an IT.
+
+## Import the recipe cover image
+
+- **Why:** JSON-LD carries an `image` URL that the MVP drops. Pulling it in gives the imported recipe a cover thumbnail for free — the overview already renders `coverAttachmentId`.
+- **Sketch:** Fetch `image` through the **same hardened fetch path** (SSRF guard + size cap apply equally), run it through `IImageProcessor` → WebP + thumbnail → `recipe.AddAttachment` so it becomes the cover. Best-effort: a failed image fetch must never fail the whole import.
+- **Impact / cost:** Small–moderate; reuses image processing + attachment storage.
+
+## Store cooking instructions / steps in the recipe model
+
+- **Why:** The MVP **drops** `recipeInstructions` (link-only) because a recipe has nowhere to store the method — it's an ingredient list today. Keeping the steps in-app is the obvious next step. Distinct from [[AI-generated cooking instructions from sources]] (that's *generate when missing*; this is *store what the import already hands us*).
+- **Sketch:** Add a structured steps representation — a `RecipeStep` child with a rank (mirroring sections/items) or an ordered instructions field — consumed by import **and** manual entry, with view/edit UI on the recipe sheet. Flat schema, no entity inheritance. Needs its own brainstorm; touches the data model, the edit page, and the view page.
+- **Impact / cost:** Real feature (model + migration + UI), not a quick add. A concrete piece of [[Align the recipe data model to schema.org/Recipe]].
+
+## Align the recipe data model to schema.org/Recipe
+
+- **Why:** We adopted `schema.org/Recipe` as the import source but map only a subset (name, description, yield, ingredients). Now that the standard is in play, decide how closely the model should track it — closer alignment makes import lossless and could enable JSON-LD **export** (portable/shareable recipes, SEO if recipes ever go public).
+- **Sketch:** Evaluate adopting more standard fields: `recipeInstructions` as `HowToStep`/`HowToSection` (see [[Store cooking instructions / steps in the recipe model]]), prep/cook/total time, richer `recipeYield`, ingredient grouping, `recipeCategory`/`keywords` ↔ the existing tag vocabulary, nutrition (heavy — needs an external data source). Don't adopt wholesale — pick the fields that serve the waste-reduction mission; keep the flat schema.
+- **Impact / cost:** Umbrella/strategic — decompose per field. Several migrations + UI over time.
+
 # Phase 3 — directional bets
 
 Bigger-picture directions, not features. The strategic thesis: phase 1–2 build the recipe *entity*; **phase 3 is where recipes become the hub that connects inventory + expiry + lists**, exploiting assets a generic recipe app doesn't have. These are theme-level — revisit and decompose when phase 2 is in hand, don't plan from here.
