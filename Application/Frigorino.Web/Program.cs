@@ -436,6 +436,7 @@ var recipes = app.MapGroup("/api/household/{householdId:int}/recipes")
     .RequireAuthorization()
     .WithTags("Recipes");
 recipes.MapCreateRecipe();
+recipes.MapImportRecipe();
 recipes.MapGetRecipes();
 recipes.MapGetRecipe();
 recipes.MapGetRecipeRevision();
