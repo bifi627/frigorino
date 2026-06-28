@@ -451,6 +451,7 @@
             "orManually": "oder manuell eingeben",
             "urlPlaceholder": "https://example.com/beste-pfannkuchen",
             "submit": "Importieren",
+            "preview": "Vorschau",
             "importing": "Wird importiert…",
             "success": "Rezept importiert – prüfen und speichern",
             "invalidUrl": "Gib eine gültige Rezept-URL ein (http oder https).",

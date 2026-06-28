@@ -451,6 +451,7 @@
             "orManually": "or fill in manually",
             "urlPlaceholder": "https://example.com/best-pancakes",
             "submit": "Import",
+            "preview": "Preview",
             "importing": "Importing…",
             "success": "Recipe imported — review and save",
             "invalidUrl": "Enter a valid recipe URL (http or https).",
