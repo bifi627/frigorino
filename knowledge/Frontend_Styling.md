@@ -52,6 +52,15 @@ Per-feature `styles.ts` is fine when a sx value is genuinely shared across 2+ fi
 - Reqnroll/Playwright step assertions use `data-testid` or `data-*` attributes — **never translated text content**. See `Application/Frigorino.IntegrationTests/Slices/Households/Members/MemberSteps.cs` for the canonical `ToHaveAttributeAsync("data-role", ...)` pattern.
 - When a UI element will be asserted on by a test, render a stable attribute alongside the translated label: `<Chip data-role={roleNames[role]} label={roleLabels[role]} />` (see `features/households/members/components/MemberListItem.tsx`).
 
+## Toasts (sonner)
+
+One `<Toaster>` is configured globally in `main.tsx` — `position="top-center"` (keeps toasts clear of the fixed bottom composer on list/recipe pages; the AppBar is `position="static"`, so it scrolls away and there's no top collision), dark theme, `closeButton`, and the `undo-action-button` class on the action button. Use the `toast` / `toast.success` API directly; don't add a second toast container.
+
+Action buttons follow one rule, split by operation type:
+
+- **Destructive operations get Undo.** A delete pairs an optimistic cache removal with `toast(t("..."), { action: { label: t("common.undo"), onClick: () => restore.mutate(...) }, duration: 5000 })` backed by a restore mutation. Canonical: `features/lists/items/useDeleteListItem.ts` (mirrored by the recipe item/section/link/attachment and inventory-item delete hooks).
+- **Additive operations get follow-through navigation, not Undo.** Copy-to-list and promote create new rows; reversing a batch isn't cheap (the responses carry no created-id contract) and an undo there would surprise more than help. Instead the success toast offers a "go see it" action — `features/recipes/copyToList/CopyToListSheet.tsx` → "View list", `features/lists/promote/PromoteReviewSheet.tsx` → "View inventory" — navigating to the target. Undo stays destructive-only.
+
 ## Anti-pattern checklist (avoid)
 
 These are already handled by the theme — don't reintroduce them inline:
