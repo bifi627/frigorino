@@ -13,7 +13,9 @@ export const extractSharedUrl = (params: {
         }
         const match = candidate.match(HTTP_URL);
         if (match) {
-            return match[0];
+            // Strip trailing sentence punctuation the greedy [^\s]+ swallows from text like
+            // "Great recipe (https://site/r)." — else the URL 404s server-side.
+            return match[0].replace(/[).,;!?'"]+$/, "");
         }
     }
     return undefined;

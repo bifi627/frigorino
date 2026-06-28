@@ -143,7 +143,19 @@ export const CreateRecipeForm = ({ householdId }: CreateRecipeFormProps) => {
                                         "recipes.import.urlPlaceholder",
                                     )}
                                     value={url}
-                                    onChange={(e) => setUrl(e.target.value)}
+                                    onChange={(e) => {
+                                        setUrl(e.target.value);
+                                        // Editing the URL invalidates a prior peek — drop its result
+                                        // (or error) so the confirm button/card hides and the user
+                                        // must re-peek the new URL (else we'd import a URL different
+                                        // from the one previewed).
+                                        if (
+                                            previewMutation.isSuccess ||
+                                            previewMutation.isError
+                                        ) {
+                                            previewMutation.reset();
+                                        }
+                                    }}
                                     disabled={isBusy}
                                     error={urlInvalid}
                                     helperText={

@@ -18,6 +18,7 @@ import { pageContainerSx } from "../../../theme";
 import { useUserHouseholds } from "../../households/useUserHouseholds";
 import { useSetCurrentHousehold } from "../../me/activeHousehold/useSetCurrentHousehold";
 import { RecipeImportPreviewCard } from "../components/RecipeImportPreviewCard";
+import { recipeImportErrorMessage } from "../recipeImportError";
 import { useImportRecipe } from "../useImportRecipe";
 import { usePreviewRecipeImport } from "../usePreviewRecipeImport";
 
@@ -106,8 +107,21 @@ export const ImportRecipePage = () => {
                     preview={previewMutation.data}
                 />
 
+                {/* A failed peek means the real import would fail too — offer the manual escape
+                    instead of leaving the disabled import controls as a dead end. */}
+                {previewMutation.isError ? (
+                    <Button
+                        variant="outlined"
+                        onClick={() => navigate({ to: "/recipes/create" })}
+                    >
+                        {t("recipes.createRecipe")}
+                    </Button>
+                ) : null}
+
                 {importMutation.isError ? (
-                    <Alert severity="error">{t("common.errorOccurred")}</Alert>
+                    <Alert severity="error">
+                        {recipeImportErrorMessage(importMutation.error, t)}
+                    </Alert>
                 ) : null}
 
                 {multiHousehold ? (
