@@ -445,7 +445,19 @@
         "attachmentDeleted": "Anhang gelöscht",
         "uploadFailed": "Upload fehlgeschlagen",
         "fileTooLarge": "Datei ist zu groß",
-        "unsupportedFileType": "Nicht unterstützter Dateityp"
+        "unsupportedFileType": "Nicht unterstützter Dateityp",
+        "import": {
+            "open": "Aus URL importieren",
+            "title": "Rezept importieren",
+            "urlLabel": "Rezept-URL",
+            "urlPlaceholder": "https://example.com/beste-pfannkuchen",
+            "submit": "Importieren",
+            "importing": "Wird importiert…",
+            "success": "Rezept importiert – prüfen und speichern",
+            "invalidUrl": "Gib eine gültige Rezept-URL ein (http oder https).",
+            "fetchFailed": "Seite nicht erreichbar. Prüfe den Link oder füge das Rezept manuell hinzu.",
+            "noRecipeFound": "Auf dieser Seite wurde kein Rezept gefunden. Bitte manuell hinzufügen."
+        }
     },
     "products": {
         "title": "Produktkatalog",

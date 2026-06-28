@@ -445,7 +445,19 @@
         "attachmentDeleted": "Attachment deleted",
         "uploadFailed": "Upload failed",
         "fileTooLarge": "File is too large",
-        "unsupportedFileType": "Unsupported file type"
+        "unsupportedFileType": "Unsupported file type",
+        "import": {
+            "open": "Import from URL",
+            "title": "Import a recipe",
+            "urlLabel": "Recipe URL",
+            "urlPlaceholder": "https://example.com/best-pancakes",
+            "submit": "Import",
+            "importing": "Importing…",
+            "success": "Recipe imported — review and save",
+            "invalidUrl": "Enter a valid recipe URL (http or https).",
+            "fetchFailed": "Couldn't reach that page. Check the link or add the recipe manually.",
+            "noRecipeFound": "Couldn't read a recipe from that page. Add it manually instead."
+        }
     },
     "products": {
         "title": "Product catalog",
