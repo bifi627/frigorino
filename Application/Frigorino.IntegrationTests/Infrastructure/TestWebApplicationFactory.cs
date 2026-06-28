@@ -85,6 +85,11 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IRecipeTagSuggester>();
             services.AddScoped<IRecipeTagSuggester, StubRecipeTagSuggester>();
 
+            // Replace the real (network-hitting) recipe importer with a deterministic stub. Registered
+            // as a concrete type (no interface), so RemoveAll + re-add the concrete service.
+            services.RemoveAll<RecipeImportService>();
+            services.AddSingleton<RecipeImportService>(new StubRecipeImportService());
+
             // Real blob storage bound to a unique temp dir per factory instance, registered under BOTH
             // keyed storage interfaces (one shared instance per area) so the startup orphan-sweep operates
             // on the temp dir, never a real path. Only the AI classifiers stay stubbed; IImageProcessor
