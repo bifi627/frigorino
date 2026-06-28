@@ -1,4 +1,4 @@
-import { Box, Link, ListItemText, Typography } from "@mui/material";
+import { Box, Link, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ItemQuantityChip } from "../../../../components/common/ItemQuantityChip";
@@ -30,79 +30,64 @@ export function TextItemRenderer({
     });
 
     return (
-        <ListItemText
+        <Box
             {...events}
-            slotProps={{ secondary: { component: "div" } }}
-            primary={
+            sx={{
+                display: "flex",
+                width: "100%",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 1,
+            }}
+        >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                     variant="body2"
-                    sx={{
-                        fontWeight: 500,
-                        wordBreak: "break-word",
-                    }}
+                    sx={{ fontWeight: 500, wordBreak: "break-word" }}
                 >
                     {item.text ? renderTextWithLinks(item.text) : ""}
                 </Typography>
-            }
-            secondary={
-                item.quantity || item.comment ? (
-                    <Box
+                {item.comment ? (
+                    <Typography
+                        component="div"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={t("lists.comment")}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEditComment?.();
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onEditComment?.();
+                            }
+                        }}
+                        data-testid={`list-item-comment-${item.id}`}
+                        variant="caption"
+                        color="text.secondary"
                         sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 0.25,
+                            display: "block",
+                            fontSize: "0.7rem",
+                            fontStyle: "italic",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                            cursor: "pointer",
                         }}
                     >
-                        {item.comment ? (
-                            <Typography
-                                component="div"
-                                role="button"
-                                tabIndex={0}
-                                aria-label={t("lists.comment")}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEditComment?.();
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" || e.key === " ") {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        onEditComment?.();
-                                    }
-                                }}
-                                data-testid={`list-item-comment-${item.id}`}
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                    fontSize: "0.7rem",
-                                    fontStyle: "italic",
-                                    whiteSpace: "pre-wrap",
-                                    wordBreak: "break-word",
-                                    cursor: "pointer",
-                                }}
-                            >
-                                {item.comment}
-                            </Typography>
-                        ) : null}
-                        {item.quantity ? (
-                            <Box
-                                sx={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 0.5,
-                                }}
-                            >
-                                <ItemQuantityChip
-                                    quantity={item.quantity}
-                                    onClick={onEditQuantity}
-                                    testId={`list-item-quantity-${item.text}`}
-                                />
-                            </Box>
-                        ) : null}
-                    </Box>
-                ) : null
-            }
-        />
+                        {item.comment}
+                    </Typography>
+                ) : null}
+            </Box>
+            {item.quantity ? (
+                <ItemQuantityChip
+                    quantity={item.quantity}
+                    onClick={onEditQuantity}
+                    testId={`list-item-quantity-${item.text}`}
+                />
+            ) : null}
+        </Box>
     );
 }
 

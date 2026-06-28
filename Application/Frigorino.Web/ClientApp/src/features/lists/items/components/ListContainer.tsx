@@ -97,6 +97,7 @@ export const ListContainer = forwardRef<HTMLDivElement, ListContainerProps>(
                 ) : (
                     <SortableList
                         items={visibleItems}
+                        dense
                         isLoading={isLoading}
                         error={error}
                         onReorder={async (itemId, afterId) => {
