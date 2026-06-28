@@ -62,6 +62,7 @@ export const RecipeContainer = forwardRef<HTMLDivElement, RecipeContainerProps>(
             >
                 <SortableList
                     items={sectionItems}
+                    dense
                     isLoading={isLoading}
                     error={error}
                     onReorder={async (itemId, afterId) => {
