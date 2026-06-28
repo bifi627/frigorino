@@ -1,5 +1,6 @@
 using System.Net;
 using FluentResults;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Frigorino.Infrastructure.Services
 {
@@ -7,14 +8,26 @@ namespace Frigorino.Infrastructure.Services
     {
         public const long MaxResponseBytes = 15 * 1024 * 1024;
         private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(2);
 
         private readonly HttpClient _http;
+        // ponytail: 2-min in-memory cache keyed by URL, success-only; warms the peek→import double
+        // call so only one network fetch happens. Add a size cap if import volume ever grows.
+        private readonly IMemoryCache? _cache;
 
-        public RecipeImportService(HttpClient http) => _http = http;
+        public RecipeImportService(HttpClient http, IMemoryCache? cache = null)
+        {
+            _http = http;
+            _cache = cache;
+        }
 
         // ponytail: protected ctor is the IT test seam (StubRecipeImportService overrides ImportAsync);
         // avoids a one-impl interface that the spec deliberately omits.
-        protected RecipeImportService() => _http = null!;
+        protected RecipeImportService()
+        {
+            _http = null!;
+            _cache = null;
+        }
 
         public static RecipeImportService CreateDefault() => new(BuildGuardedClient());
 
@@ -39,6 +52,12 @@ namespace Frigorino.Infrastructure.Services
             if (!RecipeImportUrl.TryParseHttpUrl(url, out var uri))
             {
                 return Fail("invalid_url", "Enter a valid http(s) URL.");
+            }
+
+            var cacheKey = $"recipe-import:{url.Trim()}";
+            if (_cache is not null && _cache.TryGetValue(cacheKey, out ImportedRecipe? cached) && cached is not null)
+            {
+                return Result.Ok(cached);
             }
 
             string html;
@@ -70,9 +89,13 @@ namespace Frigorino.Infrastructure.Services
             }
 
             var parsed = JsonLdRecipeParser.Parse(html);
-            return parsed is null
-                ? Fail("no_recipe_found", "Could not find a recipe on this page.")
-                : Result.Ok(parsed);
+            if (parsed is null)
+            {
+                return Fail("no_recipe_found", "Could not find a recipe on this page.");
+            }
+
+            _cache?.Set(cacheKey, parsed, CacheDuration);
+            return Result.Ok(parsed);
         }
 
         // Pulls the cover image through the SAME guarded client as the page (SSRF check + redirect

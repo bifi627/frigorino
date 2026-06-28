@@ -104,6 +104,40 @@ namespace Frigorino.Test.Infrastructure
             Assert.True(result.IsFailed);
         }
 
+        [Fact]
+        public async Task ImportAsync_caches_successful_parse_and_skips_second_fetch()
+        {
+            const string html =
+                "<html><head><script type=\"application/ld+json\">" +
+                "{\"@context\":\"https://schema.org\",\"@type\":\"Recipe\",\"name\":\"Cake\",\"recipeIngredient\":[\"x\"]}" +
+                "</script></head></html>";
+            var handler = new CountingHandler(html);
+            var cache = new Microsoft.Extensions.Caching.Memory.MemoryCache(
+                new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
+            var service = new RecipeImportService(new HttpClient(handler), cache);
+
+            var first = await service.ImportAsync("https://example.com/r", CancellationToken.None);
+            var second = await service.ImportAsync("https://example.com/r", CancellationToken.None);
+
+            Assert.True(first.IsSuccess);
+            Assert.True(second.IsSuccess);
+            Assert.Equal("Cake", second.Value.Name);
+            Assert.Equal(1, handler.Count); // second call served from cache, no 2nd fetch
+        }
+
+        private sealed class CountingHandler(string html) : HttpMessageHandler
+        {
+            public int Count { get; private set; }
+
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                Count++;
+                var content = new StringContent(html, System.Text.Encoding.UTF8, "text/html");
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+            }
+        }
+
         private static HttpClient StubClient(HttpContent content)
             => new(new StubHandler(new HttpResponseMessage(HttpStatusCode.OK) { Content = content }));
 
