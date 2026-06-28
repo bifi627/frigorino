@@ -16,6 +16,7 @@ import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as ListsIndexRouteImport } from './routes/lists/index'
 import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
+import { Route as RecipesImportRouteImport } from './routes/recipes/import'
 import { Route as RecipesCreateRouteImport } from './routes/recipes/create'
 import { Route as ListsCreateRouteImport } from './routes/lists/create'
 import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
@@ -68,6 +69,11 @@ const ListsIndexRoute = ListsIndexRouteImport.update({
 const InventoriesIndexRoute = InventoriesIndexRouteImport.update({
   id: '/inventories/',
   path: '/inventories/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesImportRoute = RecipesImportRouteImport.update({
+  id: '/recipes/import',
+  path: '/recipes/import',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecipesCreateRoute = RecipesCreateRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/recipes/create': typeof RecipesCreateRoute
+  '/recipes/import': typeof RecipesImportRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/recipes/create': typeof RecipesCreateRoute
+  '/recipes/import': typeof RecipesImportRoute
   '/inventories': typeof InventoriesIndexRoute
   '/lists': typeof ListsIndexRoute
   '/recipes': typeof RecipesIndexRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/inventories/create': typeof InventoriesCreateRoute
   '/lists/create': typeof ListsCreateRoute
   '/recipes/create': typeof RecipesCreateRoute
+  '/recipes/import': typeof RecipesImportRoute
   '/inventories/': typeof InventoriesIndexRoute
   '/lists/': typeof ListsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/inventories/create'
     | '/lists/create'
     | '/recipes/create'
+    | '/recipes/import'
     | '/inventories/'
     | '/lists/'
     | '/recipes/'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/inventories/create'
     | '/lists/create'
     | '/recipes/create'
+    | '/recipes/import'
     | '/inventories'
     | '/lists'
     | '/recipes'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/inventories/create'
     | '/lists/create'
     | '/recipes/create'
+    | '/recipes/import'
     | '/inventories/'
     | '/lists/'
     | '/recipes/'
@@ -345,6 +357,7 @@ export interface RootRouteChildren {
   InventoriesCreateRoute: typeof InventoriesCreateRoute
   ListsCreateRoute: typeof ListsCreateRoute
   RecipesCreateRoute: typeof RecipesCreateRoute
+  RecipesImportRoute: typeof RecipesImportRoute
   InventoriesIndexRoute: typeof InventoriesIndexRoute
   ListsIndexRoute: typeof ListsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/inventories'
       fullPath: '/inventories/'
       preLoaderRoute: typeof InventoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/import': {
+      id: '/recipes/import'
+      path: '/recipes/import'
+      fullPath: '/recipes/import'
+      preLoaderRoute: typeof RecipesImportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipes/create': {
@@ -553,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoriesCreateRoute: InventoriesCreateRoute,
   ListsCreateRoute: ListsCreateRoute,
   RecipesCreateRoute: RecipesCreateRoute,
+  RecipesImportRoute: RecipesImportRoute,
   InventoriesIndexRoute: InventoriesIndexRoute,
   ListsIndexRoute: ListsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,

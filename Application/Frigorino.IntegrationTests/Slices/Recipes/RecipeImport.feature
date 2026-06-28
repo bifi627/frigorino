@@ -28,3 +28,9 @@ Feature: Recipe import UI
     When I navigate to "/recipes/create"
     And I enter the import URL "not a url"
     Then the import submit is disabled
+
+  Scenario: Sharing a recipe link opens the receiver and imports
+    When I navigate to "/recipes/import?text=Great%20recipe%20https%3A%2F%2Fexample.com%2Fpancakes"
+    And the import preview shows "Imported Pancakes"
+    And I confirm the import
+    Then I am taken to the recipe edit page
