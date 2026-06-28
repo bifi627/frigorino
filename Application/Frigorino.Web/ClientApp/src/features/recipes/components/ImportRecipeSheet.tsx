@@ -47,6 +47,12 @@ export const ImportRecipeSheet = ({
         return t("common.errorOccurred");
     };
 
+    const handleClose = () => {
+        importRecipe.reset();
+        setUrl("");
+        onClose();
+    };
+
     const handleSubmit = async () => {
         try {
             const recipe = await importRecipe.mutateAsync({
@@ -66,7 +72,7 @@ export const ImportRecipeSheet = ({
     };
 
     return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
             <DialogTitle>{t("recipes.import.title")}</DialogTitle>
             <DialogContent>
                 <TextField
@@ -93,7 +99,7 @@ export const ImportRecipeSheet = ({
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>{t("common.cancel")}</Button>
+                <Button onClick={handleClose}>{t("common.cancel")}</Button>
                 <Button
                     variant="contained"
                     onClick={handleSubmit}
