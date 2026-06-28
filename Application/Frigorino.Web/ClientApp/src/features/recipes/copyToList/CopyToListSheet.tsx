@@ -116,11 +116,22 @@ export const CopyToListSheet = ({
                 body: { targetListId: targetId, items: payload },
             });
             if (result.copiedCount > 0) {
+                const targetListId = targetId;
                 toast.success(
                     t("copyToList.added", {
                         count: result.copiedCount,
                         list: targetName,
                     }),
+                    {
+                        action: {
+                            label: t("copyToList.viewList"),
+                            onClick: () =>
+                                router.navigate({
+                                    to: "/lists/$listId/view",
+                                    params: { listId: String(targetListId) },
+                                }),
+                        },
+                    },
                 );
             }
             setDrafts({});
