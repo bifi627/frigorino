@@ -1,8 +1,8 @@
 # replay test fixtures
 
-Synthetic transcripts + a throwaway seed memory store for the writing-skills
-scenarios (Tasks 3–5 of `PLAN.md`). Scenarios run against **copies** of these in
-`C:\tmp\replay-sandbox\`, never the live memory store.
+Synthetic transcripts + a throwaway seed memory store for re-testing the skill
+after edits (writing-skills scenarios). Scenarios run against **copies** of these
+in `C:\tmp\replay-sandbox\`, never the live memory store.
 
 ## Seed memory store (`memory/`)
 

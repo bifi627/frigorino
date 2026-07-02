@@ -1,13 +1,11 @@
 ---
 name: dev-down
 description: >-
-  Tears down the local Frigorino dev stack — kills the backend + vite processes
-  (port-based, since Windows doesn't propagate signals to node grandchildren) and
-  stops the docker compose containers (volume preserved, so DB state survives the
-  next dev-up). DO NOT auto-invoke this skill. Only run when the user explicitly
-  asks for it ("shut everything down", "tear down the stack", "/dev-down"). The
-  user often keeps the stack up across sessions, and tearing it down unexpectedly
-  destroys their working state.
+  Tears down the local Frigorino dev stack — backend + vite processes and the
+  docker compose containers (DB volume preserved). DO NOT auto-invoke this skill.
+  Only run when the user explicitly asks for it ("shut everything down", "tear
+  down the stack", "/dev-down"). The user often keeps the stack up across
+  sessions, and tearing it down unexpectedly destroys their working state.
 ---
 
 # Tear down the Frigorino local dev stack
