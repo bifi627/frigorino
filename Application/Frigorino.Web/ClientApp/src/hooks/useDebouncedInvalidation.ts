@@ -1,5 +1,5 @@
 import { QueryClient, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
 // Shared debouncer for all query invalidations
 class QueryInvalidationDebouncer {
@@ -26,11 +26,6 @@ class QueryInvalidationDebouncer {
 
         this.timeouts.set(keyString, timeout);
     }
-
-    clear() {
-        this.timeouts.forEach((timeout) => clearTimeout(timeout));
-        this.timeouts.clear();
-    }
 }
 
 // Global instance
@@ -51,13 +46,6 @@ export const useDebouncedInvalidation = () => {
         },
         [queryClient],
     );
-
-    // Cleanup timeouts on unmount
-    useEffect(() => {
-        return () => {
-            queryDebouncer.clear();
-        };
-    }, []);
 
     return debouncedInvalidate;
 };

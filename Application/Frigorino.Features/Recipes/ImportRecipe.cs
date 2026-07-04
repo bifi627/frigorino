@@ -86,6 +86,11 @@ namespace Frigorino.Features.Recipes
             var recipe = creation.Value;
             recipe.CreatedByUser = creator;
             recipe.AddSection(null, null); // every recipe starts with one unnamed default section
+
+            // Two-phase save (the second needs the recipe+section ids from the first for its FKs), made
+            // atomic so a transient failure between them can't leave a phantom empty recipe. Best-effort
+            // tag/cover saves below run after commit — they involve network I/O and must not fail the import.
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
             db.Recipes.Add(recipe);
             await db.SaveChangesAsync(ct); // recipe + section now have real ids so AddItem can link the FK
 
@@ -102,6 +107,7 @@ namespace Frigorino.Features.Recipes
             }
             recipe.AddLink(request.Url, imported.SourceName);
             await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
 
             // Bulk add carries the same obligation as the item-create slice: route each new item so
             // quantity extraction runs. Recipe items never chain product classification (MVP).

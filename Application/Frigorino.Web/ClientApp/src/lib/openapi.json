@@ -5156,50 +5156,6 @@
         }
       }
     },
-    "/api/Auth/me": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Auth/profile": {
-      "put": {
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProfileRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProfileRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProfileRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/Demo": {
       "get": {
         "tags": [
@@ -7077,17 +7033,6 @@
           }
         }
       },
-      "UpdateProfileRequest": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        }
-      },
       "UpdateRecipeAttachmentRequest": {
         "required": [
           "caption"
@@ -7343,9 +7288,6 @@
     },
     {
       "name": "WeatherForecast"
-    },
-    {
-      "name": "Auth"
     },
     {
       "name": "Demo"

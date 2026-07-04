@@ -16,6 +16,9 @@ namespace Frigorino.Infrastructure.Tasks
 
         public async Task Run(CancellationToken cancellationToken = default)
         {
+            // Deliberately no SortBlueprint clause: soft-deleted blueprint rows are tombstones —
+            // GetBlueprints re-seeds the default only when NO row exists, so purging them here would
+            // resurrect deleted default blueprints. Do not "complete the per-entity purge contract".
             await _dbContext.Households.Where(h => !h.IsActive).ExecuteDeleteAsync(cancellationToken);
             await _dbContext.Inventories.Where(h => !h.IsActive).ExecuteDeleteAsync(cancellationToken);
             await _dbContext.Lists.Where(li => !li.IsActive).ExecuteDeleteAsync(cancellationToken);
