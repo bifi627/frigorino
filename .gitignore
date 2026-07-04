@@ -488,3 +488,9 @@ Application/Frigorino.Web/ClientApp/.tanstack/tmp/
 
 # Local dev blob storage (LocalFileStorage fallback dir; runtime data)
 Application/Frigorino.Web/blobs/
+
+# Understand-Anything: commit config (.understandignore, config.json) + the graph
+# (knowledge-graph.json, fingerprints.json, meta.json); ignore only the scratch.
+.understand-anything/intermediate/
+.understand-anything/tmp/
+.understand-anything/.trash-*/
