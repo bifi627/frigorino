@@ -10,7 +10,7 @@ import {
     MenuItem,
     Typography,
 } from "@mui/material";
-import { useRouter } from "@tanstack/react-router";
+import { useCanGoBack, useRouter } from "@tanstack/react-router";
 import { memo, useCallback, useState } from "react";
 import { sectionIcons } from "../../common/sections";
 import {
@@ -20,6 +20,17 @@ import {
     tintedActionButtonSx,
     type SectionKey,
 } from "../../theme";
+
+// Where the back button walks "up" to when there's no in-app history to pop
+// (cold deep-link launch). Household has no single overview route, so it falls
+// back to the dashboard like sectionless pages do.
+const sectionOverview: Record<SectionKey, string> = {
+    household: "/",
+    lists: "/lists",
+    inventory: "/inventories",
+    recipes: "/recipes",
+    blueprints: "/household/blueprints",
+};
 
 export type HeadNavigationAction = {
     text?: string;
@@ -56,6 +67,7 @@ export const PageHeadActionBar = memo(
         section,
     }: HeadNavigationProps) => {
         const router = useRouter();
+        const canGoBack = useCanGoBack();
         const SectionIcon = section ? sectionIcons[section] : null;
         const sectionColor = section ? sectionColors[section] : undefined;
         // The primary direct action (edit) takes the page's section color so it
@@ -66,9 +78,19 @@ export const PageHeadActionBar = memo(
             null,
         );
 
+        // On a cold deep-link launch (push-notification click, PWA share-target
+        // import) the SPA starts at history index 0, so a raw `history.back()`
+        // falls off the app instead of returning to the section. When there's no
+        // in-app entry to go back to, walk "up" to the section overview instead.
         const handleBack = useCallback(() => {
-            router.history.back();
-        }, [router]);
+            if (canGoBack) {
+                router.history.back();
+            } else {
+                router.navigate({
+                    to: section ? sectionOverview[section] : "/",
+                });
+            }
+        }, [canGoBack, router, section]);
 
         const handleMenuOpen = useCallback(
             (event: React.MouseEvent<HTMLElement>) => {

@@ -39,7 +39,7 @@ export const CreateListForm = ({ householdId }: CreateListFormProps) => {
                 body: { name: name.trim(), description: null },
             });
             if (response?.id) {
-                navigate({ to: `/lists/${response.id}/view` });
+                navigate({ to: `/lists/${response.id}/view`, replace: true });
             }
         } catch (err) {
             console.error("Failed to create list:", err);

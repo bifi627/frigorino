@@ -29,6 +29,8 @@ Value objects: `ProductClassification` (Category + `ExpiryProfile`), `ExpiryProf
 
 `IProductClassificationTrigger.OnProductReferenced(householdId, rawName)` is the entry point. Call sites: `Lists/Items/CreateItem` + `UpdateItem` (via the quantity-extraction chain, below), `Recipes/CopyToList/CopyRecipeToList` (direct), and the startup backfill. The enabled impl (`QueueingProductClassificationTrigger`) enqueues `ClassifyProductJob`; the disabled impl (`NullProductClassificationTrigger`) is a no-op.
 
+**Contract:** any slice that creates list items (`list.AddItem`) must wire this chain itself — the extraction trigger when the quantity isn't already supplied, the classification trigger directly otherwise. Nothing enforces this centrally, and a missed call site silently breaks promote-to-inventory (this bit `CopyRecipeToList` once).
+
 `ClassifyProductJob` (`Services/ClassifyProductJob.cs`) runs in its own DI scope: normalize → look up `Product` → if it exists with `ClassifierVersion >= current`, short-circuit (cache hit); otherwise call `IItemClassifier.ClassifyAsync` and upsert. A unique-index race on insert is a benign no-op. `OpenAiItemClassifier` uses Structured Outputs (strict schema), maps refusals/empties to `Unknown`/`NonPerishable` (a valid result, not an error), and logs its reasoning for diagnostics only (never persisted).
 
 ## Quantity-extraction pipeline

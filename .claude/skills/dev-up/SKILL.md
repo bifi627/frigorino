@@ -8,13 +8,6 @@ description: >-
   the conversation merely discusses UI/frontend code; reading and editing files does
   not require a running stack. The bring-up takes ~30s and pulls compose/dotnet/vite
   logs into context, so only fire when the cost is justified.
-
-  After the script returns, it prints the resolved URLs. Ports are scanned per
-  worktree ABOVE the user's canonical 5001/44375 (so parallel worktrees don't
-  collide and the user's own env is untouched), and recorded in .dev/stack.json.
-  Read the backend/SPA URLs from the script output or .dev/stack.json; the
-  SPA is authenticated as dev@frigorino.local via DevAuth + VITE_DEV_AUTH, and
-  the Playwright MCP browser can be pointed at the printed SPA URL.
 ---
 
 # Bring up the Frigorino local dev stack

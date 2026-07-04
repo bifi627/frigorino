@@ -41,7 +41,10 @@ export const CreateInventoryForm = ({
                 body: { name: name.trim(), description: null },
             });
             if (response?.id) {
-                navigate({ to: `/inventories/${response.id}/view` });
+                navigate({
+                    to: `/inventories/${response.id}/view`,
+                    replace: true,
+                });
             }
         } catch (err) {
             console.error("Failed to create inventory:", err);

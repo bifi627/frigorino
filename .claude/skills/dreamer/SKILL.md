@@ -1,6 +1,6 @@
 ---
 name: dreamer
-description: Use when auditing, pruning, or cleaning up the agent's own file-based memory store (the memory/ directory and its MEMORY.md index) — e.g. memories have gone stale after the project moved on, the index and files have drifted apart, wiki-links dangle, or frontmatter `name:` no longer matches filenames. Triggered by "review your memory", "clean up the memories", or /dreamer.
+description: Use when auditing, pruning, or cleaning up the agent's own file-based memory store (the memory/ directory and its MEMORY.md index) — e.g. memories have gone stale after the project moved on, the index and files have drifted apart, wiki-links dangle, or frontmatter `name:` no longer matches filenames. Also sweeps the project skills (.claude/skills) for repo-state claims that have drifted. Triggered by "review your memory", "clean up the memories", or /dreamer.
 ---
 
 # Dreamer — memory consolidation
@@ -29,6 +29,7 @@ Let `MEM` = the memory directory. Do passes 1–4 as analysis + edits, then run 
    - DELETE tracking/status memories whose work shipped — branch state, "next up", "not yet merged/pushed" are now repo-derivable.
    - DELETE any memory the current code contradicts.
    - Do NOT touch durable preferences here just because they're old (see pass 4 / Keep-vs-delete).
+   - **Same audit, second store: sweep `.claude/skills/*/SKILL.md`.** Skills that assert repo state (file names, versions, pending-work lists, "currently X") drift exactly like tracking memories. Verify each such claim against the repo; fix drifted ones in place — prefer rephrasing to a durable rule or runtime derivation over updating the snapshot.
 
 3. **Reference-anchor check.** Each `reference` memory cites files / symbols / line refs — confirm they still resolve.
    - Cited example GONE but the underlying lesson durable (a framework behavior, a recurring gotcha): **UPDATE** — mark the example historical, fix the citation/links. Do NOT delete the lesson.
