@@ -43,6 +43,10 @@ namespace Frigorino.Infrastructure.Services
             if (address.AddressFamily == AddressFamily.InterNetwork)
             {
                 var b = address.GetAddressBytes();
+                if (b[0] == 0 || b[0] >= 240) // 0.0.0.0/8 (this-network) + 240.0.0.0/4 (reserved/broadcast)
+                {
+                    return false;
+                }
                 if (b[0] == 10)
                 {
                     return false;

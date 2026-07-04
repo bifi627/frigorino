@@ -444,10 +444,6 @@ export type UpdateMyInventoryNotificationRequest = {
     leadDays: null | number;
 };
 
-export type UpdateProfileRequest = {
-    name: string;
-};
-
 export type UpdateRecipeAttachmentRequest = {
     caption: null | string;
 };
@@ -3428,34 +3424,6 @@ export type GetWeatherForecastResponses = {
 };
 
 export type GetWeatherForecastResponse = GetWeatherForecastResponses[keyof GetWeatherForecastResponses];
-
-export type GetApiAuthMeData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/Auth/me';
-};
-
-export type GetApiAuthMeResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type PutApiAuthProfileData = {
-    body: UpdateProfileRequest;
-    path?: never;
-    query?: never;
-    url: '/api/Auth/profile';
-};
-
-export type PutApiAuthProfileResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
 
 export type GetApiDemoData = {
     body?: never;
