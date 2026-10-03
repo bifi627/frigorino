@@ -50,14 +50,12 @@ export function useItemComposer<TItem extends ComposerItem>({
                             item.id !== editingId &&
                             item.text.toLowerCase().includes(q),
                     )
-                    .map(
-                        (item): Suggestion => ({
-                            id: item.id,
-                            label: item.text,
-                            secondaryLabel: getSecondaryLabel?.(item),
-                            badge: getBadge?.(item),
-                        }),
-                    );
+                    .map((item): Suggestion => ({
+                        id: item.id,
+                        label: item.text,
+                        secondaryLabel: getSecondaryLabel?.(item),
+                        badge: getBadge?.(item),
+                    }));
             },
         }),
         [existingItems, editingId, getBadge, getSecondaryLabel],

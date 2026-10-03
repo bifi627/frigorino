@@ -48,10 +48,9 @@ export type AnyFeature = AnyModifierFeature | AnyActionFeature;
 
 /** Map of each modifier feature's id -> its value type. */
 export type ModifierValues<F extends readonly AnyFeature[]> = {
-    [M in Extract<
-        F[number],
-        AnyModifierFeature
-    > as M["id"]]: M extends ModifierFeature<string, infer V> ? V : never;
+    [
+        M in Extract<F[number], AnyModifierFeature> as M["id"]
+    ]: M extends ModifierFeature<string, infer V> ? V : never;
 };
 
 /** The text-send completion: text + mode + all modifier values. */
@@ -67,8 +66,7 @@ export type ActionCompletion<A extends AnyActionFeature> =
 
 /** Full discriminated-union completion for a features tuple. */
 export type Completion<F extends readonly AnyFeature[]> =
-    | TextCompletion<F>
-    | ActionCompletion<Extract<F[number], AnyActionFeature>>;
+    TextCompletion<F> | ActionCompletion<Extract<F[number], AnyActionFeature>>;
 
 export interface Suggestion {
     id: string | number;
