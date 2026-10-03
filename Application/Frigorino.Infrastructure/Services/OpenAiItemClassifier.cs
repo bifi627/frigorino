@@ -14,7 +14,7 @@ namespace Frigorino.Infrastructure.Services
     public class OpenAiItemClassifier : IItemClassifier
     {
         // Bump when the prompt or schema changes to force re-classification on the next reference.
-        public int Version => 2;
+        public int Version => 3;
 
         // The strict Structured Outputs schema. Enum values and the shelf-life bounds are
         // interpolated from the domain types so they can't silently drift from ProductCategory /
