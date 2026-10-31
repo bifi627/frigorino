@@ -1,5 +1,6 @@
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import { create } from "zustand";
+import { firebaseApp } from "./auth";
 import { identifyUser, resetUser } from "./observability";
 
 interface AuthState {
@@ -45,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
 
         // Set up new subscription
-        unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+        unsubscribe = onAuthStateChanged(getAuth(firebaseApp), (user) => {
             window.console.log("Auth state changed:", user);
             if (user) {
                 identifyUser({ id: user.uid, email: user.email });
