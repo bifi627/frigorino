@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node 24
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '26'
           cache: npm
           cache-dependency-path: Application/Frigorino.Web/ClientApp/package-lock.json
 
