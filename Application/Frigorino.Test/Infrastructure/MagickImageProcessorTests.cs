@@ -94,7 +94,7 @@ namespace Frigorino.Test.Infrastructure
                 var exif = new ExifProfile();
                 exif.SetValue(ExifTag.Orientation, (ushort)6);
                 image.SetProfile(exif);
-                image.Orientation = OrientationType.RightTop;
+                image.Orientation = Orientation.RightTop;
                 rotated = image.ToByteArray(MagickFormat.Jpeg);
             }
 

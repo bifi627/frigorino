@@ -9,36 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SettingsIndexRouteImport } from './routes/settings/index'
-import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
-import { Route as ListsIndexRouteImport } from './routes/lists/index'
-import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
-import { Route as RecipesImportRouteImport } from './routes/recipes/import'
-import { Route as RecipesCreateRouteImport } from './routes/recipes/create'
-import { Route as ListsCreateRouteImport } from './routes/lists/create'
-import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
-import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
-import { Route as HouseholdProductsRouteImport } from './routes/household/products'
-import { Route as HouseholdManageRouteImport } from './routes/household/manage'
-import { Route as HouseholdCreateRouteImport } from './routes/household/create'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as HouseholdCreateRouteImport } from './routes/household/create'
+import { Route as HouseholdManageRouteImport } from './routes/household/manage'
+import { Route as HouseholdProductsRouteImport } from './routes/household/products'
+import { Route as InventoriesIndexRouteImport } from './routes/inventories/index'
+import { Route as InventoriesCalendarRouteImport } from './routes/inventories/calendar'
+import { Route as InventoriesCreateRouteImport } from './routes/inventories/create'
+import { Route as ListsIndexRouteImport } from './routes/lists/index'
+import { Route as ListsCreateRouteImport } from './routes/lists/create'
+import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
+import { Route as RecipesCreateRouteImport } from './routes/recipes/create'
+import { Route as RecipesImportRouteImport } from './routes/recipes/import'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as HouseholdBlueprintsIndexRouteImport } from './routes/household/blueprints/index'
-import { Route as RecipesRecipeIdViewRouteImport } from './routes/recipes/$recipeId/view'
-import { Route as RecipesRecipeIdEditRouteImport } from './routes/recipes/$recipeId/edit'
-import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
-import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
-import { Route as InventoriesInventoryIdViewRouteImport } from './routes/inventories/$inventoryId/view'
-import { Route as InventoriesInventoryIdEditRouteImport } from './routes/inventories/$inventoryId/edit'
 import { Route as HouseholdBlueprintsCreateRouteImport } from './routes/household/blueprints/create'
-import { Route as HouseholdBlueprintsBlueprintIdViewRouteImport } from './routes/household/blueprints/$blueprintId/view'
+import { Route as InventoriesInventoryIdEditRouteImport } from './routes/inventories/$inventoryId/edit'
+import { Route as InventoriesInventoryIdViewRouteImport } from './routes/inventories/$inventoryId/view'
+import { Route as ListsListIdEditRouteImport } from './routes/lists/$listId/edit'
+import { Route as ListsListIdViewRouteImport } from './routes/lists/$listId/view'
+import { Route as RecipesRecipeIdEditRouteImport } from './routes/recipes/$recipeId/edit'
+import { Route as RecipesRecipeIdViewRouteImport } from './routes/recipes/$recipeId/view'
 import { Route as HouseholdBlueprintsBlueprintIdEditRouteImport } from './routes/household/blueprints/$blueprintId/edit'
+import { Route as HouseholdBlueprintsBlueprintIdViewRouteImport } from './routes/household/blueprints/$blueprintId/view'
 
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -46,64 +46,14 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesIndexRoute = RecipesIndexRouteImport.update({
-  id: '/recipes/',
-  path: '/recipes/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListsIndexRoute = ListsIndexRouteImport.update({
-  id: '/lists/',
-  path: '/lists/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoriesIndexRoute = InventoriesIndexRouteImport.update({
-  id: '/inventories/',
-  path: '/inventories/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesImportRoute = RecipesImportRouteImport.update({
-  id: '/recipes/import',
-  path: '/recipes/import',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesCreateRoute = RecipesCreateRouteImport.update({
-  id: '/recipes/create',
-  path: '/recipes/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListsCreateRoute = ListsCreateRouteImport.update({
-  id: '/lists/create',
-  path: '/lists/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoriesCreateRoute = InventoriesCreateRouteImport.update({
-  id: '/inventories/create',
-  path: '/inventories/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoriesCalendarRoute = InventoriesCalendarRouteImport.update({
-  id: '/inventories/calendar',
-  path: '/inventories/calendar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HouseholdProductsRoute = HouseholdProductsRouteImport.update({
-  id: '/household/products',
-  path: '/household/products',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HouseholdManageRoute = HouseholdManageRouteImport.update({
-  id: '/household/manage',
-  path: '/household/manage',
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseholdCreateRoute = HouseholdCreateRouteImport.update({
@@ -111,9 +61,59 @@ const HouseholdCreateRoute = HouseholdCreateRouteImport.update({
   path: '/household/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
+const HouseholdManageRoute = HouseholdManageRouteImport.update({
+  id: '/household/manage',
+  path: '/household/manage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseholdProductsRoute = HouseholdProductsRouteImport.update({
+  id: '/household/products',
+  path: '/household/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoriesIndexRoute = InventoriesIndexRouteImport.update({
+  id: '/inventories/',
+  path: '/inventories/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoriesCalendarRoute = InventoriesCalendarRouteImport.update({
+  id: '/inventories/calendar',
+  path: '/inventories/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoriesCreateRoute = InventoriesCreateRouteImport.update({
+  id: '/inventories/create',
+  path: '/inventories/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsIndexRoute = ListsIndexRouteImport.update({
+  id: '/lists/',
+  path: '/lists/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsCreateRoute = ListsCreateRouteImport.update({
+  id: '/lists/create',
+  path: '/lists/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesIndexRoute = RecipesIndexRouteImport.update({
+  id: '/recipes/',
+  path: '/recipes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesCreateRoute = RecipesCreateRouteImport.update({
+  id: '/recipes/create',
+  path: '/recipes/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesImportRoute = RecipesImportRouteImport.update({
+  id: '/recipes/import',
+  path: '/recipes/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HouseholdBlueprintsIndexRoute =
@@ -122,30 +122,10 @@ const HouseholdBlueprintsIndexRoute =
     path: '/household/blueprints/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const RecipesRecipeIdViewRoute = RecipesRecipeIdViewRouteImport.update({
-  id: '/recipes/$recipeId/view',
-  path: '/recipes/$recipeId/view',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecipesRecipeIdEditRoute = RecipesRecipeIdEditRouteImport.update({
-  id: '/recipes/$recipeId/edit',
-  path: '/recipes/$recipeId/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListsListIdViewRoute = ListsListIdViewRouteImport.update({
-  id: '/lists/$listId/view',
-  path: '/lists/$listId/view',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ListsListIdEditRoute = ListsListIdEditRouteImport.update({
-  id: '/lists/$listId/edit',
-  path: '/lists/$listId/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoriesInventoryIdViewRoute =
-  InventoriesInventoryIdViewRouteImport.update({
-    id: '/inventories/$inventoryId/view',
-    path: '/inventories/$inventoryId/view',
+const HouseholdBlueprintsCreateRoute =
+  HouseholdBlueprintsCreateRouteImport.update({
+    id: '/household/blueprints/create',
+    path: '/household/blueprints/create',
     getParentRoute: () => rootRouteImport,
   } as any)
 const InventoriesInventoryIdEditRoute =
@@ -154,22 +134,42 @@ const InventoriesInventoryIdEditRoute =
     path: '/inventories/$inventoryId/edit',
     getParentRoute: () => rootRouteImport,
   } as any)
-const HouseholdBlueprintsCreateRoute =
-  HouseholdBlueprintsCreateRouteImport.update({
-    id: '/household/blueprints/create',
-    path: '/household/blueprints/create',
+const InventoriesInventoryIdViewRoute =
+  InventoriesInventoryIdViewRouteImport.update({
+    id: '/inventories/$inventoryId/view',
+    path: '/inventories/$inventoryId/view',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ListsListIdEditRoute = ListsListIdEditRouteImport.update({
+  id: '/lists/$listId/edit',
+  path: '/lists/$listId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ListsListIdViewRoute = ListsListIdViewRouteImport.update({
+  id: '/lists/$listId/view',
+  path: '/lists/$listId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRecipeIdEditRoute = RecipesRecipeIdEditRouteImport.update({
+  id: '/recipes/$recipeId/edit',
+  path: '/recipes/$recipeId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesRecipeIdViewRoute = RecipesRecipeIdViewRouteImport.update({
+  id: '/recipes/$recipeId/view',
+  path: '/recipes/$recipeId/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HouseholdBlueprintsBlueprintIdEditRoute =
+  HouseholdBlueprintsBlueprintIdEditRouteImport.update({
+    id: '/household/blueprints/$blueprintId/edit',
+    path: '/household/blueprints/$blueprintId/edit',
     getParentRoute: () => rootRouteImport,
   } as any)
 const HouseholdBlueprintsBlueprintIdViewRoute =
   HouseholdBlueprintsBlueprintIdViewRouteImport.update({
     id: '/household/blueprints/$blueprintId/view',
     path: '/household/blueprints/$blueprintId/view',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const HouseholdBlueprintsBlueprintIdEditRoute =
-  HouseholdBlueprintsBlueprintIdEditRouteImport.update({
-    id: '/household/blueprints/$blueprintId/edit',
-    path: '/household/blueprints/$blueprintId/edit',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -376,11 +376,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -390,95 +390,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/': {
-      id: '/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/': {
-      id: '/recipes/'
-      path: '/recipes'
-      fullPath: '/recipes/'
-      preLoaderRoute: typeof RecipesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lists/': {
-      id: '/lists/'
-      path: '/lists'
-      fullPath: '/lists/'
-      preLoaderRoute: typeof ListsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventories/': {
-      id: '/inventories/'
-      path: '/inventories'
-      fullPath: '/inventories/'
-      preLoaderRoute: typeof InventoriesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/import': {
-      id: '/recipes/import'
-      path: '/recipes/import'
-      fullPath: '/recipes/import'
-      preLoaderRoute: typeof RecipesImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/create': {
-      id: '/recipes/create'
-      path: '/recipes/create'
-      fullPath: '/recipes/create'
-      preLoaderRoute: typeof RecipesCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lists/create': {
-      id: '/lists/create'
-      path: '/lists/create'
-      fullPath: '/lists/create'
-      preLoaderRoute: typeof ListsCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventories/create': {
-      id: '/inventories/create'
-      path: '/inventories/create'
-      fullPath: '/inventories/create'
-      preLoaderRoute: typeof InventoriesCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventories/calendar': {
-      id: '/inventories/calendar'
-      path: '/inventories/calendar'
-      fullPath: '/inventories/calendar'
-      preLoaderRoute: typeof InventoriesCalendarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/household/products': {
-      id: '/household/products'
-      path: '/household/products'
-      fullPath: '/household/products'
-      preLoaderRoute: typeof HouseholdProductsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/household/manage': {
-      id: '/household/manage'
-      path: '/household/manage'
-      fullPath: '/household/manage'
-      preLoaderRoute: typeof HouseholdManageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/household/create': {
-      id: '/household/create'
-      path: '/household/create'
-      fullPath: '/household/create'
-      preLoaderRoute: typeof HouseholdCreateRouteImport
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -488,53 +404,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/household/create': {
+      id: '/household/create'
+      path: '/household/create'
+      fullPath: '/household/create'
+      preLoaderRoute: typeof HouseholdCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/manage': {
+      id: '/household/manage'
+      path: '/household/manage'
+      fullPath: '/household/manage'
+      preLoaderRoute: typeof HouseholdManageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/products': {
+      id: '/household/products'
+      path: '/household/products'
+      fullPath: '/household/products'
+      preLoaderRoute: typeof HouseholdProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/': {
+      id: '/inventories/'
+      path: '/inventories'
+      fullPath: '/inventories/'
+      preLoaderRoute: typeof InventoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/calendar': {
+      id: '/inventories/calendar'
+      path: '/inventories/calendar'
+      fullPath: '/inventories/calendar'
+      preLoaderRoute: typeof InventoriesCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/create': {
+      id: '/inventories/create'
+      path: '/inventories/create'
+      fullPath: '/inventories/create'
+      preLoaderRoute: typeof InventoriesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/': {
+      id: '/lists/'
+      path: '/lists'
+      fullPath: '/lists/'
+      preLoaderRoute: typeof ListsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/create': {
+      id: '/lists/create'
+      path: '/lists/create'
+      fullPath: '/lists/create'
+      preLoaderRoute: typeof ListsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/': {
+      id: '/recipes/'
+      path: '/recipes'
+      fullPath: '/recipes/'
+      preLoaderRoute: typeof RecipesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/create': {
+      id: '/recipes/create'
+      path: '/recipes/create'
+      fullPath: '/recipes/create'
+      preLoaderRoute: typeof RecipesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/import': {
+      id: '/recipes/import'
+      path: '/recipes/import'
+      fullPath: '/recipes/import'
+      preLoaderRoute: typeof RecipesImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/household/blueprints/': {
       id: '/household/blueprints/'
       path: '/household/blueprints'
       fullPath: '/household/blueprints/'
       preLoaderRoute: typeof HouseholdBlueprintsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/$recipeId/view': {
-      id: '/recipes/$recipeId/view'
-      path: '/recipes/$recipeId/view'
-      fullPath: '/recipes/$recipeId/view'
-      preLoaderRoute: typeof RecipesRecipeIdViewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recipes/$recipeId/edit': {
-      id: '/recipes/$recipeId/edit'
-      path: '/recipes/$recipeId/edit'
-      fullPath: '/recipes/$recipeId/edit'
-      preLoaderRoute: typeof RecipesRecipeIdEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lists/$listId/view': {
-      id: '/lists/$listId/view'
-      path: '/lists/$listId/view'
-      fullPath: '/lists/$listId/view'
-      preLoaderRoute: typeof ListsListIdViewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lists/$listId/edit': {
-      id: '/lists/$listId/edit'
-      path: '/lists/$listId/edit'
-      fullPath: '/lists/$listId/edit'
-      preLoaderRoute: typeof ListsListIdEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventories/$inventoryId/view': {
-      id: '/inventories/$inventoryId/view'
-      path: '/inventories/$inventoryId/view'
-      fullPath: '/inventories/$inventoryId/view'
-      preLoaderRoute: typeof InventoriesInventoryIdViewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventories/$inventoryId/edit': {
-      id: '/inventories/$inventoryId/edit'
-      path: '/inventories/$inventoryId/edit'
-      fullPath: '/inventories/$inventoryId/edit'
-      preLoaderRoute: typeof InventoriesInventoryIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/household/blueprints/create': {
@@ -544,11 +502,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HouseholdBlueprintsCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/household/blueprints/$blueprintId/view': {
-      id: '/household/blueprints/$blueprintId/view'
-      path: '/household/blueprints/$blueprintId/view'
-      fullPath: '/household/blueprints/$blueprintId/view'
-      preLoaderRoute: typeof HouseholdBlueprintsBlueprintIdViewRouteImport
+    '/inventories/$inventoryId/edit': {
+      id: '/inventories/$inventoryId/edit'
+      path: '/inventories/$inventoryId/edit'
+      fullPath: '/inventories/$inventoryId/edit'
+      preLoaderRoute: typeof InventoriesInventoryIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventories/$inventoryId/view': {
+      id: '/inventories/$inventoryId/view'
+      path: '/inventories/$inventoryId/view'
+      fullPath: '/inventories/$inventoryId/view'
+      preLoaderRoute: typeof InventoriesInventoryIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/$listId/edit': {
+      id: '/lists/$listId/edit'
+      path: '/lists/$listId/edit'
+      fullPath: '/lists/$listId/edit'
+      preLoaderRoute: typeof ListsListIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lists/$listId/view': {
+      id: '/lists/$listId/view'
+      path: '/lists/$listId/view'
+      fullPath: '/lists/$listId/view'
+      preLoaderRoute: typeof ListsListIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/$recipeId/edit': {
+      id: '/recipes/$recipeId/edit'
+      path: '/recipes/$recipeId/edit'
+      fullPath: '/recipes/$recipeId/edit'
+      preLoaderRoute: typeof RecipesRecipeIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/$recipeId/view': {
+      id: '/recipes/$recipeId/view'
+      path: '/recipes/$recipeId/view'
+      fullPath: '/recipes/$recipeId/view'
+      preLoaderRoute: typeof RecipesRecipeIdViewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/household/blueprints/$blueprintId/edit': {
@@ -556,6 +549,13 @@ declare module '@tanstack/react-router' {
       path: '/household/blueprints/$blueprintId/edit'
       fullPath: '/household/blueprints/$blueprintId/edit'
       preLoaderRoute: typeof HouseholdBlueprintsBlueprintIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/household/blueprints/$blueprintId/view': {
+      id: '/household/blueprints/$blueprintId/view'
+      path: '/household/blueprints/$blueprintId/view'
+      fullPath: '/household/blueprints/$blueprintId/view'
+      preLoaderRoute: typeof HouseholdBlueprintsBlueprintIdViewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
