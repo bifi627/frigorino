@@ -16,7 +16,7 @@ description: >-
 
 ## Wave order
 
-0. **Inventory first:** `npm ci` (local `node_modules` can be stale vs the lockfile — `npm outdated` then lies), then `npm outdated` + `dotnet list Application/Frigorino.sln package --outdated`. `npm outdated`'s "Wanted" already honors `min-release-age`.
+0. **Inventory first:** `npm ci` (local `node_modules` can be stale vs the lockfile — `npm outdated` then lies), then `npm outdated` + `dotnet list Application/Frigorino.sln package --outdated` **and** `... --outdated --highest-minor` (the plain form only shows the newest major, hiding in-major patches such as .NET servicing/security releases). Also check open Dependabot alerts: `gh api "repos/{owner}/{repo}/dependabot/alerts?state=open"`. `npm outdated`'s "Wanted" already honors `min-release-age`.
 1. **Patches + safe minors, all stacks together** — one wave, one verify.
 2. **Majors, one at a time**, least → most blast radius:
    1. Node base image — always the **active LTS** (user's rule). Check `https://endoflife.date/api/nodejs.json` (`lts` date ≤ today), don't assume.
