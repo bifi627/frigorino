@@ -16,7 +16,7 @@ description: >-
 
 ## Wave order
 
-0. **Inventory first:** `npm ci` (local `node_modules` can be stale vs the lockfile — `npm outdated` then lies), then `npm outdated` + `dotnet list Application/Frigorino.sln package --outdated` **and** `... --outdated --highest-minor` (the plain form only shows the newest major, hiding in-major patches such as .NET servicing/security releases). Also check open Dependabot alerts: `gh api "repos/{owner}/{repo}/dependabot/alerts?state=open"`. `npm outdated`'s "Wanted" already honors `min-release-age`.
+0. **Inventory first:** `npm ci` (local `node_modules` can be stale vs the lockfile — `npm outdated` then lies), then `npm outdated` + `dotnet list Application/Frigorino.sln package --outdated` **and** `... --outdated --highest-minor` (the plain form only shows the newest major, hiding in-major patches such as .NET servicing/security releases) **and** `... --outdated --include-prerelease` (beta-only packages like `OpenTelemetry.Instrumentation.EntityFrameworkCore` never ship stable — the other forms print "not found in sources" for them, which does NOT mean up to date). Also check open Dependabot alerts: `gh api "repos/{owner}/{repo}/dependabot/alerts?state=open"`. `npm outdated`'s "Wanted" already honors `min-release-age`.
 1. **Patches + safe minors, all stacks together** — one wave, one verify.
 2. **Majors, one at a time**, least → most blast radius:
    1. Node base image — always the **active LTS** (user's rule). Check `https://endoflife.date/api/nodejs.json` (`lts` date ≤ today), don't assume.
@@ -59,6 +59,8 @@ IntegrationTests (~2 min) are NOT "expensive" — include by default. They catch
 
 - Central Package Management: **all** NuGet versions live in `Application/Directory.Packages.props` (`<PackageVersion>`), the `.csproj` files carry version-less `<PackageReference>`. Edit the version there, once. No lock files / `--locked-mode` — a plain `dotnet restore` is enough.
 - `Microsoft.EntityFrameworkCore*` packages all move in lockstep — bump them together.
+- **Apply the 7-day release-age rule to NuGet by hand** (nothing enforces it): pick the newest version published ≥7 days ago — check `https://api.nuget.org/v3/registration5-gz-semver2/<id>/<ver>.json` (`published`). Exception: Microsoft security servicing releases (e.g. .NET 10.0.x Patch Tuesday) are taken immediately.
+- Beta-only packages (`OpenTelemetry.Instrumentation.EntityFrameworkCore`) move with their stable family: pick the newest beta past the quarantine whose nuspec range accepts the family's version.
 
 ## npm specifics
 
